@@ -113,8 +113,8 @@
   - [x] 创建 `pkg/logger/logger.go`
   - [x] 配置 zap 日志格式（JSON/Console）
   - [x] 支持日志级别配置（Debug/Info/Warn/Error）
-  - [ ] 支持日志文件输出
-  - [ ] 配置日志滚动策略
+  - [x] 支持日志文件输出
+  - [x] 配置日志滚动策略
 
 ### 2.2 数据库设计与模型
 
@@ -381,20 +381,17 @@
   - [x] `POST /api/v1/admin/announcements` 添加公告
   - [x] `PUT /api/v1/admin/announcements/:id` 修改公告
   - [x] `DELETE /api/v1/admin/announcements/:id` 删除公告
-  - [ ] `POST /api/v1/admin/announcements` 添加公告
-  - [ ] `PUT /api/v1/admin/announcements/:id` 修改公告
-  - [ ] `DELETE /api/v1/admin/announcements/:id` 删除公告
 
-- [ ] 实现爬虫管理接口
-  - [ ] `GET /api/v1/admin/crawlers` 爬虫任务列表
-  - [ ] `POST /api/v1/admin/crawlers/trigger` 手动触发爬虫
-  - [ ] `GET /api/v1/admin/list-pages` 列表页管理
-  - [ ] `POST /api/v1/admin/list-pages` 添加列表页
+- [x] 实现爬虫管理接口
+  - [x] `GET /api/v1/admin/crawlers` 爬虫任务列表
+  - [x] `POST /api/v1/admin/crawlers/trigger` 手动触发爬虫
+  - [x] `GET /api/v1/admin/list-pages` 列表页管理
+  - [x] `POST /api/v1/admin/list-pages` 添加列表页
 
 - [x] 实现统计接口
   - [x] `GET /api/v1/admin/stats/overview` 概览统计
-  - [ ] `GET /api/v1/admin/stats/positions` 职位统计
-  - [ ] `GET /api/v1/admin/stats/users` 用户统计
+  - [x] `GET /api/v1/admin/stats/positions` 职位统计
+  - [x] `GET /api/v1/admin/stats/users` 用户统计
 
 ### 2.9 中间件开发
 
@@ -404,21 +401,21 @@
   - [x] 实现Token验证
   - [x] 实现用户信息注入Context
 
-- [ ] RBAC权限中间件
-  - [ ] 创建 `internal/middleware/permission.go`
-  - [ ] 实现角色权限校验
+- [x] RBAC权限中间件
+  - [x] 创建 `internal/middleware/permission.go`
+  - [x] 实现角色权限校验
 
 - [x] 请求日志中间件
   - [x] 创建 `internal/middleware/logger.go`
   - [x] 记录请求信息
   - [x] 记录响应时间
 
-- [ ] 限流中间件
-  - [ ] 创建 `internal/middleware/ratelimit.go`
-  - [ ] 基于Redis实现令牌桶限流
+- [x] 限流中间件
+  - [x] 创建 `internal/middleware/ratelimit.go`
+  - [x] 基于Redis实现令牌桶限流
 
-- [ ] CORS中间件
-  - [ ] 配置允许的域名和方法
+- [x] CORS中间件
+  - [x] 配置允许的域名和方法
 
 - [x] 错误处理中间件
   - [x] 创建 `internal/middleware/error.go`

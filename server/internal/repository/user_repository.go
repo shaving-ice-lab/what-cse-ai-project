@@ -97,3 +97,60 @@ func (r *UserRepository) Search(keyword string, page, pageSize int) ([]model.Use
 
 	return users, total, nil
 }
+
+func (r *UserRepository) GetStatsByStatus() (map[string]int64, error) {
+	var results []struct {
+		Status int
+		Count  int64
+	}
+
+	err := r.db.Model(&model.User{}).
+		Select("status, COUNT(*) as count").
+		Group("status").
+		Find(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]int64)
+	statusNames := map[int]string{
+		0: "disabled",
+		1: "active",
+	}
+	for _, r := range results {
+		name := statusNames[r.Status]
+		if name == "" {
+			name = "unknown"
+		}
+		stats[name] = r.Count
+	}
+	return stats, nil
+}
+
+type UserTimeStats struct {
+	Today     int64
+	ThisWeek  int64
+	ThisMonth int64
+}
+
+func (r *UserRepository) GetUserTimeStats() (*UserTimeStats, error) {
+	stats := &UserTimeStats{}
+
+	// Today
+	r.db.Model(&model.User{}).
+		Where("DATE(created_at) = CURDATE()").
+		Count(&stats.Today)
+
+	// This week
+	r.db.Model(&model.User{}).
+		Where("YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)").
+		Count(&stats.ThisWeek)
+
+	// This month
+	r.db.Model(&model.User{}).
+		Where("YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())").
+		Count(&stats.ThisMonth)
+
+	return stats, nil
+}

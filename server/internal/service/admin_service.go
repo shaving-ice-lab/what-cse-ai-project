@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	ErrAdminNotFound      = errors.New("admin not found")
-	ErrAdminDisabled      = errors.New("admin account is disabled")
+	ErrAdminNotFound           = errors.New("admin not found")
+	ErrAdminDisabled           = errors.New("admin account is disabled")
 	ErrInvalidAdminCredentials = errors.New("invalid admin credentials")
 )
 
@@ -44,8 +44,8 @@ type AdminLoginRequest struct {
 }
 
 type AdminTokenResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int64  `json:"expires_in"`
+	AccessToken string    `json:"access_token"`
+	ExpiresIn   int64     `json:"expires_in"`
 	Admin       AdminInfo `json:"admin"`
 }
 
@@ -149,10 +149,10 @@ func (s *AdminService) UpdatePositionStatus(positionID uint, status int) error {
 
 // Statistics
 type DashboardStats struct {
-	TotalUsers         int64            `json:"total_users"`
-	TotalPositions     int64            `json:"total_positions"`
-	TotalAnnouncements int64            `json:"total_announcements"`
-	NewUsersToday      int64            `json:"new_users_today"`
+	TotalUsers          int64            `json:"total_users"`
+	TotalPositions      int64            `json:"total_positions"`
+	TotalAnnouncements  int64            `json:"total_announcements"`
+	NewUsersToday       int64            `json:"new_users_today"`
 	PositionsByExamType map[string]int64 `json:"positions_by_exam_type"`
 	PositionsByProvince map[string]int64 `json:"positions_by_province"`
 }
@@ -178,6 +178,79 @@ func (s *AdminService) GetDashboardStats() (*DashboardStats, error) {
 	byProvince, err := s.positionRepo.GetStatsByProvince()
 	if err == nil {
 		stats.PositionsByProvince = byProvince
+	}
+
+	return stats, nil
+}
+
+// PositionStats represents detailed position statistics
+type PositionStats struct {
+	TotalPositions      int64            `json:"total_positions"`
+	PositionsByExamType map[string]int64 `json:"positions_by_exam_type"`
+	PositionsByProvince map[string]int64 `json:"positions_by_province"`
+	PositionsByStatus   map[string]int64 `json:"positions_by_status"`
+	TotalRecruitCount   int64            `json:"total_recruit_count"`
+	AvgCompetitionRatio float64          `json:"avg_competition_ratio"`
+}
+
+func (s *AdminService) GetPositionStats() (*PositionStats, error) {
+	stats := &PositionStats{}
+
+	byExamType, err := s.positionRepo.GetStatsByExamType()
+	if err == nil {
+		stats.PositionsByExamType = byExamType
+		for _, count := range byExamType {
+			stats.TotalPositions += count
+		}
+	}
+
+	byProvince, err := s.positionRepo.GetStatsByProvince()
+	if err == nil {
+		stats.PositionsByProvince = byProvince
+	}
+
+	byStatus, err := s.positionRepo.GetStatsByStatus()
+	if err == nil {
+		stats.PositionsByStatus = byStatus
+	}
+
+	recruitStats, err := s.positionRepo.GetRecruitStats()
+	if err == nil {
+		stats.TotalRecruitCount = recruitStats.TotalRecruitCount
+		stats.AvgCompetitionRatio = recruitStats.AvgCompetitionRatio
+	}
+
+	return stats, nil
+}
+
+// UserStats represents detailed user statistics
+type UserStats struct {
+	TotalUsers        int64            `json:"total_users"`
+	UsersByStatus     map[string]int64 `json:"users_by_status"`
+	NewUsersToday     int64            `json:"new_users_today"`
+	NewUsersThisWeek  int64            `json:"new_users_this_week"`
+	NewUsersThisMonth int64            `json:"new_users_this_month"`
+	ActiveUsersToday  int64            `json:"active_users_today"`
+}
+
+func (s *AdminService) GetUserStats() (*UserStats, error) {
+	stats := &UserStats{}
+
+	_, total, err := s.userRepo.List(1, 1)
+	if err == nil {
+		stats.TotalUsers = total
+	}
+
+	byStatus, err := s.userRepo.GetStatsByStatus()
+	if err == nil {
+		stats.UsersByStatus = byStatus
+	}
+
+	timeStats, err := s.userRepo.GetUserTimeStats()
+	if err == nil {
+		stats.NewUsersToday = timeStats.Today
+		stats.NewUsersThisWeek = timeStats.ThisWeek
+		stats.NewUsersThisMonth = timeStats.ThisMonth
 	}
 
 	return stats, nil

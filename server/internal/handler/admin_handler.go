@@ -212,6 +212,42 @@ func (h *AdminHandler) GetDashboardStats(c echo.Context) error {
 	return success(c, stats)
 }
 
+// GetPositionStats returns detailed position statistics
+// @Summary Get Position Stats (Admin)
+// @Description Get detailed position statistics
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Success 200 {object} Response
+// @Router /api/v1/admin/stats/positions [get]
+func (h *AdminHandler) GetPositionStats(c echo.Context) error {
+	stats, err := h.adminService.GetPositionStats()
+	if err != nil {
+		return fail(c, 500, "Failed to fetch position stats: "+err.Error())
+	}
+
+	return success(c, stats)
+}
+
+// GetUserStats returns detailed user statistics
+// @Summary Get User Stats (Admin)
+// @Description Get detailed user statistics
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Success 200 {object} Response
+// @Router /api/v1/admin/stats/users [get]
+func (h *AdminHandler) GetUserStats(c echo.Context) error {
+	stats, err := h.adminService.GetUserStats()
+	if err != nil {
+		return fail(c, 500, "Failed to fetch user stats: "+err.Error())
+	}
+
+	return success(c, stats)
+}
+
 func (h *AdminHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.MiddlewareFunc) {
 	g.POST("/login", h.Login)
 
@@ -222,4 +258,6 @@ func (h *AdminHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.Mi
 	admin.GET("/positions", h.ListPositions)
 	admin.PUT("/positions/:id/status", h.UpdatePositionStatus)
 	admin.GET("/stats/overview", h.GetDashboardStats)
+	admin.GET("/stats/positions", h.GetPositionStats)
+	admin.GET("/stats/users", h.GetUserStats)
 }

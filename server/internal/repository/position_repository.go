@@ -14,18 +14,18 @@ func NewPositionRepository(db *gorm.DB) *PositionRepository {
 }
 
 type PositionFilter struct {
-	ExamType              string   `query:"exam_type"`
-	Province              string   `query:"province"`
-	City                  string   `query:"city"`
-	EducationMin          string   `query:"education_min"`
-	MajorUnlimited        *bool    `query:"major_unlimited"`
-	PoliticalStatus       string   `query:"political_status"`
-	DepartmentLevel       string   `query:"department_level"`
-	GenderRequired        string   `query:"gender_required"`
-	RecruitCountMin       int      `query:"recruit_count_min"`
-	AgeMax                int      `query:"age_max"`
-	Keyword               string   `query:"keyword"`
-	Status                *int     `query:"status"`
+	ExamType        string `query:"exam_type"`
+	Province        string `query:"province"`
+	City            string `query:"city"`
+	EducationMin    string `query:"education_min"`
+	MajorUnlimited  *bool  `query:"major_unlimited"`
+	PoliticalStatus string `query:"political_status"`
+	DepartmentLevel string `query:"department_level"`
+	GenderRequired  string `query:"gender_required"`
+	RecruitCountMin int    `query:"recruit_count_min"`
+	AgeMax          int    `query:"age_max"`
+	Keyword         string `query:"keyword"`
+	Status          *int   `query:"status"`
 }
 
 type PositionSort struct {
@@ -197,4 +197,55 @@ func (r *PositionRepository) GetStatsByProvince() (map[string]int64, error) {
 		stats[r.Province] = r.Count
 	}
 	return stats, nil
+}
+
+func (r *PositionRepository) GetStatsByStatus() (map[string]int64, error) {
+	var results []struct {
+		Status int
+		Count  int64
+	}
+
+	err := r.db.Model(&model.Position{}).
+		Select("status, COUNT(*) as count").
+		Group("status").
+		Find(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]int64)
+	statusNames := map[int]string{
+		0: "pending",
+		1: "published",
+		2: "offline",
+	}
+	for _, r := range results {
+		name := statusNames[r.Status]
+		if name == "" {
+			name = "unknown"
+		}
+		stats[name] = r.Count
+	}
+	return stats, nil
+}
+
+type RecruitStats struct {
+	TotalRecruitCount   int64
+	AvgCompetitionRatio float64
+}
+
+func (r *PositionRepository) GetRecruitStats() (*RecruitStats, error) {
+	var stats RecruitStats
+
+	err := r.db.Model(&model.Position{}).
+		Select("COALESCE(SUM(recruit_count), 0) as total_recruit_count, COALESCE(AVG(competition_ratio), 0) as avg_competition_ratio").
+		Where("status = ?", model.PositionStatusPublished).
+		Scan(&stats).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
 }
