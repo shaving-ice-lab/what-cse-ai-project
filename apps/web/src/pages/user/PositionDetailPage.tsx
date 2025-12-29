@@ -1,8 +1,8 @@
-import { useParams, Link } from 'react-router-dom'
-import { Heart, Share2, ArrowLeft, Check, X, AlertCircle } from 'lucide-react'
+import { useParams, Link } from "react-router-dom";
+import { Heart, Share2, ArrowLeft, Check, X, AlertCircle } from "lucide-react";
 
 export default function PositionDetailPage() {
-  const { id } = useParams()
+  const { id } = useParams();
 
   return (
     <div className="space-y-6">
@@ -46,7 +46,10 @@ export default function PositionDetailPage() {
                 <p className="text-sm text-green-600">符合您的大部分条件</p>
               </div>
             </div>
-            <Link to="/match" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            <Link
+              to="/match"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
               查看详细分析
             </Link>
           </div>
@@ -164,8 +167,46 @@ export default function PositionDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Related Announcements */}
+          <div className="bg-white rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">关联公告</h2>
+            <div className="space-y-3">
+              <Link
+                to="/announcements/1"
+                className="block p-3 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <p className="font-medium text-gray-800 text-sm line-clamp-2">
+                  2024年国家公务员考试公告
+                </p>
+                <p className="text-xs text-gray-500 mt-1">2024-10-15</p>
+              </Link>
+              <Link
+                to="/announcements/2"
+                className="block p-3 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <p className="font-medium text-gray-800 text-sm line-clamp-2">
+                  2024年国考报名统计（截至10月20日）
+                </p>
+                <p className="text-xs text-gray-500 mt-1">2024-10-20</p>
+              </Link>
+              <Link
+                to="/announcements/3"
+                className="block p-3 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <p className="font-medium text-gray-800 text-sm line-clamp-2">2024年国考笔试公告</p>
+                <p className="text-xs text-gray-500 mt-1">2024-11-10</p>
+              </Link>
+            </div>
+            <Link
+              to="/announcements"
+              className="block text-center text-sm text-primary hover:underline mt-4"
+            >
+              查看更多公告 →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

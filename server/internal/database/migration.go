@@ -33,15 +33,32 @@ func AutoMigrate(db *gorm.DB) error {
 
 func CreateIndexes(db *gorm.DB) error {
 	// Add composite indexes for frequently used queries
-	
+
 	// Position search indexes
 	db.Exec("CREATE INDEX IF NOT EXISTS idx_positions_search ON positions(exam_type, work_location_province, education_min, status)")
-	
+
 	// User favorites composite index
 	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_user_favorites_unique ON user_favorites(user_id, position_id)")
-	
+
 	// User views index for recent views
 	db.Exec("CREATE INDEX IF NOT EXISTS idx_user_views_recent ON user_views(user_id, view_time DESC)")
-	
+
+	return nil
+}
+
+func CreateFullTextIndexes(db *gorm.DB) error {
+	// Create FULLTEXT indexes for MySQL full-text search
+	// Note: These indexes support Chinese text search when using ngram parser
+
+	// Position full-text search index
+	db.Exec("ALTER TABLE positions ADD FULLTEXT INDEX ft_position_name (position_name) WITH PARSER ngram")
+	db.Exec("ALTER TABLE positions ADD FULLTEXT INDEX ft_department_name (department_name) WITH PARSER ngram")
+	db.Exec("ALTER TABLE positions ADD FULLTEXT INDEX ft_position_search (position_name, department_name) WITH PARSER ngram")
+
+	// Announcement full-text search index
+	db.Exec("ALTER TABLE announcements ADD FULLTEXT INDEX ft_announcement_title (title) WITH PARSER ngram")
+	db.Exec("ALTER TABLE announcements ADD FULLTEXT INDEX ft_announcement_content (content) WITH PARSER ngram")
+	db.Exec("ALTER TABLE announcements ADD FULLTEXT INDEX ft_announcement_search (title, content) WITH PARSER ngram")
+
 	return nil
 }

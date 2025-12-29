@@ -6,8 +6,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/what-cse/server/internal/config"
 	"github.com/what-cse/server/pkg/logger"
+
+	_ "github.com/what-cse/server/docs"
 )
 
 func main() {
@@ -38,6 +41,9 @@ func main() {
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "ok"})
 	})
+
+	// Swagger documentation endpoint
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// API v1 group
 	v1 := e.Group("/api/v1")

@@ -232,7 +232,7 @@
   - [x] 创建 `internal/model/position_announcement.go`
   - [x] 创建 `internal/model/list_page.go`
   - [x] 定义 JSON 字段的序列化/反序列化
-  - [ ] 添加全文搜索相关标签
+  - [x] 添加全文搜索相关标签
 
 - [x] 设计用户行为表
   - [x] `user_favorites` 收藏表设计
@@ -247,7 +247,7 @@
 - [x] 数据库迁移
   - [x] 创建 `internal/database/migration.go`
   - [x] 实现 AutoMigrate 自动迁移
-  - [ ] 创建初始化数据 seed 脚本
+  - [x] 创建初始化数据 seed 脚本
   - [x] 添加索引优化
 
 ### 2.3 用户模块开发
@@ -438,10 +438,10 @@
   - [ ] Repository层测试
   - [ ] Handler层测试
 
-- [ ] 配置Swagger
-  - [ ] 添加Swagger注解
-  - [ ] 生成API文档
-  - [ ] 配置Swagger UI
+- [x] 配置Swagger
+  - [x] 添加Swagger注解
+  - [x] 生成API文档
+  - [x] 配置Swagger UI
 
 ---
 
@@ -507,7 +507,7 @@
 - [x] 配置React Query
   - [x] 创建 `src/providers/QueryProvider.tsx` (在main.tsx中集成)
   - [x] 配置默认选项（重试、缓存时间）
-  - [ ] 配置全局错误处理
+  - [x] 配置全局错误处理
 
 ### 3.2 通用组件开发
 
@@ -545,12 +545,12 @@
 - [x] 认证页面
   - [x] 创建登录页 `/login`
     - [x] 手机号/邮箱登录表单
-    - [ ] 验证码登录选项
-    - [ ] 记住登录状态
+    - [x] 验证码登录选项
+    - [x] 记住登录状态
   - [x] 创建注册页 `/register`
     - [x] 注册表单
-    - [ ] 验证码发送与校验
-  - [ ] 创建忘记密码页 `/forgot-password`
+    - [x] 验证码发送与校验
+  - [x] 创建忘记密码页 `/forgot-password`
 
 - [x] 首页与职位浏览
   - [x] 创建首页 `/`
@@ -568,7 +568,7 @@
     - [x] 条件对比表
     - [x] 匹配度分析
     - [x] 收藏/分享按钮
-    - [ ] 关联公告列表
+    - [x] 关联公告列表
   - [x] 创建职位对比页 `/positions/compare`
 
 - [x] 智能匹配页面
@@ -576,10 +576,10 @@
     - [x] 匹配策略选择
     - [x] 匹配结果列表
     - [x] 匹配度展示
-  - [ ] 创建匹配报告页 `/match/report`
-    - [ ] 个人条件概览
-    - [ ] 可报考职位统计
-    - [ ] 竞争优势分析
+  - [x] 创建匹配报告页 `/match/report`
+    - [x] 个人条件概览
+    - [x] 可报考职位统计
+    - [x] 竞争优势分析
 
 - [x] 公告页面
   - [x] 创建公告列表页 `/announcements`
@@ -590,12 +590,12 @@
   - [x] 创建个人简历页 `/profile`
     - [x] 基本信息表单
     - [x] 教育背景表单
-    - [ ] 证书管理
-  - [ ] 创建偏好设置页 `/user/preferences`
+    - [x] 证书管理
+  - [x] 创建偏好设置页 `/user/preferences`
   - [x] 创建我的收藏页 `/favorites`
-  - [ ] 创建浏览历史页 `/user/history`
-  - [ ] 创建消息通知页 `/user/notifications`
-  - [ ] 创建账号安全页 `/user/security`
+  - [x] 创建浏览历史页 `/user/history`
+  - [x] 创建消息通知页 `/user/notifications`
+  - [x] 创建账号安全页 `/user/security`
 
 ### 3.4 Admin端页面开发
 
@@ -610,30 +610,30 @@
 
 - [x] 用户管理
   - [x] 创建用户列表页 `/admin/users`
-  - [ ] 创建用户详情页 `/admin/users/:id`
+  - [x] 创建用户详情页 `/admin/users/:id`
 
 - [x] 职位数据管理
   - [x] 创建职位列表页 `/admin/positions`
-  - [ ] 创建职位详情/编辑页 `/admin/positions/:id`
-  - [ ] 创建待审核职位页 `/admin/positions/pending`
+  - [x] 创建职位详情/编辑页 `/admin/positions/:id`
+  - [x] 创建待审核职位页 `/admin/positions/pending`
 
 - [x] 公告管理
   - [x] 创建公告列表页 `/admin/announcements`
-  - [ ] 创建添加公告页 `/admin/announcements/create`
-  - [ ] 创建编辑公告页 `/admin/announcements/:id/edit`
+  - [x] 创建添加公告页 `/admin/announcements/create`
+  - [x] 创建编辑公告页 `/admin/announcements/:id/edit`
 
-- [ ] 爬虫管理
-  - [ ] 创建爬虫任务页 `/admin/crawlers`
-  - [ ] 创建监控列表页管理 `/admin/list-pages`
+- [x] 爬虫管理
+  - [x] 创建爬虫任务页 `/admin/crawlers`
+  - [x] 创建监控列表页管理 `/admin/list-pages`
 
-- [ ] 数据字典管理
-  - [ ] 创建专业词典页 `/admin/dictionary/majors`
-  - [ ] 创建地区词典页 `/admin/dictionary/regions`
+- [x] 数据字典管理
+  - [x] 创建专业词典页 `/admin/dictionary/majors`
+  - [x] 创建地区词典页 `/admin/dictionary/regions`
 
-- [ ] 系统设置
-  - [ ] 创建系统配置页 `/admin/settings`
-  - [ ] 创建管理员账号页 `/admin/settings/admins`
-  - [ ] 创建操作日志页 `/admin/logs`
+- [x] 系统设置
+  - [x] 创建系统配置页 `/admin/settings`
+  - [x] 创建管理员账号页 `/admin/settings/admins`
+  - [x] 创建操作日志页 `/admin/logs`
 
 ### 3.5 状态管理
 
@@ -677,13 +677,13 @@
 
 - [x] 响应式布局
   - [x] 配置TailwindCSS断点
-  - [ ] 移动端导航适配
-  - [ ] 表格移动端适配
+  - [x] 移动端导航适配
+  - [x] 表格移动端适配
 
 - [x] 性能优化
-  - [ ] 图片懒加载
+  - [x] 图片懒加载
   - [x] 路由懒加载
-  - [ ] 骨架屏加载
+  - [x] 骨架屏加载
 
 ---
 
@@ -1085,15 +1085,15 @@
 
 ### 7.1 Docker化
 
-- [ ] 创建Dockerfile
-  - [ ] 后端 `server/Dockerfile`
-  - [ ] Web前端 `apps/web/Dockerfile`
-  - [ ] 爬虫 `crawler/Dockerfile`
+- [x] 创建Dockerfile
+  - [x] 后端 `server/Dockerfile`
+  - [x] Web前端 `apps/web/Dockerfile`
+  - [x] 爬虫 `crawler/Dockerfile`
 
-- [ ] 创建Docker Compose
-  - [ ] 创建 `docker-compose.yml`
-  - [ ] 定义服务（api, web, mysql, redis, elasticsearch）
-  - [ ] 定义网络和数据卷
+- [x] 创建Docker Compose
+  - [x] 创建 `docker-compose.yml`
+  - [x] 定义服务（api, web, mysql, redis, elasticsearch）
+  - [x] 定义网络和数据卷
 
 ### 7.2 数据库初始化
 
@@ -1111,11 +1111,11 @@
 
 ### 7.3 CI/CD
 
-- [ ] GitHub Actions配置
-  - [ ] 代码检查（lint）
-  - [ ] 单元测试
-  - [ ] 构建镜像
-  - [ ] 部署流程
+- [x] GitHub Actions配置
+  - [x] 代码检查（lint）
+  - [x] 单元测试
+  - [x] 构建镜像
+  - [x] 部署流程
 
 - [ ] 环境配置
   - [ ] 开发环境
