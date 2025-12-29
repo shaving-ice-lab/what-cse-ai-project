@@ -1,0 +1,41 @@
+# 开发环境配置
+server:
+  port: 8080
+  mode: development
+
+database:
+  host: localhost
+  port: 3306
+  user: root
+  password: ""
+  dbname: what_cse_dev
+  charset: utf8mb4
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: "dev-secret-key-not-for-production"
+  expiration_hours: 24
+  refresh_hours: 168
+
+log:
+  level: debug
+  format: console
+  output: stdout
+
+elasticsearch:
+  addresses:
+    - "http://localhost:9200"
+  username: ""
+  password: ""
+  index_name: "positions_dev"
+
+push:
+  jpush_app_key: ""
+  jpush_secret: ""
+  wx_app_id: ""
+  wx_app_secret: ""

@@ -1,0 +1,41 @@
+# 生产环境配置
+server:
+  port: ${PORT:8080}
+  mode: production
+
+database:
+  host: ${DB_HOST}
+  port: ${DB_PORT:3306}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+  dbname: ${DB_NAME:what_cse}
+  charset: utf8mb4
+
+redis:
+  host: ${REDIS_HOST}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD}
+  db: 0
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration_hours: ${JWT_EXPIRATION:24}
+  refresh_hours: ${JWT_REFRESH:168}
+
+log:
+  level: ${LOG_LEVEL:info}
+  format: json
+  output: ${LOG_OUTPUT:stdout}
+
+elasticsearch:
+  addresses:
+    - ${ES_HOST}
+  username: ${ES_USERNAME}
+  password: ${ES_PASSWORD}
+  index_name: ${ES_INDEX:positions}
+
+push:
+  jpush_app_key: ${JPUSH_APP_KEY}
+  jpush_secret: ${JPUSH_SECRET}
+  wx_app_id: ${WX_APP_ID}
+  wx_app_secret: ${WX_APP_SECRET}
