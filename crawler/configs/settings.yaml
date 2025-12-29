@@ -1,0 +1,166 @@
+# 公考职位智能筛选系统 - 爬虫配置文件
+
+# 数据库配置
+database:
+  mysql:
+    host: ${MYSQL_HOST:localhost}
+    port: ${MYSQL_PORT:3306}
+    user: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:}
+    database: ${MYSQL_DATABASE:cse_crawler}
+    charset: utf8mb4
+    pool_size: 10
+    max_overflow: 20
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    db: 0
+    decode_responses: true
+
+  elasticsearch:
+    hosts:
+      - ${ES_HOST:localhost:9200}
+    username: ${ES_USER:}
+    password: ${ES_PASSWORD:}
+    index_prefix: cse_
+
+# 爬虫配置
+spider:
+  # 并发设置
+  concurrent_requests: 16
+  concurrent_requests_per_domain: 8
+  download_delay: 1.0
+  randomize_download_delay: true
+  
+  # 重试设置
+  retry_times: 3
+  retry_http_codes:
+    - 500
+    - 502
+    - 503
+    - 504
+    - 408
+    - 429
+  
+  # 超时设置
+  download_timeout: 30
+  
+  # User-Agent配置
+  user_agent_type: random  # random | fixed
+  fixed_user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  
+  # Cookies
+  cookies_enabled: true
+  
+  # 日志级别
+  log_level: INFO
+
+# 代理配置
+proxy:
+  enabled: false
+  provider: custom  # custom | api
+  api_url: ${PROXY_API_URL:}
+  custom_proxies: []
+  rotation_interval: 300  # 秒
+  max_failures: 3
+
+# AI配置
+ai:
+  provider: openai  # openai | anthropic | zhipu
+  
+  openai:
+    api_key: ${OPENAI_API_KEY:}
+    api_base: ${OPENAI_API_BASE:https://api.openai.com/v1}
+    model: gpt-4o-mini
+    max_tokens: 4096
+    temperature: 0.1
+  
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY:}
+    model: claude-3-haiku-20240307
+    max_tokens: 4096
+  
+  zhipu:
+    api_key: ${ZHIPU_API_KEY:}
+    model: glm-4-flash
+  
+  # Token限制
+  max_input_tokens: 8000
+  batch_size: 5
+  
+  # 置信度阈值
+  confidence_threshold: 85
+
+# OCR配置
+ocr:
+  engine: paddleocr  # paddleocr | tesseract
+  
+  paddleocr:
+    use_gpu: false
+    lang: ch
+    det_db_thresh: 0.3
+    rec_batch_num: 6
+  
+  tesseract:
+    lang: chi_sim+eng
+    config: --psm 6
+
+# 任务调度配置
+celery:
+  broker_url: ${CELERY_BROKER_URL:redis://localhost:6379/1}
+  result_backend: ${CELERY_RESULT_BACKEND:redis://localhost:6379/2}
+  task_serializer: json
+  result_serializer: json
+  accept_content:
+    - json
+  timezone: Asia/Shanghai
+  enable_utc: false
+  
+  # 任务路由
+  task_routes:
+    'tasks.spider.*': {queue: spider}
+    'tasks.parser.*': {queue: parser}
+    'tasks.ai.*': {queue: ai}
+
+# 定时任务配置
+schedule:
+  # 列表页监控频率 (cron表达式)
+  list_monitor:
+    national_exam: "0 */2 * * *"    # 每2小时
+    provincial_exam: "0 */6 * * *"  # 每6小时
+    public_institution: "0 8 * * *" # 每天8点
+    default: "0 */12 * * *"         # 每12小时
+
+# 日志配置
+logging:
+  level: INFO
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}"
+  rotation: "500 MB"
+  retention: "30 days"
+  compression: zip
+  
+  # 日志文件路径
+  file: logs/crawler.log
+  error_file: logs/error.log
+
+# API服务配置
+api:
+  host: 0.0.0.0
+  port: 8001
+  debug: false
+  cors_origins:
+    - "*"
+  
+  # 认证
+  api_key: ${CRAWLER_API_KEY:}
+
+# GUI配置
+gui:
+  theme: dark  # dark | light
+  language: zh_CN
+  window_size:
+    width: 1400
+    height: 900
+  auto_refresh_interval: 5  # 秒
