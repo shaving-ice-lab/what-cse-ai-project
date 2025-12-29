@@ -7,11 +7,19 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	Log      LogConfig      `mapstructure:"log"`
+	Server        ServerConfig        `mapstructure:"server"`
+	Database      DatabaseConfig      `mapstructure:"database"`
+	Redis         RedisConfig         `mapstructure:"redis"`
+	JWT           JWTConfig           `mapstructure:"jwt"`
+	Log           LogConfig           `mapstructure:"log"`
+	Elasticsearch ElasticsearchConfig `mapstructure:"elasticsearch"`
+}
+
+type ElasticsearchConfig struct {
+	Addresses []string `mapstructure:"addresses"`
+	Username  string   `mapstructure:"username"`
+	Password  string   `mapstructure:"password"`
+	IndexName string   `mapstructure:"index_name"`
 }
 
 type ServerConfig struct {
@@ -103,4 +111,10 @@ func setDefaults() {
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.format", "json")
 	viper.SetDefault("log.output", "stdout")
+
+	// Elasticsearch defaults
+	viper.SetDefault("elasticsearch.addresses", []string{"http://localhost:9200"})
+	viper.SetDefault("elasticsearch.username", "")
+	viper.SetDefault("elasticsearch.password", "")
+	viper.SetDefault("elasticsearch.index_name", "positions")
 }

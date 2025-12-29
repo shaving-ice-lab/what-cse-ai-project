@@ -1,2 +1,4 @@
-﻿Result: should_continue=false
-User chose to end the conversation.
+﻿Result: should_continue=true
+User instruction: 继续根据开发文档来进行开发，完成的项目需要将[]标记成完成，完成一个任务立即进行完成标记
+
+Please continue the task based on the user's new instruction.

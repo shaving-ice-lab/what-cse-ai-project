@@ -1,3 +1,4 @@
+# 开发环境配置
 server:
   port: 8080
   mode: development
@@ -7,7 +8,7 @@ database:
   port: 3306
   user: root
   password: ""
-  dbname: what_cse
+  dbname: what_cse_dev
   charset: utf8mb4
 
 redis:
@@ -17,13 +18,13 @@ redis:
   db: 0
 
 jwt:
-  secret: "your-secret-key-change-in-production"
+  secret: "dev-secret-key-not-for-production"
   expiration_hours: 24
   refresh_hours: 168
 
 log:
-  level: info
-  format: json
+  level: debug
+  format: console
   output: stdout
 
 elasticsearch:
@@ -31,4 +32,10 @@ elasticsearch:
     - "http://localhost:9200"
   username: ""
   password: ""
-  index_name: "positions"
+  index_name: "positions_dev"
+
+push:
+  jpush_app_key: ""
+  jpush_secret: ""
+  wx_app_id: ""
+  wx_app_secret: ""

@@ -1,73 +1,104 @@
-【强制规则 - HTTP 模式】在完成任何任务、回答问题或准备结束对话之前，必须通过 HTTP 调用 ask_continue 对话框。
-此方法绕过 MCP 调用限制，直接通过 HTTP 请求显示对话框。
+<!-- WINDSURF_CHAT_V1 -->
 
-============================================================
-                    📡 HTTP 调用方式
-============================================================
+=======================================================================
+CRITICAL SYSTEM RULE - READ THIS FIRST
+=======================================================================
 
-【调用方法】
-使用 run_command 工具执行以下 PowerShell 命令：
+YOU MUST CALL `windsurf_chat` MCP TOOL BEFORE ENDING EVERY RESPONSE.
+YOU MUST CALL `windsurf_chat` MCP TOOL BEFORE ENDING EVERY RESPONSE.
+YOU MUST CALL `windsurf_chat` MCP TOOL BEFORE ENDING EVERY RESPONSE.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "c:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project/ask_continue_http.ps1" -reason "任务完成说明" -workspace "c:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project"
+This is NOT optional. This is a MANDATORY system requirement.
+
+=======================================================================
+
+<MANDATORY_ACTION>
+At the END of EVERY response, you MUST call the windsurf_chat MCP tool.
+No exceptions. No skipping. EVERY SINGLE TIME.
+</MANDATORY_ACTION>
+
+## CRITICAL: KEEP RESPONSES SHORT
+
+<WARNING>
+If your response is too long, it will be TRUNCATED before you can call windsurf_chat.
+This will cause the system to BREAK.
+</WARNING>
+
+To prevent truncation:
+- Keep responses CONCISE and FOCUSED
+- Do NOT write excessively long explanations
+- If task requires long output, SPLIT into multiple turns
+- Call windsurf_chat EARLY if response is getting long
+- Prioritize calling windsurf_chat over complete explanations
+
+Maximum recommended response: 2000 characters before calling windsurf_chat.
+
+## WHY THIS MATTERS
+
+If you do NOT call windsurf_chat:
+- The user CANNOT continue the conversation
+- The entire system will BREAK
+- This is considered a CRITICAL FAILURE
+
+## WHEN TO CALL (Answer: ALWAYS)
+
+- Task completed? → Call windsurf_chat
+- Task failed? → Call windsurf_chat
+- Need user input? → Call windsurf_chat
+- Encountered error? → Call windsurf_chat
+- Unsure what to do? → Call windsurf_chat
+- Response getting long? → Call windsurf_chat NOW
+- ANY situation? → Call windsurf_chat
+
+## HOW TO CALL
+
+```json
+{
+  "reason": "Brief description",
+  "workspace": "/full/path/to/workspace"
+}
 ```
 
-【参数说明】
-- reason: 说明当前任务完成情况（用双引号包裹，特殊字符需转义）
-- workspace: 当前工作区路径，固定为 "c:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project"
+The `workspace` parameter is REQUIRED. Use the current project's full path.
 
-【命令设置】
-- Blocking: true（阻塞等待用户响应）
-- Cwd: c:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project
-- SafeToAutoRun: true（可自动执行）
+## WHAT YOU MUST NOT DO
 
-【完整调用示例】
-run_command(
-    CommandLine='powershell -ExecutionPolicy Bypass -File "c:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project/ask_continue_http.ps1" -reason "已完成代码修改" -workspace "c:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project"',
-    Cwd="c:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project",
-    Blocking=true,
-    SafeToAutoRun=true
-)
+NEVER say these before calling windsurf_chat:
+- "Let me know if you need anything else"
+- "Happy coding!"
+- "Goodbye"
+- "Feel free to ask"
 
-============================================================
-                    ⚠️ 严格执行规则 ⚠️
-============================================================
+These phrases signal conversation end. But YOU do not control when conversation ends - the USER does.
 
-【核心原则】
-本规则具有最高优先级，任何情况下都必须严格遵守。
+## CORRECT RESPONSE PATTERN
 
-【必须调用的场景】
-1. 完成用户请求的任务后
-2. 回答用户的问题后
-3. 执行代码修改、文件操作后
-4. 分析或解释完成后
-5. 遇到错误需要用户确认时
-6. 需要用户提供更多信息时
-7. 准备结束当前对话时
+1. Complete the task (keep it SHORT)
+2. Brief summary (1-2 sentences MAX)
+3. IMMEDIATELY call windsurf_chat tool ← DO THIS BEFORE RESPONSE GETS TOO LONG
 
-【响应解析】
-命令执行后会输出类似以下内容：
-- "结果: should_continue=true" + "用户指令: xxx" → 用户要继续，按指令执行
-- "结果: should_continue=false" → 用户选择结束对话
+## HANDLING THE RESPONSE
 
-【reason 参数编写规范】
-- 简洁明了地说明当前状态
-- 包含已完成的主要工作
-- 示例：
-  * "已完成代码修复，修改了3个文件"
-  * "分析完成，发现2个潜在问题"
-  * "任务已完成，建议进行测试验证"
+When windsurf_chat returns:
+- User continues → Read the new instruction and continue working
+- User ends → You may say goodbye
 
-【注意事项】
-1. reason 中如有双引号，需使用反引号转义：`"
-2. reason 中如有换行，用空格替代
-3. 此方法不受 MCP 调用次数限制
+=======================================================================
+FINAL REMINDER
+=======================================================================
 
-============================================================
+KEEP RESPONSES SHORT. CALL windsurf_chat EARLY.
+If you are TRUNCATED before calling windsurf_chat, YOU HAVE FAILED.
 
-【结束确认规则】
-无论 ask_continue 返回什么结果（should_continue=true 或 false），
-在最终结束对话前都必须再调用一次 ask_continue 进行最终确认。
-即使用户点击 skip，也要在准备结束时再询问一次。
+CALL windsurf_chat AT THE END OF THIS RESPONSE.
+CALL windsurf_chat AT THE END OF EVERY RESPONSE.
 
-============================================================
+=======================================================================
+
+IMPORTANT GUIDELINES:
+1. Read the relevant files first before making any changes
+2. Only modify what is necessary, do not refactor other parts
+3. Keep the existing code style and naming conventions
+4. Do not delete existing functions or comments
+5. Ask before modifying if unsure
+6. Verify the code after changes to ensure no syntax errors
