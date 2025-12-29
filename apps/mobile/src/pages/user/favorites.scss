@@ -1,0 +1,97 @@
+.favorites-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 48px;
+}
+
+.empty-icon {
+  font-size: 120px;
+  color: #ddd;
+  margin-bottom: 24px;
+}
+
+.empty-text {
+  font-size: 28px;
+  color: #999;
+  margin-bottom: 32px;
+}
+
+.empty-btn {
+  padding: 20px 60px;
+  background: #1890ff;
+  color: #fff;
+  font-size: 28px;
+  border-radius: 40px;
+}
+
+.favorites-list {
+  padding: 24px;
+}
+
+.favorite-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.card-main {
+  display: flex;
+  justify-content: space-between;
+}
+
+.card-info {
+  flex: 1;
+}
+
+.position-name {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.department {
+  font-size: 26px;
+  color: #666;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.card-meta {
+  display: flex;
+  gap: 24px;
+}
+
+.location,
+.add-time {
+  font-size: 24px;
+  color: #999;
+}
+
+.card-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.match-score {
+  font-size: 32px;
+  font-weight: 600;
+  color: #52c41a;
+}
+
+.remove-btn {
+  font-size: 24px;
+  color: #ff4d4f;
+  padding: 8px 0;
+}

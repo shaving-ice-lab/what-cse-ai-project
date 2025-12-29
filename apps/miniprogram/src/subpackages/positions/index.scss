@@ -1,0 +1,80 @@
+.positions-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.filter-bar {
+  display: flex;
+  background: #fff;
+  padding: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.filter-scroll {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.filter-tab {
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 26px;
+  color: #666;
+  margin-right: 16px;
+  border-radius: 24px;
+  background: #f5f5f5;
+
+  &.active {
+    color: #1890ff;
+    background: #e6f7ff;
+  }
+}
+
+.filter-btn {
+  padding: 12px 24px;
+  font-size: 26px;
+  color: #1890ff;
+}
+
+.position-list {
+  padding: 16px;
+}
+
+.position-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.position-name {
+  font-size: 30px;
+  font-weight: 600;
+  color: #333;
+}
+
+.match-score {
+  font-size: 28px;
+  font-weight: 600;
+  color: #52c41a;
+}
+
+.dept {
+  font-size: 26px;
+  color: #666;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.location {
+  font-size: 24px;
+  color: #999;
+}

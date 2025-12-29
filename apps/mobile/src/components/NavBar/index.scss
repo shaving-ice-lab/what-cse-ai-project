@@ -1,0 +1,37 @@
+.nav-bar {
+  display: flex;
+  align-items: center;
+  height: 88px;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.nav-bar-left,
+.nav-bar-right {
+  width: 100px;
+}
+
+.nav-bar-center {
+  flex: 1;
+  text-align: center;
+}
+
+.back-btn {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  font-size: 48px;
+  color: #333;
+}
+
+.nav-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333;
+}

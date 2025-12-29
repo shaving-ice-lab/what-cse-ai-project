@@ -1,0 +1,56 @@
+.position-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.position-name {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.match-score {
+  font-size: 30px;
+  font-weight: 600;
+
+  &.high {
+    color: #52c41a;
+  }
+
+  &.medium {
+    color: #faad14;
+  }
+
+  &.low {
+    color: #ff4d4f;
+  }
+}
+
+.department {
+  font-size: 26px;
+  color: #666;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.card-meta {
+  display: flex;
+  gap: 24px;
+}
+
+.location,
+.education,
+.recruit-count {
+  font-size: 24px;
+  color: #999;
+}

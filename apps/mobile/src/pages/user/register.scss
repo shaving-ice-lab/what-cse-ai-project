@@ -1,0 +1,111 @@
+.register-page {
+  min-height: 100vh;
+  background: #fff;
+  padding: 48px 48px;
+}
+
+.register-header {
+  margin-bottom: 60px;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #333;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 28px;
+  color: #999;
+}
+
+.register-form {
+  margin-bottom: 40px;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding: 24px 0;
+  margin-bottom: 8px;
+}
+
+.prefix {
+  font-size: 30px;
+  color: #333;
+  margin-right: 24px;
+  padding-right: 24px;
+  border-right: 1px solid #eee;
+}
+
+.input {
+  flex: 1;
+  font-size: 30px;
+}
+
+.code-btn {
+  font-size: 26px;
+  color: #1890ff;
+  white-space: nowrap;
+
+  &.disabled {
+    color: #999;
+  }
+}
+
+.agreement {
+  display: flex;
+  align-items: flex-start;
+  margin: 32px 0 40px;
+}
+
+.checkbox {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #d9d9d9;
+  border-radius: 4px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  flex-shrink: 0;
+
+  &.checked {
+    background: #1890ff;
+    border-color: #1890ff;
+  }
+}
+
+.agreement-text {
+  font-size: 24px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.link {
+  color: #1890ff;
+}
+
+.register-btn {
+  height: 96px;
+  background: #1890ff;
+  border-radius: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 40px;
+}
+
+.login-link {
+  text-align: center;
+  font-size: 28px;
+  color: #666;
+}

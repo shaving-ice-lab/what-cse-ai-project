@@ -1,0 +1,108 @@
+.report-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.report-header {
+  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
+  padding: 48px 24px;
+  text-align: center;
+  color: #fff;
+}
+
+.overall-score {
+  margin-bottom: 16px;
+}
+
+.score-value {
+  font-size: 80px;
+  font-weight: 700;
+  display: block;
+}
+
+.score-label {
+  font-size: 26px;
+  opacity: 0.9;
+}
+
+.match-count {
+  font-size: 28px;
+  opacity: 0.9;
+}
+
+.report-section {
+  background: #fff;
+  margin: 16px;
+  padding: 24px;
+  border-radius: 12px;
+}
+
+.section-title {
+  font-size: 30px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.detail-item {
+  margin-bottom: 24px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.detail-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.detail-label {
+  font-size: 26px;
+  color: #333;
+}
+
+.detail-status {
+  font-size: 24px;
+
+  &.passed {
+    color: #52c41a;
+  }
+
+  &.failed {
+    color: #ff4d4f;
+  }
+}
+
+.detail-bar {
+  height: 12px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1890ff, #36cfc9);
+  border-radius: 6px;
+}
+
+.detail-score {
+  font-size: 24px;
+  color: #666;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.suggestion-item {
+  font-size: 26px;
+  color: #666;
+  line-height: 1.6;
+}
