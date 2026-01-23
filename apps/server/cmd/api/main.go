@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/redis/go-redis/v9"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/what-cse/server/internal/config"
 	"github.com/what-cse/server/internal/database"
@@ -48,6 +50,22 @@ func main() {
 	log.Info("Database migrations completed")
 
 	// ============================================
+	// Initialize Redis (optional)
+	// ============================================
+	var redisClient *redis.Client
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		log.Warn(fmt.Sprintf("Redis not available, rate limiting will use local memory: %v", err))
+		redisClient = nil
+	} else {
+		log.Info("Redis connected successfully")
+	}
+
+	// ============================================
 	// Initialize Repositories
 	// ============================================
 	userRepo := repository.NewUserRepository(db)
@@ -59,6 +77,7 @@ func main() {
 	announcementRepo := repository.NewAnnouncementRepository(db)
 	notificationRepo := repository.NewNotificationRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
+	listPageRepo := repository.NewListPageRepository(db)
 
 	// ============================================
 	// Initialize Services
@@ -70,6 +89,16 @@ func main() {
 	announcementService := service.NewAnnouncementService(announcementRepo)
 	notificationService := service.NewNotificationService(notificationRepo)
 	adminService := service.NewAdminService(adminRepo, userRepo, positionRepo, &cfg.JWT)
+	crawlerService := service.NewCrawlerService(listPageRepo)
+
+	// Initialize SearchService (optional - requires Elasticsearch)
+	var searchService *service.SearchService
+	searchService, err = service.NewSearchService(&cfg.Elasticsearch)
+	if err != nil {
+		log.Warn(fmt.Sprintf("Elasticsearch not available, search disabled: %v", err))
+	} else {
+		log.Info("Elasticsearch connected successfully")
+	}
 
 	// ============================================
 	// Initialize Handlers
@@ -81,11 +110,19 @@ func main() {
 	announcementHandler := handler.NewAnnouncementHandler(announcementService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	adminHandler := handler.NewAdminHandler(adminService)
+	crawlerHandler := handler.NewCrawlerHandler(crawlerService)
+
+	// Initialize SearchHandler (only if Elasticsearch is available)
+	var searchHandler *handler.SearchHandler
+	if searchService != nil {
+		searchHandler = handler.NewSearchHandler(searchService)
+	}
 
 	// ============================================
 	// Initialize Middleware
 	// ============================================
 	authMiddleware := customMiddleware.NewAuthMiddleware(authService)
+	rateLimiter := customMiddleware.DefaultRateLimiter(redisClient)
 
 	// Create Echo instance
 	e := echo.New()
@@ -93,6 +130,7 @@ func main() {
 	// Global Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(customMiddleware.RateLimitMiddleware(rateLimiter))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
@@ -143,6 +181,15 @@ func main() {
 	// Admin routes
 	adminGroup := v1.Group("/admin")
 	adminHandler.RegisterRoutes(adminGroup, authMiddleware.JWT())
+
+	// Crawler routes (admin only)
+	crawlerHandler.RegisterRoutes(adminGroup, authMiddleware.JWT())
+
+	// Search routes (public, only if Elasticsearch is available)
+	if searchHandler != nil {
+		searchGroup := v1.Group("/search")
+		searchHandler.RegisterRoutes(searchGroup)
+	}
 
 	// Start server
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

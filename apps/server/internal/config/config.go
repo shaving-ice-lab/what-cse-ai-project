@@ -85,7 +85,7 @@ func Load() (*Config, error) {
 
 func setDefaults() {
 	// Server defaults
-	viper.SetDefault("server.port", 8080)
+	viper.SetDefault("server.port", 9000)
 	viper.SetDefault("server.mode", "development")
 
 	// Database defaults

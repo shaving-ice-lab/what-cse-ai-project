@@ -1,6 +1,6 @@
 # 生产环境配置
 server:
-  port: ${PORT:8080}
+  port: ${PORT:9000}
   mode: production
 
 database:
