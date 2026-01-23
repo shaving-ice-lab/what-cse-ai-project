@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公考职位数据采集系统</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--primary:#3b82f6;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444;--bg-dark:#1e293b;--bg-card:#fff;--bg-body:#f1f5f9;--text-primary:#1e293b;--text-secondary:#64748b;--border:#e2e8f0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;background:var(--bg-body);color:var(--text-primary);height:100vh;overflow:hidden}
+        .app{display:flex;height:100vh}
+        .sidebar{width:220px;background:var(--bg-dark);color:#fff;display:flex;flex-direction:column}
+        .sidebar-header{padding:16px;border-bottom:1px solid rgba(255,255,255,.1)}
+        .sidebar-header h1{font-size:14px}
+        .sidebar-header .ver{font-size:11px;color:rgba(255,255,255,.5)}
+        .nav{flex:1;padding:8px 0;overflow-y:auto}
+        .nav-item{display:flex;align-items:center;padding:10px 16px;cursor:pointer;color:rgba(255,255,255,.7);font-size:13px}
+        .nav-item:hover{background:rgba(255,255,255,.05)}
+        .nav-item.active{background:rgba(59,130,246,.2);color:#fff;border-left:3px solid var(--primary)}
+        .nav-item svg{width:18px;height:18px;margin-right:10px}
+        .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+        .content{flex:1;display:flex;overflow:hidden}
+        .content-main{flex:1;padding:20px;overflow-y:auto}
+        .log-panel{width:280px;background:var(--bg-card);border-left:1px solid var(--border);display:flex;flex-direction:column}
+        .log-header{padding:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .log-content{flex:1;overflow-y:auto;padding:8px;font-family:Consolas,monospace;font-size:11px;background:#f8fafc}
+        .log-entry{padding:3px 6px;border-radius:3px;margin-bottom:3px}
+        .log-entry.info{background:#e0f2fe;color:#0369a1}
+        .log-entry.error{background:#fee2e2;color:#dc2626}
+        .btn{padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+        .btn-primary{background:var(--primary);color:#fff}
+        .btn-success{background:var(--success);color:#fff}
+        .btn-danger{background:var(--danger);color:#fff}
+        .btn-secondary{background:var(--border);color:var(--text-primary)}
+        .btn-sm{padding:4px 8px;font-size:12px}
+        .card{background:var(--bg-card);border-radius:10px;border:1px solid var(--border);margin-bottom:16px}
+        .card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .card-header h3{font-size:14px}
+        .card-body{padding:16px}
+        table{width:100%;border-collapse:collapse}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;font-size:12px;color:var(--text-secondary)}
+        td{font-size:13px}
+        .badge{padding:3px 8px;border-radius:10px;font-size:11px}
+        .badge-success{background:#dcfce7;color:#16a34a}
+        .badge-warning{background:#fef3c7;color:#b45309}
+        .badge-info{background:#e0f2fe;color:#0369a1}
+        .badge-secondary{background:var(--border);color:var(--text-secondary)}
+        .progress{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+        .progress-bar{height:100%;background:var(--primary);border-radius:3px}
+        .page{display:none}
+        .page.active{display:block}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+        .stat-card{background:var(--bg-card);border-radius:10px;padding:16px;border:1px solid var(--border)}
+        .stat-card .val{font-size:28px;font-weight:700;color:var(--primary)}
+        .stat-card .lbl{font-size:12px;color:var(--text-secondary);margin-top:2px}
+        .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+        .toolbar-spacer{flex:1}
+        .form-group{margin-bottom:12px}
+        .form-group label{display:block;font-size:13px;margin-bottom:4px;color:var(--text-secondary)}
+        .form-control{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+        .form-control:focus{outline:none;border-color:var(--primary)}
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:1000}
+        .modal-overlay.show{display:flex}
+        .modal{background:var(--bg-card);border-radius:10px;width:400px;max-width:90%}
+        .modal-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .modal-body{padding:16px}
+        .modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+        .spider-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:5px;margin:4px 0}
+        .spider-item:hover{background:#f8fafc}
+        .spider-status{width:8px;height:8px;border-radius:50%;margin-right:8px}
+        .spider-status.running{background:var(--success)}
+        .spider-status.stopped{background:var(--text-secondary)}
+        .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+        .tab{padding:10px 16px;cursor:pointer;font-size:13px;color:var(--text-secondary);border-bottom:2px solid transparent}
+        .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+        .close-btn{background:none;border:none;cursor:pointer;color:var(--text-secondary)}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:#f1f5f9}
+        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>公考数据采集系统</h1>
+            <div class="ver">v1.0.0</div>
+        </div>
+        <nav class="nav">
+            <div class="nav-item active" data-page="dashboard">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                概览
+            </div>
+            <div class="nav-item" data-page="spiders">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                爬虫管理
+            </div>
+            <div class="nav-item" data-page="tasks">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                任务监控
+            </div>
+            <div class="nav-item" data-page="list-pages">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                列表页管理
+            </div>
+            <div class="nav-item" data-page="data">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                数据浏览
+            </div>
+            <div class="nav-item" data-page="review">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                待审核
+            </div>
+            <div class="nav-item" data-page="test">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                测试采集
+            </div>
+            <div class="nav-item" data-page="settings">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                系统设置
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="content">
+            <div class="content-main">
+                <!-- Dashboard -->
+                <div class="page active" id="page-dashboard">
+                    <h2 style="margin-bottom:20px">系统概览</h2>
+                    <div class="grid-4" id="stats-cards">
+                        <div class="stat-card"><div class="val" id="total-ann">0</div><div class="lbl">公告总数</div></div>
+                        <div class="stat-card"><div class="val" id="total-pos">0</div><div class="lbl">职位总数</div></div>
+                        <div class="stat-card"><div class="val" id="pending-rev">0</div><div class="lbl">待审核</div></div>
+                        <div class="stat-card"><div class="val" id="today-crawl">0</div><div class="lbl">今日采集</div></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><h3>爬虫状态</h3><button class="btn btn-sm btn-secondary" onclick="loadSpiders()">刷新</button></div>
+                            <div class="card-body" id="spider-list"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>最近任务</h3><button class="btn btn-sm btn-secondary" onclick="loadTasks()">刷新</button></div>
+                            <div class="card-body"><table><thead><tr><th>任务</th><th>状态</th><th>进度</th></tr></thead><tbody id="recent-tasks"></tbody></table></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spiders -->
+                <div class="page" id="page-spiders">
+                    <h2 style="margin-bottom:20px">爬虫管理</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-success" onclick="startAllSpiders()">启动全部</button>
+                        <button class="btn btn-danger" onclick="stopAllSpiders()">停止全部</button>
+                        <div class="toolbar-spacer"></div>
+                        <button class="btn btn-secondary" onclick="loadSpiders()">刷新</button>
+                    </div>
+                    <div class="card"><div class="card-body" id="spider-tree"></div></div>
+                </div>
+
+                <!-- Tasks -->
+                <div class="page" id="page-tasks">
+                    <h2 style="margin-bottom:20px">任务监控</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" onclick="loadTasks()">刷新</button>
+                        <button class="btn btn-secondary" onclick="clearCompleted()">清空已完成</button>
+                        <div class="toolbar-spacer"></div>
+                        <select class="form-control" style="width:auto" id="task-filter" onchange="loadTasks()">
+                            <option value="all">全部</option>
+                            <option value="running">运行中</option>
+                            <option value="completed">已完成</option>
+                            <option value="failed">失败</option>
+                        </select>
+                    </div>
+                    <div class="card"><div class="card-body"><table><thead><tr><th>任务ID</th><th>类型</th><th>状态</th><th>进度</th><th>时间</th><th>操作</th></tr></thead><tbody id="tasks-table"></tbody></table></div></div>
+                </div>
+
+                <!-- List Pages -->
+                <div class="page" id="page-list-pages">
+                    <h2 style="margin-bottom:20px">列表页管理</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-primary" onclick="showModal('add-page-modal')">添加列表页</button>
+                        <div class="toolbar-spacer"></div>
+                        <button class="btn btn-secondary" onclick="loadListPages()">刷新</button>
+                    </div>
+                    <div class="card"><div class="card-body"><table><thead><tr><th>来源</th><th>URL</th><th>频率</th><th>状态</th><th>文章数</th><th>操作</th></tr></thead><tbody id="pages-table"></tbody></table></div></div>
+                </div>
+
+                <!-- Data -->
+                <div class="page" id="page-data">
+                    <h2 style="margin-bottom:20px">数据浏览</h2>
+                    <div class="tabs">
+                        <div class="tab active" data-tab="announcements">公告数据</div>
+                        <div class="tab" data-tab="positions">职位数据</div>
+                    </div>
+                    <div class="tab-content active" id="tab-announcements">
+                        <div class="toolbar"><button class="btn btn-secondary" onclick="loadAnnouncements()">刷新</button><button class="btn btn-secondary" onclick="exportData('announcements')">导出</button></div>
+                        <div class="card"><div class="card-body"><table><thead><tr><th>标题</th><th>类型</th><th>发布日期</th><th>来源</th><th>状态</th></tr></thead><tbody id="ann-table"></tbody></table></div></div>
+                    </div>
+                    <div class="tab-content" id="tab-positions">
+                        <div class="toolbar"><button class="btn btn-secondary" onclick="loadPositions()">刷新</button><button class="btn btn-secondary" onclick="exportData('positions')">导出</button></div>
+                        <div class="card"><div class="card-body"><table><thead><tr><th>职位</th><th>部门</th><th>学历</th><th>地点</th><th>人数</th><th>置信度</th></tr></thead><tbody id="pos-table"></tbody></table></div></div>
+                    </div>
+                </div>
+
+                <!-- Review -->
+                <div class="page" id="page-review">
+                    <h2 style="margin-bottom:20px">待审核</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-success" onclick="batchApprove()">批量通过</button>
+                        <div class="toolbar-spacer"></div>
+                        <span id="review-stats">待审核: 0</span>
+                        <button class="btn btn-secondary" onclick="loadReview()">刷新</button>
+                    </div>
+                    <div class="card"><div class="card-body"><table><thead><tr><th><input type="checkbox" id="sel-all"></th><th>职位</th><th>部门</th><th>置信度</th><th>问题</th><th>操作</th></tr></thead><tbody id="review-table"></tbody></table></div></div>
+                </div>
+
+                <!-- Test Page -->
+                <div class="page" id="page-test">
+                    <h2 style="margin-bottom:20px">测试采集与AI分析</h2>
+                    <div class="card">
+                        <div class="card-header"><h3>输入文章URL</h3></div>
+                        <div class="card-body">
+                            <div style="display:flex;gap:10px;align-items:flex-end">
+                                <div class="form-group" style="flex:1;margin-bottom:0">
+                                    <label>文章链接</label>
+                                    <input type="url" class="form-control" id="test-url" placeholder="https://example.com/article/...">
+                                </div>
+                                <button class="btn btn-primary" onclick="fetchArticle()" id="fetch-btn">采集文章</button>
+                            </div>
+                            <div style="margin-top:12px;font-size:12px;color:var(--text-secondary)">
+                                支持采集各类公考招聘公告页面，系统将自动提取内容并进行AI分析
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><h3>采集结果</h3><span class="badge badge-secondary" id="fetch-status">等待采集</span></div>
+                            <div class="card-body">
+                                <div id="article-content" style="min-height:300px;max-height:400px;overflow-y:auto;background:#f8fafc;padding:12px;border-radius:6px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-all">
+                                    <div style="color:var(--text-secondary);text-align:center;padding:40px">请输入URL并点击采集</div>
+                                </div>
+                                <div style="margin-top:12px;display:flex;gap:8px">
+                                    <div style="flex:1"><strong style="font-size:12px;color:var(--text-secondary)">标题:</strong><div id="article-title" style="font-size:13px">-</div></div>
+                                    <div><strong style="font-size:12px;color:var(--text-secondary)">字数:</strong><div id="article-length" style="font-size:13px">-</div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>AI分析结果</h3><button class="btn btn-sm btn-primary" onclick="analyzeArticle()" id="analyze-btn" disabled>开始分析</button></div>
+                            <div class="card-body">
+                                <div id="ai-result" style="min-height:300px;max-height:400px;overflow-y:auto">
+                                    <div style="color:var(--text-secondary);text-align:center;padding:40px">请先采集文章内容</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3>提取的职位信息</h3><span class="badge badge-info" id="position-count">0 个职位</span></div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>职位名称</th>
+                                        <th>招录单位</th>
+                                        <th>学历要求</th>
+                                        <th>专业要求</th>
+                                        <th>招录人数</th>
+                                        <th>置信度</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="extracted-positions">
+                                    <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">暂无数据</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="page" id="page-settings">
+                    <h2 style="margin-bottom:20px">系统设置</h2>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><h3>数据库配置</h3></div>
+                            <div class="card-body">
+                                <div class="form-group"><label>MySQL Host</label><input type="text" class="form-control" id="cfg-mysql-host" value="localhost"></div>
+                                <div class="form-group"><label>MySQL Port</label><input type="number" class="form-control" id="cfg-mysql-port" value="3306"></div>
+                                <div class="form-group"><label>数据库名</label><input type="text" class="form-control" id="cfg-mysql-db" value="cse_crawler"></div>
+                                <div class="form-group"><label>用户名</label><input type="text" class="form-control" id="cfg-mysql-user" value="root"></div>
+                                <div class="form-group"><label>密码</label><input type="password" class="form-control" id="cfg-mysql-pass"></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>AI配置</h3></div>
+                            <div class="card-body">
+                                <div class="form-group"><label>Provider</label><select class="form-control" id="cfg-ai-provider"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="zhipu">智谱</option></select></div>
+                                <div class="form-group"><label>API Key</label><input type="password" class="form-control" id="cfg-ai-key"></div>
+                                <div class="form-group"><label>置信度阈值</label><input type="number" class="form-control" id="cfg-threshold" value="85"></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>爬虫配置</h3></div>
+                            <div class="card-body">
+                                <div class="form-group"><label>并发数</label><input type="number" class="form-control" id="cfg-concurrent" value="16"></div>
+                                <div class="form-group"><label>延迟(秒)</label><input type="number" class="form-control" id="cfg-delay" value="1" step="0.1"></div>
+                                <div class="form-group"><label>重试次数</label><input type="number" class="form-control" id="cfg-retry" value="3"></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>Redis配置</h3></div>
+                            <div class="card-body">
+                                <div class="form-group"><label>Host</label><input type="text" class="form-control" id="cfg-redis-host" value="localhost"></div>
+                                <div class="form-group"><label>Port</label><input type="number" class="form-control" id="cfg-redis-port" value="6379"></div>
+                                <div class="form-group"><label>DB</label><input type="number" class="form-control" id="cfg-redis-db" value="0"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:16px;text-align:right"><button class="btn btn-primary" onclick="saveConfig()">保存配置</button></div>
+                </div>
+            </div>
+
+            <aside class="log-panel">
+                <div class="log-header"><h3 style="font-size:13px">运行日志</h3><button class="btn btn-sm btn-secondary" onclick="clearLogs()">清空</button></div>
+                <div class="log-content" id="log-content"></div>
+            </aside>
+        </div>
+    </main>
+</div>
+
+<!-- Add Page Modal -->
+<div class="modal-overlay" id="add-page-modal">
+    <div class="modal">
+        <div class="modal-header"><h3>添加列表页</h3><button class="close-btn" onclick="hideModal('add-page-modal')">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>URL</label><input type="url" class="form-control" id="new-page-url" placeholder="https://..."></div>
+            <div class="form-group"><label>来源名称</label><input type="text" class="form-control" id="new-page-source"></div>
+            <div class="form-group"><label>爬取频率</label><select class="form-control" id="new-page-freq"><option value="every_2h">每2小时</option><option value="every_6h">每6小时</option><option value="daily">每天</option></select></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="hideModal('add-page-modal')">取消</button><button class="btn btn-primary" onclick="addListPage()">添加</button></div>
+    </div>
+</div>
+
+<script>
+let currentPage='dashboard';
+document.addEventListener('DOMContentLoaded',()=>{initNav();initTabs();loadAll();startLogPoll();});
+
+function initNav(){document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',()=>navTo(i.dataset.page)));}
+function navTo(p){currentPage=p;document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===p));document.querySelectorAll('.page').forEach(pg=>pg.classList.toggle('active',pg.id==='page-'+p));loadPageData(p);}
+function loadPageData(p){switch(p){case'dashboard':loadStats();loadSpiders();loadTasks();break;case'spiders':loadSpiders();break;case'tasks':loadTasks();break;case'list-pages':loadListPages();break;case'data':loadAnnouncements();break;case'review':loadReview();break;case'settings':loadConfig();break;}}
+function initTabs(){document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{let id=t.dataset.tab;t.closest('.page').querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.closest('.page').querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('tab-'+id).classList.add('active');if(id==='positions')loadPositions();}));}
+
+async function api(m,...a){try{if(window.pywebview?.api)return await window.pywebview.api[m](...a);return{success:true};}catch(e){return{success:false,error:e.message};}}
+function loadAll(){loadStats();loadSpiders();loadTasks();}
+
+async function loadStats(){let r=await api('get_statistics');if(r.success){let s=r.stats;document.getElementById('total-ann').textContent=s.total_announcements||0;document.getElementById('total-pos').textContent=s.total_positions||0;document.getElementById('pending-rev').textContent=s.pending_review||0;document.getElementById('today-crawl').textContent=s.today_crawled||0;}}
+
+async function loadSpiders(){let r=await api('get_spiders');if(r.success)renderSpiders(r.spiders);}
+function renderSpiders(spiders){let html=spiders.map(s=>`<div class="spider-item"><div style="display:flex;align-items:center"><div class="spider-status ${s.status}"></div><strong>${s.name}</strong></div><div><button class="btn btn-sm btn-success" onclick="startSpider('${s.id}')">启动</button> <button class="btn btn-sm btn-danger" onclick="stopSpider('${s.id}')">停止</button></div></div>`).join('');document.getElementById('spider-list').innerHTML=html;document.getElementById('spider-tree').innerHTML=html;}
+async function startSpider(id){await api('start_spider',id);loadSpiders();}
+async function stopSpider(id){await api('stop_spider',id);loadSpiders();}
+async function startAllSpiders(){let r=await api('get_spiders');if(r.success)for(let s of r.spiders)await api('start_spider',s.id);loadSpiders();}
+async function stopAllSpiders(){await api('stop_all_spiders');loadSpiders();}
+
+async function loadTasks(){let f=document.getElementById('task-filter')?.value||'all';let r=await api('get_tasks',f);if(r.success)renderTasks(r.tasks);}
+function renderTasks(tasks){let t=document.getElementById('tasks-table'),rt=document.getElementById('recent-tasks');if(!tasks.length){if(t)t.innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b">暂无任务</td></tr>';if(rt)rt.innerHTML='<tr><td colspan="3" style="text-align:center;color:#64748b">暂无任务</td></tr>';return;}if(t)t.innerHTML=tasks.map(x=>`<tr><td><code>${x.id}</code></td><td>${x.type}</td><td><span class="badge badge-${x.status==='running'?'warning':x.status==='completed'?'success':'secondary'}">${x.status}</span></td><td><div class="progress" style="width:80px"><div class="progress-bar" style="width:${x.progress}%"></div></div></td><td>${x.created_at}</td><td><button class="btn btn-sm btn-danger" onclick="cancelTask('${x.id}')" ${x.status!=='running'?'disabled':''}>取消</button></td></tr>`).join('');if(rt)rt.innerHTML=tasks.slice(0,5).map(x=>`<tr><td>${x.name}</td><td><span class="badge badge-${x.status==='running'?'warning':'success'}">${x.status}</span></td><td><div class="progress" style="width:60px"><div class="progress-bar" style="width:${x.progress}%"></div></div></td></tr>`).join('');}
+async function cancelTask(id){await api('cancel_task',id);loadTasks();}
+async function clearCompleted(){await api('clear_completed_tasks');loadTasks();}
+
+async function loadListPages(){let r=await api('get_list_pages');if(r.success)renderPages(r.pages);}
+function renderPages(pages){let t=document.getElementById('pages-table');if(!pages.length){t.innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b">暂无列表页</td></tr>';return;}t.innerHTML=pages.map(p=>`<tr><td><strong>${p.source_name}</strong></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${p.url}</td><td>${p.crawl_frequency}</td><td><span class="badge badge-${p.status==='active'?'success':'secondary'}">${p.status}</span></td><td>${p.article_count}</td><td><button class="btn btn-sm btn-secondary" onclick="testPage('${p.url}')">测试</button> <button class="btn btn-sm btn-danger" onclick="deletePage(${p.id})">删除</button></td></tr>`).join('');}
+async function addListPage(){let url=document.getElementById('new-page-url').value,src=document.getElementById('new-page-source').value,freq=document.getElementById('new-page-freq').value;if(!url||!src)return alert('请填写完整');await api('add_list_page',url,src,freq);hideModal('add-page-modal');loadListPages();}
+async function deletePage(id){if(confirm('确定删除?')){await api('delete_list_page',id);loadListPages();}}
+async function testPage(url){let r=await api('test_list_page',url);alert(r.success?'测试成功: 发现 '+r.result.found+' 条':'测试失败: '+r.error);}
+
+async function loadAnnouncements(){let r=await api('get_announcements');if(r.success)renderAnn(r.announcements);}
+function renderAnn(ann){let t=document.getElementById('ann-table');if(!ann.length){t.innerHTML='<tr><td colspan="5" style="text-align:center;color:#64748b">暂无数据</td></tr>';return;}t.innerHTML=ann.map(a=>`<tr><td><strong>${a.title}</strong></td><td><span class="badge badge-info">${a.type}</span></td><td>${a.publish_date}</td><td>${a.source}</td><td><span class="badge badge-${a.status==='parsed'?'success':'warning'}">${a.status}</span></td></tr>`).join('');}
+
+async function loadPositions(){let r=await api('get_positions');if(r.success)renderPos(r.positions);}
+function renderPos(pos){let t=document.getElementById('pos-table');if(!pos.length){t.innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b">暂无数据</td></tr>';return;}t.innerHTML=pos.map(p=>`<tr><td><strong>${p.name}</strong></td><td>${p.department}</td><td>${p.education}</td><td>${p.location}</td><td>${p.recruit_count}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="progress" style="width:60px"><div class="progress-bar" style="width:${p.confidence}%;background:${p.confidence>=85?'#22c55e':p.confidence>=70?'#f59e0b':'#ef4444'}"></div></div><span>${p.confidence}%</span></div></td></tr>`).join('');}
+
+async function loadReview(){let r=await api('get_review_items');if(r.success){renderReview(r.items);document.getElementById('review-stats').textContent='待审核: '+r.total;}}
+function renderReview(items){let t=document.getElementById('review-table');if(!items.length){t.innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b">暂无待审核</td></tr>';return;}t.innerHTML=items.map(i=>`<tr><td><input type="checkbox" class="rev-cb" value="${i.id}"></td><td><strong>${i.position_name}</strong></td><td>${i.department}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="progress" style="width:60px"><div class="progress-bar" style="width:${i.confidence}%;background:${i.confidence>=85?'#22c55e':i.confidence>=70?'#f59e0b':'#ef4444'}"></div></div><span>${i.confidence}%</span></div></td><td style="max-width:150px">${i.issues.join(', ')}</td><td><button class="btn btn-sm btn-success" onclick="approveItem(${i.id})">通过</button> <button class="btn btn-sm btn-danger" onclick="rejectItem(${i.id})">拒绝</button></td></tr>`).join('');}
+async function approveItem(id){await api('approve_item',id);loadReview();}
+async function rejectItem(id){let reason=prompt('拒绝原因:');if(reason){await api('reject_item',id,reason);loadReview();}}
+async function batchApprove(){let ids=[...document.querySelectorAll('.rev-cb:checked')].map(c=>parseInt(c.value));if(!ids.length)return alert('请选择项目');await api('batch_approve',ids);loadReview();}
+
+async function loadConfig(){let r=await api('get_config');if(r.success&&r.config){let c=r.config;if(c.database?.mysql){document.getElementById('cfg-mysql-host').value=c.database.mysql.host||'localhost';document.getElementById('cfg-mysql-port').value=c.database.mysql.port||3306;document.getElementById('cfg-mysql-db').value=c.database.mysql.database||'cse_crawler';document.getElementById('cfg-mysql-user').value=c.database.mysql.user||'root';}if(c.ai){document.getElementById('cfg-ai-provider').value=c.ai.provider||'openai';document.getElementById('cfg-threshold').value=c.ai.confidence_threshold||85;}if(c.spider){document.getElementById('cfg-concurrent').value=c.spider.concurrent_requests||16;document.getElementById('cfg-delay').value=c.spider.download_delay||1;document.getElementById('cfg-retry').value=c.spider.retry_times||3;}if(c.database?.redis){document.getElementById('cfg-redis-host').value=c.database.redis.host||'localhost';document.getElementById('cfg-redis-port').value=c.database.redis.port||6379;document.getElementById('cfg-redis-db').value=c.database.redis.db||0;}}}
+async function saveConfig(){let cfg={'database.mysql.host':document.getElementById('cfg-mysql-host').value,'database.mysql.port':parseInt(document.getElementById('cfg-mysql-port').value),'database.mysql.database':document.getElementById('cfg-mysql-db').value,'database.mysql.user':document.getElementById('cfg-mysql-user').value,'ai.provider':document.getElementById('cfg-ai-provider').value,'ai.confidence_threshold':parseInt(document.getElementById('cfg-threshold').value),'spider.concurrent_requests':parseInt(document.getElementById('cfg-concurrent').value),'spider.download_delay':parseFloat(document.getElementById('cfg-delay').value),'spider.retry_times':parseInt(document.getElementById('cfg-retry').value)};await api('save_config',cfg);alert('配置已保存');}
+
+async function exportData(type){await api('export_data',type);}
+
+function startLogPoll(){setInterval(async()=>{let r=await api('get_logs');if(r.success)renderLogs(r.logs);},2000);}
+function renderLogs(logs){let c=document.getElementById('log-content');c.innerHTML=logs.map(l=>`<div class="log-entry ${l.type}"><span style="color:#94a3b8">[${l.time}]</span> ${l.message}</div>`).join('');c.scrollTop=c.scrollHeight;}
+async function clearLogs(){await api('clear_logs');document.getElementById('log-content').innerHTML='';}
+
+function showModal(id){document.getElementById(id).classList.add('show');}
+function hideModal(id){document.getElementById(id).classList.remove('show');}
+
+// ==================== 测试采集功能 ====================
+let currentArticle = null;
+
+async function fetchArticle() {
+    const url = document.getElementById('test-url').value.trim();
+    if (!url) {
+        alert('请输入文章URL');
+        return;
+    }
+    
+    const btn = document.getElementById('fetch-btn');
+    const status = document.getElementById('fetch-status');
+    
+    btn.disabled = true;
+    btn.textContent = '采集中...';
+    status.textContent = '采集中';
+    status.className = 'badge badge-warning';
+    document.getElementById('article-content').innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner"></div>正在采集文章内容...</div>';
+    
+    try {
+        const r = await api('fetch_article', url);
+        if (r.success) {
+            currentArticle = r.data;
+            document.getElementById('article-title').textContent = r.data.title || '未知标题';
+            document.getElementById('article-length').textContent = (r.data.content?.length || 0) + ' 字';
+            document.getElementById('article-content').textContent = r.data.content || '无内容';
+            status.textContent = '采集成功';
+            status.className = 'badge badge-success';
+            document.getElementById('analyze-btn').disabled = false;
+        } else {
+            document.getElementById('article-content').innerHTML = '<div style="color:#ef4444;padding:20px">采集失败: ' + (r.error || '未知错误') + '</div>';
+            status.textContent = '采集失败';
+            status.className = 'badge badge-danger';
+        }
+    } catch (e) {
+        document.getElementById('article-content').innerHTML = '<div style="color:#ef4444;padding:20px">采集错误: ' + e.message + '</div>';
+        status.textContent = '错误';
+        status.className = 'badge badge-danger';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '采集文章';
+    }
+}
+
+async function analyzeArticle() {
+    if (!currentArticle || !currentArticle.content) {
+        alert('请先采集文章内容');
+        return;
+    }
+    
+    const btn = document.getElementById('analyze-btn');
+    btn.disabled = true;
+    btn.textContent = '分析中...';
+    document.getElementById('ai-result').innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner"></div>AI正在分析文章内容...</div>';
+    
+    try {
+        const r = await api('analyze_article', currentArticle.content, currentArticle.title);
+        if (r.success) {
+            renderAIResult(r.data);
+            if (r.data.positions && r.data.positions.length > 0) {
+                renderExtractedPositions(r.data.positions);
+            }
+        } else {
+            document.getElementById('ai-result').innerHTML = '<div style="color:#ef4444;padding:20px">分析失败: ' + (r.error || '未知错误') + '</div>';
+        }
+    } catch (e) {
+        document.getElementById('ai-result').innerHTML = '<div style="color:#ef4444;padding:20px">分析错误: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '开始分析';
+    }
+}
+
+function renderAIResult(data) {
+    let html = '<div style="font-size:13px;line-height:1.8">';
+    
+    if (data.summary) {
+        html += '<div style="margin-bottom:16px"><strong style="color:var(--primary)">📝 内容摘要</strong><div style="background:#f0f9ff;padding:12px;border-radius:6px;margin-top:8px">' + data.summary + '</div></div>';
+    }
+    
+    if (data.announcement_type) {
+        html += '<div style="margin-bottom:12px"><strong>📋 公告类型:</strong> <span class="badge badge-info">' + data.announcement_type + '</span></div>';
+    }
+    
+    if (data.publish_date) {
+        html += '<div style="margin-bottom:12px"><strong>📅 发布日期:</strong> ' + data.publish_date + '</div>';
+    }
+    
+    if (data.registration_time) {
+        html += '<div style="margin-bottom:12px"><strong>⏰ 报名时间:</strong> ' + data.registration_time + '</div>';
+    }
+    
+    if (data.exam_time) {
+        html += '<div style="margin-bottom:12px"><strong>📝 考试时间:</strong> ' + data.exam_time + '</div>';
+    }
+    
+    if (data.total_positions) {
+        html += '<div style="margin-bottom:12px"><strong>👥 招录人数:</strong> ' + data.total_positions + ' 人</div>';
+    }
+    
+    if (data.key_requirements) {
+        html += '<div style="margin-bottom:12px"><strong>📌 关键要求:</strong><ul style="margin:8px 0 0 20px">';
+        data.key_requirements.forEach(req => {
+            html += '<li>' + req + '</li>';
+        });
+        html += '</ul></div>';
+    }
+    
+    if (data.confidence) {
+        const confColor = data.confidence >= 85 ? '#22c55e' : data.confidence >= 70 ? '#f59e0b' : '#ef4444';
+        html += '<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)"><strong>🎯 分析置信度:</strong> <span style="color:' + confColor + ';font-weight:bold">' + data.confidence + '%</span></div>';
+    }
+    
+    html += '</div>';
+    document.getElementById('ai-result').innerHTML = html;
+}
+
+function renderExtractedPositions(positions) {
+    document.getElementById('position-count').textContent = positions.length + ' 个职位';
+    
+    if (!positions.length) {
+        document.getElementById('extracted-positions').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">未提取到职位信息</td></tr>';
+        return;
+    }
+    
+    document.getElementById('extracted-positions').innerHTML = positions.map(p => {
+        const confColor = (p.confidence || 0) >= 85 ? '#22c55e' : (p.confidence || 0) >= 70 ? '#f59e0b' : '#ef4444';
+        return `<tr>
+            <td><strong>${p.name || '-'}</strong></td>
+            <td>${p.department || '-'}</td>
+            <td>${p.education || '-'}</td>
+            <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis">${p.major || '-'}</td>
+            <td>${p.recruit_count || '-'}</td>
+            <td><div style="display:flex;align-items:center;gap:6px">
+                <div class="progress" style="width:60px"><div class="progress-bar" style="width:${p.confidence || 0}%;background:${confColor}"></div></div>
+                <span>${p.confidence || 0}%</span>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+</script>
+</body>
+</html>
