@@ -1,0 +1,36 @@
+.filter-bar {
+  background: #fff;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  
+  &__scroll {
+    width: 100%;
+    white-space: nowrap;
+  }
+  
+  &__list {
+    display: inline-flex;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  
+  &__item {
+    padding: 6px 16px;
+    border-radius: 16px;
+    background: #f5f5f5;
+    transition: all 0.2s;
+    
+    text {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    &--active {
+      background: #1890ff;
+      
+      text {
+        color: #fff;
+      }
+    }
+  }
+}

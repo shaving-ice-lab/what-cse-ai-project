@@ -1,0 +1,72 @@
+.position-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  
+  &__name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+    line-height: 1.4;
+  }
+  
+  &__score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 12px;
+    
+    &-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1890ff;
+    }
+    
+    &-label {
+      font-size: 10px;
+      color: #999;
+    }
+  }
+  
+  &__department {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+    display: block;
+  }
+  
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  &__tag {
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    
+    text {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    &--type {
+      background: #e6f7ff;
+      
+      text {
+        color: #1890ff;
+      }
+    }
+  }
+}

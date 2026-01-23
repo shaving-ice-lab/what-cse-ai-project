@@ -1,13 +1,13 @@
-import { PropsWithChildren } from 'react'
-import { useLaunch } from '@tarojs/taro'
-import './app.scss'
+import { PropsWithChildren } from "react";
+import { useLaunch } from "@tarojs/taro";
+import "./app.scss";
 
 function App({ children }: PropsWithChildren) {
   useLaunch(() => {
-    console.log('小程序启动')
-  })
+    console.log("小程序启动");
+  });
 
-  return children
+  return children;
 }
 
-export default App
+export default App;

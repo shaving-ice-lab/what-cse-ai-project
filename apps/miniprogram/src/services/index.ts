@@ -1,2 +1,2 @@
-export { authService } from './auth'
-export { positionService } from './position'
+export { authService } from "./auth";
+export { positionService } from "./position";

@@ -1,21 +1,21 @@
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
-import Taro from '@tarojs/taro'
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import Taro from "@tarojs/taro";
 
 interface User {
-  id: number
-  nickname: string
-  avatar: string
-  openid: string
+  id: number;
+  nickname: string;
+  avatar: string;
+  openid: string;
 }
 
 interface AuthState {
-  token: string | null
-  user: User | null
-  isLoggedIn: boolean
-  setToken: (token: string) => void
-  setUser: (user: User) => void
-  logout: () => void
+  token: string | null;
+  user: User | null;
+  isLoggedIn: boolean;
+  setToken: (token: string) => void;
+  setUser: (user: User) => void;
+  logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -27,12 +27,12 @@ export const useAuthStore = create<AuthState>()(
       setToken: (token) => set({ token, isLoggedIn: true }),
       setUser: (user) => set({ user }),
       logout: () => {
-        set({ token: null, user: null, isLoggedIn: false })
-        Taro.removeStorageSync('auth-storage')
+        set({ token: null, user: null, isLoggedIn: false });
+        Taro.removeStorageSync("auth-storage");
       },
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       storage: createJSONStorage(() => ({
         getItem: (name) => Taro.getStorageSync(name),
         setItem: (name, value) => Taro.setStorageSync(name, value),
@@ -40,4 +40,4 @@ export const useAuthStore = create<AuthState>()(
       })),
     }
   )
-)
+);
