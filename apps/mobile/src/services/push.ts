@@ -57,7 +57,7 @@ export const pushService = {
 
     try {
       await Taro.request({
-        url: "http://localhost:8080/api/v1/user/push-token",
+        url: "http://localhost:9000/api/v1/user/push-token",
         method: "POST",
         data: {
           userId,

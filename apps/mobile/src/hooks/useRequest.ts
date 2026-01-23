@@ -1,42 +1,48 @@
-import { useState, useCallback } from 'react'
-import Taro from '@tarojs/taro'
-import { useAuthStore } from '../stores'
+import { useState, useCallback } from "react";
+import Taro from "@tarojs/taro";
+import { useAuthStore } from "../stores";
 
 interface RequestOptions {
-  url: string
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
-  data?: any
-  showLoading?: boolean
-  showError?: boolean
+  url: string;
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  data?: any;
+  showLoading?: boolean;
+  showError?: boolean;
 }
 
 interface UseRequestReturn<T> {
-  data: T | null
-  loading: boolean
-  error: string | null
-  run: (options?: Partial<RequestOptions>) => Promise<T | null>
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+  run: (options?: Partial<RequestOptions>) => Promise<T | null>;
 }
 
-const BASE_URL = 'http://localhost:8080/api'
+const BASE_URL = "http://localhost:9000/api";
 
 export function useRequest<T = any>(defaultOptions: RequestOptions): UseRequestReturn<T> {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const token = useAuthStore((state) => state.token)
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const token = useAuthStore((state) => state.token);
 
   const run = useCallback(
     async (options?: Partial<RequestOptions>): Promise<T | null> => {
-      const { url, method = 'GET', data: requestData, showLoading = false, showError = true } = {
+      const {
+        url,
+        method = "GET",
+        data: requestData,
+        showLoading = false,
+        showError = true,
+      } = {
         ...defaultOptions,
         ...options,
-      }
+      };
 
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       if (showLoading) {
-        Taro.showLoading({ title: '加载中...' })
+        Taro.showLoading({ title: "加载中..." });
       }
 
       try {
@@ -45,33 +51,33 @@ export function useRequest<T = any>(defaultOptions: RequestOptions): UseRequestR
           method,
           data: requestData,
           header: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-        })
+        });
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
-          setData(response.data)
-          return response.data
+          setData(response.data);
+          return response.data;
         } else {
-          throw new Error(response.data?.message || '请求失败')
+          throw new Error(response.data?.message || "请求失败");
         }
       } catch (err: any) {
-        const errorMsg = err.message || '网络请求失败'
-        setError(errorMsg)
+        const errorMsg = err.message || "网络请求失败";
+        setError(errorMsg);
         if (showError) {
-          Taro.showToast({ title: errorMsg, icon: 'none' })
+          Taro.showToast({ title: errorMsg, icon: "none" });
         }
-        return null
+        return null;
       } finally {
-        setLoading(false)
+        setLoading(false);
         if (showLoading) {
-          Taro.hideLoading()
+          Taro.hideLoading();
         }
       }
     },
     [defaultOptions, token]
-  )
+  );
 
-  return { data, loading, error, run }
+  return { data, loading, error, run };
 }

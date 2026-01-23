@@ -1,7 +1,7 @@
 import Taro from "@tarojs/taro";
 import { storage } from "../utils/storage";
 
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "http://localhost:9000/api";
 
 const TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "auth_refresh_token";

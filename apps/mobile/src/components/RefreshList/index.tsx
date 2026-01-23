@@ -1,15 +1,15 @@
-import { View, Text, ScrollView } from '@tarojs/components'
-import { useState, useCallback } from 'react'
-import './index.scss'
+import { View, Text, ScrollView } from "@tarojs/components";
+import { useState, useCallback } from "react";
+import "./index.scss";
 
 interface RefreshListProps {
-  children: React.ReactNode
-  onRefresh?: () => Promise<void>
-  onLoadMore?: () => Promise<void>
-  hasMore?: boolean
-  loading?: boolean
-  emptyText?: string
-  isEmpty?: boolean
+  children: React.ReactNode;
+  onRefresh?: () => Promise<void>;
+  onLoadMore?: () => Promise<void>;
+  hasMore?: boolean;
+  loading?: boolean;
+  emptyText?: string;
+  isEmpty?: boolean;
 }
 
 export default function RefreshList({
@@ -18,29 +18,29 @@ export default function RefreshList({
   onLoadMore,
   hasMore = true,
   loading = false,
-  emptyText = '暂无数据',
+  emptyText = "暂无数据",
   isEmpty = false,
 }: RefreshListProps) {
-  const [refreshing, setRefreshing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = useCallback(async () => {
-    if (refreshing || !onRefresh) return
-    setRefreshing(true)
+    if (refreshing || !onRefresh) return;
+    setRefreshing(true);
     try {
-      await onRefresh()
+      await onRefresh();
     } finally {
-      setRefreshing(false)
+      setRefreshing(false);
     }
-  }, [refreshing, onRefresh])
+  }, [refreshing, onRefresh]);
 
   const handleScrollToLower = useCallback(async () => {
-    if (loading || !hasMore || !onLoadMore) return
-    await onLoadMore()
-  }, [loading, hasMore, onLoadMore])
+    if (loading || !hasMore || !onLoadMore) return;
+    await onLoadMore();
+  }, [loading, hasMore, onLoadMore]);
 
   return (
     <ScrollView
-      className='refresh-list'
+      className="refresh-list"
       scrollY
       refresherEnabled={!!onRefresh}
       refresherTriggered={refreshing}
@@ -49,24 +49,24 @@ export default function RefreshList({
       lowerThreshold={100}
     >
       {isEmpty ? (
-        <View className='empty-state'>
-          <Text className='empty-text'>{emptyText}</Text>
+        <View className="empty-state">
+          <Text className="empty-text">{emptyText}</Text>
         </View>
       ) : (
         <>
           {children}
           {hasMore && (
-            <View className='load-more'>
-              <Text>{loading ? '加载中...' : '上拉加载更多'}</Text>
+            <View className="load-more">
+              <Text>{loading ? "加载中..." : "上拉加载更多"}</Text>
             </View>
           )}
           {!hasMore && (
-            <View className='no-more'>
+            <View className="no-more">
               <Text>没有更多了</Text>
             </View>
           )}
         </>
       )}
     </ScrollView>
-  )
+  );
 }
