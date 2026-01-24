@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
+import { Eye, EyeOff, Mail, Lock, Phone, ArrowRight, Loader2 } from "lucide-react";
 
 type LoginMode = "password" | "code";
 
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -96,107 +98,203 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
-      <h1 className="text-2xl font-bold text-center mb-6">登录</h1>
-
-      <div className="flex mb-6 border-b">
-        <button
-          type="button"
-          onClick={() => setLoginMode("password")}
-          className={`flex-1 pb-3 text-center font-medium transition-colors ${
-            loginMode === "password" ? "text-primary border-b-2 border-primary" : "text-gray-500"
-          }`}
-        >
-          密码登录
-        </button>
-        <button
-          type="button"
-          onClick={() => setLoginMode("code")}
-          className={`flex-1 pb-3 text-center font-medium transition-colors ${
-            loginMode === "code" ? "text-primary border-b-2 border-primary" : "text-gray-500"
-          }`}
-        >
-          验证码登录
-        </button>
-      </div>
-
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">手机号/邮箱</label>
-          <input
-            type="text"
-            value={account}
-            onChange={(e) => setAccount(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="请输入手机号或邮箱"
-          />
+    <div className="animate-fade-in">
+      {/* Card */}
+      <div className="bg-white rounded-3xl shadow-warm-lg border border-stone-200/50 p-8 lg:p-10">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-serif font-bold text-stone-800 mb-2">欢迎回来</h1>
+          <p className="text-stone-500">登录账号，继续您的公考之旅</p>
         </div>
 
-        {loginMode === "password" ? (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">密码</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="请输入密码"
-            />
-          </div>
-        ) : (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">验证码</label>
-            <div className="flex gap-3">
+        {/* Login Mode Tabs */}
+        <div className="flex p-1 bg-stone-100 rounded-xl mb-8">
+          <button
+            type="button"
+            onClick={() => setLoginMode("password")}
+            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
+              loginMode === "password"
+                ? "bg-white text-stone-800 shadow-warm-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            密码登录
+          </button>
+          <button
+            type="button"
+            onClick={() => setLoginMode("code")}
+            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
+              loginMode === "code"
+                ? "bg-white text-stone-800 shadow-warm-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            验证码登录
+          </button>
+        </div>
+
+        {/* Form */}
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {/* Account Field */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-stone-700">手机号/邮箱</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                {account.includes("@") ? (
+                  <Mail className="w-5 h-5 text-stone-400" />
+                ) : (
+                  <Phone className="w-5 h-5 text-stone-400" />
+                )}
+              </div>
               <input
                 type="text"
-                value={verifyCode}
-                onChange={(e) => setVerifyCode(e.target.value)}
-                maxLength={6}
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="请输入验证码"
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
+                className="w-full pl-12 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                placeholder="请输入手机号或邮箱"
               />
-              <button
-                type="button"
-                onClick={handleSendCode}
-                disabled={countdown > 0}
-                className="px-4 py-2 border rounded-lg text-primary hover:bg-primary/5 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
-              >
-                {countdown > 0 ? `${countdown}s` : "获取验证码"}
-              </button>
             </div>
           </div>
-        )}
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <span className="text-sm text-gray-600">记住账号</span>
-          </label>
-          <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-            忘记密码？
-          </Link>
+          {/* Password / Code Field */}
+          {loginMode === "password" ? (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-stone-700">密码</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="w-5 h-5 text-stone-400" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-12 py-3.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                  placeholder="请输入密码"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-stone-400 hover:text-stone-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-stone-700">验证码</label>
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="w-5 h-5 text-stone-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    maxLength={6}
+                    className="w-full pl-12 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                    placeholder="请输入验证码"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={countdown > 0}
+                  className="px-5 py-3.5 text-sm font-medium border border-amber-500 text-amber-600 rounded-xl hover:bg-amber-50 disabled:border-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                >
+                  {countdown > 0 ? `${countdown}s` : "获取验证码"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Remember & Forgot */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="w-5 h-5 border-2 border-stone-300 rounded-md peer-checked:border-amber-500 peer-checked:bg-amber-500 transition-colors" />
+                <svg
+                  className="absolute inset-0 w-5 h-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-sm text-stone-600 group-hover:text-stone-800">记住账号</span>
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+            >
+              忘记密码？
+            </Link>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-amber-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-amber-md hover:shadow-amber-lg btn-shine"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                登录中...
+              </>
+            ) : (
+              <>
+                登录
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-stone-200" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="px-4 bg-white text-sm text-stone-500">其他登录方式</span>
+          </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
-        >
-          {loading ? "登录中..." : "登录"}
-        </button>
-      </form>
+        {/* Social Login */}
+        <div className="flex justify-center gap-4">
+          <button className="w-12 h-12 flex items-center justify-center rounded-xl border border-stone-200 hover:bg-stone-50 hover:border-stone-300 transition-colors">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="#07C160">
+              <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89l-.407-.032zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z" />
+            </svg>
+          </button>
+          <button className="w-12 h-12 flex items-center justify-center rounded-xl border border-stone-200 hover:bg-stone-50 hover:border-stone-300 transition-colors">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="#1296db">
+              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5c-1.51 0-2.816.917-3.437 2.25-.416-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+            </svg>
+          </button>
+        </div>
 
-      <p className="mt-4 text-center text-sm text-gray-600">
-        还没有账号？
-        <Link href="/register" className="text-primary hover:underline">
-          立即注册
-        </Link>
-      </p>
+        {/* Register Link */}
+        <p className="mt-8 text-center text-sm text-stone-600">
+          还没有账号？
+          <Link
+            href="/register"
+            className="ml-1 text-amber-600 hover:text-amber-700 font-semibold"
+          >
+            立即注册
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,207 +1,89 @@
-import * as React from "react";
-import { Check, X, AlertCircle, Minus } from "lucide-react";
+"use client";
+
+import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
-export type MatchStatus = "match" | "mismatch" | "partial" | "unknown";
-
-export interface ConditionItem {
-  label: string;
-  userValue: string | null;
-  positionRequirement: string;
-  status: MatchStatus;
-  note?: string;
+interface ConditionItem {
+  name: string;
+  userValue: string;
+  positionValue: string;
+  isMatch: boolean;
 }
 
-export interface ConditionCompareTableProps {
+interface ConditionCompareTableProps {
   conditions: ConditionItem[];
-  title?: string;
   className?: string;
-  showHeader?: boolean;
 }
-
-const statusConfig: Record<MatchStatus, { icon: React.ElementType; color: string; label: string }> =
-  {
-    match: {
-      icon: Check,
-      color: "text-green-600 bg-green-50",
-      label: "符合",
-    },
-    mismatch: {
-      icon: X,
-      color: "text-red-600 bg-red-50",
-      label: "不符合",
-    },
-    partial: {
-      icon: AlertCircle,
-      color: "text-yellow-600 bg-yellow-50",
-      label: "部分符合",
-    },
-    unknown: {
-      icon: Minus,
-      color: "text-gray-500 bg-gray-50",
-      label: "待确认",
-    },
-  };
 
 export function ConditionCompareTable({
   conditions,
-  title = "报考条件对比",
   className,
-  showHeader = true,
 }: ConditionCompareTableProps) {
-  const matchCount = conditions.filter((c) => c.status === "match").length;
-  const mismatchCount = conditions.filter((c) => c.status === "mismatch").length;
-  const partialCount = conditions.filter((c) => c.status === "partial").length;
-
-  const renderStatusIcon = (status: MatchStatus) => {
-    const config = statusConfig[status];
-    const Icon = config.icon;
-    return (
-      <div
-        className={cn("inline-flex items-center justify-center w-6 h-6 rounded-full", config.color)}
-      >
-        <Icon className="h-4 w-4" />
-      </div>
-    );
-  };
-
-  const renderStatusBadge = (status: MatchStatus) => {
-    const config = statusConfig[status];
-    return (
-      <Badge variant="outline" className={cn("font-normal", config.color)}>
-        {config.label}
-      </Badge>
-    );
-  };
+  const matchedCount = conditions.filter((c) => c.isMatch).length;
+  const totalCount = conditions.length;
 
   return (
     <div className={cn("space-y-4", className)}>
-      {showHeader && (
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-              符合 {matchCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-yellow-500" />
-              部分符合 {partialCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-red-500" />
-              不符合 {mismatchCount}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Summary */}
+      <div className="flex items-center justify-between px-4 py-3 bg-stone-50 rounded-xl">
+        <span className="text-sm text-stone-600">条件匹配情况</span>
+        <span className="text-sm font-medium">
+          <span className="text-emerald-600">{matchedCount}</span>
+          <span className="text-stone-400"> / {totalCount}</span>
+          <span className="text-stone-500 ml-1">项符合</span>
+        </span>
+      </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[140px]">条件项</TableHead>
-              <TableHead>岗位要求</TableHead>
-              <TableHead>我的条件</TableHead>
-              <TableHead className="w-[100px] text-center">匹配状态</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {conditions.map((condition, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">{condition.label}</TableCell>
-                <TableCell>
-                  <span className="text-muted-foreground">
-                    {condition.positionRequirement || "不限"}
+      {/* Conditions List */}
+      <div className="space-y-3">
+        {conditions.map((condition, index) => (
+          <div
+            key={index}
+            className={cn(
+              "flex items-center justify-between p-4 rounded-xl border",
+              condition.isMatch
+                ? "bg-emerald-50/50 border-emerald-200"
+                : "bg-red-50/50 border-red-200"
+            )}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-stone-500">{condition.name}</p>
+              <div className="flex items-center gap-4 mt-1">
+                <div>
+                  <span className="text-xs text-stone-400">要求: </span>
+                  <span className="text-sm font-medium text-stone-700">
+                    {condition.positionValue}
                   </span>
-                </TableCell>
-                <TableCell>
-                  {condition.userValue ? (
-                    <span>{condition.userValue}</span>
-                  ) : (
-                    <span className="text-muted-foreground">未填写</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col items-center gap-1">
-                    {renderStatusIcon(condition.status)}
-                    {condition.note && (
-                      <span className="text-xs text-muted-foreground text-center">
-                        {condition.note}
-                      </span>
+                </div>
+                <div className="w-px h-4 bg-stone-200" />
+                <div>
+                  <span className="text-xs text-stone-400">您: </span>
+                  <span
+                    className={cn(
+                      "text-sm font-medium",
+                      condition.isMatch ? "text-emerald-600" : "text-red-600"
                     )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {mismatchCount > 0 && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-700">
-            <strong>注意：</strong>
-            您有 {mismatchCount} 项条件不符合该职位要求，建议谨慎报考。
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function MultiPositionCompareTable({
-  positions,
-  conditions,
-  className,
-}: {
-  positions: { id: string; name: string }[];
-  conditions: {
-    label: string;
-    values: Record<string, string>;
-  }[];
-  className?: string;
-}) {
-  return (
-    <div className={cn("space-y-4", className)}>
-      <h3 className="text-lg font-semibold">职位对比</h3>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[140px] sticky left-0 bg-background">条件项</TableHead>
-              {positions.map((position) => (
-                <TableHead key={position.id} className="min-w-[150px]">
-                  {position.name}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {conditions.map((condition, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium sticky left-0 bg-background">
-                  {condition.label}
-                </TableCell>
-                {positions.map((position) => (
-                  <TableCell key={position.id}>{condition.values[position.id] || "-"}</TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                  >
+                    {condition.userValue}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ml-4",
+                condition.isMatch ? "bg-emerald-500" : "bg-red-500"
+              )}
+            >
+              {condition.isMatch ? (
+                <Check className="w-5 h-5 text-white" />
+              ) : (
+                <X className="w-5 h-5 text-white" />
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
-
-export default ConditionCompareTable;

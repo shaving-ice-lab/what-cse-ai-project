@@ -1,3 +1,7 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+
 interface MatchScoreBadgeProps {
   score: number;
   size?: "sm" | "md" | "lg";
@@ -5,34 +9,82 @@ interface MatchScoreBadgeProps {
   className?: string;
 }
 
+function getScoreConfig(score: number) {
+  if (score >= 90) {
+    return {
+      label: "完美匹配",
+      gradient: "from-emerald-500 to-emerald-600",
+      bg: "bg-emerald-100",
+      text: "text-emerald-700",
+    };
+  }
+  if (score >= 70) {
+    return {
+      label: "高度匹配",
+      gradient: "from-amber-500 to-amber-600",
+      bg: "bg-amber-100",
+      text: "text-amber-700",
+    };
+  }
+  if (score >= 50) {
+    return {
+      label: "部分匹配",
+      gradient: "from-orange-500 to-orange-600",
+      bg: "bg-orange-100",
+      text: "text-orange-700",
+    };
+  }
+  return {
+    label: "匹配较低",
+    gradient: "from-stone-400 to-stone-500",
+    bg: "bg-stone-100",
+    text: "text-stone-600",
+  };
+}
+
 export function MatchScoreBadge({
   score,
   size = "md",
   showLabel = true,
-  className = "",
+  className,
 }: MatchScoreBadgeProps) {
-  const getScoreConfig = (score: number) => {
-    if (score >= 90) return { color: "text-green-600 bg-green-100", label: "极高匹配" };
-    if (score >= 80) return { color: "text-green-500 bg-green-50", label: "高度匹配" };
-    if (score >= 70) return { color: "text-blue-500 bg-blue-50", label: "较好匹配" };
-    if (score >= 60) return { color: "text-yellow-500 bg-yellow-50", label: "一般匹配" };
-    return { color: "text-red-500 bg-red-50", label: "低匹配度" };
-  };
+  const config = getScoreConfig(score);
 
   const sizeClasses = {
-    sm: "text-xs px-2 py-0.5",
-    md: "text-sm px-3 py-1",
-    lg: "text-base px-4 py-1.5",
+    sm: "text-lg",
+    md: "text-2xl",
+    lg: "text-3xl",
   };
 
-  const { color, label } = getScoreConfig(score);
+  const labelSizeClasses = {
+    sm: "text-xs px-1.5 py-0.5",
+    md: "text-xs px-2 py-0.5",
+    lg: "text-sm px-2.5 py-1",
+  };
 
   return (
-    <div
-      className={`inline-flex items-center space-x-1 rounded-full font-medium ${color} ${sizeClasses[size]} ${className}`}
-    >
-      <span>{score}分</span>
-      {showLabel && <span className="opacity-80">· {label}</span>}
+    <div className={cn("flex flex-col items-end gap-1", className)}>
+      <div
+        className={cn(
+          "font-display font-bold bg-gradient-to-r bg-clip-text text-transparent",
+          config.gradient,
+          sizeClasses[size]
+        )}
+      >
+        {score}%
+      </div>
+      {showLabel && (
+        <span
+          className={cn(
+            "font-medium rounded-md",
+            config.bg,
+            config.text,
+            labelSizeClasses[size]
+          )}
+        >
+          {config.label}
+        </span>
+      )}
     </div>
   );
 }
