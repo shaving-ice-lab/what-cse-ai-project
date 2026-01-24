@@ -149,8 +149,90 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 	return success(c, tokens)
 }
 
+// ForgotPassword handles forgot password request
+// @Summary Forgot Password
+// @Description Send reset code to user's phone/email
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body service.ForgotPasswordRequest true "Forgot password request"
+// @Success 200 {object} Response
+// @Router /api/v1/auth/forgot-password [post]
+func (h *AuthHandler) ForgotPassword(c echo.Context) error {
+	var req service.ForgotPasswordRequest
+	if err := c.Bind(&req); err != nil {
+		return fail(c, 400, "Invalid request parameters")
+	}
+
+	if req.Account == "" {
+		return fail(c, 400, "Account is required")
+	}
+
+	err := h.authService.SendResetCode(&req)
+	if err != nil {
+		switch err {
+		case service.ErrUserNotFound:
+			return fail(c, 404, "User not found")
+		case service.ErrUserDisabled:
+			return fail(c, 403, "User account is disabled")
+		default:
+			return fail(c, 500, "Failed to send reset code: "+err.Error())
+		}
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "Reset code sent successfully",
+	})
+}
+
+// ResetPassword handles password reset
+// @Summary Reset Password
+// @Description Reset user password with verification code
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body service.ResetPasswordRequest true "Reset password request"
+// @Success 200 {object} Response
+// @Router /api/v1/auth/reset-password [post]
+func (h *AuthHandler) ResetPassword(c echo.Context) error {
+	var req service.ResetPasswordRequest
+	if err := c.Bind(&req); err != nil {
+		return fail(c, 400, "Invalid request parameters")
+	}
+
+	if req.Account == "" {
+		return fail(c, 400, "Account is required")
+	}
+	if req.Code == "" {
+		return fail(c, 400, "Verification code is required")
+	}
+	if req.NewPassword == "" || len(req.NewPassword) < 6 {
+		return fail(c, 400, "Password must be at least 6 characters")
+	}
+
+	err := h.authService.ResetPassword(&req)
+	if err != nil {
+		switch err {
+		case service.ErrUserNotFound:
+			return fail(c, 404, "User not found")
+		case service.ErrInvalidResetCode:
+			return fail(c, 400, "Invalid or expired verification code")
+		case service.ErrUserDisabled:
+			return fail(c, 403, "User account is disabled")
+		default:
+			return fail(c, 500, "Failed to reset password: "+err.Error())
+		}
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "Password reset successfully",
+	})
+}
+
 func (h *AuthHandler) RegisterRoutes(g *echo.Group) {
 	g.POST("/register", h.Register)
 	g.POST("/login", h.Login)
 	g.POST("/refresh", h.RefreshToken)
+	g.POST("/forgot-password", h.ForgotPassword)
+	g.POST("/reset-password", h.ResetPassword)
 }

@@ -16,7 +16,12 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserNotFound       = errors.New("user not found")
 	ErrUserDisabled       = errors.New("user account is disabled")
+	ErrInvalidResetCode   = errors.New("invalid reset code")
 )
+
+// In-memory store for reset codes (development only)
+// In production, use Redis or database with expiration
+var resetCodes = make(map[string]string)
 
 type AuthService struct {
 	userRepo *repository.UserRepository
@@ -212,4 +217,89 @@ func (s *AuthService) parseToken(tokenString string) (*Claims, error) {
 
 func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	return s.parseToken(tokenString)
+}
+
+// ForgotPasswordRequest represents the forgot password request
+type ForgotPasswordRequest struct {
+	Account string `json:"account" validate:"required"` // phone or email
+}
+
+// ResetPasswordRequest represents the reset password request
+type ResetPasswordRequest struct {
+	Account     string `json:"account" validate:"required"`
+	Code        string `json:"code" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=6"`
+}
+
+// SendResetCode generates and stores a reset code for the account
+// In development mode, it uses a fixed code "123456"
+// In production, this should send an email/SMS with a random code
+func (s *AuthService) SendResetCode(req *ForgotPasswordRequest) error {
+	// Find user by phone or email to verify account exists
+	var user *model.User
+	var err error
+
+	user, err = s.userRepo.FindByPhone(req.Account)
+	if err != nil || user == nil {
+		user, err = s.userRepo.FindByEmail(req.Account)
+	}
+
+	if err != nil || user == nil {
+		return ErrUserNotFound
+	}
+
+	// Check if user is disabled
+	if user.Status == int(model.UserStatusDisabled) {
+		return ErrUserDisabled
+	}
+
+	// In development mode, use fixed code "123456"
+	// In production, generate a random 6-digit code and send via email/SMS
+	resetCodes[req.Account] = "123456"
+
+	return nil
+}
+
+// ResetPassword verifies the reset code and updates the user's password
+func (s *AuthService) ResetPassword(req *ResetPasswordRequest) error {
+	// Verify reset code
+	storedCode, exists := resetCodes[req.Account]
+	if !exists || storedCode != req.Code {
+		return ErrInvalidResetCode
+	}
+
+	// Find user by phone or email
+	var user *model.User
+	var err error
+
+	user, err = s.userRepo.FindByPhone(req.Account)
+	if err != nil || user == nil {
+		user, err = s.userRepo.FindByEmail(req.Account)
+	}
+
+	if err != nil || user == nil {
+		return ErrUserNotFound
+	}
+
+	// Check if user is disabled
+	if user.Status == int(model.UserStatusDisabled) {
+		return ErrUserDisabled
+	}
+
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// Update user password
+	user.PasswordHash = string(hashedPassword)
+	if err := s.userRepo.Update(user); err != nil {
+		return err
+	}
+
+	// Remove used reset code
+	delete(resetCodes, req.Account)
+
+	return nil
 }

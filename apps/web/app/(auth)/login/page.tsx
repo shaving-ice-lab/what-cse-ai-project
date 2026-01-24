@@ -2,30 +2,34 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
+import { useLogin } from "@/hooks/useAuth";
+import { validators } from "@/utils/validation";
+import { toast } from "@/components/ui/toaster";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowRight, Loader2 } from "lucide-react";
-
-type LoginMode = "password" | "code";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser, isAuthenticated } = useAuthStore();
-  const [loginMode, setLoginMode] = useState<LoginMode>("password");
+  const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuthStore();
+  const loginMutation = useLogin();
+
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
-  const [verifyCode, setVerifyCode] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [errors, setErrors] = useState<{ account?: string; password?: string }>({});
 
+  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/");
+      const redirect = searchParams.get("redirect") || "/";
+      router.push(redirect);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, searchParams]);
 
+  // Load remembered account
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedAccount = localStorage.getItem("remembered_account");
@@ -36,65 +40,50 @@ export default function LoginPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
+  const validateForm = (): boolean => {
+    const newErrors: { account?: string; password?: string } = {};
 
-  const handleSendCode = async () => {
     if (!account) {
-      alert("请输入手机号或邮箱");
-      return;
+      newErrors.account = "请输入手机号或邮箱";
+    } else if (!validators.phone(account) && !validators.email(account)) {
+      newErrors.account = "请输入正确的手机号或邮箱";
     }
-    setCountdown(60);
-    alert("验证码已发送");
+
+    if (!password) {
+      newErrors.password = "请输入密码";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!account) {
-      alert("请输入手机号或邮箱");
-      return;
-    }
-    if (loginMode === "password" && !password) {
-      alert("请输入密码");
-      return;
-    }
-    if (loginMode === "code" && !verifyCode) {
-      alert("请输入验证码");
+
+    if (!validateForm()) {
       return;
     }
 
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Save or remove remembered account
+    if (rememberMe && typeof window !== "undefined") {
+      localStorage.setItem("remembered_account", account);
+    } else if (typeof window !== "undefined") {
+      localStorage.removeItem("remembered_account");
+    }
 
-      if (rememberMe && typeof window !== "undefined") {
-        localStorage.setItem("remembered_account", account);
-      } else if (typeof window !== "undefined") {
-        localStorage.removeItem("remembered_account");
-      }
-
-      setUser(
-        {
-          id: 1,
-          nickname: "考公人",
-          phone: account.includes("@") ? "" : account,
-          email: account.includes("@") ? account : "",
-          avatar: "",
+    loginMutation.mutate(
+      { account, password },
+      {
+        onSuccess: () => {
+          toast.success("登录成功");
+          const redirect = searchParams.get("redirect") || "/";
+          router.push(redirect);
         },
-        "mock-token",
-        "mock-refresh-token"
-      );
-
-      router.push("/");
-    } catch {
-      alert("登录失败，请重试");
-    } finally {
-      setLoading(false);
-    }
+        onError: (error) => {
+          toast.error(error.message || "登录失败，请重试");
+        },
+      }
+    );
   };
 
   return (
@@ -105,32 +94,6 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-serif font-bold text-stone-800 mb-2">欢迎回来</h1>
           <p className="text-stone-500">登录账号，继续您的公考之旅</p>
-        </div>
-
-        {/* Login Mode Tabs */}
-        <div className="flex p-1 bg-stone-100 rounded-xl mb-8">
-          <button
-            type="button"
-            onClick={() => setLoginMode("password")}
-            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
-              loginMode === "password"
-                ? "bg-white text-stone-800 shadow-warm-sm"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            密码登录
-          </button>
-          <button
-            type="button"
-            onClick={() => setLoginMode("code")}
-            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
-              loginMode === "code"
-                ? "bg-white text-stone-800 shadow-warm-sm"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            验证码登录
-          </button>
         </div>
 
         {/* Form */}
@@ -149,65 +112,48 @@ export default function LoginPage() {
               <input
                 type="text"
                 value={account}
-                onChange={(e) => setAccount(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                onChange={(e) => {
+                  setAccount(e.target.value);
+                  if (errors.account) setErrors((prev) => ({ ...prev, account: undefined }));
+                }}
+                className={`w-full pl-12 pr-4 py-3.5 bg-stone-50 border rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 ${
+                  errors.account ? "border-red-400" : "border-stone-200"
+                }`}
                 placeholder="请输入手机号或邮箱"
               />
             </div>
+            {errors.account && <p className="text-sm text-red-500">{errors.account}</p>}
           </div>
 
-          {/* Password / Code Field */}
-          {loginMode === "password" ? (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-stone-700">密码</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-stone-400" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
-                  placeholder="请输入密码"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-stone-400 hover:text-stone-600"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+          {/* Password Field */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-stone-700">密码</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="w-5 h-5 text-stone-400" />
               </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                }}
+                className={`w-full pl-12 pr-12 py-3.5 bg-stone-50 border rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 ${
+                  errors.password ? "border-red-400" : "border-stone-200"
+                }`}
+                placeholder="请输入密码"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-stone-400 hover:text-stone-600"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-stone-700">验证码</label>
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-stone-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={verifyCode}
-                    onChange={(e) => setVerifyCode(e.target.value)}
-                    maxLength={6}
-                    className="w-full pl-12 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
-                    placeholder="请输入验证码"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={countdown > 0}
-                  className="px-5 py-3.5 text-sm font-medium border border-amber-500 text-amber-600 rounded-xl hover:bg-amber-50 disabled:border-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-                >
-                  {countdown > 0 ? `${countdown}s` : "获取验证码"}
-                </button>
-              </div>
-            </div>
-          )}
+            {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+          </div>
 
           {/* Remember & Forgot */}
           <div className="flex items-center justify-between">
@@ -243,10 +189,10 @@ export default function LoginPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loginMutation.isPending}
             className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-amber-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-amber-md hover:shadow-amber-lg btn-shine"
           >
-            {loading ? (
+            {loginMutation.isPending ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 登录中...
@@ -287,10 +233,7 @@ export default function LoginPage() {
         {/* Register Link */}
         <p className="mt-8 text-center text-sm text-stone-600">
           还没有账号？
-          <Link
-            href="/register"
-            className="ml-1 text-amber-600 hover:text-amber-700 font-semibold"
-          >
+          <Link href="/register" className="ml-1 text-amber-600 hover:text-amber-700 font-semibold">
             立即注册
           </Link>
         </p>

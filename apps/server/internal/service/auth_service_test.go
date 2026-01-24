@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"server/internal/config"
-	"server/internal/model"
+	"github.com/what-cse/server/internal/config"
+	"github.com/what-cse/server/internal/model"
 )
 
 type MockUserRepository struct {

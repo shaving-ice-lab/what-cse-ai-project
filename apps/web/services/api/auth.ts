@@ -18,6 +18,16 @@ export interface TokenResponse {
   expires_in: number;
 }
 
+export interface ForgotPasswordRequest {
+  account: string;
+}
+
+export interface ResetPasswordRequest {
+  account: string;
+  code: string;
+  new_password: string;
+}
+
 export interface LoginResponse {
   user: {
     id: number;
@@ -36,6 +46,10 @@ export const authApi = {
 
   refreshToken: (refreshToken: string): Promise<TokenResponse> =>
     request.post("/auth/refresh", { refresh_token: refreshToken }),
+
+  forgotPassword: (account: string) => request.post("/auth/forgot-password", { account }),
+
+  resetPassword: (data: ResetPasswordRequest) => request.post("/auth/reset-password", data),
 };
 
 export interface AdminLoginRequest {

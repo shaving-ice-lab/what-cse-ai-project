@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { useState } from "react";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster, toast } from "@/components/ui/toaster";
 
 // Global error handler for API errors
 const handleGlobalError = (error: unknown) => {
@@ -11,34 +11,29 @@ const handleGlobalError = (error: unknown) => {
     message?: string;
   };
 
+  // 401 errors are handled by the request interceptor
   if (err?.response?.status === 401) {
-    // Token expired or invalid - redirect to login
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      window.location.href = "/login";
-    }
     return;
   }
 
   if (err?.response?.status === 403) {
-    console.error("没有权限访问该资源");
+    toast.error("没有权限访问该资源");
     return;
   }
 
   if (err?.response?.status === 404) {
-    console.error("请求的资源不存在");
+    toast.error("请求的资源不存在");
     return;
   }
 
   if (err?.response?.status === 500) {
-    console.error("服务器错误，请稍后重试");
+    toast.error("服务器错误，请稍后重试");
     return;
   }
 
   // Default error message
   const message = err?.response?.data?.message || err?.message || "操作失败，请重试";
-  console.error(message);
+  toast.error(message);
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {

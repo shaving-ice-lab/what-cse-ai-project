@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"server/internal/model"
+	"github.com/what-cse/server/internal/model"
 )
 
 func TestUserModel_TableName(t *testing.T) {
