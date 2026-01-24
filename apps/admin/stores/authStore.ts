@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist, StateStorage } from "zustand/middleware";
+import { persist, StateStorage, createJSONStorage } from "zustand/middleware";
 
 interface Admin {
   id: number;
@@ -11,31 +11,44 @@ interface AuthState {
   admin: Admin | null;
   adminToken: string | null;
   isAuthenticated: boolean;
+  _hasHydrated: boolean;
   setAdmin: (admin: Admin, token: string) => void;
   logout: () => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
-// Custom storage that syncs to both localStorage and cookies
-// This allows middleware (server-side) to read auth state from cookies
-const cookieSyncStorage: StateStorage = {
+// Cookie 操作工具函数
+const setCookie = (name: string, value: string, days: number = 7) => {
+  if (typeof document === "undefined") return;
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+};
+
+const getCookie = (name: string): string | null => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+  return match ? decodeURIComponent(match[2]) : null;
+};
+
+const deleteCookie = (name: string) => {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+};
+
+// 只使用 Cookie 存储，不使用 localStorage
+// 这样可以确保服务端（middleware）和客户端使用相同的数据源
+const cookieOnlyStorage: StateStorage = {
   getItem: (name: string): string | null => {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem(name);
+    return getCookie(name);
   },
   setItem: (name: string, value: string): void => {
     if (typeof window === "undefined") return;
-    // Store in localStorage for client-side hydration
-    localStorage.setItem(name, value);
-    // Also store in cookie for middleware access (server-side)
-    // Cookie expires in 7 days
-    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
-    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; expires=${expires}; SameSite=Lax`;
+    setCookie(name, value, 7); // 7 天有效期
   },
   removeItem: (name: string): void => {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(name);
-    // Remove cookie by setting expired date
-    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    deleteCookie(name);
   },
 };
 
@@ -55,6 +68,7 @@ export const useAuthStore = create<AuthState>()(
       admin: DEV_SKIP_AUTH ? DEV_DEFAULT_ADMIN : null,
       adminToken: DEV_SKIP_AUTH ? "dev-token" : null,
       isAuthenticated: DEV_SKIP_AUTH ? true : false,
+      _hasHydrated: false,
 
       setAdmin: (admin, token) =>
         set({
@@ -69,10 +83,21 @@ export const useAuthStore = create<AuthState>()(
           adminToken: DEV_SKIP_AUTH ? "dev-token" : null,
           isAuthenticated: DEV_SKIP_AUTH ? true : false,
         }),
+
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: "admin-auth-storage",
-      storage: cookieSyncStorage,
+      storage: createJSONStorage(() => cookieOnlyStorage),
+      // 排除 _hasHydrated，不持久化
+      partialize: (state) => ({
+        admin: state.admin,
+        adminToken: state.adminToken,
+        isAuthenticated: state.isAuthenticated,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

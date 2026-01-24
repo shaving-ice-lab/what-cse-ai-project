@@ -32,7 +32,10 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    const authData = JSON.parse(authStorage.value);
+    // Cookie 值可能被 URL 编码，需要先解码
+    const decodedValue = decodeURIComponent(authStorage.value);
+    const authData = JSON.parse(decodedValue);
+    
     if (!authData?.state?.isAuthenticated) {
       return NextResponse.redirect(new URL("/login", request.url));
     }

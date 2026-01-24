@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Command, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { adminApi } from "@/services/api";
@@ -17,7 +16,6 @@ import {
 } from "@what-cse/ui";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const { setAdmin } = useAuthStore();
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -34,11 +32,15 @@ export default function AdminLoginPage() {
         username: formData.username,
         password: formData.password,
       });
+      
+      // Set auth state in zustand store (会自动同步到 localStorage 和 cookie)
       setAdmin(
         { id: response.admin.id, username: response.admin.username, role: response.admin.role },
         response.access_token
       );
-      router.push("/");
+      
+      // 使用 window.location.href 进行硬刷新，确保 cookie 生效
+      window.location.href = "/";
     } catch (err: any) {
       setError(err.message || "用户名或密码错误");
     } finally {
@@ -170,7 +172,7 @@ export default function AdminLoginPage() {
         <div className="text-center text-sm text-muted-foreground">
           <p>
             默认账号: <code className="rounded bg-muted px-1 py-0.5">admin</code>{" "}
-            / <code className="rounded bg-muted px-1 py-0.5">admin123456</code>
+            / <code className="rounded bg-muted px-1 py-0.5">admin123</code>
           </p>
         </div>
 
