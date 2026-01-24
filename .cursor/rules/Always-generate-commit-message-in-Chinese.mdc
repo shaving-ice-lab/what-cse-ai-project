@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Always generate commit message in Chinese 创建提交消息必须使用中文
