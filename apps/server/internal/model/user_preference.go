@@ -23,7 +23,7 @@ type UserPreference struct {
 }
 
 func (UserPreference) TableName() string {
-	return "user_preferences"
+	return "what_user_preferences"
 }
 
 type MatchStrategy string

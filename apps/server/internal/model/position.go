@@ -42,11 +42,11 @@ type Position struct {
 	UpdatedAt            time.Time       `json:"updated_at"`
 	DeletedAt            gorm.DeletedAt  `gorm:"index" json:"-"`
 
-	Announcements []Announcement `gorm:"many2many:position_announcements;" json:"announcements,omitempty"`
+	Announcements []Announcement `gorm:"many2many:what_position_announcements;" json:"announcements,omitempty"`
 }
 
 func (Position) TableName() string {
-	return "positions"
+	return "what_positions"
 }
 
 type PositionStatus int

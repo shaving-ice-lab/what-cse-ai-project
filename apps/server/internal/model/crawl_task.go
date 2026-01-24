@@ -29,7 +29,7 @@ type CrawlTask struct {
 }
 
 func (CrawlTask) TableName() string {
-	return "crawl_tasks"
+	return "what_crawl_tasks"
 }
 
 // CrawlTaskStatus represents task status constants
@@ -91,7 +91,7 @@ type CrawlLog struct {
 }
 
 func (CrawlLog) TableName() string {
-	return "crawl_logs"
+	return "what_crawl_logs"
 }
 
 // CrawlLogLevel represents log level constants

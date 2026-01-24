@@ -19,7 +19,7 @@ type UserCertificate struct {
 }
 
 func (UserCertificate) TableName() string {
-	return "user_certificates"
+	return "what_user_certificates"
 }
 
 type CertType string

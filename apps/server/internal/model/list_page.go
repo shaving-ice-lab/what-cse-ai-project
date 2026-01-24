@@ -23,7 +23,7 @@ type ListPage struct {
 }
 
 func (ListPage) TableName() string {
-	return "list_pages"
+	return "what_list_pages"
 }
 
 type ListPageStatus string

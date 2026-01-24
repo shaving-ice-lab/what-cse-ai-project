@@ -27,7 +27,7 @@ type UserProfile struct {
 }
 
 func (UserProfile) TableName() string {
-	return "user_profiles"
+	return "what_user_profiles"
 }
 
 type PoliticalStatus string

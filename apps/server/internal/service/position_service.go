@@ -141,18 +141,24 @@ func (s *PositionService) GetPositionStats() (map[string]interface{}, error) {
 }
 
 // Favorite management
+// positionID is the database primary key (uint)
 func (s *PositionService) AddFavorite(userID, positionID uint) error {
-	// Check if position exists
-	_, err := s.positionRepo.FindByID(positionID)
+	// Check if position exists and get the string position_id
+	position, err := s.positionRepo.FindByID(positionID)
 	if err != nil {
 		return ErrPositionNotFound
 	}
 
-	return s.favoriteRepo.AddFavorite(userID, positionID)
+	return s.favoriteRepo.AddFavorite(userID, position.PositionID)
 }
 
 func (s *PositionService) RemoveFavorite(userID, positionID uint) error {
-	return s.favoriteRepo.RemoveFavorite(userID, positionID)
+	// Get the string position_id from the database ID
+	position, err := s.positionRepo.FindByID(positionID)
+	if err != nil {
+		return ErrPositionNotFound
+	}
+	return s.favoriteRepo.RemoveFavorite(userID, position.PositionID)
 }
 
 func (s *PositionService) GetUserFavorites(userID uint, page, pageSize int) ([]model.Position, int64, error) {
@@ -160,5 +166,10 @@ func (s *PositionService) GetUserFavorites(userID uint, page, pageSize int) ([]m
 }
 
 func (s *PositionService) IsFavorite(userID, positionID uint) bool {
-	return s.favoriteRepo.IsFavorite(userID, positionID)
+	// Get the string position_id from the database ID
+	position, err := s.positionRepo.FindByID(positionID)
+	if err != nil {
+		return false
+	}
+	return s.favoriteRepo.IsFavorite(userID, position.PositionID)
 }

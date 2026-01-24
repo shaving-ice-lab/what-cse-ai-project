@@ -1,8 +1,11 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/what-cse/server/internal/model"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type FavoriteRepository struct {
@@ -13,7 +16,9 @@ func NewFavoriteRepository(db *gorm.DB) *FavoriteRepository {
 	return &FavoriteRepository{db: db}
 }
 
-func (r *FavoriteRepository) AddFavorite(userID, positionID uint) error {
+// AddFavorite adds a position to user's favorites
+// positionID is the string position_id from positions table
+func (r *FavoriteRepository) AddFavorite(userID uint, positionID string) error {
 	favorite := &model.UserFavorite{
 		UserID:     userID,
 		PositionID: positionID,
@@ -21,12 +26,12 @@ func (r *FavoriteRepository) AddFavorite(userID, positionID uint) error {
 	return r.db.Create(favorite).Error
 }
 
-func (r *FavoriteRepository) RemoveFavorite(userID, positionID uint) error {
+func (r *FavoriteRepository) RemoveFavorite(userID uint, positionID string) error {
 	return r.db.Where("user_id = ? AND position_id = ?", userID, positionID).
 		Delete(&model.UserFavorite{}).Error
 }
 
-func (r *FavoriteRepository) IsFavorite(userID, positionID uint) bool {
+func (r *FavoriteRepository) IsFavorite(userID uint, positionID string) bool {
 	var count int64
 	r.db.Model(&model.UserFavorite{}).
 		Where("user_id = ? AND position_id = ?", userID, positionID).
@@ -41,8 +46,7 @@ func (r *FavoriteRepository) GetUserFavorites(userID uint, page, pageSize int) (
 	r.db.Model(&model.UserFavorite{}).Where("user_id = ?", userID).Count(&total)
 
 	offset := (page - 1) * pageSize
-	err := r.db.Preload("Position").
-		Where("user_id = ?", userID).
+	err := r.db.Where("user_id = ?", userID).
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(pageSize).
@@ -52,14 +56,38 @@ func (r *FavoriteRepository) GetUserFavorites(userID uint, page, pageSize int) (
 		return nil, 0, err
 	}
 
+	if len(favorites) == 0 {
+		return []model.Position{}, total, nil
+	}
+
+	// Collect position IDs
+	positionIDs := make([]string, len(favorites))
+	for i, f := range favorites {
+		positionIDs[i] = f.PositionID
+	}
+
+	// Load positions by position_id (string)
 	var positions []model.Position
+	err = r.db.Where("position_id IN ?", positionIDs).Find(&positions).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Create a map for quick lookup
+	positionMap := make(map[string]model.Position)
+	for _, p := range positions {
+		positionMap[p.PositionID] = p
+	}
+
+	// Maintain order from favorites
+	var result []model.Position
 	for _, f := range favorites {
-		if f.Position != nil {
-			positions = append(positions, *f.Position)
+		if p, ok := positionMap[f.PositionID]; ok {
+			result = append(result, p)
 		}
 	}
 
-	return positions, total, nil
+	return result, total, nil
 }
 
 func (r *FavoriteRepository) GetFavoriteCount(userID uint) int64 {
@@ -77,12 +105,20 @@ func NewViewRepository(db *gorm.DB) *ViewRepository {
 	return &ViewRepository{db: db}
 }
 
-func (r *ViewRepository) AddView(userID, positionID uint) error {
+// AddView records a user viewing a position
+// If the user has already viewed this position, update the view_time and increment view_count
+func (r *ViewRepository) AddView(userID uint, positionID string) error {
 	view := &model.UserView{
 		UserID:     userID,
 		PositionID: positionID,
+		ViewTime:   time.Now(),
+		ViewCount:  1,
 	}
-	return r.db.Create(view).Error
+	// Use upsert to update view_time and view_count if record exists
+	return r.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}, {Name: "position_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{"view_time": time.Now(), "view_count": gorm.Expr("view_count + 1")}),
+	}).Create(view).Error
 }
 
 func (r *ViewRepository) GetUserViews(userID uint, page, pageSize int) ([]model.Position, int64, error) {
@@ -92,8 +128,7 @@ func (r *ViewRepository) GetUserViews(userID uint, page, pageSize int) ([]model.
 	r.db.Model(&model.UserView{}).Where("user_id = ?", userID).Count(&total)
 
 	offset := (page - 1) * pageSize
-	err := r.db.Preload("Position").
-		Where("user_id = ?", userID).
+	err := r.db.Where("user_id = ?", userID).
 		Order("view_time DESC").
 		Offset(offset).
 		Limit(pageSize).
@@ -103,14 +138,38 @@ func (r *ViewRepository) GetUserViews(userID uint, page, pageSize int) ([]model.
 		return nil, 0, err
 	}
 
+	if len(views) == 0 {
+		return []model.Position{}, total, nil
+	}
+
+	// Collect position IDs
+	positionIDs := make([]string, len(views))
+	for i, v := range views {
+		positionIDs[i] = v.PositionID
+	}
+
+	// Load positions by position_id (string)
 	var positions []model.Position
+	err = r.db.Where("position_id IN ?", positionIDs).Find(&positions).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Create a map for quick lookup
+	positionMap := make(map[string]model.Position)
+	for _, p := range positions {
+		positionMap[p.PositionID] = p
+	}
+
+	// Maintain order from views
+	var result []model.Position
 	for _, v := range views {
-		if v.Position != nil {
-			positions = append(positions, *v.Position)
+		if p, ok := positionMap[v.PositionID]; ok {
+			result = append(result, p)
 		}
 	}
 
-	return positions, total, nil
+	return result, total, nil
 }
 
 func (r *ViewRepository) ClearHistory(userID uint) error {

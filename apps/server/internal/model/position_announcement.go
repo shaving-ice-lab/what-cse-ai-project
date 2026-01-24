@@ -5,14 +5,15 @@ import (
 )
 
 type PositionAnnouncement struct {
-	PositionID     uint      `gorm:"primaryKey" json:"position_id"`
-	AnnouncementID uint      `gorm:"primaryKey" json:"announcement_id"`
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	PositionID     string    `gorm:"type:varchar(50);index;not null" json:"position_id"`
+	AnnouncementID uint      `gorm:"index;not null" json:"announcement_id"`
 	Stage          string    `gorm:"type:varchar(50)" json:"stage"` // 招聘, 报名, 笔试, 面试, 录用
 	CreatedAt      time.Time `json:"created_at"`
 }
 
 func (PositionAnnouncement) TableName() string {
-	return "position_announcements"
+	return "what_position_announcements"
 }
 
 type LifecycleStage string

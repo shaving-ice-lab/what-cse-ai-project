@@ -23,11 +23,11 @@ type Announcement struct {
 	UpdatedAt        time.Time       `json:"updated_at"`
 	DeletedAt        gorm.DeletedAt  `gorm:"index" json:"-"`
 
-	Positions []Position `gorm:"many2many:position_announcements;" json:"positions,omitempty"`
+	Positions []Position `gorm:"many2many:what_position_announcements;" json:"positions,omitempty"`
 }
 
 func (Announcement) TableName() string {
-	return "announcements"
+	return "what_announcements"
 }
 
 type AnnouncementType string

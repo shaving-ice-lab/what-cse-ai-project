@@ -24,7 +24,7 @@ type User struct {
 }
 
 func (User) TableName() string {
-	return "users"
+	return "what_users"
 }
 
 type UserStatus int
