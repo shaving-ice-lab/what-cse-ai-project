@@ -41,7 +41,7 @@ func seedAdmins(db *gorm.DB) error {
 	}
 
 	// Create default admin password hash
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin123456"), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
