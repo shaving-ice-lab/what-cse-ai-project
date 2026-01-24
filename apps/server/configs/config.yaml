@@ -6,8 +6,8 @@ database:
   host: localhost
   port: 3306
   user: root
-  password: ""
-  dbname: what_cse
+  password: "12345678"
+  dbname: what-cse-ai
   charset: utf8mb4
 
 redis:
@@ -32,3 +32,47 @@ elasticsearch:
   username: ""
   password: ""
   index_name: "positions"
+
+# Crawler Configuration
+crawler:
+  concurrent_requests: 16
+  download_delay: 1s
+  retry_times: 3
+  timeout: 30s
+  user_agent: random
+  proxy_enabled: false
+  proxy_url: ""
+
+# AI Configuration
+ai:
+  provider: openai
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    base_url: "https://api.openai.com/v1"
+    model: "gpt-4o-mini"
+  max_input_tokens: 8000
+  max_output_tokens: 4096
+  temperature: 0.1
+  confidence_threshold: 85
+  timeout: 60s
+
+# Scheduler Configuration
+scheduler:
+  redis_addr: "localhost:6379"
+  redis_password: ""
+  redis_db: 1
+  concurrency: 10
+  retry_max: 3
+
+# Scheduled Tasks (cron expressions)
+schedule:
+  list_monitor:
+    high_priority: "0 */2 * * *"    # Every 2 hours
+    medium_priority: "0 */6 * * *"  # Every 6 hours
+    low_priority: "0 8 * * *"       # Daily at 8am
+
+# OCR Configuration
+ocr:
+  engine: tesseract
+  tesseract_cmd: tesseract
+  language: "chi_sim+eng"

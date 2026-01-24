@@ -89,7 +89,7 @@ func main() {
 	announcementService := service.NewAnnouncementService(announcementRepo)
 	notificationService := service.NewNotificationService(notificationRepo)
 	adminService := service.NewAdminService(adminRepo, userRepo, positionRepo, &cfg.JWT)
-	crawlerService := service.NewCrawlerService(listPageRepo)
+	crawlerService := service.NewCrawlerServiceSimple(listPageRepo)
 
 	// Initialize SearchService (optional - requires Elasticsearch)
 	var searchService *service.SearchService
@@ -122,6 +122,7 @@ func main() {
 	// Initialize Middleware
 	// ============================================
 	authMiddleware := customMiddleware.NewAuthMiddleware(authService)
+	adminAuthMiddleware := customMiddleware.NewAdminAuthMiddleware(adminService)
 	rateLimiter := customMiddleware.DefaultRateLimiter(redisClient)
 
 	// Create Echo instance
@@ -180,10 +181,10 @@ func main() {
 
 	// Admin routes
 	adminGroup := v1.Group("/admin")
-	adminHandler.RegisterRoutes(adminGroup, authMiddleware.JWT())
+	adminHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
 
 	// Crawler routes (admin only)
-	crawlerHandler.RegisterRoutes(adminGroup, authMiddleware.JWT())
+	crawlerHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
 
 	// Search routes (public, only if Elasticsearch is available)
 	if searchHandler != nil {

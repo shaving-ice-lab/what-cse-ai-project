@@ -28,6 +28,10 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.Admin{},
 		&model.MajorDictionary{},
 		&model.RegionDictionary{},
+
+		// Crawler related tables
+		&model.CrawlTask{},
+		&model.CrawlLog{},
 	)
 }
 
