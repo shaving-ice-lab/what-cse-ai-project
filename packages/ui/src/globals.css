@@ -1,51 +1,157 @@
+/* ===== 字体引入 ===== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* ===== 主色 - 琥珀金系 ===== */
+    --amber-50: 48 100% 96%;
+    --amber-100: 48 96% 89%;
+    --amber-200: 48 97% 77%;
+    --amber-300: 46 97% 65%;
+    --amber-400: 43 96% 56%;
+    --amber-500: 38 92% 50%;
+    --amber-600: 32 95% 44%;
+    --amber-700: 26 90% 37%;
+    --amber-800: 23 83% 31%;
+    --amber-900: 22 78% 26%;
+
+    /* ===== 中性色 - 暖石色系 ===== */
+    --stone-50: 60 9% 98%;
+    --stone-100: 60 5% 96%;
+    --stone-200: 20 6% 90%;
+    --stone-300: 24 6% 83%;
+    --stone-400: 24 5% 64%;
+    --stone-500: 25 5% 45%;
+    --stone-600: 33 5% 32%;
+    --stone-700: 30 6% 25%;
+    --stone-800: 12 6% 15%;
+    --stone-900: 24 10% 10%;
+    --stone-950: 20 14% 4%;
+
+    /* ===== 语义色彩变量 ===== */
+    --background: 60 9% 98%;
+    --foreground: 24 10% 10%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 24 10% 10%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --popover-foreground: 24 10% 10%;
+    
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 60 5% 96%;
+    --secondary-foreground: 24 10% 10%;
+    
+    --muted: 60 5% 96%;
+    --muted-foreground: 25 5% 45%;
+    
+    --accent: 48 96% 89%;
+    --accent-foreground: 26 90% 37%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 25 95% 53%;
+    --warning-foreground: 0 0% 100%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    
+    --border: 24 6% 83%;
+    --input: 24 6% 83%;
+    --ring: 38 92% 50%;
+    
+    --radius: 0.75rem;
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 38 92% 50%;
+
+    /* ===== 字体 ===== */
+    --font-sans: 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Noto Serif SC', Georgia, serif;
+    --font-display: 'DM Sans', 'Noto Sans SC', sans-serif;
+
+    /* ===== 阴影 ===== */
+    --shadow-amber-sm: 0 1px 2px 0 rgba(245, 158, 11, 0.05);
+    --shadow-amber: 0 1px 3px 0 rgba(245, 158, 11, 0.1), 0 1px 2px -1px rgba(245, 158, 11, 0.1);
+    --shadow-amber-md: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -2px rgba(245, 158, 11, 0.1);
+    --shadow-amber-lg: 0 10px 15px -3px rgba(245, 158, 11, 0.1), 0 4px 6px -4px rgba(245, 158, 11, 0.1);
+    --shadow-amber-xl: 0 20px 25px -5px rgba(245, 158, 11, 0.1), 0 8px 10px -6px rgba(245, 158, 11, 0.1);
+    
+    --shadow-warm-sm: 0 1px 2px 0 rgba(41, 37, 36, 0.05);
+    --shadow-warm: 0 1px 3px 0 rgba(41, 37, 36, 0.1), 0 1px 2px -1px rgba(41, 37, 36, 0.1);
+    --shadow-warm-md: 0 4px 6px -1px rgba(41, 37, 36, 0.1), 0 2px 4px -2px rgba(41, 37, 36, 0.1);
+    --shadow-warm-lg: 0 10px 15px -3px rgba(41, 37, 36, 0.1), 0 4px 6px -4px rgba(41, 37, 36, 0.1);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 20 14% 4%;
+    --foreground: 60 9% 98%;
+    
+    --card: 24 10% 10%;
+    --card-foreground: 60 9% 98%;
+    
+    --popover: 24 10% 10%;
+    --popover-foreground: 60 9% 98%;
+    
+    --primary: 43 96% 56%;
+    --primary-foreground: 24 10% 10%;
+    
+    --secondary: 30 6% 25%;
+    --secondary-foreground: 60 9% 98%;
+    
+    --muted: 30 6% 25%;
+    --muted-foreground: 24 5% 64%;
+    
+    --accent: 26 90% 37%;
+    --accent-foreground: 48 96% 89%;
+    
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 60 9% 98%;
+    
+    --success: 160 84% 39%;
+    --success-foreground: 60 9% 98%;
+    
+    --warning: 25 95% 53%;
+    --warning-foreground: 60 9% 98%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 60 9% 98%;
+    
+    --border: 30 6% 25%;
+    --input: 30 6% 25%;
+    --ring: 43 96% 56%;
+
+    --shadow-amber-sm: 0 1px 2px 0 rgba(251, 191, 36, 0.1);
+    --shadow-amber: 0 1px 3px 0 rgba(251, 191, 36, 0.15), 0 1px 2px -1px rgba(251, 191, 36, 0.15);
+    --shadow-amber-md: 0 4px 6px -1px rgba(251, 191, 36, 0.15), 0 2px 4px -2px rgba(251, 191, 36, 0.15);
+    --shadow-amber-lg: 0 10px 15px -3px rgba(251, 191, 36, 0.15), 0 4px 6px -4px rgba(251, 191, 36, 0.15);
+
+    /* Sidebar Dark */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 43 96% 56%;
   }
 }
 
@@ -53,7 +159,262 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+  
+  html {
+    scroll-behavior: smooth;
   }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    @apply font-semibold tracking-tight;
+  }
+
+  /* 数字使用 DM Sans */
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  /* ===== 毛玻璃效果 ===== */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply bg-stone-900/80 backdrop-blur-md border border-stone-800/50;
+  }
+
+  /* ===== 渐变背景 ===== */
+  .gradient-amber {
+    @apply bg-gradient-to-r from-amber-500 to-amber-600;
+  }
+  
+  .gradient-amber-warm {
+    @apply bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500;
+  }
+  
+  .gradient-warm-subtle {
+    @apply bg-gradient-to-br from-amber-50 via-orange-50 to-stone-50;
+  }
+
+  /* ===== 卡片悬浮效果 ===== */
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .card-hover:hover {
+    @apply -translate-y-1;
+    box-shadow: var(--shadow-amber-lg);
+  }
+
+  /* ===== 金色光环效果 ===== */
+  .ring-glow {
+    @apply ring-2 ring-amber-500/30 ring-offset-2 ring-offset-background;
+  }
+
+  /* ===== 左边框强调 ===== */
+  .border-accent-left {
+    @apply border-l-4 border-l-amber-500;
+  }
+
+  /* ===== 输入框聚焦光晕 ===== */
+  .input-glow:focus {
+    @apply ring-2 ring-amber-500/20 border-amber-500;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  }
+
+  /* ===== 按钮光泽动画 ===== */
+  .btn-shine {
+    @apply relative overflow-hidden;
+  }
+  
+  .btn-shine::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: transform 0.5s ease;
+  }
+  
+  .btn-shine:hover::after {
+    @apply translate-x-full;
+  }
+
+  /* ===== 文字渐变 ===== */
+  .text-gradient-amber {
+    @apply bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent;
+  }
+
+  /* ===== 下划线动画 ===== */
+  .underline-animation {
+    @apply relative;
+  }
+  
+  .underline-animation::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-amber-500 transition-all duration-300;
+  }
+  
+  .underline-animation:hover::after,
+  .underline-animation.active::after {
+    @apply w-full;
+  }
+
+  /* ===== 标签样式 ===== */
+  .tag-glass {
+    @apply px-2.5 py-1 text-xs font-medium rounded-full;
+    @apply bg-white/60 backdrop-blur-sm border border-stone-200/50;
+  }
+
+  /* ===== 分数环形进度 ===== */
+  .score-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+  
+  .score-ring svg {
+    @apply transform -rotate-90;
+  }
+
+  /* ===== 时间轴样式 ===== */
+  .timeline-item {
+    @apply relative pl-8 pb-6;
+  }
+  
+  .timeline-item::before {
+    content: '';
+    @apply absolute left-3 top-2 w-0.5 h-full bg-stone-200;
+  }
+  
+  .timeline-item:last-child::before {
+    @apply hidden;
+  }
+  
+  .timeline-item::after {
+    content: '';
+    @apply absolute left-1.5 top-1.5 w-4 h-4 rounded-full bg-amber-500 border-4 border-white;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+  }
+  
+  .timeline-item.completed::after {
+    @apply bg-emerald-500;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  }
+  
+  .timeline-item.pending::after {
+    @apply bg-stone-300;
+    box-shadow: 0 0 0 2px rgba(214, 211, 209, 0.2);
+  }
+}
+
+@layer utilities {
+  /* ===== 动画延迟 ===== */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+
+  /* ===== 淡入动画 ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  /* ===== 滑入动画 ===== */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.4s ease-out forwards;
+  }
+
+  /* ===== 缩放弹入 ===== */
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  /* ===== 数字跳动 ===== */
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-count-up {
+    animation: countUp 0.6s ease-out forwards;
+  }
+
+  /* ===== 脉冲光环 ===== */
+  @keyframes pulseRing {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  }
+  
+  .animate-pulse-ring {
+    animation: pulseRing 2s infinite;
+  }
+
+  /* ===== 浮动动画 ===== */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* ===== 闪烁点 ===== */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  .animate-blink {
+    animation: blink 1.5s ease-in-out infinite;
+  }
+}
+
+/* ===== 滚动条美化 ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-stone-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-stone-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone-400;
+}
+
+/* ===== 选中文本颜色 ===== */
+::selection {
+  @apply bg-amber-200 text-amber-900;
 }

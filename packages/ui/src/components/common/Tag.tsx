@@ -1,3 +1,5 @@
+"use client";
+
 type TagColor = "default" | "primary" | "success" | "warning" | "error" | "info";
 
 interface TagProps {

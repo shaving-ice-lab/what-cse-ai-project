@@ -1,3 +1,5 @@
+"use client";
+
 import { FileX } from "lucide-react";
 
 interface EmptyProps {

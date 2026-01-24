@@ -2,8 +2,28 @@
 export { cn } from "./lib/utils";
 
 // UI Components
+export { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
 export { Badge, badgeVariants, type BadgeProps } from "./components/ui/badge";
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from "./components/ui/breadcrumb";
 export { Button, buttonVariants, type ButtonProps } from "./components/ui/button";
+export { Calendar, type CalendarProps } from "./components/ui/calendar";
+export {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  ChartStyle,
+  type ChartConfig,
+} from "./components/ui/chart";
 export {
   Card,
   CardHeader,
@@ -12,7 +32,11 @@ export {
   CardDescription,
   CardContent,
 } from "./components/ui/card";
-export { Calendar, type CalendarProps } from "./components/ui/calendar";
+export {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "./components/ui/collapsible";
 export {
   Dialog,
   DialogPortal,
@@ -25,9 +49,27 @@ export {
   DialogTitle,
   DialogDescription,
 } from "./components/ui/dialog";
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+} from "./components/ui/dropdown-menu";
 export { Input, type InputProps } from "./components/ui/input";
 export { Label } from "./components/ui/label";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/ui/popover";
+export { ScrollArea, ScrollBar } from "./components/ui/scroll-area";
 export {
   Select,
   SelectGroup,
@@ -42,6 +84,44 @@ export {
 } from "./components/ui/select";
 export { Separator } from "./components/ui/separator";
 export {
+  Sheet,
+  SheetPortal,
+  SheetOverlay,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from "./components/ui/sheet";
+export {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar,
+} from "./components/ui/sidebar";
+export {
   Skeleton,
   SkeletonCard,
   SkeletonPositionCard,
@@ -51,6 +131,7 @@ export {
   SkeletonDashboard,
   SkeletonDetail,
 } from "./components/ui/skeleton";
+export { Switch } from "./components/ui/switch";
 export {
   Table,
   TableHeader,
@@ -63,6 +144,12 @@ export {
 } from "./components/ui/table";
 export { Textarea, type TextareaProps } from "./components/ui/textarea";
 export { Toaster, toast } from "./components/ui/toaster";
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "./components/ui/tooltip";
 export { LazyImage, LazyAvatar } from "./components/ui/lazy-image";
 export { ResponsiveTable, DataList, MobileDataCard } from "./components/ui/responsive-table";
 

@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -16,8 +18,8 @@ import {
 } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { cn } from "../../lib/utils";
+import { Button } from "./button";
 
 export interface CalendarProps {
   selected?: Date;
