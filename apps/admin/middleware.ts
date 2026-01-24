@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// 开发模式：跳过所有鉴权检查
+const DEV_SKIP_AUTH = false;
+
 // 不需要登录的路由
 const publicRoutes = ["/login"];
 
 export function middleware(request: NextRequest) {
+  // 开发模式下跳过所有鉴权
+  if (DEV_SKIP_AUTH) {
+    return NextResponse.next();
+  }
+
   const { pathname } = request.nextUrl;
 
   // 检查是否是公开路由

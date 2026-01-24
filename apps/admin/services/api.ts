@@ -129,6 +129,141 @@ export const adminApi = {
   deleteAnnouncement: (id: number) => {
     return request.delete(`/admin/announcements/${id}`);
   },
+
+  // Crawler APIs
+  getCrawlerStats: () => {
+    return request.get("/admin/crawlers");
+  },
+
+  getCrawlerStatistics: () => {
+    return request.get("/admin/crawlers/stats");
+  },
+
+  triggerCrawler: (data: { spider_type: string; list_page_id?: number }) => {
+    return request.post("/admin/crawlers/trigger", data);
+  },
+
+  getCrawlTasks: (params?: {
+    page?: number;
+    page_size?: number;
+    task_type?: string;
+    status?: string;
+  }) => {
+    return request.get("/admin/crawlers/tasks", { params });
+  },
+
+  getCrawlTask: (taskId: string) => {
+    return request.get(`/admin/crawlers/tasks/${taskId}`);
+  },
+
+  cancelCrawlTask: (taskId: string) => {
+    return request.post(`/admin/crawlers/tasks/${taskId}/cancel`);
+  },
+
+  getCrawlerLogs: (params?: { task_id?: string; limit?: number }) => {
+    return request.get("/admin/crawlers/logs", { params });
+  },
+
+  // List Pages APIs
+  getListPages: (params?: {
+    page?: number;
+    page_size?: number;
+    status?: string;
+  }) => {
+    return request.get("/admin/list-pages", { params });
+  },
+
+  getListPage: (id: number) => {
+    return request.get(`/admin/list-pages/${id}`);
+  },
+
+  createListPage: (data: {
+    url: string;
+    source_name?: string;
+    category?: string;
+    crawl_frequency?: string;
+    article_selector?: string;
+    pagination_pattern?: string;
+  }) => {
+    return request.post("/admin/list-pages", data);
+  },
+
+  updateListPage: (
+    id: number,
+    data: {
+      source_name?: string;
+      category?: string;
+      crawl_frequency?: string;
+      article_selector?: string;
+      pagination_pattern?: string;
+      status?: string;
+    }
+  ) => {
+    return request.put(`/admin/list-pages/${id}`, data);
+  },
+
+  deleteListPage: (id: number) => {
+    return request.delete(`/admin/list-pages/${id}`);
+  },
+
+  testListPageCrawl: (id: number) => {
+    return request.post(`/admin/list-pages/${id}/test`);
+  },
 };
+
+// Crawler Types
+export interface CrawlTask {
+  id: number;
+  task_id: string;
+  task_type: string;
+  task_name: string;
+  task_params: Record<string, unknown>;
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  progress: number;
+  result?: Record<string, unknown>;
+  error_message?: string;
+  items_scraped: number;
+  items_saved: number;
+  started_at?: string;
+  completed_at?: string;
+  created_at: string;
+}
+
+export interface ListPage {
+  id: number;
+  url: string;
+  source_name: string;
+  category: string;
+  crawl_frequency: string;
+  last_crawl_time?: string;
+  article_count: number;
+  article_selector: string;
+  pagination_pattern: string;
+  status: "active" | "inactive" | "error";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CrawlerStats {
+  list_pages: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  tasks: {
+    total: number;
+    by_status: Record<string, number>;
+    by_type: Record<string, number>;
+    running_count: number;
+  };
+}
+
+export interface CrawlLog {
+  id: number;
+  task_id: string;
+  level: string;
+  message: string;
+  data?: Record<string, unknown>;
+  created_at: string;
+}
 
 export default request;

@@ -1,7 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus, Edit, Trash2, ChevronRight, ChevronDown } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronRight,
+  ChevronDown,
+  GraduationCap,
+  MoreHorizontal,
+  BookOpen,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Button,
+  Input,
+  Badge,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@what-cse/ui";
 
 interface MajorCategory {
   id: number;
@@ -43,94 +72,202 @@ const mockCategories: MajorCategory[] = [
       { id: 7, code: "0202", name: "金融学" },
     ],
   },
+  {
+    id: 4,
+    code: "03",
+    name: "法学",
+    expanded: false,
+    majors: [
+      { id: 8, code: "0301", name: "法学" },
+      { id: 9, code: "0302", name: "政治学" },
+    ],
+  },
 ];
 
 export default function MajorsDictionaryPage() {
   const [categories, setCategories] = useState<MajorCategory[]>(mockCategories);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const toggleCategory = (id: number) => {
     setCategories(
-      categories.map((cat) => (cat.id === id ? { ...cat, expanded: !cat.expanded } : cat))
+      categories.map((cat) =>
+        cat.id === id ? { ...cat, expanded: !cat.expanded } : cat
+      )
     );
   };
 
+  const totalMajors = categories.reduce((sum, cat) => sum + cat.majors.length, 0);
+
+  const filteredCategories = categories.filter((cat) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      cat.name.toLowerCase().includes(searchLower) ||
+      cat.code.includes(searchTerm) ||
+      cat.majors.some(
+        (m) =>
+          m.name.toLowerCase().includes(searchLower) || m.code.includes(searchTerm)
+      )
+    );
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">专业字典</h1>
-        <button className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-          <Plus className="w-4 h-4" />
-          <span>添加专业</span>
-        </button>
+      {/* 页面标题 */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">专业字典</h1>
+          <p className="text-muted-foreground">管理专业分类和专业列表</p>
+        </div>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          添加专业
+        </Button>
       </div>
 
-      <div className="bg-white rounded-lg border">
-        <div className="p-4 border-b">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="搜索专业..."
-              className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="divide-y">
-          {categories.map((category) => (
-            <div key={category.id}>
-              <div
-                onClick={() => toggleCategory(category.id)}
-                className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50"
-              >
-                <div className="flex items-center space-x-3">
-                  {category.expanded ? (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-500" />
-                  )}
-                  <span className="font-mono text-gray-500">{category.code}</span>
-                  <span className="font-medium text-gray-800">{category.name}</span>
-                  <span className="text-sm text-gray-400">({category.majors.length})</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="p-1 hover:bg-gray-100 rounded"
-                  >
-                    <Edit className="w-4 h-4 text-gray-500" />
-                  </button>
-                </div>
-              </div>
-              {category.expanded && (
-                <div className="bg-gray-50 border-t">
-                  {category.majors.map((major) => (
-                    <div
-                      key={major.id}
-                      className="flex items-center justify-between px-6 py-3 pl-14 hover:bg-gray-100"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="font-mono text-gray-500">{major.code}</span>
-                        <span className="text-gray-700">{major.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button className="p-1 hover:bg-gray-200 rounded">
-                          <Edit className="w-4 h-4 text-gray-500" />
-                        </button>
-                        <button className="p-1 hover:bg-red-50 rounded">
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {/* 统计信息 */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">专业门类</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{categories.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">专业总数</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalMajors}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">平均专业数</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(totalMajors / categories.length).toFixed(1)}
             </div>
-          ))}
-        </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* 专业列表 */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>专业分类</CardTitle>
+              <CardDescription>点击分类展开查看具体专业</CardDescription>
+            </div>
+            <div className="relative w-full sm:w-[250px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="搜索专业..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {filteredCategories.map((category) => (
+              <Collapsible
+                key={category.id}
+                open={category.expanded}
+                onOpenChange={() => toggleCategory(category.id)}
+              >
+                <div className="rounded-lg border">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        {category.expanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <Badge variant="outline" className="font-mono">
+                          {category.code}
+                        </Badge>
+                        <span className="font-medium">{category.name}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {category.majors.length}
+                        </Badge>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>操作</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Plus className="mr-2 h-4 w-4" />
+                            添加专业
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="mr-2 h-4 w-4" />
+                            编辑分类
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            删除分类
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="border-t bg-muted/30">
+                      {category.majors.map((major) => (
+                        <div
+                          key={major.id}
+                          className="flex items-center justify-between px-4 py-2.5 pl-12 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {major.code}
+                            </Badge>
+                            <span className="text-sm">{major.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

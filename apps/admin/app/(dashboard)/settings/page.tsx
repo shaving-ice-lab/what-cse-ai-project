@@ -2,7 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Save, Shield, Bell, Database, Globe, Users } from "lucide-react";
+import { Save, Globe, Shield, Bell, Database, Users } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Switch,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Separator,
+} from "@what-cse/ui";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -10,8 +28,10 @@ export default function SettingsPage() {
     siteDescription: "公务员职位智能筛选系统",
     allowRegistration: true,
     requireEmailVerification: false,
-    defaultPageSize: 20,
-    crawlerInterval: 24,
+    defaultPageSize: "20",
+    crawlerInterval: "24",
+    systemNotification: true,
+    crawlerErrorNotification: true,
   });
 
   const handleSave = () => {
@@ -21,176 +41,204 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">系统设置</h1>
-        <Link
-          href="/settings/admins"
-          className="flex items-center space-x-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
-        >
-          <Users className="w-4 h-4" />
-          <span>管理员管理</span>
-        </Link>
+      {/* 页面标题 */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">系统设置</h1>
+          <p className="text-muted-foreground">管理系统配置和偏好设置</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/settings/admins">
+              <Users className="mr-2 h-4 w-4" />
+              管理员管理
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* 基本设置 */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Globe className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-800">基本设置</h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">站点名称</label>
-              <input
-                type="text"
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <CardTitle>基本设置</CardTitle>
+                <CardDescription>配置站点基本信息</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="siteName">站点名称</Label>
+              <Input
+                id="siteName"
                 value={settings.siteName}
-                onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                onChange={(e) =>
+                  setSettings({ ...settings, siteName: e.target.value })
+                }
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">站点描述</label>
-              <textarea
+            <div className="space-y-2">
+              <Label htmlFor="siteDescription">站点描述</Label>
+              <Textarea
+                id="siteDescription"
                 value={settings.siteDescription}
-                onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, siteDescription: e.target.value })
+                }
                 rows={3}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* 用户设置 */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Shield className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-800">用户设置</h2>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-muted-foreground" />
               <div>
-                <div className="font-medium text-gray-800">允许用户注册</div>
-                <div className="text-sm text-gray-500">关闭后新用户无法注册</div>
+                <CardTitle>用户设置</CardTitle>
+                <CardDescription>配置用户注册和验证选项</CardDescription>
               </div>
-              <button
-                onClick={() =>
-                  setSettings({ ...settings, allowRegistration: !settings.allowRegistration })
-                }
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.allowRegistration ? "bg-primary" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    settings.allowRegistration ? "left-7" : "left-1"
-                  }`}
-                />
-              </button>
             </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium text-gray-800">邮箱验证</div>
-                <div className="text-sm text-gray-500">注册时要求验证邮箱</div>
+              <div className="space-y-0.5">
+                <Label>允许用户注册</Label>
+                <p className="text-sm text-muted-foreground">
+                  关闭后新用户无法注册
+                </p>
               </div>
-              <button
-                onClick={() =>
-                  setSettings({
-                    ...settings,
-                    requireEmailVerification: !settings.requireEmailVerification,
-                  })
+              <Switch
+                checked={settings.allowRegistration}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, allowRegistration: checked })
                 }
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.requireEmailVerification ? "bg-primary" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    settings.requireEmailVerification ? "left-7" : "left-1"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 数据设置 */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Database className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-800">数据设置</h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">默认分页大小</label>
-              <select
-                value={settings.defaultPageSize}
-                onChange={(e) =>
-                  setSettings({ ...settings, defaultPageSize: parseInt(e.target.value) })
-                }
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                爬虫运行间隔（小时）
-              </label>
-              <input
-                type="number"
-                value={settings.crawlerInterval}
-                onChange={(e) =>
-                  setSettings({ ...settings, crawlerInterval: parseInt(e.target.value) })
-                }
-                min={1}
-                max={168}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
-          </div>
-        </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>邮箱验证</Label>
+                <p className="text-sm text-muted-foreground">
+                  注册时要求验证邮箱
+                </p>
+              </div>
+              <Switch
+                checked={settings.requireEmailVerification}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, requireEmailVerification: checked })
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 数据设置 */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <CardTitle>数据设置</CardTitle>
+                <CardDescription>配置数据处理参数</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="pageSize">默认分页大小</Label>
+              <Select
+                value={settings.defaultPageSize}
+                onValueChange={(value) =>
+                  setSettings({ ...settings, defaultPageSize: value })
+                }
+              >
+                <SelectTrigger id="pageSize">
+                  <SelectValue placeholder="选择分页大小" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10条/页</SelectItem>
+                  <SelectItem value="20">20条/页</SelectItem>
+                  <SelectItem value="50">50条/页</SelectItem>
+                  <SelectItem value="100">100条/页</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="crawlerInterval">爬虫运行间隔（小时）</Label>
+              <Input
+                id="crawlerInterval"
+                type="number"
+                min="1"
+                max="168"
+                value={settings.crawlerInterval}
+                onChange={(e) =>
+                  setSettings({ ...settings, crawlerInterval: e.target.value })
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                设置爬虫自动运行的时间间隔，范围1-168小时
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 通知设置 */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Bell className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-800">通知设置</h2>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-muted-foreground" />
               <div>
-                <div className="font-medium text-gray-800">系统通知</div>
-                <div className="text-sm text-gray-500">重要系统事件通知</div>
+                <CardTitle>通知设置</CardTitle>
+                <CardDescription>配置系统通知选项</CardDescription>
               </div>
-              <button className="relative w-12 h-6 rounded-full transition-colors bg-primary">
-                <span className="absolute top-1 left-7 w-4 h-4 bg-white rounded-full" />
-              </button>
             </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium text-gray-800">爬虫异常通知</div>
-                <div className="text-sm text-gray-500">爬虫任务异常时发送通知</div>
+              <div className="space-y-0.5">
+                <Label>系统通知</Label>
+                <p className="text-sm text-muted-foreground">
+                  接收重要系统事件通知
+                </p>
               </div>
-              <button className="relative w-12 h-6 rounded-full transition-colors bg-primary">
-                <span className="absolute top-1 left-7 w-4 h-4 bg-white rounded-full" />
-              </button>
+              <Switch
+                checked={settings.systemNotification}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, systemNotification: checked })
+                }
+              />
             </div>
-          </div>
-        </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>爬虫异常通知</Label>
+                <p className="text-sm text-muted-foreground">
+                  爬虫任务异常时发送通知
+                </p>
+              </div>
+              <Switch
+                checked={settings.crawlerErrorNotification}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, crawlerErrorNotification: checked })
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* 保存按钮 */}
       <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          className="flex items-center space-x-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-        >
-          <Save className="w-4 h-4" />
-          <span>保存设置</span>
-        </button>
+        <Button onClick={handleSave} size="lg">
+          <Save className="mr-2 h-4 w-4" />
+          保存设置
+        </Button>
       </div>
     </div>
   );
