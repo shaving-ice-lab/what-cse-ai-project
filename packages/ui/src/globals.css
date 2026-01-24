@@ -394,6 +394,22 @@
   .animate-blink {
     animation: blink 1.5s ease-in-out infinite;
   }
+
+  /* ===== Toast slide-in ===== */
+  @keyframes slideInRight {
+    0% { 
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    100% { 
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
 }
 
 /* ===== 滚动条美化 ===== */
