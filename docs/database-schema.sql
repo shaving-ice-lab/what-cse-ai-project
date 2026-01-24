@@ -386,7 +386,7 @@ ALTER TABLE `what_announcements` ADD FULLTEXT INDEX `ft_announcement_search` (`t
 
 -- 插入默认管理员 (密码: admin123)
 INSERT INTO `what_admins` (`username`, `password_hash`, `nickname`, `role`, `status`, `created_at`, `updated_at`) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuLmGsAkMtWNsrG1QH/4f3EzSAE8I9Ck.', '超级管理员', 'super_admin', 1, NOW(), NOW())
+('admin', '$2a$10$nn5yb5ws97Fy5NwVAC6aM.GpE5IOKHSw1W9fnObP8Lt3zEtMmqpvu', '超级管理员', 'super_admin', 1, NOW(), NOW())
 ON DUPLICATE KEY UPDATE `updated_at` = NOW();
 
 -- 插入示例地区数据
