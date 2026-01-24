@@ -31,7 +31,9 @@ export function middleware(request: NextRequest) {
     }
 
     try {
-      const authData = JSON.parse(authStorage.value);
+      // Cookie 值可能被 URL 编码，需要先解码
+      const decodedValue = decodeURIComponent(authStorage.value);
+      const authData = JSON.parse(decodedValue);
       if (!authData?.state?.isAuthenticated) {
         const url = new URL("/login", request.url);
         url.searchParams.set("redirect", pathname);

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { useRegister } from "@/hooks/useAuth";
 import { validators } from "@/utils/validation";
@@ -18,8 +17,7 @@ interface FormErrors {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const registerMutation = useRegister();
 
   const [nickname, setNickname] = useState("");
@@ -30,12 +28,13 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (wait for hydration to complete)
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/");
+    if (_hasHydrated && isAuthenticated) {
+      // 使用硬刷新确保状态完全同步
+      window.location.href = "/";
     }
-  }, [isAuthenticated, router]);
+  }, [_hasHydrated, isAuthenticated]);
 
   // Password strength check
   const getPasswordStrength = (pwd: string) => {

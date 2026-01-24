@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { useLogin } from "@/hooks/useAuth";
 import { validators } from "@/utils/validation";
@@ -10,9 +10,8 @@ import { toast } from "@/components/ui/toaster";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowRight, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const loginMutation = useLogin();
 
   const [account, setAccount] = useState("");
@@ -21,13 +20,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ account?: string; password?: string }>({});
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (wait for hydration to complete)
   useEffect(() => {
-    if (isAuthenticated) {
+    // 等待 hydration 完成后再判断
+    if (_hasHydrated && isAuthenticated) {
       const redirect = searchParams.get("redirect") || "/";
-      router.push(redirect);
+      // 使用硬刷新确保状态完全同步到新页面
+      window.location.href = redirect;
     }
-  }, [isAuthenticated, router, searchParams]);
+  }, [_hasHydrated, isAuthenticated, searchParams]);
 
   // Load remembered account
   useEffect(() => {
@@ -76,8 +77,7 @@ export default function LoginPage() {
       {
         onSuccess: () => {
           toast.success("登录成功");
-          const redirect = searchParams.get("redirect") || "/";
-          router.push(redirect);
+          // 跳转由 useEffect 处理，确保状态同步后再跳转
         },
         onError: (error) => {
           toast.error(error.message || "登录失败，请重试");

@@ -35,10 +35,19 @@ const userMenuItems = [
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user, logout, _hasHydrated } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // 确保客户端挂载后再显示认证状态
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 在 hydration 完成且客户端挂载后，才显示认证状态
+  const showAuthenticated = mounted && _hasHydrated && isAuthenticated;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -105,7 +114,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                 <Search className="w-5 h-5" />
               </button>
 
-              {isAuthenticated ? (
+              {showAuthenticated ? (
                 <>
                   {/* Notifications */}
                   <Link

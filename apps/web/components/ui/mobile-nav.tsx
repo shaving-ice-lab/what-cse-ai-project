@@ -24,7 +24,10 @@ const NAV_ITEMS: NavItem[] = [
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, logout, _hasHydrated } = useAuthStore();
+
+  // 在 hydration 完成前，使用默认状态避免闪烁
+  const showAuthenticated = _hasHydrated && isAuthenticated;
 
   const handleLogout = () => {
     logout();
@@ -71,7 +74,7 @@ export function MobileNav() {
                   <span>{item.label}</span>
                 </Link>
               ))}
-              {isAuthenticated && (
+              {showAuthenticated && (
                 <>
                   <div className="border-t my-2" />
                   <Link

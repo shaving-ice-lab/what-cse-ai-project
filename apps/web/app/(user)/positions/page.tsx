@@ -121,19 +121,19 @@ function MultiSelect({ label, options, selected, onChange, className = "" }: {
     <div className={`relative ${className}`}>
       <button onClick={() => setOpen(!open)}
         className={`flex items-center gap-1 px-2 py-1 text-sm border rounded transition-colors ${
-          selected.length > 0 ? "bg-blue-50 border-blue-300 text-blue-700" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+          selected.length > 0 ? "bg-amber-50 border-amber-300 text-amber-700" : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
         }`}>
-        {label}{selected.length > 0 && <span className="px-1 py-0.5 bg-blue-600 text-white text-xs rounded">{selected.length}</span>}
+        {label}{selected.length > 0 && <span className="px-1 py-0.5 bg-amber-500 text-white text-xs rounded">{selected.length}</span>}
         <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[160px] max-h-[240px] overflow-y-auto">
+          <div className="absolute top-full left-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-warm-lg z-50 min-w-[160px] max-h-[240px] overflow-y-auto">
             {options.map(opt => (
               <button key={opt} onClick={() => toggle(opt)}
-                className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-slate-50 ${selected.includes(opt) ? "text-blue-600" : "text-slate-700"}`}>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selected.includes(opt) ? "bg-blue-600 border-blue-600" : "border-slate-300"}`}>
+                className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-stone-50 ${selected.includes(opt) ? "text-amber-600" : "text-stone-700"}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selected.includes(opt) ? "bg-amber-500 border-amber-500" : "border-stone-300"}`}>
                   {selected.includes(opt) && <Check className="w-3 h-3 text-white" />}
                 </div>
                 {opt}
@@ -156,12 +156,12 @@ function RangeFilter({ label, min, max, value, onChange }: {
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-slate-500 w-16">{label}</span>
+      <span className="text-xs text-stone-500 w-16">{label}</span>
       <input type="number" value={value[0]} onChange={e => onChange([+e.target.value, value[1]])}
-        className="w-14 px-1 py-0.5 text-xs border border-slate-200 rounded text-center" min={min} max={max} />
-      <span className="text-slate-400">-</span>
+        className="w-14 px-1 py-0.5 text-xs border border-stone-200 rounded-lg text-center focus:border-amber-500 outline-none" min={min} max={max} />
+      <span className="text-stone-400">-</span>
       <input type="number" value={value[1]} onChange={e => onChange([value[0], +e.target.value])}
-        className="w-14 px-1 py-0.5 text-xs border border-slate-200 rounded text-center" min={min} max={max} />
+        className="w-14 px-1 py-0.5 text-xs border border-stone-200 rounded-lg text-center focus:border-amber-500 outline-none" min={min} max={max} />
     </div>
   );
 }
@@ -271,25 +271,25 @@ export default function PositionsPage() {
 
   const ratioColor = (r: number) => r <= 30 ? "text-emerald-600" : r <= 60 ? "text-green-500" : r <= 100 ? "text-amber-500" : r <= 200 ? "text-orange-500" : "text-red-600";
   const ratioBg = (r: number) => r <= 30 ? "bg-emerald-50" : r <= 60 ? "bg-green-50" : r <= 100 ? "bg-amber-50" : r <= 200 ? "bg-orange-50" : "bg-red-50";
-  const matchColor = (m: number) => m >= 90 ? "text-emerald-600" : m >= 80 ? "text-green-500" : m >= 70 ? "text-amber-500" : m >= 60 ? "text-orange-500" : "text-slate-500";
-  const matchBg = (m: number) => m >= 90 ? "bg-emerald-500" : m >= 80 ? "bg-green-500" : m >= 70 ? "bg-amber-500" : m >= 60 ? "bg-orange-500" : "bg-slate-400";
+  const matchColor = (m: number) => m >= 90 ? "text-emerald-600" : m >= 80 ? "text-green-500" : m >= 70 ? "text-amber-500" : m >= 60 ? "text-orange-500" : "text-stone-500";
+  const matchBg = (m: number) => m >= 90 ? "bg-emerald-500" : m >= 80 ? "bg-green-500" : m >= 70 ? "bg-amber-500" : m >= 60 ? "bg-orange-500" : "bg-stone-400";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen text-stone-800">
       {/* 筛选区域 */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200/50 sticky top-0 z-30 shadow-warm-sm">
         <div className="max-w-[1800px] mx-auto">
           {/* 主筛选行 */}
           <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
             {/* 搜索 */}
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
               <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 placeholder="搜索代码/职位/部门/专业"
-                className="w-48 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:border-blue-400" />
+                className="w-48 pl-8 pr-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" />
             </div>
 
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-stone-200" />
 
             {/* 主要筛选器 */}
             <MultiSelect label="考试类型" options={filterConfig.examType.options} selected={filters.examType} onChange={v => updateFilter("examType", v)} />
@@ -303,32 +303,32 @@ export default function PositionsPage() {
 
             {/* 高级筛选按钮 */}
             <button onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`flex items-center gap-1 px-2 py-1 text-sm border rounded transition-colors ${
-                showAdvanced ? "bg-blue-50 border-blue-300 text-blue-700" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+              className={`flex items-center gap-1 px-2 py-1 text-sm border rounded-lg transition-colors ${
+                showAdvanced ? "bg-amber-50 border-amber-300 text-amber-700" : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
               }`}>
               <SlidersHorizontal className="w-4 h-4" />
               高级筛选
-              {activeFilterCount > 0 && <span className="px-1 py-0.5 bg-blue-600 text-white text-xs rounded">{activeFilterCount}</span>}
+              {activeFilterCount > 0 && <span className="px-1 py-0.5 bg-amber-500 text-white text-xs rounded">{activeFilterCount}</span>}
             </button>
 
             {/* 重置 */}
             {activeFilterCount > 0 && (
-              <button onClick={resetFilters} className="flex items-center gap-1 px-2 py-1 text-sm text-slate-500 hover:text-slate-700">
+              <button onClick={resetFilters} className="flex items-center gap-1 px-2 py-1 text-sm text-stone-500 hover:text-stone-700">
                 <RotateCcw className="w-3 h-3" />重置
               </button>
             )}
 
             {/* 工具按钮 */}
-            <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><RefreshCw className="w-4 h-4" /></button>
-            <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><Download className="w-4 h-4" /></button>
+            <button className="p-1.5 text-stone-500 hover:bg-stone-100 rounded-lg"><RefreshCw className="w-4 h-4" /></button>
+            <button className="p-1.5 text-stone-500 hover:bg-stone-100 rounded-lg"><Download className="w-4 h-4" /></button>
           </div>
 
           {/* 高级筛选面板 */}
           {showAdvanced && (
-            <div className="border-t border-slate-100 bg-slate-50/50">
+            <div className="border-t border-stone-100 bg-stone-50/50">
               {/* 第二行筛选器 */}
               <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
-                <span className="text-xs text-slate-500 font-medium">更多条件:</span>
+                <span className="text-xs text-stone-500 font-medium">更多条件:</span>
                 <MultiSelect label="部门类型" options={filterConfig.deptType.options} selected={filters.deptType} onChange={v => updateFilter("deptType", v)} />
                 <MultiSelect label="职位类别" options={filterConfig.positionType.options} selected={filters.positionType} onChange={v => updateFilter("positionType", v)} />
                 <MultiSelect label="学位要求" options={filterConfig.degree.options} selected={filters.degree} onChange={v => updateFilter("degree", v)} />
@@ -339,8 +339,8 @@ export default function PositionsPage() {
               </div>
 
               {/* 数值范围筛选 */}
-              <div className="flex items-center gap-4 px-3 py-2 border-t border-slate-100 flex-wrap">
-                <span className="text-xs text-slate-500 font-medium">数值范围:</span>
+              <div className="flex items-center gap-4 px-3 py-2 border-t border-stone-100 flex-wrap">
+                <span className="text-xs text-stone-500 font-medium">数值范围:</span>
                 <RangeFilter label="招录人数" min={1} max={100} value={ranges.recruit} onChange={v => updateRange("recruit", v)} />
                 <RangeFilter label="竞争比" min={0} max={1000} value={ranges.ratio} onChange={v => updateRange("ratio", v)} />
                 <RangeFilter label="匹配度" min={0} max={100} value={ranges.match} onChange={v => updateRange("match", v)} />
@@ -348,14 +348,14 @@ export default function PositionsPage() {
               </div>
 
               {/* 快捷筛选 */}
-              <div className="flex items-center gap-2 px-3 py-2 border-t border-slate-100 flex-wrap">
-                <span className="text-xs text-slate-500 font-medium">快捷筛选:</span>
+              <div className="flex items-center gap-2 px-3 py-2 border-t border-stone-100 flex-wrap">
+                <span className="text-xs text-stone-500 font-medium">快捷筛选:</span>
                 {quickFilters.map(qf => (
                   <button key={qf.id} onClick={() => toggleQuick(qf.id)}
-                    className={`flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
+                    className={`flex items-center gap-1 px-2 py-1 text-xs rounded-lg border transition-colors ${
                       activeQuickFilters.includes(qf.id)
-                        ? "bg-blue-50 border-blue-300 text-blue-700"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                        ? "bg-amber-50 border-amber-300 text-amber-700"
+                        : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
                     }`}>
                     <qf.icon className="w-3 h-3" />{qf.label}
                   </button>
@@ -366,20 +366,20 @@ export default function PositionsPage() {
 
           {/* 已选筛选标签 */}
           {activeFilterCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 border-t border-slate-100 bg-blue-50/50 flex-wrap">
-              <span className="text-xs text-slate-500">已选:</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 border-t border-stone-100 bg-amber-50/50 flex-wrap">
+              <span className="text-xs text-stone-500">已选:</span>
               {Object.entries(filters).map(([key, vals]) => vals.map(v => (
-                <span key={`${key}-${v}`} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700">
+                <span key={`${key}-${v}`} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-stone-200 rounded-lg text-xs text-stone-700">
                   {v}
-                  <button onClick={() => updateFilter(key, vals.filter(x => x !== v))} className="text-slate-400 hover:text-slate-600">
+                  <button onClick={() => updateFilter(key, vals.filter(x => x !== v))} className="text-stone-400 hover:text-stone-600">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )))}
               {activeQuickFilters.map(qf => (
-                <span key={qf} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 border border-blue-200 rounded text-xs text-blue-700">
+                <span key={qf} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 border border-amber-200 rounded-lg text-xs text-amber-700">
                   {quickFilters.find(q => q.id === qf)?.label}
-                  <button onClick={() => toggleQuick(qf)} className="text-blue-400 hover:text-blue-600">
+                  <button onClick={() => toggleQuick(qf)} className="text-amber-400 hover:text-amber-600">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -389,10 +389,10 @@ export default function PositionsPage() {
 
           {/* 对比栏 */}
           {compareList.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 border-t border-slate-100 bg-emerald-50">
+            <div className="flex items-center gap-2 px-3 py-1.5 border-t border-stone-100 bg-emerald-50">
               <Scale className="w-4 h-4 text-emerald-600" />
               <span className="text-sm text-emerald-700">已选 {compareList.length}/4 个职位</span>
-              <button className="px-2 py-0.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700">开始对比</button>
+              <button className="px-2 py-0.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700">开始对比</button>
               <button onClick={() => setCompareList([])} className="text-emerald-600 hover:text-emerald-700 text-xs">清除</button>
             </div>
           )}
@@ -400,58 +400,58 @@ export default function PositionsPage() {
       </div>
 
       {/* 数据表格 */}
-      <div className="max-w-[1800px] mx-auto px-2">
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="max-w-[1800px] mx-auto px-4 py-4">
+        <div className="bg-white border border-stone-200/50 rounded-2xl overflow-hidden shadow-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
-              <thead className="bg-slate-100">
+              <thead className="bg-stone-50">
               <tr>
-                <th className="px-1.5 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-8">
-                  <input type="checkbox" className="rounded border-slate-300" />
+                <th className="px-1.5 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200 w-8">
+                  <input type="checkbox" className="rounded border-stone-300" />
                 </th>
-                <th className="px-1.5 py-2 text-left font-semibold text-slate-600 border-b border-slate-200">代码</th>
-                <th className="px-1.5 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 min-w-[140px]">职位名称</th>
-                <th className="px-1.5 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 min-w-[180px]">招录单位</th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200">类型</th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200">层级</th>
-                <th className="px-1.5 py-2 text-left font-semibold text-slate-600 border-b border-slate-200">地区</th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200">学历</th>
-                <th className="px-1.5 py-2 text-left font-semibold text-slate-600 border-b border-slate-200">专业</th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200" onClick={() => handleSort("recruit")}>
+                <th className="px-1.5 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200">代码</th>
+                <th className="px-1.5 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200 min-w-[140px]">职位名称</th>
+                <th className="px-1.5 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200 min-w-[180px]">招录单位</th>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200">类型</th>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200">层级</th>
+                <th className="px-1.5 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200">地区</th>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200">学历</th>
+                <th className="px-1.5 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200">专业</th>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg" onClick={() => handleSort("recruit")}>
                   招录{sortKey === "recruit" && (sortAsc ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />)}
                 </th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200" onClick={() => handleSort("ratio")}>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg" onClick={() => handleSort("ratio")}>
                   竞争{sortKey === "ratio" && (sortAsc ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />)}
                 </th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200" onClick={() => handleSort("match")}>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg" onClick={() => handleSort("match")}>
                   匹配{sortKey === "match" && (sortAsc ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />)}
                 </th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200" onClick={() => handleSort("trend")}>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg" onClick={() => handleSort("trend")}>
                   热度{sortKey === "trend" && (sortAsc ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />)}
                 </th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200" onClick={() => handleSort("score")}>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg" onClick={() => handleSort("score")}>
                   分数{sortKey === "score" && (sortAsc ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />)}
                 </th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200">要求</th>
-                <th className="px-1.5 py-2 text-center font-semibold text-slate-600 border-b border-slate-200 w-16">操作</th>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200">要求</th>
+                <th className="px-1.5 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 w-16">操作</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.map((p, idx) => (
-                <tr key={p.id} className={`border-b border-slate-100 hover:bg-blue-50/50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"}`}>
+                <tr key={p.id} className={`border-b border-stone-100 hover:bg-amber-50/50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-stone-50/30"}`}>
                   <td className="px-1.5 py-1.5">
-                    <input type="checkbox" checked={compareList.includes(p.id)} onChange={() => toggleCompare(p.id)} className="rounded border-slate-300" />
+                    <input type="checkbox" checked={compareList.includes(p.id)} onChange={() => toggleCompare(p.id)} className="rounded border-stone-300" />
                   </td>
-                  <td className="px-1.5 py-1.5 font-mono text-xs text-slate-500">{p.code}</td>
+                  <td className="px-1.5 py-1.5 font-mono text-xs text-stone-500">{p.code}</td>
                   <td className="px-1.5 py-1.5">
                     <div className="flex items-center gap-1">
                       {p.hot && <Flame className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
                       {favorites.includes(p.id) && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />}
-                      <Link href={`/positions/${p.id}`} className="font-medium text-slate-800 hover:text-blue-600 truncate">{p.name}</Link>
+                      <Link href={`/positions/${p.id}`} className="font-medium text-stone-800 hover:text-amber-600 truncate">{p.name}</Link>
                     </div>
                   </td>
                   <td className="px-1.5 py-1.5">
-                    <div className="truncate text-slate-700" title={p.dept}>{p.dept}</div>
+                    <div className="truncate text-stone-700" title={p.dept}>{p.dept}</div>
                   </td>
                   <td className="px-1.5 py-1.5 text-center">
                     <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${
@@ -463,16 +463,16 @@ export default function PositionsPage() {
                       "bg-orange-100 text-orange-700"
                     }`}>{p.examType}</span>
                   </td>
-                  <td className="px-1.5 py-1.5 text-center text-xs text-slate-600">{p.level}</td>
-                  <td className="px-1.5 py-1.5 text-slate-700 text-xs">{p.province} {p.city}</td>
-                  <td className="px-1.5 py-1.5 text-center text-slate-600">{p.edu}</td>
+                  <td className="px-1.5 py-1.5 text-center text-xs text-stone-600">{p.level}</td>
+                  <td className="px-1.5 py-1.5 text-stone-700 text-xs">{p.province} {p.city}</td>
+                  <td className="px-1.5 py-1.5 text-center text-stone-600">{p.edu}</td>
                   <td className="px-1.5 py-1.5">
-                    <span className={`text-xs truncate ${p.major === "不限" ? "text-emerald-600 font-medium" : "text-slate-600"}`} title={p.major}>
+                    <span className={`text-xs truncate ${p.major === "不限" ? "text-emerald-600 font-medium" : "text-stone-600"}`} title={p.major}>
                       {p.major.length > 6 ? p.major.slice(0, 6) + "…" : p.major}
                     </span>
                   </td>
                   <td className="px-1.5 py-1.5 text-center">
-                    <span className={`font-mono font-bold ${p.recruit >= 5 ? "text-emerald-600" : p.recruit >= 3 ? "text-green-500" : "text-slate-700"}`}>{p.recruit}</span>
+                    <span className={`font-mono font-bold ${p.recruit >= 5 ? "text-emerald-600" : p.recruit >= 3 ? "text-green-500" : "text-stone-700"}`}>{p.recruit}</span>
                   </td>
                   <td className="px-1.5 py-1.5 text-center">
                     <span className={`font-mono font-bold px-1.5 py-0.5 rounded ${ratioColor(p.ratio)} ${ratioBg(p.ratio)}`}>{p.ratio}:1</span>
@@ -480,18 +480,18 @@ export default function PositionsPage() {
                   <td className="px-1.5 py-1.5 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <span className={`font-mono font-bold ${matchColor(p.match)}`}>{p.match}%</span>
-                      <div className="w-8 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="w-8 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full ${matchBg(p.match)}`} style={{ width: `${p.match}%` }} />
                       </div>
                     </div>
                   </td>
                   <td className="px-1.5 py-1.5 text-center">
-                    <span className={`font-mono text-xs flex items-center justify-center gap-0.5 ${p.trend > 0 ? "text-red-500" : p.trend < 0 ? "text-emerald-500" : "text-slate-400"}`}>
+                    <span className={`font-mono text-xs flex items-center justify-center gap-0.5 ${p.trend > 0 ? "text-red-500" : p.trend < 0 ? "text-emerald-500" : "text-stone-400"}`}>
                       {p.trend > 0 ? <ArrowUp className="w-3 h-3" /> : p.trend < 0 ? <ArrowDown className="w-3 h-3" /> : null}
                       {p.trend > 0 ? "+" : ""}{p.trend.toFixed(1)}%
                     </span>
                   </td>
-                  <td className="px-1.5 py-1.5 text-center font-mono text-blue-600 text-xs">{p.score}</td>
+                  <td className="px-1.5 py-1.5 text-center font-mono text-amber-600 text-xs">{p.score}</td>
                   <td className="px-1.5 py-1.5">
                     <div className="flex flex-wrap gap-0.5 justify-center">
                       {p.political !== "不限" && <span className="px-1 py-0.5 bg-red-50 text-red-600 rounded text-xs">{p.political}</span>}
@@ -501,10 +501,10 @@ export default function PositionsPage() {
                   </td>
                   <td className="px-1.5 py-1.5">
                     <div className="flex items-center justify-center gap-0.5">
-                      <button onClick={() => toggleFav(p.id)} className={`p-1 rounded transition-colors ${favorites.includes(p.id) ? "text-amber-500" : "text-slate-400 hover:text-amber-500"}`}>
+                      <button onClick={() => toggleFav(p.id)} className={`p-1 rounded-lg transition-colors ${favorites.includes(p.id) ? "text-amber-500" : "text-stone-400 hover:text-amber-500"}`}>
                         <Star className={`w-4 h-4 ${favorites.includes(p.id) ? "fill-current" : ""}`} />
                       </button>
-                      <Link href={`/positions/${p.id}`} className="p-1 rounded text-slate-400 hover:text-blue-600">
+                      <Link href={`/positions/${p.id}`} className="p-1 rounded-lg text-stone-400 hover:text-amber-600">
                         <Eye className="w-4 h-4" />
                       </Link>
                     </div>
@@ -516,13 +516,13 @@ export default function PositionsPage() {
           </div>
 
           {/* 底部状态栏 */}
-          <div className="bg-slate-50 border-t border-slate-200 px-3 py-2 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4 text-slate-600">
-            <span>共 <b className="text-slate-800">{filteredData.length}</b> 条</span>
+          <div className="bg-stone-50 border-t border-stone-200 px-3 py-2.5 flex items-center justify-between text-sm">
+          <div className="flex items-center gap-4 text-stone-600">
+            <span>共 <b className="text-stone-800">{filteredData.length}</b> 条</span>
             <span>招录 <b className="text-emerald-600">{stats.recruit}</b> 人</span>
             <span>均竞争 <b className="text-amber-600">{stats.avgRatio}:1</b></span>
           </div>
-          <div className="flex items-center gap-2 text-slate-400">
+          <div className="flex items-center gap-2 text-stone-400">
             <Activity className="w-4 h-4 text-emerald-500" />
             <span>实时更新</span>
             <Clock className="w-4 h-4" />
@@ -532,11 +532,11 @@ export default function PositionsPage() {
         </div>
 
         {filteredData.length === 0 && (
-          <div className="bg-white p-12 text-center">
-            <Filter className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">暂无符合条件的职位</h3>
-            <p className="text-slate-500 mb-4">请调整筛选条件或搜索关键词</p>
-            <button onClick={resetFilters} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">重置筛选</button>
+          <div className="bg-white p-12 text-center rounded-2xl border border-stone-200/50 shadow-card mt-4">
+            <Filter className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-stone-700 mb-2">暂无符合条件的职位</h3>
+            <p className="text-stone-500 mb-4">请调整筛选条件或搜索关键词</p>
+            <button onClick={resetFilters} className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl hover:from-amber-600 hover:to-amber-700 shadow-amber-md">重置筛选</button>
           </div>
         )}
       </div>

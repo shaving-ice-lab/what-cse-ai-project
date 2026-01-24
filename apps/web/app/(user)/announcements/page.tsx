@@ -82,8 +82,8 @@ function MultiSelect({ label, options, selected, onChange, className = "" }: {
   return (
     <div className={`relative ${className}`}>
       <button onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1 px-2 py-1 text-sm border rounded transition-colors ${
-          selected.length > 0 ? "bg-amber-50 border-amber-300 text-amber-700" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+        className={`flex items-center gap-1 px-2 py-1 text-sm border rounded-lg transition-colors ${
+          selected.length > 0 ? "bg-amber-50 border-amber-300 text-amber-700" : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
         }`}>
         {label}{selected.length > 0 && <span className="px-1 py-0.5 bg-amber-500 text-white text-xs rounded">{selected.length}</span>}
         <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -91,11 +91,11 @@ function MultiSelect({ label, options, selected, onChange, className = "" }: {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[160px] max-h-[240px] overflow-y-auto">
+          <div className="absolute top-full left-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-warm-lg z-50 min-w-[160px] max-h-[240px] overflow-y-auto">
             {options.map(opt => (
               <button key={opt} onClick={() => toggle(opt)}
-                className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-slate-50 ${selected.includes(opt) ? "text-amber-600" : "text-slate-700"}`}>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selected.includes(opt) ? "bg-amber-500 border-amber-500" : "border-slate-300"}`}>
+                className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-stone-50 ${selected.includes(opt) ? "text-amber-600" : "text-stone-700"}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selected.includes(opt) ? "bg-amber-500 border-amber-500" : "border-stone-300"}`}>
                   {selected.includes(opt) && <Check className="w-3 h-3 text-white" />}
                 </div>
                 {opt}
@@ -203,7 +203,7 @@ export default function AnnouncementListPage() {
       "成绩查询": "bg-cyan-100 text-cyan-700",
       "面试公告": "bg-orange-100 text-orange-700",
     };
-    return colors[type] || "bg-slate-100 text-slate-700";
+    return colors[type] || "bg-stone-100 text-stone-700";
   };
 
   const examTypeColor = (type: string) => {
@@ -212,20 +212,20 @@ export default function AnnouncementListPage() {
       "省考": "bg-emerald-100 text-emerald-700",
       "事业单位": "bg-violet-100 text-violet-700",
       "选调生": "bg-amber-100 text-amber-700",
-      "军队文职": "bg-slate-200 text-slate-700",
+      "军队文职": "bg-stone-200 text-stone-700",
       "三支一扶": "bg-orange-100 text-orange-700",
     };
-    return colors[type] || "bg-slate-100 text-slate-700";
+    return colors[type] || "bg-stone-100 text-stone-700";
   };
 
   const statusColor = (status: string) => {
     const colors: Record<string, string> = {
       "进行中": "bg-emerald-100 text-emerald-700",
-      "已结束": "bg-slate-100 text-slate-500",
+      "已结束": "bg-stone-100 text-stone-500",
       "即将开始": "bg-amber-100 text-amber-700",
       "已发布": "bg-blue-50 text-blue-600",
     };
-    return colors[status] || "bg-slate-100 text-slate-700";
+    return colors[status] || "bg-stone-100 text-stone-700";
   };
 
   const formatNumber = (num: number) => {
@@ -235,21 +235,21 @@ export default function AnnouncementListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen text-stone-800">
       {/* 筛选区域 */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200/50 sticky top-0 z-30 shadow-warm-sm">
         <div className="max-w-[1800px] mx-auto">
           {/* 主筛选行 */}
           <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
             {/* 搜索 */}
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
               <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 placeholder="搜索代码/标题/来源"
-                className="w-48 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:border-amber-400" />
+                className="w-48 pl-8 pr-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" />
             </div>
 
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-stone-200" />
 
             {/* 主要筛选器 */}
             <MultiSelect label="公告类型" options={filterConfig.type.options} selected={filters.type} onChange={v => updateFilter("type", v)} />
@@ -261,8 +261,8 @@ export default function AnnouncementListPage() {
 
             {/* 高级筛选按钮 */}
             <button onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`flex items-center gap-1 px-2 py-1 text-sm border rounded transition-colors ${
-                showAdvanced ? "bg-amber-50 border-amber-300 text-amber-700" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+              className={`flex items-center gap-1 px-2 py-1 text-sm border rounded-lg transition-colors ${
+                showAdvanced ? "bg-amber-50 border-amber-300 text-amber-700" : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
               }`}>
               <SlidersHorizontal className="w-4 h-4" />
               高级筛选
@@ -271,34 +271,34 @@ export default function AnnouncementListPage() {
 
             {/* 重置 */}
             {activeFilterCount > 0 && (
-              <button onClick={resetFilters} className="flex items-center gap-1 px-2 py-1 text-sm text-slate-500 hover:text-slate-700">
+              <button onClick={resetFilters} className="flex items-center gap-1 px-2 py-1 text-sm text-stone-500 hover:text-stone-700">
                 <RotateCcw className="w-3 h-3" />重置
               </button>
             )}
 
             {/* 工具按钮 */}
-            <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><RefreshCw className="w-4 h-4" /></button>
-            <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><Download className="w-4 h-4" /></button>
+            <button className="p-1.5 text-stone-500 hover:bg-stone-100 rounded-lg"><RefreshCw className="w-4 h-4" /></button>
+            <button className="p-1.5 text-stone-500 hover:bg-stone-100 rounded-lg"><Download className="w-4 h-4" /></button>
           </div>
 
           {/* 高级筛选面板 */}
           {showAdvanced && (
-            <div className="border-t border-slate-100 bg-slate-50/50">
+            <div className="border-t border-stone-100 bg-stone-50/50">
               {/* 第二行筛选器 */}
               <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
-                <span className="text-xs text-slate-500 font-medium">更多条件:</span>
+                <span className="text-xs text-stone-500 font-medium">更多条件:</span>
                 <MultiSelect label="发布机构" options={filterConfig.source.options} selected={filters.source} onChange={v => updateFilter("source", v)} />
               </div>
 
               {/* 快捷筛选 */}
-              <div className="flex items-center gap-2 px-3 py-2 border-t border-slate-100 flex-wrap">
-                <span className="text-xs text-slate-500 font-medium">快捷筛选:</span>
+              <div className="flex items-center gap-2 px-3 py-2 border-t border-stone-100 flex-wrap">
+                <span className="text-xs text-stone-500 font-medium">快捷筛选:</span>
                 {quickFilters.map(qf => (
                   <button key={qf.id} onClick={() => toggleQuick(qf.id)}
-                    className={`flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
+                    className={`flex items-center gap-1 px-2 py-1 text-xs rounded-lg border transition-colors ${
                       activeQuickFilters.includes(qf.id)
                         ? "bg-amber-50 border-amber-300 text-amber-700"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                        : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
                     }`}>
                     <qf.icon className="w-3 h-3" />{qf.label}
                   </button>
@@ -309,18 +309,18 @@ export default function AnnouncementListPage() {
 
           {/* 已选筛选标签 */}
           {activeFilterCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 border-t border-slate-100 bg-amber-50/50 flex-wrap">
-              <span className="text-xs text-slate-500">已选:</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 border-t border-stone-100 bg-amber-50/50 flex-wrap">
+              <span className="text-xs text-stone-500">已选:</span>
               {Object.entries(filters).map(([key, vals]) => vals.map(v => (
-                <span key={`${key}-${v}`} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700">
+                <span key={`${key}-${v}`} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-stone-200 rounded-lg text-xs text-stone-700">
                   {v}
-                  <button onClick={() => updateFilter(key, vals.filter(x => x !== v))} className="text-slate-400 hover:text-slate-600">
+                  <button onClick={() => updateFilter(key, vals.filter(x => x !== v))} className="text-stone-400 hover:text-stone-600">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )))}
               {activeQuickFilters.map(qf => (
-                <span key={qf} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 border border-amber-200 rounded text-xs text-amber-700">
+                <span key={qf} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 border border-amber-200 rounded-lg text-xs text-amber-700">
                   {quickFilters.find(q => q.id === qf)?.label}
                   <button onClick={() => toggleQuick(qf)} className="text-amber-400 hover:text-amber-600">
                     <X className="w-3 h-3" />
@@ -333,53 +333,53 @@ export default function AnnouncementListPage() {
       </div>
 
       {/* 数据表格 */}
-      <div className="max-w-[1800px] mx-auto px-2 py-3">
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+      <div className="max-w-[1800px] mx-auto px-4 py-4">
+        <div className="bg-white border border-stone-200/50 rounded-2xl overflow-hidden shadow-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
-              <thead className="bg-slate-100">
+              <thead className="bg-stone-50">
                 <tr>
-                  <th className="px-2 py-2.5 text-left font-semibold text-slate-600 border-b border-slate-200 w-8">
-                    <input type="checkbox" className="rounded border-slate-300" />
+                  <th className="px-2 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200 w-8">
+                    <input type="checkbox" className="rounded border-stone-300" />
                   </th>
-                  <th className="px-2 py-2.5 text-left font-semibold text-slate-600 border-b border-slate-200 w-24">编号</th>
-                  <th className="px-2 py-2.5 text-left font-semibold text-slate-600 border-b border-slate-200 min-w-[280px]">公告标题</th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 w-24">类型</th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 w-24">考试</th>
-                  <th className="px-2 py-2.5 text-left font-semibold text-slate-600 border-b border-slate-200 w-32">来源</th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 w-20">地区</th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200 w-24" onClick={() => handleSort("publishDate")}>
+                  <th className="px-2 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200 w-24">编号</th>
+                  <th className="px-2 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200 min-w-[280px]">公告标题</th>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 w-24">类型</th>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 w-24">考试</th>
+                  <th className="px-2 py-2.5 text-left font-semibold text-stone-600 border-b border-stone-200 w-32">来源</th>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 w-20">地区</th>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg w-24" onClick={() => handleSort("publishDate")}>
                     <div className="flex items-center justify-center gap-1">
                       发布日期{sortKey === "publishDate" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
                     </div>
                   </th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 w-24">截止日期</th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200 w-20" onClick={() => handleSort("recruitCount")}>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 w-24">截止日期</th>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg w-20" onClick={() => handleSort("recruitCount")}>
                     <div className="flex items-center justify-center gap-1">
                       招录{sortKey === "recruitCount" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
                     </div>
                   </th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-200 w-20" onClick={() => handleSort("views")}>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 cursor-pointer hover:bg-stone-100 rounded-lg w-20" onClick={() => handleSort("views")}>
                     <div className="flex items-center justify-center gap-1">
                       浏览{sortKey === "views" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
                     </div>
                   </th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 w-20">状态</th>
-                  <th className="px-2 py-2.5 text-center font-semibold text-slate-600 border-b border-slate-200 w-20">操作</th>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 w-20">状态</th>
+                  <th className="px-2 py-2.5 text-center font-semibold text-stone-600 border-b border-stone-200 w-20">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.map((a, idx) => (
-                  <tr key={a.id} className={`border-b border-slate-100 hover:bg-amber-50/50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"}`}>
+                  <tr key={a.id} className={`border-b border-stone-100 hover:bg-amber-50/50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-stone-50/30"}`}>
                     <td className="px-2 py-2">
-                      <input type="checkbox" className="rounded border-slate-300" />
+                      <input type="checkbox" className="rounded border-stone-300" />
                     </td>
-                    <td className="px-2 py-2 font-mono text-xs text-slate-500">{a.code}</td>
+                    <td className="px-2 py-2 font-mono text-xs text-stone-500">{a.code}</td>
                     <td className="px-2 py-2">
                       <div className="flex items-center gap-1.5">
                         {a.isHot && <Flame className="w-4 h-4 text-red-500 flex-shrink-0" />}
                         {favorites.includes(a.id) && <Star className="w-4 h-4 text-amber-500 fill-amber-500 flex-shrink-0" />}
-                        <Link href={`/announcements/${a.id}`} className="font-medium text-slate-800 hover:text-amber-600 truncate" title={a.title}>
+                        <Link href={`/announcements/${a.id}`} className="font-medium text-stone-800 hover:text-amber-600 truncate" title={a.title}>
                           {a.title.length > 35 ? a.title.slice(0, 35) + "…" : a.title}
                         </Link>
                       </div>
@@ -391,51 +391,51 @@ export default function AnnouncementListPage() {
                       <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${examTypeColor(a.examType)}`}>{a.examType}</span>
                     </td>
                     <td className="px-2 py-2">
-                      <div className="flex items-center gap-1 text-slate-600 text-xs">
-                        <Building2 className="w-3 h-3 text-slate-400" />
+                      <div className="flex items-center gap-1 text-stone-600 text-xs">
+                        <Building2 className="w-3 h-3 text-stone-400" />
                         <span className="truncate" title={a.source}>{a.source.length > 8 ? a.source.slice(0, 8) + "…" : a.source}</span>
                       </div>
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <div className="flex items-center justify-center gap-1 text-slate-600 text-xs">
-                        <MapPin className="w-3 h-3 text-slate-400" />
+                      <div className="flex items-center justify-center gap-1 text-stone-600 text-xs">
+                        <MapPin className="w-3 h-3 text-stone-400" />
                         {a.region}
                       </div>
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <div className="flex items-center justify-center gap-1 text-slate-600 text-xs">
-                        <CalendarDays className="w-3 h-3 text-slate-400" />
+                      <div className="flex items-center justify-center gap-1 text-stone-600 text-xs">
+                        <CalendarDays className="w-3 h-3 text-stone-400" />
                         {a.publishDate.slice(5)}
                       </div>
                     </td>
                     <td className="px-2 py-2 text-center text-xs">
                       {a.deadline ? (
-                        <span className={`${new Date(a.deadline) < new Date() ? "text-slate-400" : "text-red-600 font-medium"}`}>
+                        <span className={`${new Date(a.deadline) < new Date() ? "text-stone-400" : "text-red-600 font-medium"}`}>
                           {a.deadline.slice(5)}
                         </span>
                       ) : (
-                        <span className="text-slate-300">-</span>
+                        <span className="text-stone-300">-</span>
                       )}
                     </td>
                     <td className="px-2 py-2 text-center">
                       {a.recruitCount > 0 ? (
                         <span className="font-mono font-bold text-emerald-600">{formatNumber(a.recruitCount)}</span>
                       ) : (
-                        <span className="text-slate-300">-</span>
+                        <span className="text-stone-300">-</span>
                       )}
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <span className="font-mono text-slate-600">{formatNumber(a.views)}</span>
+                      <span className="font-mono text-stone-600">{formatNumber(a.views)}</span>
                     </td>
                     <td className="px-2 py-2 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusColor(a.status)}`}>{a.status}</span>
                     </td>
                     <td className="px-2 py-2">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => toggleFav(a.id)} className={`p-1 rounded transition-colors ${favorites.includes(a.id) ? "text-amber-500" : "text-slate-400 hover:text-amber-500"}`}>
+                        <button onClick={() => toggleFav(a.id)} className={`p-1 rounded-lg transition-colors ${favorites.includes(a.id) ? "text-amber-500" : "text-stone-400 hover:text-amber-500"}`}>
                           <Star className={`w-4 h-4 ${favorites.includes(a.id) ? "fill-current" : ""}`} />
                         </button>
-                        <Link href={`/announcements/${a.id}`} className="p-1 rounded text-slate-400 hover:text-amber-600">
+                        <Link href={`/announcements/${a.id}`} className="p-1 rounded-lg text-stone-400 hover:text-amber-600">
                           <Eye className="w-4 h-4" />
                         </Link>
                       </div>
@@ -447,14 +447,14 @@ export default function AnnouncementListPage() {
           </div>
 
           {/* 底部状态栏 */}
-          <div className="bg-slate-50 border-t border-slate-200 px-3 py-2 flex items-center justify-between text-sm">
-            <div className="flex items-center gap-4 text-slate-600">
-              <span>共 <b className="text-slate-800">{stats.total}</b> 条</span>
+          <div className="bg-stone-50 border-t border-stone-200 px-3 py-2.5 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-4 text-stone-600">
+              <span>共 <b className="text-stone-800">{stats.total}</b> 条</span>
               <span>招录 <b className="text-emerald-600">{formatNumber(stats.totalRecruit)}</b> 人</span>
               <span>总浏览 <b className="text-amber-600">{formatNumber(stats.totalViews)}</b></span>
-              <span>进行中 <b className="text-blue-600">{stats.recruiting}</b></span>
+              <span>进行中 <b className="text-amber-600">{stats.recruiting}</b></span>
             </div>
-            <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-2 text-stone-400">
               <Bell className="w-4 h-4 text-amber-500" />
               <span>公告实时更新</span>
               <Clock className="w-4 h-4" />
@@ -464,11 +464,11 @@ export default function AnnouncementListPage() {
         </div>
 
         {filteredData.length === 0 && (
-          <div className="bg-white p-12 text-center rounded-lg border border-slate-200 mt-3">
-            <Filter className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">暂无符合条件的公告</h3>
-            <p className="text-slate-500 mb-4">请调整筛选条件或搜索关键词</p>
-            <button onClick={resetFilters} className="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600">重置筛选</button>
+          <div className="bg-white p-12 text-center rounded-2xl border border-stone-200/50 shadow-card mt-4">
+            <Filter className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-stone-700 mb-2">暂无符合条件的公告</h3>
+            <p className="text-stone-500 mb-4">请调整筛选条件或搜索关键词</p>
+            <button onClick={resetFilters} className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl hover:from-amber-600 hover:to-amber-700 shadow-amber-md">重置筛选</button>
           </div>
         )}
       </div>

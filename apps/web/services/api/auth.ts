@@ -51,23 +51,3 @@ export const authApi = {
 
   resetPassword: (data: ResetPasswordRequest) => request.post("/auth/reset-password", data),
 };
-
-export interface AdminLoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface AdminLoginResponse {
-  access_token: string;
-  expires_in: number;
-  admin: {
-    id: number;
-    username: string;
-    role: string;
-  };
-}
-
-export const adminAuthApi = {
-  login: (data: AdminLoginRequest): Promise<AdminLoginResponse> =>
-    request.post("/admin/login", data),
-};

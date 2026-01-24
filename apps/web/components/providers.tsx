@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster, toast } from "@/components/ui/toaster";
+import { AuthInitializer } from "@/components/auth-initializer";
 
 // Global error handler for API errors
 const handleGlobalError = (error: unknown) => {
@@ -67,7 +68,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <AuthInitializer>{children}</AuthInitializer>
       <Toaster />
     </QueryClientProvider>
   );
