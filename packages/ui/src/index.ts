@@ -133,6 +133,12 @@ export {
 } from "./components/ui/skeleton";
 export { Switch } from "./components/ui/switch";
 export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "./components/ui/tabs";
+export {
   Table,
   TableHeader,
   TableBody,
