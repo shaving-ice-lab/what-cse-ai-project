@@ -425,6 +425,180 @@ INSERT INTO `what_major_dictionaries` (`code`, `name`, `category`, `parent_code`
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `updated_at` = NOW();
 
 -- ============================================================================
+-- LLM 配置表
+-- ============================================================================
+
+-- LLM 服务商配置表
+CREATE TABLE IF NOT EXISTS `what_llm_configs` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(100) NOT NULL COMMENT '配置名称',
+    `provider` VARCHAR(50) NOT NULL COMMENT '服务商: openai/azure/anthropic/deepseek/ollama/custom',
+    `model` VARCHAR(100) NOT NULL COMMENT '模型名称',
+    `api_url` VARCHAR(500) NOT NULL COMMENT 'API 接口地址',
+    `api_key_encrypted` TEXT NOT NULL COMMENT '加密存储的 API Key',
+    `organization_id` VARCHAR(100) DEFAULT NULL COMMENT '组织ID（部分服务商需要）',
+    `max_tokens` INT DEFAULT 4096 COMMENT '最大token数',
+    `temperature` DECIMAL(3,2) DEFAULT 0.70 COMMENT '温度参数 0-2',
+    `timeout` INT DEFAULT 60 COMMENT '请求超时时间（秒）',
+    `is_default` TINYINT(1) DEFAULT 0 COMMENT '是否默认配置',
+    `is_enabled` TINYINT(1) DEFAULT 1 COMMENT '是否启用',
+    `extra_params` JSON DEFAULT NULL COMMENT '额外参数（JSON格式）',
+    `description` TEXT DEFAULT NULL COMMENT '配置描述',
+    `last_test_at` DATETIME DEFAULT NULL COMMENT '最后测试时间',
+    `last_test_status` TINYINT DEFAULT NULL COMMENT '最后测试状态: 1-成功 0-失败',
+    `last_test_message` TEXT DEFAULT NULL COMMENT '最后测试消息',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    `deleted_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_llm_config_name` (`name`),
+    KEY `idx_llm_configs_provider` (`provider`),
+    KEY `idx_llm_configs_is_default` (`is_default`),
+    KEY `idx_llm_configs_is_enabled` (`is_enabled`),
+    KEY `idx_llm_configs_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='LLM服务商配置表';
+
+-- ============================================================================
+-- 粉笔爬虫相关表
+-- ============================================================================
+
+-- 粉笔登录凭证表
+CREATE TABLE IF NOT EXISTS `what_fenbi_credentials` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `phone` VARCHAR(20) NOT NULL COMMENT '手机号',
+    `password_encrypted` TEXT NOT NULL COMMENT '加密存储的密码',
+    `cookies` TEXT DEFAULT NULL COMMENT '登录后的Cookie',
+    `cookie_expires_at` DATETIME DEFAULT NULL COMMENT 'Cookie过期时间',
+    `login_status` TINYINT DEFAULT 0 COMMENT '登录状态: 0-未登录 1-已登录 2-已过期',
+    `last_login_at` DATETIME DEFAULT NULL COMMENT '最后登录时间',
+    `last_check_at` DATETIME DEFAULT NULL COMMENT '最后检查时间',
+    `is_default` TINYINT(1) DEFAULT 0 COMMENT '是否默认账号',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    `deleted_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_fenbi_phone` (`phone`),
+    KEY `idx_fenbi_credentials_login_status` (`login_status`),
+    KEY `idx_fenbi_credentials_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='粉笔登录凭证表';
+
+-- 粉笔筛选类别表
+CREATE TABLE IF NOT EXISTS `what_fenbi_categories` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `category_type` VARCHAR(20) NOT NULL COMMENT '类型: region/exam_type/year',
+    `code` VARCHAR(50) NOT NULL COMMENT '代码',
+    `name` VARCHAR(100) NOT NULL COMMENT '名称',
+    `fenbi_param_id` VARCHAR(20) DEFAULT NULL COMMENT '粉笔网站URL参数使用的ID',
+    `sort_order` INT DEFAULT 0 COMMENT '排序',
+    `is_enabled` TINYINT(1) DEFAULT 1 COMMENT '是否启用',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_fenbi_type_code` (`category_type`, `code`),
+    KEY `idx_fenbi_categories_type` (`category_type`),
+    KEY `idx_fenbi_categories_enabled` (`is_enabled`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='粉笔筛选类别表';
+
+-- 粉笔公告表
+CREATE TABLE IF NOT EXISTS `what_fenbi_announcements` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `fenbi_id` VARCHAR(50) NOT NULL COMMENT '粉笔公告ID',
+    `title` VARCHAR(500) NOT NULL COMMENT '公告标题',
+    `fenbi_url` VARCHAR(500) NOT NULL COMMENT '粉笔页面URL',
+    `original_url` VARCHAR(500) DEFAULT NULL COMMENT '原文网址',
+    `region_code` VARCHAR(50) DEFAULT NULL COMMENT '地区代码',
+    `region_name` VARCHAR(100) DEFAULT NULL COMMENT '地区名称',
+    `exam_type_code` VARCHAR(50) DEFAULT NULL COMMENT '考试类型代码',
+    `exam_type_name` VARCHAR(100) DEFAULT NULL COMMENT '考试类型名称',
+    `year` INT DEFAULT NULL COMMENT '年份',
+    `publish_date` DATE DEFAULT NULL COMMENT '发布日期',
+    `crawl_status` TINYINT DEFAULT 0 COMMENT '爬取状态: 0-待爬取 1-已爬取列表 2-已爬取详情',
+    `sync_to_announcement` TINYINT(1) DEFAULT 0 COMMENT '是否同步到公告表',
+    `announcement_id` BIGINT UNSIGNED DEFAULT NULL COMMENT '关联的公告ID',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    `deleted_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_fenbi_id` (`fenbi_id`),
+    KEY `idx_fenbi_announcements_region` (`region_code`),
+    KEY `idx_fenbi_announcements_exam_type` (`exam_type_code`),
+    KEY `idx_fenbi_announcements_year` (`year`),
+    KEY `idx_fenbi_announcements_crawl_status` (`crawl_status`),
+    KEY `idx_fenbi_announcements_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='粉笔公告表';
+
+-- 插入粉笔筛选类别初始数据 - 地区（包含粉笔网站URL参数ID）
+INSERT INTO `what_fenbi_categories` (`category_type`, `code`, `name`, `fenbi_param_id`, `sort_order`, `is_enabled`, `created_at`, `updated_at`) VALUES
+('region', 'all', '全部', NULL, 0, 1, NOW(), NOW()),
+('region', 'national', '国家级机构', '4012', 1, 1, NOW(), NOW()),
+('region', 'anhui', '安徽', '1', 2, 1, NOW(), NOW()),
+('region', 'beijing', '北京', '159', 3, 1, NOW(), NOW()),
+('region', 'chongqing', '重庆', '180', 4, 1, NOW(), NOW()),
+('region', 'fujian', '福建', '223', 5, 1, NOW(), NOW()),
+('region', 'guangdong', '广东', '336', 6, 1, NOW(), NOW()),
+('region', 'gansu', '甘肃', '557', 7, 1, NOW(), NOW()),
+('region', 'guangxi', '广西', '683', 8, 1, NOW(), NOW()),
+('region', 'guizhou', '贵州', '836', 9, 1, NOW(), NOW()),
+('region', 'hebei', '河北', '947', 10, 1, NOW(), NOW()),
+('region', 'hubei', '湖北', '1157', 11, 1, NOW(), NOW()),
+('region', 'heilongjiang', '黑龙江', '1307', 12, 1, NOW(), NOW()),
+('region', 'henan', '河南', '1480', 13, 1, NOW(), NOW()),
+('region', 'hainan', '海南', '1694', 14, 1, NOW(), NOW()),
+('region', 'hunan', '湖南', '1723', 15, 1, NOW(), NOW()),
+('region', 'jilin', '吉林', '1887', 16, 1, NOW(), NOW()),
+('region', 'jiangsu', '江苏', '1978', 17, 1, NOW(), NOW()),
+('region', 'jiangxi', '江西', '2130', 18, 1, NOW(), NOW()),
+('region', 'liaoning', '辽宁', '2267', 19, 1, NOW(), NOW()),
+('region', 'neimenggu', '内蒙古', '2416', 20, 1, NOW(), NOW()),
+('region', 'ningxia', '宁夏', '2551', 21, 1, NOW(), NOW()),
+('region', 'qinghai', '青海', '2589', 22, 1, NOW(), NOW()),
+('region', 'sichuan', '四川', '2650', 23, 1, NOW(), NOW()),
+('region', 'shandong', '山东', '2894', 24, 1, NOW(), NOW()),
+('region', 'shanghai', '上海', '3091', 25, 1, NOW(), NOW()),
+('region', 'shanxi', '山西', '3114', 26, 1, NOW(), NOW()),
+('region', 'shaanxi', '陕西', '3268', 27, 1, NOW(), NOW()),
+('region', 'tianjin', '天津', '3406', 28, 1, NOW(), NOW()),
+('region', 'xinjiang', '新疆', '3428', 29, 1, NOW(), NOW()),
+('region', 'xizang', '西藏', '3559', 30, 1, NOW(), NOW()),
+('region', 'yunnan', '云南', '3648', 31, 1, NOW(), NOW()),
+('region', 'zhejiang', '浙江', '3818', 32, 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `fenbi_param_id` = VALUES(`fenbi_param_id`), `updated_at` = NOW();
+
+-- 插入粉笔筛选类别初始数据 - 考试类型（包含粉笔网站URL参数ID）
+INSERT INTO `what_fenbi_categories` (`category_type`, `code`, `name`, `fenbi_param_id`, `sort_order`, `is_enabled`, `created_at`, `updated_at`) VALUES
+('exam_type', 'shengkao', '省考', '1', 1, 1, NOW(), NOW()),
+('exam_type', 'guokao', '国考', '2', 2, 1, NOW(), NOW()),
+('exam_type', 'junduiwenzhi', '军队文职', '3', 3, 1, NOW(), NOW()),
+('exam_type', 'xuandiao', '选调', '4', 4, 1, NOW(), NOW()),
+('exam_type', 'shiyedanwei', '事业单位', '5', 5, 1, NOW(), NOW()),
+('exam_type', 'daxueshengcunguan', '大学生村官', '6', 6, 1, NOW(), NOW()),
+('exam_type', 'sanzhiyifu', '三支一扶', '7', 7, 1, NOW(), NOW()),
+('exam_type', 'lianxuan', '遴选', '8', 8, 1, NOW(), NOW()),
+('exam_type', 'zhaojing', '招警', '9', 9, 1, NOW(), NOW()),
+('exam_type', 'guoqi', '国企', '10', 10, 1, NOW(), NOW()),
+('exam_type', 'jiaoshi', '教师', '11', 11, 1, NOW(), NOW()),
+('exam_type', 'yiliao', '医疗', '12', 12, 1, NOW(), NOW()),
+('exam_type', 'yinhang', '银行', '13', 13, 1, NOW(), NOW()),
+('exam_type', 'qita', '其他', '14', 14, 1, NOW(), NOW()),
+('exam_type', 'nongxinshe', '农信社', '15', 15, 1, NOW(), NOW()),
+('exam_type', 'paiqian', '派遣/临时/购买服务等', '16', 16, 1, NOW(), NOW()),
+('exam_type', 'liankao', '联考/统考', '17', 17, 1, NOW(), NOW()),
+('exam_type', 'shequ', '社区工作者', '18', 18, 1, NOW(), NOW()),
+('exam_type', 'gaoxiao', '高校', '19', 19, 1, NOW(), NOW()),
+('exam_type', 'gongwuyuandanzhao', '公务员单招', '20', 20, 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `fenbi_param_id` = VALUES(`fenbi_param_id`), `updated_at` = NOW();
+
+-- 插入粉笔筛选类别初始数据 - 年份
+INSERT INTO `what_fenbi_categories` (`category_type`, `code`, `name`, `sort_order`, `is_enabled`, `created_at`, `updated_at`) VALUES
+('year', '2026', '2026', 1, 1, NOW(), NOW()),
+('year', '2025', '2025', 2, 1, NOW(), NOW()),
+('year', '2024', '2024', 3, 1, NOW(), NOW()),
+('year', '2023', '2023', 4, 1, NOW(), NOW()),
+('year', '2022', '2022', 5, 1, NOW(), NOW()),
+('year', '2021', '2021', 6, 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `updated_at` = NOW();
+
+-- ============================================================================
 -- 完成
 -- ============================================================================
 SELECT 'Database schema created successfully!' AS status;
