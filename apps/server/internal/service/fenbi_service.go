@@ -6,7 +6,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
+	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -21,6 +25,7 @@ var (
 	ErrNotLoggedIn               = errors.New("not logged in")
 	ErrCrawlFailed               = errors.New("crawl failed")
 	ErrFenbiAnnouncementNotFound = errors.New("fenbi announcement not found")
+	ErrCrawlStopped              = errors.New("crawl stopped by user")
 )
 
 // Encryption key for password storage (should be from config in production)
@@ -33,6 +38,11 @@ type FenbiService struct {
 	announcementRepo *repository.FenbiAnnouncementRepository
 	spiderConfig     *crawler.SpiderConfig
 	logger           *zap.Logger
+
+	// Crawl control
+	crawlMutex   sync.Mutex
+	crawlRunning bool
+	crawlStopped bool
 }
 
 func NewFenbiService(
@@ -370,6 +380,23 @@ type CrawlProgress struct {
 }
 
 func (s *FenbiService) TriggerCrawl(req *TriggerCrawlRequest) (*CrawlProgress, error) {
+	// Set crawl state
+	s.crawlMutex.Lock()
+	if s.crawlRunning {
+		s.crawlMutex.Unlock()
+		return nil, errors.New("crawl already running")
+	}
+	s.crawlRunning = true
+	s.crawlStopped = false
+	s.crawlMutex.Unlock()
+
+	// Ensure we reset crawlRunning when done
+	defer func() {
+		s.crawlMutex.Lock()
+		s.crawlRunning = false
+		s.crawlMutex.Unlock()
+	}()
+
 	// Check login status first
 	credential, err := s.credRepo.FindDefault()
 	if err != nil {
@@ -442,21 +469,66 @@ func (s *FenbiService) TriggerCrawl(req *TriggerCrawlRequest) (*CrawlProgress, e
 	progress.TotalTasks = len(req.Regions) * len(req.ExamTypes) * len(req.Years)
 
 	// Crawl each combination
+crawlLoop:
 	for _, region := range req.Regions {
+		// Check if crawl was stopped
+		s.crawlMutex.Lock()
+		stopped := s.crawlStopped
+		s.crawlMutex.Unlock()
+		if stopped {
+			s.logger.Info("Crawl stopped by user")
+			progress.Status = "stopped"
+			progress.Message = "爬取已停止"
+			return progress, nil
+		}
+
 		// Get the fenbi_param_id for this region from database
 		regionParamID := s.GetRegionParamID(region)
 
 		for _, examType := range req.ExamTypes {
+			// Check if crawl was stopped
+			s.crawlMutex.Lock()
+			stopped := s.crawlStopped
+			s.crawlMutex.Unlock()
+			if stopped {
+				s.logger.Info("Crawl stopped by user")
+				progress.Status = "stopped"
+				progress.Message = "爬取已停止"
+				return progress, nil
+			}
+
 			// Get the fenbi_param_id for this exam type from database
 			examTypeParamID := s.GetExamTypeParamID(examType)
 
 			for _, year := range req.Years {
+				// Check if crawl was stopped
+				s.crawlMutex.Lock()
+				stopped := s.crawlStopped
+				s.crawlMutex.Unlock()
+				if stopped {
+					s.logger.Info("Crawl stopped by user")
+					progress.Status = "stopped"
+					progress.Message = "爬取已停止"
+					return progress, nil
+				}
+
 				progress.CurrentTask = s.formatTaskName(region, examType, year)
 
 				// Crawl all pages for this combination
 				// Pass regionParamID and examTypeParamID directly (numeric IDs) instead of codes
 				page := 1
 				for {
+					// Check if crawl was stopped before each page request
+					s.crawlMutex.Lock()
+					stopped := s.crawlStopped
+					s.crawlMutex.Unlock()
+					if stopped {
+						s.logger.Info("Crawl stopped by user during page crawl")
+						progress.Status = "stopped"
+						progress.Message = "爬取已停止"
+						break crawlLoop
+					}
+
 					result, err := spider.CrawlAnnouncementList(regionParamID, examTypeParamID, year, page)
 					if err != nil {
 						s.logger.Error("Crawl failed",
@@ -490,10 +562,40 @@ func (s *FenbiService) TriggerCrawl(req *TriggerCrawlRequest) (*CrawlProgress, e
 		}
 	}
 
-	progress.Status = "completed"
-	progress.Message = "爬取完成"
+	// Check if stopped during crawl
+	s.crawlMutex.Lock()
+	stopped := s.crawlStopped
+	s.crawlMutex.Unlock()
+	if stopped {
+		progress.Status = "stopped"
+		progress.Message = "爬取已停止"
+	} else {
+		progress.Status = "completed"
+		progress.Message = "爬取完成"
+	}
 
 	return progress, nil
+}
+
+// StopCrawl stops the running crawl task
+func (s *FenbiService) StopCrawl() error {
+	s.crawlMutex.Lock()
+	defer s.crawlMutex.Unlock()
+
+	if !s.crawlRunning {
+		return errors.New("no crawl task running")
+	}
+
+	s.crawlStopped = true
+	s.logger.Info("Crawl stop requested")
+	return nil
+}
+
+// IsCrawlRunning returns whether a crawl task is currently running
+func (s *FenbiService) IsCrawlRunning() bool {
+	s.crawlMutex.Lock()
+	defer s.crawlMutex.Unlock()
+	return s.crawlRunning
 }
 
 func (s *FenbiService) CrawlAnnouncementDetail(id uint) (*model.FenbiAnnouncement, error) {
@@ -703,6 +805,207 @@ func (s *FenbiService) GetAnnouncementStats() (map[string]interface{}, error) {
 	return stats, nil
 }
 
+// TestCrawlResult represents the result of a test crawl
+type TestCrawlResult struct {
+	Success    bool             `json:"success"`
+	Message    string           `json:"message"`
+	TestResult *TestCrawlDetail `json:"test_result,omitempty"`
+}
+
+// TestCrawlDetail contains the detailed test crawl results
+type TestCrawlDetail struct {
+	AnnouncementID uint                   `json:"announcement_id,omitempty"`
+	Title          string                 `json:"title,omitempty"`
+	FenbiURL       string                 `json:"fenbi_url,omitempty"`
+	OriginalURL    string                 `json:"original_url,omitempty"`
+	RawData        map[string]interface{} `json:"raw_data,omitempty"`
+}
+
+// TestCrawl tests the cookie-based crawling by fetching a sample announcement
+func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
+	// Check login status
+	credential, err := s.credRepo.FindDefault()
+	if err != nil {
+		return &TestCrawlResult{
+			Success: false,
+			Message: "未配置粉笔账号",
+			TestResult: &TestCrawlDetail{
+				RawData: map[string]interface{}{
+					"error": "credential not found",
+				},
+			},
+		}, ErrCredentialNotFound
+	}
+
+	if credential.LoginStatus != int(model.FenbiLoginStatusLoggedIn) || credential.Cookies == "" {
+		return &TestCrawlResult{
+			Success: false,
+			Message: "未登录或Cookie为空，请先登录或导入Cookie",
+			TestResult: &TestCrawlDetail{
+				RawData: map[string]interface{}{
+					"login_status":    credential.LoginStatus,
+					"has_cookies":     credential.Cookies != "",
+					"cookies_preview": s.getCookiesPreview(credential.Cookies),
+				},
+			},
+		}, ErrNotLoggedIn
+	}
+
+	// Create spider and set cookies
+	spider := crawler.NewFenbiSpider(s.spiderConfig, s.logger)
+	spider.SetCookies(credential.Cookies)
+
+	// First, get detailed login status for debugging
+	loginDetails := spider.CheckLoginStatusWithDetails()
+	isValid := loginDetails["any_valid"].(bool)
+	
+	if !isValid {
+		s.logger.Warn("Test crawl: cookies invalid", zap.Any("login_details", loginDetails))
+		
+		return &TestCrawlResult{
+			Success: false,
+			Message: "Cookie已失效，请重新登录或导入新的Cookie",
+			TestResult: &TestCrawlDetail{
+				RawData: map[string]interface{}{
+					"login_check_details": loginDetails,
+					"cookies_preview":     s.getCookiesPreview(credential.Cookies),
+					"credential_phone":    credential.Phone,
+					"last_login_at":       credential.LastLoginAt,
+					"last_check_at":       credential.LastCheckAt,
+					"cookie_expires":      credential.CookieExpiresAt,
+				},
+			},
+		}, nil
+	}
+
+	// Find a sample announcement to test with (preferably one that hasn't been fully crawled)
+	pendingList, err := s.announcementRepo.ListPendingDetails(1)
+	var testAnnouncement *model.FenbiAnnouncement
+
+	if err == nil && len(pendingList) > 0 {
+		testAnnouncement = &pendingList[0]
+	} else {
+		// Fallback: get the most recent announcement
+		params := &repository.FenbiAnnouncementListParams{
+			Page:     1,
+			PageSize: 1,
+		}
+		announcements, _, err := s.announcementRepo.List(params)
+		if err != nil || len(announcements) == 0 {
+			// No existing announcements, try to crawl one from the list first
+			s.logger.Info("No existing announcements, attempting to crawl list first")
+
+			// Try to get a sample from the list
+			result, err := spider.CrawlAnnouncementList("", "", time.Now().Year(), 1)
+			if err != nil {
+				return &TestCrawlResult{
+					Success: false,
+					Message: "测试列表爬取失败: " + err.Error(),
+				}, nil
+			}
+
+			if len(result.Items) == 0 {
+				return &TestCrawlResult{
+					Success: true,
+					Message: "Cookie有效，但未找到可测试的公告数据",
+					TestResult: &TestCrawlDetail{
+						RawData: map[string]interface{}{
+							"list_crawl_result": result,
+						},
+					},
+				}, nil
+			}
+
+			// Return the list item data as test result
+			firstItem := result.Items[0]
+			return &TestCrawlResult{
+				Success: true,
+				Message: "Cookie有效，成功获取公告列表数据",
+				TestResult: &TestCrawlDetail{
+					Title:    firstItem.Title,
+					FenbiURL: firstItem.FenbiURL,
+					RawData: map[string]interface{}{
+						"fenbi_id":     firstItem.FenbiID,
+						"title":        firstItem.Title,
+						"fenbi_url":    firstItem.FenbiURL,
+						"region_code":  firstItem.RegionCode,
+						"region_name":  firstItem.RegionName,
+						"exam_type":    firstItem.ExamTypeCode,
+						"year":         firstItem.Year,
+						"publish_date": firstItem.PublishDate,
+						"total_found":  result.TotalFound,
+						"has_next":     result.HasNextPage,
+					},
+				},
+			}, nil
+		}
+		testAnnouncement = &announcements[0]
+	}
+
+	// Now test crawling the detail page to get original URL
+	s.logger.Info("Testing detail crawl", zap.String("fenbi_id", testAnnouncement.FenbiID))
+
+	detail, rawHTML, err := spider.CrawlAnnouncementDetailWithHTML(testAnnouncement.FenbiID)
+	
+	// Save the raw HTML to a file for debugging
+	htmlFilePath := fmt.Sprintf("fenbi_test_detail_%s.html", testAnnouncement.FenbiID)
+	if writeErr := os.WriteFile(htmlFilePath, []byte(rawHTML), 0644); writeErr != nil {
+		s.logger.Warn("Failed to save HTML file", zap.Error(writeErr))
+	} else {
+		s.logger.Info("Saved HTML to file", zap.String("path", htmlFilePath))
+	}
+	
+	if err != nil {
+		return &TestCrawlResult{
+			Success: false,
+			Message: "测试详情爬取失败: " + err.Error(),
+			TestResult: &TestCrawlDetail{
+				AnnouncementID: testAnnouncement.ID,
+				Title:          testAnnouncement.Title,
+				FenbiURL:       testAnnouncement.FenbiURL,
+				RawData: map[string]interface{}{
+					"html_file":   htmlFilePath,
+					"html_length": len(rawHTML),
+					"error":       err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	// Check if original_url was found
+	message := "Cookie有效，成功获取公告详情"
+	if detail.OriginalURL != "" {
+		message += "和原始链接"
+	} else {
+		message += "，但未找到原始链接（HTML已保存到文件供检查）"
+	}
+
+	// Success - we got the original URL and other data
+	return &TestCrawlResult{
+		Success: true,
+		Message: message,
+		TestResult: &TestCrawlDetail{
+			AnnouncementID: testAnnouncement.ID,
+			Title:          testAnnouncement.Title,
+			FenbiURL:       testAnnouncement.FenbiURL,
+			OriginalURL:    detail.OriginalURL,
+			RawData: map[string]interface{}{
+				"html_file":   htmlFilePath,
+				"html_length": len(rawHTML),
+				"fenbi_id":     testAnnouncement.FenbiID,
+				"title":        testAnnouncement.Title,
+				"fenbi_url":    testAnnouncement.FenbiURL,
+				"original_url": detail.OriginalURL,
+				"region_code":  testAnnouncement.RegionCode,
+				"region_name":  testAnnouncement.RegionName,
+				"exam_type":    testAnnouncement.ExamTypeCode,
+				"year":         testAnnouncement.Year,
+				"crawl_status": testAnnouncement.CrawlStatus,
+			},
+		},
+	}, nil
+}
+
 // === Helper Functions ===
 
 // GetRegionParamID returns the fenbi_param_id for a region code
@@ -824,6 +1127,34 @@ func getLoginStatusText(status int) string {
 	default:
 		return "未登录"
 	}
+}
+
+// getCookiesPreview returns a preview of the cookies (for debugging, without exposing full values)
+func (s *FenbiService) getCookiesPreview(cookies string) map[string]string {
+	result := make(map[string]string)
+	if cookies == "" {
+		return result
+	}
+
+	parts := strings.Split(cookies, ";")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) == 2 {
+			name := strings.TrimSpace(kv[0])
+			value := strings.TrimSpace(kv[1])
+			// Show first 10 chars and length for security
+			preview := value
+			if len(value) > 10 {
+				preview = value[:10] + "..." + fmt.Sprintf("(len=%d)", len(value))
+			}
+			result[name] = preview
+		}
+	}
+	return result
 }
 
 // Password encryption helpers

@@ -1,7 +1,7 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
-const request = axios.create({
+const axiosInstance = axios.create({
   baseURL: "/api/v1",
   timeout: 10000,
   headers: {
@@ -9,7 +9,22 @@ const request = axios.create({
   },
 });
 
-request.interceptors.request.use(
+// Typed request wrapper that reflects the response interceptor behavior
+// The interceptor returns data.data, so the return type is T, not AxiosResponse<T>
+const request = {
+  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.get(url, config) as Promise<T>,
+  post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.post(url, data, config) as Promise<T>,
+  put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.put(url, data, config) as Promise<T>,
+  delete: <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.delete(url, config) as Promise<T>,
+  patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.patch(url, data, config) as Promise<T>,
+};
+
+axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const { adminToken } = useAuthStore.getState();
 
@@ -24,7 +39,7 @@ request.interceptors.request.use(
   }
 );
 
-request.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => {
     const { data } = response;
     if (data.code !== 0) {
@@ -397,6 +412,10 @@ export const fenbiApi = {
     return request.post<FenbiCrawlProgress>("/admin/fenbi/crawl", data, { signal });
   },
 
+  stopCrawl: () => {
+    return request.post<{ message: string }>("/admin/fenbi/crawl/stop");
+  },
+
   batchCrawlDetails: (limit?: number) => {
     return request.post<{ message: string; crawled: number }>(
       "/admin/fenbi/crawl-details",
@@ -430,6 +449,21 @@ export const fenbiApi = {
       by_region: Record<string, number>;
       by_year: Record<number, number>;
     }>("/admin/fenbi/stats");
+  },
+
+  // Test crawl with cookie
+  testCrawl: () => {
+    return request.post<{
+      success: boolean;
+      message: string;
+      test_result?: {
+        announcement_id?: number;
+        title?: string;
+        fenbi_url?: string;
+        original_url?: string;
+        raw_data?: Record<string, unknown>;
+      };
+    }>("/admin/fenbi/test-crawl");
   },
 };
 

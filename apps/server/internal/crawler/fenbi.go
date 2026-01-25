@@ -660,57 +660,141 @@ func (s *FenbiSpider) loginWithRSA(phone, password string) (*LoginResult, error)
 }
 
 // CheckLoginStatus checks if the current session is still valid
+// Since the old /api/users/session endpoint no longer exists (returns 404),
+// we now validate by checking if we have valid cookie values and optionally
+// testing with the actual business API
 func (s *FenbiSpider) CheckLoginStatus() (bool, error) {
 	// Log current cookies before checking
 	s.logger.Info("CheckLoginStatus - current cookies",
 		zap.String("cookies", serializeCookies(s.cookies)),
 	)
 
-	req, err := http.NewRequest("GET", FenbiCheckLoginURL, nil)
-	if err != nil {
-		return false, err
+	// Check if we have the essential cookies
+	hasUserID := false
+	hasSess := false
+	for _, cookie := range s.cookies {
+		switch cookie.Name {
+		case "userid":
+			if cookie.Value != "" && cookie.Value != "0" {
+				hasUserID = true
+			}
+		case "sess":
+			if cookie.Value != "" {
+				hasSess = true
+			}
+		}
 	}
 
+	if hasUserID && hasSess {
+		s.logger.Info("CheckLoginStatus: found valid userid and sess cookies")
+		return true, nil
+	}
+
+	s.logger.Warn("CheckLoginStatus: missing essential cookies",
+		zap.Bool("has_userid", hasUserID),
+		zap.Bool("has_sess", hasSess),
+	)
+	return false, nil
+}
+
+// CheckLoginStatusWithDetails returns detailed login check results for debugging
+func (s *FenbiSpider) CheckLoginStatusWithDetails() map[string]interface{} {
+	result := map[string]interface{}{
+		"cookies_count": len(s.cookies),
+		"cookies":       map[string]string{},
+	}
+
+	// Extract cookie values for debugging
+	cookieMap := result["cookies"].(map[string]string)
+	hasUserID := false
+	hasSess := false
+	
+	for _, cookie := range s.cookies {
+		// Show preview of cookie value
+		value := cookie.Value
+		if len(value) > 20 {
+			value = value[:20] + "..."
+		}
+		cookieMap[cookie.Name] = value
+		
+		switch cookie.Name {
+		case "userid":
+			if cookie.Value != "" && cookie.Value != "0" {
+				hasUserID = true
+			}
+		case "sess":
+			if cookie.Value != "" {
+				hasSess = true
+			}
+		}
+	}
+
+	result["has_userid"] = hasUserID
+	result["has_sess"] = hasSess
+	result["any_valid"] = hasUserID && hasSess
+	
+	// Also try to make a test API call to verify cookies actually work
+	testResult := s.testAPICall()
+	result["api_test"] = testResult
+
+	return result
+}
+
+// testAPICall makes a test API call to verify cookies work
+func (s *FenbiSpider) testAPICall() map[string]interface{} {
+	result := map[string]interface{}{}
+	
+	// Try the exam list API with minimal params
+	apiReq := FenbiExamAPIRequest{
+		Year:      fmt.Sprintf("%d", time.Now().Year()),
+		Start:     0,
+		Len:       1,
+		NeedTotal: true,
+	}
+
+	reqBody, err := json.Marshal(apiReq)
+	if err != nil {
+		result["error"] = "marshal error: " + err.Error()
+		return result
+	}
+
+	targetURL := FenbiExamAPIURL + "?app=web&av=100&hav=100&kav=100"
+	req, err := http.NewRequest("POST", targetURL, strings.NewReader(string(reqBody)))
+	if err != nil {
+		result["error"] = "request error: " + err.Error()
+		return result
+	}
+
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Referer", "https://www.fenbi.com/")
+	req.Header.Set("Origin", "https://www.fenbi.com")
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		s.logger.Error("CheckLoginStatus request failed", zap.Error(err))
-		return false, err
+		result["error"] = "http error: " + err.Error()
+		return result
 	}
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	bodyStr := string(body)
-
-	s.logger.Info("CheckLoginStatus response",
-		zap.Int("status_code", resp.StatusCode),
-		zap.String("body", bodyStr),
-	)
-
-	var result struct {
-		Code int `json:"code"`
-		Data struct {
-			ID int64 `json:"id"`
-		} `json:"data"`
+	result["status_code"] = resp.StatusCode
+	
+	// Try to parse the response
+	var apiResp FenbiExamAPIResponse
+	if err := json.Unmarshal(body, &apiResp); err != nil {
+		result["parse_error"] = err.Error()
+		result["response"] = string(body)
+	} else {
+		result["api_code"] = apiResp.Code
+		result["api_msg"] = apiResp.Msg
+		result["total_found"] = apiResp.Data.Total
+		result["articles_count"] = len(apiResp.Data.Articles)
+		result["success"] = apiResp.Code == 1
 	}
 
-	if err := json.Unmarshal(body, &result); err != nil {
-		s.logger.Error("CheckLoginStatus parse failed", zap.Error(err), zap.String("body", bodyStr))
-		return false, err
-	}
-
-	isLoggedIn := result.Code == 1 && result.Data.ID > 0
-	s.logger.Info("CheckLoginStatus result",
-		zap.Bool("is_logged_in", isLoggedIn),
-		zap.Int("code", result.Code),
-		zap.Int64("user_id", result.Data.ID),
-	)
-
-	// Code 1 and user ID > 0 means logged in
-	return isLoggedIn, nil
+	return result
 }
 
 // CrawlAnnouncementList crawls the announcement list page
@@ -871,30 +955,55 @@ func (s *FenbiSpider) CrawlAnnouncementList(regionCode, examTypeCode string, yea
 
 // CrawlAnnouncementDetail crawls the announcement detail page to get the original URL
 func (s *FenbiSpider) CrawlAnnouncementDetail(fenbiID string) (*FenbiDetailInfo, error) {
+	detail, _, err := s.CrawlAnnouncementDetailWithHTML(fenbiID)
+	return detail, err
+}
+
+// CrawlAnnouncementDetailWithHTML crawls the announcement detail page and returns both parsed info and raw HTML
+func (s *FenbiSpider) CrawlAnnouncementDetailWithHTML(fenbiID string) (*FenbiDetailInfo, string, error) {
 	targetURL := fmt.Sprintf("%s/%s", FenbiDetailURL, fenbiID)
 
 	req, err := http.NewRequest("GET", targetURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 	req.Header.Set("Referer", FenbiListURL)
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+	// Log cookies being sent
+	s.logger.Info("CrawlAnnouncementDetail request",
+		zap.String("url", targetURL),
+		zap.String("cookies", serializeCookies(s.cookies)),
+	)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer resp.Body.Close()
 
+	// Read the entire body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read body: %w", err)
+	}
+	rawHTML := string(bodyBytes)
+
+	s.logger.Info("CrawlAnnouncementDetail response",
+		zap.Int("status_code", resp.StatusCode),
+		zap.Int("body_length", len(rawHTML)),
+	)
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, rawHTML, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(rawHTML))
 	if err != nil {
-		return nil, err
+		return nil, rawHTML, err
 	}
 
 	detail := &FenbiDetailInfo{
@@ -904,22 +1013,55 @@ func (s *FenbiSpider) CrawlAnnouncementDetail(fenbiID string) (*FenbiDetailInfo,
 	// Extract title
 	detail.Title = strings.TrimSpace(doc.Find("h1, .detail-title, .title").First().Text())
 
-	// Look for original URL in various places
-	// Pattern 1: Link with text containing "原文" or "来源"
-	doc.Find("a").Each(func(i int, sel *goquery.Selection) {
-		text := sel.Text()
-		if href, exists := sel.Attr("href"); exists {
-			if strings.Contains(text, "原文") || strings.Contains(text, "来源") || strings.Contains(text, "查看原文") {
-				if isValidExternalURL(href) {
-					detail.OriginalURL = href
+	// Use rawHTML directly for regex matching (goquery may modify HTML)
+	// Pattern 1: Look for t.fenbi.com short URL (most common format)
+	// Format: https://t.fenbi.com/s/xxxxx (appears as plain text after "原文网址在这里")
+	if detail.OriginalURL == "" {
+		// Match t.fenbi.com short URLs
+		tFenbiPattern := regexp.MustCompile(`https?://t\.fenbi\.com/s/[a-zA-Z0-9]+`)
+		if matches := tFenbiPattern.FindString(rawHTML); matches != "" {
+			detail.OriginalURL = matches
+			s.logger.Info("Found t.fenbi.com short URL", zap.String("url", matches))
+		}
+	}
+
+	// Pattern 2: Look for URL in text after "原文网址" marker
+	if detail.OriginalURL == "" {
+		// The URL appears in a <p> tag after the "原文网址" section
+		patterns := []string{
+			`原文网址[^<]*</[^>]+>[^<]*<[^>]+>[^<]*<[^>]+>[^<]*<p[^>]*>(https?://[^<]+)</p>`,
+			`原文网址.*?<p[^>]*>(https?://[^<]+)</p>`,
+		}
+		for _, pattern := range patterns {
+			re := regexp.MustCompile(pattern)
+			if matches := re.FindStringSubmatch(rawHTML); len(matches) > 1 {
+				url := strings.TrimSpace(matches[1])
+				// Skip fenbi.com main site URLs, we want external or short URLs
+				if isValidExternalURL(url) && !strings.Contains(url, "www.fenbi.com") && !strings.Contains(url, "nodestatic.fbstatic") {
+					detail.OriginalURL = url
+					s.logger.Info("Found URL via pattern", zap.String("pattern", pattern), zap.String("url", url))
+					break
 				}
 			}
 		}
-	})
+	}
 
-	// Pattern 2: Text containing "原文网址" followed by a URL
+	// Pattern 3: Link with text containing "原文" or "来源"
 	if detail.OriginalURL == "" {
-		html, _ := doc.Html()
+		doc.Find("a").Each(func(i int, sel *goquery.Selection) {
+			text := sel.Text()
+			if href, exists := sel.Attr("href"); exists {
+				if strings.Contains(text, "原文") || strings.Contains(text, "来源") || strings.Contains(text, "查看原文") {
+					if isValidExternalURL(href) {
+						detail.OriginalURL = href
+					}
+				}
+			}
+		})
+	}
+
+	// Pattern 4: Text containing "原文网址" followed by a URL in <a> tag
+	if detail.OriginalURL == "" {
 		patterns := []string{
 			`原文网址[：:]\s*<a[^>]*href=["']([^"']+)["']`,
 			`原文链接[：:]\s*<a[^>]*href=["']([^"']+)["']`,
@@ -928,7 +1070,7 @@ func (s *FenbiSpider) CrawlAnnouncementDetail(fenbiID string) (*FenbiDetailInfo,
 		}
 		for _, pattern := range patterns {
 			re := regexp.MustCompile(pattern)
-			if matches := re.FindStringSubmatch(html); len(matches) > 1 {
+			if matches := re.FindStringSubmatch(rawHTML); len(matches) > 1 {
 				if isValidExternalURL(matches[1]) {
 					detail.OriginalURL = matches[1]
 					break
@@ -937,7 +1079,7 @@ func (s *FenbiSpider) CrawlAnnouncementDetail(fenbiID string) (*FenbiDetailInfo,
 		}
 	}
 
-	// Pattern 3: Look for external links in the content area
+	// Pattern 5: Look for external links in the content area
 	if detail.OriginalURL == "" {
 		doc.Find(".content a, .detail-content a, .article-content a").Each(func(i int, sel *goquery.Selection) {
 			if href, exists := sel.Attr("href"); exists {
@@ -954,7 +1096,7 @@ func (s *FenbiSpider) CrawlAnnouncementDetail(fenbiID string) (*FenbiDetailInfo,
 		zap.String("original_url", detail.OriginalURL),
 	)
 
-	return detail, nil
+	return detail, rawHTML, nil
 }
 
 // GetCookiesString returns the current cookies as a string

@@ -26,6 +26,7 @@ import {
   FileText,
   Cookie,
   Upload,
+  FlaskConical,
 } from "lucide-react";
 import {
   Card,
@@ -91,6 +92,18 @@ export default function FenbiCrawlerPage() {
   const [cookieForm, setCookieForm] = useState("");
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<FenbiAnnouncement | null>(null);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+    test_result?: {
+      announcement_id?: number;
+      title?: string;
+      fenbi_url?: string;
+      original_url?: string;
+      raw_data?: Record<string, unknown>;
+    };
+  } | null>(null);
 
   // Loading states
   const [loggingIn, setLoggingIn] = useState(false);
@@ -98,6 +111,7 @@ export default function FenbiCrawlerPage() {
   const [importingCookies, setImportingCookies] = useState(false);
   const [crawling, setCrawling] = useState(false);
   const [crawlProgress, setCrawlProgress] = useState<FenbiCrawlProgress | null>(null);
+  const [testing, setTesting] = useState(false);
 
   // Filter states
   const [filterRegion, setFilterRegion] = useState("");
@@ -127,7 +141,7 @@ export default function FenbiCrawlerPage() {
       if ((credRes as any).has_credential) {
         setCredential((credRes as any).credential);
       }
-      setLoginStatus(statusRes as FenbiLoginStatus);
+      setLoginStatus(statusRes as unknown as FenbiLoginStatus);
       setCategories({
         regions: (catRes as any).regions || [],
         exam_types: (catRes as any).exam_types || [],
@@ -312,7 +326,14 @@ export default function FenbiCrawlerPage() {
     }
   };
 
-  const handleStopCrawl = () => {
+  const handleStopCrawl = async () => {
+    try {
+      // 调用后端停止爬取 API
+      await fenbiApi.stopCrawl();
+    } catch (error) {
+      console.error("Failed to stop crawl on server:", error);
+    }
+    
     // 取消正在进行的请求
     if (crawlAbortControllerRef.current) {
       crawlAbortControllerRef.current.abort();
@@ -326,6 +347,8 @@ export default function FenbiCrawlerPage() {
     // 更新状态
     setCrawling(false);
     setCrawlProgress((prev) => prev ? { ...prev, status: "stopped", message: "爬取已停止" } : null);
+    // 最终刷新一次数据
+    await refreshCrawlData();
   };
 
   const handleCrawlDetail = async (id: number) => {
@@ -340,6 +363,33 @@ export default function FenbiCrawlerPage() {
   const handleViewDetail = (announcement: FenbiAnnouncement) => {
     setSelectedAnnouncement(announcement);
     setDetailDialogOpen(true);
+  };
+
+  const handleTestCrawl = async () => {
+    setTesting(true);
+    setTestResult(null);
+    setTestDialogOpen(true);
+    try {
+      const res = await fenbiApi.testCrawl();
+      setTestResult(res as {
+        success: boolean;
+        message: string;
+        test_result?: {
+          announcement_id?: number;
+          title?: string;
+          fenbi_url?: string;
+          original_url?: string;
+          raw_data?: Record<string, unknown>;
+        };
+      });
+    } catch (error: any) {
+      setTestResult({
+        success: false,
+        message: error?.message || "测试请求失败",
+      });
+    } finally {
+      setTesting(false);
+    }
   };
 
   const getStatusIcon = (status: number) => {
@@ -593,25 +643,39 @@ export default function FenbiCrawlerPage() {
                   </Select>
                 </div>
 
-                {crawling ? (
+                <div className="flex gap-2">
+                  {crawling ? (
+                    <Button
+                      className="flex-1"
+                      variant="destructive"
+                      onClick={handleStopCrawl}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      停止爬取
+                    </Button>
+                  ) : (
+                    <Button
+                      className="flex-1"
+                      onClick={handleTriggerCrawl}
+                      disabled={!loginStatus?.is_logged_in}
+                    >
+                      <Play className="mr-2 h-4 w-4" />
+                      开始爬取
+                    </Button>
+                  )}
                   <Button
-                    className="w-full"
-                    variant="destructive"
-                    onClick={handleStopCrawl}
+                    variant="outline"
+                    onClick={handleTestCrawl}
+                    disabled={!loginStatus?.is_logged_in || testing}
+                    title="测试Cookie爬取"
                   >
-                    <XCircle className="mr-2 h-4 w-4" />
-                    停止爬取
+                    {testing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FlaskConical className="h-4 w-4" />
+                    )}
                   </Button>
-                ) : (
-                  <Button
-                    className="w-full"
-                    onClick={handleTriggerCrawl}
-                    disabled={!loginStatus?.is_logged_in}
-                  >
-                    <Play className="mr-2 h-4 w-4" />
-                    开始爬取
-                  </Button>
-                )}
+                </div>
 
                 {/* Crawl Progress - Show when crawling or when completed */}
                 {(crawling || crawlProgress) && (
@@ -959,6 +1023,153 @@ export default function FenbiCrawlerPage() {
               )}
               导入并验证
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test Crawl Result Dialog */}
+      <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5" />
+              Cookie 爬取测试结果
+            </DialogTitle>
+            <DialogDescription>
+              测试使用当前 Cookie 爬取公告数据是否正常
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-4 py-4">
+              {testing ? (
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在测试爬取...</p>
+                </div>
+              ) : testResult ? (
+                <>
+                  {/* 测试状态 */}
+                  <div className={`p-4 rounded-lg ${
+                    testResult.success 
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800" 
+                      : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {testResult.success ? (
+                        <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      )}
+                      <span className={`font-medium ${
+                        testResult.success 
+                          ? "text-emerald-700 dark:text-emerald-300" 
+                          : "text-red-700 dark:text-red-300"
+                      }`}>
+                        {testResult.success ? "测试成功" : "测试失败"}
+                      </span>
+                    </div>
+                    <p className={`mt-2 text-sm ${
+                      testResult.success 
+                        ? "text-emerald-600 dark:text-emerald-400" 
+                        : "text-red-600 dark:text-red-400"
+                    }`}>
+                      {testResult.message}
+                    </p>
+                  </div>
+
+                  {/* 测试结果详情 */}
+                  {testResult.test_result && (
+                    <div className="space-y-4">
+                      {/* 公告信息 */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">测试公告</Label>
+                        <div className="p-3 bg-muted rounded-lg">
+                          <p className="text-sm font-medium">{testResult.test_result.title || "-"}</p>
+                          {testResult.test_result.announcement_id && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              ID: {testResult.test_result.announcement_id}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 粉笔链接 */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Link className="h-3 w-3" />
+                          粉笔链接
+                        </Label>
+                        {testResult.test_result.fenbi_url ? (
+                          <a
+                            href={testResult.test_result.fenbi_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline break-all flex items-center gap-1"
+                          >
+                            {testResult.test_result.fenbi_url}
+                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                          </a>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">-</p>
+                        )}
+                      </div>
+
+                      {/* 原文链接 */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          原文链接
+                        </Label>
+                        {testResult.test_result.original_url ? (
+                          <a
+                            href={testResult.test_result.original_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline break-all flex items-center gap-1"
+                          >
+                            {testResult.test_result.original_url}
+                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                          </a>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">未获取到原文链接</p>
+                        )}
+                      </div>
+
+                      {/* 原始数据 */}
+                      {testResult.test_result.raw_data && (
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Database className="h-3 w-3" />
+                            原始响应数据
+                          </Label>
+                          <div className="p-3 bg-muted rounded-lg overflow-auto max-h-[300px]">
+                            <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                              {JSON.stringify(testResult.test_result.raw_data, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <FlaskConical className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">点击测试按钮开始测试</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
+              关闭
+            </Button>
+            {!testing && (
+              <Button onClick={handleTestCrawl} disabled={!loginStatus?.is_logged_in}>
+                <FlaskConical className="mr-2 h-4 w-4" />
+                重新测试
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

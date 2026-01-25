@@ -212,6 +212,26 @@ func (h *FenbiHandler) TriggerCrawl(c echo.Context) error {
 	return success(c, progress)
 }
 
+// StopCrawl stops the running Fenbi crawl task
+// @Summary Stop Fenbi Crawl (Admin)
+// @Description Stop the currently running Fenbi crawl task
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/crawl/stop [post]
+func (h *FenbiHandler) StopCrawl(c echo.Context) error {
+	err := h.fenbiService.StopCrawl()
+	if err != nil {
+		return fail(c, 400, err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "爬取已停止",
+	})
+}
+
 // ListAnnouncements returns Fenbi announcements
 // @Summary List Fenbi Announcements (Admin)
 // @Description Get paginated list of Fenbi announcements
@@ -344,6 +364,34 @@ func (h *FenbiHandler) BatchCrawlDetails(c echo.Context) error {
 	})
 }
 
+// TestCrawl tests the cookie-based crawling functionality
+// @Summary Test Fenbi Cookie Crawl (Admin)
+// @Description Test if the current cookie can successfully crawl announcement data
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/test-crawl [post]
+func (h *FenbiHandler) TestCrawl(c echo.Context) error {
+	result, err := h.fenbiService.TestCrawl()
+	if err != nil {
+		// Even if there's an error, return the result if available
+		if result != nil {
+			return success(c, result)
+		}
+		if err == service.ErrCredentialNotFound {
+			return fail(c, 400, "请先配置粉笔账号")
+		}
+		if err == service.ErrNotLoggedIn {
+			return fail(c, 401, "请先登录粉笔账号")
+		}
+		return fail(c, 500, "测试爬取失败: "+err.Error())
+	}
+
+	return success(c, result)
+}
+
 // RegisterRoutes registers all Fenbi API routes
 func (h *FenbiHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.MiddlewareFunc) {
 	fenbi := g.Group("/fenbi", adminAuthMiddleware)
@@ -362,7 +410,9 @@ func (h *FenbiHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.Mi
 
 	// Crawler operations
 	fenbi.POST("/crawl", h.TriggerCrawl)
+	fenbi.POST("/crawl/stop", h.StopCrawl)
 	fenbi.POST("/crawl-details", h.BatchCrawlDetails)
+	fenbi.POST("/test-crawl", h.TestCrawl)
 
 	// Announcements
 	fenbi.GET("/announcements", h.ListAnnouncements)
