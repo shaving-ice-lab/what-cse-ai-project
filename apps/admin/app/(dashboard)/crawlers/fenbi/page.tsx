@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Settings,
   CheckCircle,
@@ -109,6 +109,11 @@ export default function FenbiCrawlerPage() {
   const [crawlExamTypes, setCrawlExamTypes] = useState<string[]>([]);
   const [crawlYears, setCrawlYears] = useState<number[]>([]);
 
+  // Crawl interval ref for real-time updates
+  const crawlIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Abort controller ref for canceling crawl requests
+  const crawlAbortControllerRef = useRef<AbortController | null>(null);
+
   // Fetch data
   const fetchData = useCallback(async () => {
     try {
@@ -159,6 +164,15 @@ export default function FenbiCrawlerPage() {
   useEffect(() => {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
+
+  // Cleanup crawl interval on unmount
+  useEffect(() => {
+    return () => {
+      if (crawlIntervalRef.current) {
+        clearInterval(crawlIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Handlers
   const handleSaveCredential = async () => {
@@ -222,9 +236,38 @@ export default function FenbiCrawlerPage() {
     }
   };
 
+  // 定义刷新函数，直接调用 API 避免闭包问题
+  const refreshCrawlData = async () => {
+    try {
+      const [announcementsRes, statsRes] = await Promise.all([
+        fenbiApi.getAnnouncements({
+          page: 1, // 始终显示第一页，这样能看到最新爬取的内容
+          page_size: 20,
+          region: filterRegion || undefined,
+          exam_type: filterExamType || undefined,
+          year: filterYear ? parseInt(filterYear) : undefined,
+        }),
+        fenbiApi.getStats(),
+      ]);
+      setAnnouncements((announcementsRes as any).announcements || []);
+      setAnnouncementsTotal((announcementsRes as any).total || 0);
+      setAnnouncementsPage(1); // 重置到第一页
+      setStats(statsRes as any);
+    } catch (error) {
+      console.error("Failed to refresh during crawl:", error);
+    }
+  };
+
   const handleTriggerCrawl = async () => {
     setCrawling(true);
     setCrawlProgress(null);
+    
+    // 创建 AbortController 用于取消请求
+    crawlAbortControllerRef.current = new AbortController();
+    
+    // 启动定时器，每1.5秒刷新一次公告列表和统计数据
+    crawlIntervalRef.current = setInterval(refreshCrawlData, 1500);
+    
     try {
       // 排除省考和国考的考试类型
       const excludedExamTypes = ["shengkao", "guokao"];
@@ -244,14 +287,45 @@ export default function FenbiCrawlerPage() {
         regions: crawlRegions.length > 0 ? crawlRegions : undefined,
         exam_types: examTypesToCrawl,
         years: crawlYears.length > 0 ? crawlYears : undefined,
-      });
+      }, crawlAbortControllerRef.current.signal);
       setCrawlProgress(res as FenbiCrawlProgress);
-      await Promise.all([fetchAnnouncements(), fetchData()]);
-    } catch (error) {
-      console.error("Failed to trigger crawl:", error);
+    } catch (error: any) {
+      // 忽略用户主动取消的错误
+      const isCanceled = error?.name === 'CanceledError' || 
+                         error?.name === 'AbortError' || 
+                         error?.code === 'ERR_CANCELED' ||
+                         error?.message === 'canceled';
+      if (!isCanceled) {
+        console.error("Failed to trigger crawl:", error);
+      }
     } finally {
+      // 停止定时器
+      if (crawlIntervalRef.current) {
+        clearInterval(crawlIntervalRef.current);
+        crawlIntervalRef.current = null;
+      }
+      // 清除 AbortController
+      crawlAbortControllerRef.current = null;
+      // 最终刷新一次确保数据完整
+      await refreshCrawlData();
       setCrawling(false);
     }
+  };
+
+  const handleStopCrawl = () => {
+    // 取消正在进行的请求
+    if (crawlAbortControllerRef.current) {
+      crawlAbortControllerRef.current.abort();
+      crawlAbortControllerRef.current = null;
+    }
+    // 停止定时器
+    if (crawlIntervalRef.current) {
+      clearInterval(crawlIntervalRef.current);
+      crawlIntervalRef.current = null;
+    }
+    // 更新状态
+    setCrawling(false);
+    setCrawlProgress((prev) => prev ? { ...prev, status: "stopped", message: "爬取已停止" } : null);
   };
 
   const handleCrawlDetail = async (id: number) => {
@@ -519,43 +593,80 @@ export default function FenbiCrawlerPage() {
                   </Select>
                 </div>
 
-                <Button
-                  className="w-full"
-                  onClick={handleTriggerCrawl}
-                  disabled={crawling || !loginStatus?.is_logged_in}
-                >
-                  {crawling ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
+                {crawling ? (
+                  <Button
+                    className="w-full"
+                    variant="destructive"
+                    onClick={handleStopCrawl}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    停止爬取
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    onClick={handleTriggerCrawl}
+                    disabled={!loginStatus?.is_logged_in}
+                  >
                     <Play className="mr-2 h-4 w-4" />
-                  )}
-                  开始爬取
-                </Button>
+                    开始爬取
+                  </Button>
+                )}
 
-                {/* Crawl Progress */}
-                {crawlProgress && (
+                {/* Crawl Progress - Show when crawling or when completed */}
+                {(crawling || crawlProgress) && (
                   <div className="p-3 bg-muted rounded-lg space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">爬取进度</span>
-                      <Badge variant={crawlProgress.status === "completed" ? "default" : "secondary"} className="text-xs">
-                        {crawlProgress.status === "completed" ? "已完成" : "进行中"}
+                      <span className="text-xs font-medium flex items-center gap-2">
+                        {crawling && <Loader2 className="h-3 w-3 animate-spin" />}
+                        爬取状态
+                      </span>
+                      <Badge 
+                        variant={
+                          crawlProgress?.status === "completed" ? "default" : 
+                          crawlProgress?.status === "stopped" ? "destructive" : 
+                          "secondary"
+                        } 
+                        className="text-xs"
+                      >
+                        {crawling ? "正在爬取" : 
+                         crawlProgress?.status === "completed" ? "已完成" : 
+                         crawlProgress?.status === "stopped" ? "已停止" : 
+                         "进行中"}
                       </Badge>
                     </div>
-                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{
-                          width: `${
-                            crawlProgress.total_tasks > 0
-                              ? (crawlProgress.completed_tasks / crawlProgress.total_tasks) * 100
-                              : 0
-                          }%`,
-                        }}
-                      />
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      爬取 {crawlProgress.items_crawled} 项 · 保存 {crawlProgress.items_saved} 项
-                    </div>
+                    {crawlProgress && (
+                      <>
+                        <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              crawlProgress.status === "stopped" ? "bg-destructive" : "bg-primary"
+                            }`}
+                            style={{
+                              width: `${
+                                crawlProgress.total_tasks > 0
+                                  ? (crawlProgress.completed_tasks / crawlProgress.total_tasks) * 100
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          爬取 {crawlProgress.items_crawled} 项 · 保存 {crawlProgress.items_saved} 项
+                          {crawlProgress.status === "stopped" && " · 已手动停止"}
+                        </div>
+                      </>
+                    )}
+                    {crawling && !crawlProgress && (
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span>正在获取数据，右侧列表将实时更新...</span>
+                      </div>
+                    )}
+                    {crawling && (
+                      <div className="text-xs text-blue-600 dark:text-blue-400">
+                        当前公告总数: {stats?.total || 0}
+                      </div>
+                    )}
                   </div>
                 )}
 

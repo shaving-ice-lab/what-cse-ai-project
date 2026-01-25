@@ -33,6 +33,11 @@ request.interceptors.response.use(
     return data.data;
   },
   async (error: AxiosError<{ code: number; message: string }>) => {
+    // 忽略用户主动取消的请求
+    if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401) {
       const { logout } = useAuthStore.getState();
       logout();
@@ -388,8 +393,8 @@ export const fenbiApi = {
     regions?: string[];
     exam_types?: string[];
     years?: number[];
-  }) => {
-    return request.post<FenbiCrawlProgress>("/admin/fenbi/crawl", data);
+  }, signal?: AbortSignal) => {
+    return request.post<FenbiCrawlProgress>("/admin/fenbi/crawl", data, { signal });
   },
 
   batchCrawlDetails: (limit?: number) => {
