@@ -61,6 +61,11 @@ const navMainItems: NavItem[] = [
     title: "爬虫管理",
     url: "/crawlers",
     icon: Bug,
+    items: [
+      { title: "爬虫概览", url: "/crawlers" },
+      { title: "粉笔爬虫", url: "/crawlers/fenbi" },
+      { title: "公告爬虫", url: "/crawlers/announcement" },
+    ],
   },
   {
     title: "列表页管理",
@@ -83,6 +88,7 @@ const navMainItems: NavItem[] = [
     items: [
       { title: "基本设置", url: "/settings" },
       { title: "管理员管理", url: "/settings/admins" },
+      { title: "LLM 配置", url: "/settings/llm" },
     ],
   },
   {

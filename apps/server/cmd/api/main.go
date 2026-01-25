@@ -49,6 +49,13 @@ func main() {
 	}
 	log.Info("Database migrations completed")
 
+	// Seed Fenbi categories if not present
+	if err := database.SeedFenbiCategories(db); err != nil {
+		log.Warn(fmt.Sprintf("Failed to seed Fenbi categories: %v", err))
+	} else {
+		log.Info("Fenbi categories initialized")
+	}
+
 	// ============================================
 	// Initialize Redis (optional)
 	// ============================================
@@ -79,6 +86,14 @@ func main() {
 	adminRepo := repository.NewAdminRepository(db)
 	listPageRepo := repository.NewListPageRepository(db)
 
+	// Fenbi repositories
+	fenbiCredRepo := repository.NewFenbiCredentialRepository(db)
+	fenbiCategoryRepo := repository.NewFenbiCategoryRepository(db)
+	fenbiAnnouncementRepo := repository.NewFenbiAnnouncementRepository(db)
+
+	// LLM config repository
+	llmConfigRepo := repository.NewLLMConfigRepository(db)
+
 	// ============================================
 	// Initialize Services
 	// ============================================
@@ -90,6 +105,12 @@ func main() {
 	notificationService := service.NewNotificationService(notificationRepo)
 	adminService := service.NewAdminService(adminRepo, userRepo, positionRepo, &cfg.JWT)
 	crawlerService := service.NewCrawlerServiceSimple(listPageRepo)
+
+	// Fenbi service
+	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, nil, log.Logger)
+
+	// LLM config service
+	llmConfigService := service.NewLLMConfigService(llmConfigRepo, log.Logger)
 
 	// Initialize SearchService (optional - requires Elasticsearch)
 	var searchService *service.SearchService
@@ -111,6 +132,8 @@ func main() {
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	adminHandler := handler.NewAdminHandler(adminService)
 	crawlerHandler := handler.NewCrawlerHandler(crawlerService)
+	fenbiHandler := handler.NewFenbiHandler(fenbiService)
+	llmConfigHandler := handler.NewLLMConfigHandler(llmConfigService)
 
 	// Initialize SearchHandler (only if Elasticsearch is available)
 	var searchHandler *handler.SearchHandler
@@ -185,6 +208,12 @@ func main() {
 
 	// Crawler routes (admin only)
 	crawlerHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// Fenbi routes (admin only)
+	fenbiHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// LLM config routes (admin only)
+	llmConfigHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
 
 	// Search routes (public, only if Elasticsearch is available)
 	if searchHandler != nil {

@@ -266,4 +266,305 @@ export interface CrawlLog {
   created_at: string;
 }
 
+// Fenbi Types
+export interface FenbiCredential {
+  id: number;
+  phone: string;
+  phone_masked: string;
+  password?: string; // 明文密码，只允许单账号登录
+  login_status: number;
+  login_status_text: string;
+  last_login_at?: string;
+  last_check_at?: string;
+  is_default: boolean;
+  created_at: string;
+}
+
+export interface FenbiLoginStatus {
+  is_logged_in: boolean;
+  status: number;
+  status_text: string;
+  phone?: string;
+  phone_masked?: string;
+  last_login_at?: string;
+  last_check_at?: string;
+  cookie_expires_at?: string;
+}
+
+export interface FenbiCategory {
+  id: number;
+  category_type: string;
+  code: string;
+  name: string;
+  sort_order: number;
+  is_enabled: boolean;
+}
+
+export interface FenbiAnnouncement {
+  id: number;
+  fenbi_id: string;
+  title: string;
+  fenbi_url: string;
+  original_url?: string;
+  region_code?: string;
+  region_name?: string;
+  exam_type_code?: string;
+  exam_type_name?: string;
+  year?: number;
+  publish_date?: string;
+  crawl_status: number;
+  sync_to_announcement: boolean;
+  announcement_id?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FenbiCrawlProgress {
+  total_tasks: number;
+  completed_tasks: number;
+  current_task: string;
+  items_crawled: number;
+  items_saved: number;
+  status: string;
+  message?: string;
+}
+
+export interface FenbiAnnouncementListParams {
+  page?: number;
+  page_size?: number;
+  region?: string;
+  exam_type?: string;
+  year?: number;
+  crawl_status?: number;
+  keyword?: string;
+}
+
+// Fenbi APIs
+export const fenbiApi = {
+  // Credential management
+  getCredential: () => {
+    return request.get<{
+      has_credential: boolean;
+      credential?: FenbiCredential;
+      message?: string;
+    }>("/admin/fenbi/credentials");
+  },
+
+  saveCredential: (data: { phone: string; password: string }) => {
+    return request.post<{
+      message: string;
+      credential: FenbiCredential;
+    }>("/admin/fenbi/credentials", data);
+  },
+
+  // Login management
+  login: () => {
+    return request.post<FenbiLoginStatus>("/admin/fenbi/login");
+  },
+
+  checkLoginStatus: () => {
+    return request.get<FenbiLoginStatus>("/admin/fenbi/login-status");
+  },
+
+  importCookies: (data: { cookies: string; phone?: string }) => {
+    return request.post<{
+      message: string;
+      login_status: FenbiLoginStatus;
+    }>("/admin/fenbi/import-cookies", data);
+  },
+
+  // Categories
+  getCategories: (type?: string) => {
+    return request.get<{
+      regions?: FenbiCategory[];
+      exam_types?: FenbiCategory[];
+      years?: FenbiCategory[];
+      categories?: FenbiCategory[];
+    }>("/admin/fenbi/categories", { params: type ? { type } : {} });
+  },
+
+  // Crawler operations
+  triggerCrawl: (data: {
+    regions?: string[];
+    exam_types?: string[];
+    years?: number[];
+  }) => {
+    return request.post<FenbiCrawlProgress>("/admin/fenbi/crawl", data);
+  },
+
+  batchCrawlDetails: (limit?: number) => {
+    return request.post<{ message: string; crawled: number }>(
+      "/admin/fenbi/crawl-details",
+      {},
+      { params: limit ? { limit } : {} }
+    );
+  },
+
+  // Announcements
+  getAnnouncements: (params?: FenbiAnnouncementListParams) => {
+    return request.get<{
+      announcements: FenbiAnnouncement[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>("/admin/fenbi/announcements", { params });
+  },
+
+  crawlAnnouncementDetail: (id: number) => {
+    return request.post<{
+      message: string;
+      announcement: FenbiAnnouncement;
+    }>(`/admin/fenbi/announcements/${id}/crawl-detail`);
+  },
+
+  // Stats
+  getStats: () => {
+    return request.get<{
+      total: number;
+      by_crawl_status: Record<number, number>;
+      by_region: Record<string, number>;
+      by_year: Record<number, number>;
+    }>("/admin/fenbi/stats");
+  },
+};
+
+// LLM Config Types
+export interface LLMConfig {
+  id: number;
+  name: string;
+  provider: string;
+  model: string;
+  api_url: string;
+  api_key_masked: string;
+  organization_id?: string;
+  max_tokens: number;
+  temperature: number;
+  timeout: number;
+  is_default: boolean;
+  is_enabled: boolean;
+  extra_params?: Record<string, unknown>;
+  description?: string;
+  last_test_at?: string;
+  last_test_status?: number;
+  last_test_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LLMConfigSelectOption {
+  id: number;
+  name: string;
+  provider: string;
+  model: string;
+}
+
+export interface LLMProvider {
+  id: string;
+  name: string;
+  description: string;
+  api_url: string;
+  models: string[];
+}
+
+export interface CreateLLMConfigRequest {
+  name: string;
+  provider: string;
+  model: string;
+  api_url: string;
+  api_key: string;
+  organization_id?: string;
+  max_tokens?: number;
+  temperature?: number;
+  timeout?: number;
+  is_default?: boolean;
+  is_enabled?: boolean;
+  extra_params?: Record<string, unknown>;
+  description?: string;
+}
+
+export interface UpdateLLMConfigRequest {
+  name?: string;
+  provider?: string;
+  model?: string;
+  api_url?: string;
+  api_key?: string;
+  organization_id?: string;
+  max_tokens?: number;
+  temperature?: number;
+  timeout?: number;
+  is_default?: boolean;
+  is_enabled?: boolean;
+  extra_params?: Record<string, unknown>;
+  description?: string;
+}
+
+// LLM Config APIs
+export const llmConfigApi = {
+  // Get all configs
+  getConfigs: (params?: { provider?: string; is_enabled?: boolean }) => {
+    return request.get<{
+      configs: LLMConfig[];
+      total: number;
+    }>("/admin/llm-configs", { params });
+  },
+
+  // Get single config
+  getConfig: (id: number) => {
+    return request.get<LLMConfig>(`/admin/llm-configs/${id}`);
+  },
+
+  // Create config
+  createConfig: (data: CreateLLMConfigRequest) => {
+    return request.post<{
+      message: string;
+      config: LLMConfig;
+    }>("/admin/llm-configs", data);
+  },
+
+  // Update config
+  updateConfig: (id: number, data: UpdateLLMConfigRequest) => {
+    return request.put<{
+      message: string;
+      config: LLMConfig;
+    }>(`/admin/llm-configs/${id}`, data);
+  },
+
+  // Delete config
+  deleteConfig: (id: number) => {
+    return request.delete<{ message: string }>(`/admin/llm-configs/${id}`);
+  },
+
+  // Get default config
+  getDefault: () => {
+    return request.get<LLMConfig>("/admin/llm-configs/default");
+  },
+
+  // Set default config
+  setDefault: (id: number) => {
+    return request.post<{ message: string }>(`/admin/llm-configs/${id}/default`);
+  },
+
+  // Test config
+  testConfig: (id: number, prompt?: string) => {
+    return request.post<{
+      message: string;
+      response: string;
+    }>(`/admin/llm-configs/${id}/test`, { prompt });
+  },
+
+  // Get select options
+  getSelectOptions: () => {
+    return request.get<{
+      options: LLMConfigSelectOption[];
+    }>("/admin/llm-configs/options");
+  },
+
+  // Get supported providers
+  getProviders: () => {
+    return request.get<{
+      providers: LLMProvider[];
+    }>("/admin/llm-configs/providers");
+  },
+};
+
 export default request;

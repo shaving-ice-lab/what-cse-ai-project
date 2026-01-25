@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Search, Moon, Sun } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,10 +13,6 @@ import {
   Input,
   Separator,
   SidebarTrigger,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@what-cse/ui";
 import React from "react";
 
@@ -29,6 +25,8 @@ const routeMap: Record<string, string> = {
   announcements: "公告管理",
   create: "创建",
   crawlers: "爬虫管理",
+  fenbi: "粉笔爬虫",
+  announcement: "公告爬虫",
   "list-pages": "列表页管理",
   dictionary: "数据字典",
   majors: "专业字典",
@@ -115,22 +113,6 @@ export function SiteHeader() {
           </span>
           <span className="sr-only">通知</span>
         </Button>
-
-        {/* 主题切换 */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">切换主题</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>浅色</DropdownMenuItem>
-            <DropdownMenuItem>深色</DropdownMenuItem>
-            <DropdownMenuItem>跟随系统</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   );
