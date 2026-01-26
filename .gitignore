@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Server temp files
 apps/server/temp
+
+# IDE files
+.idea
