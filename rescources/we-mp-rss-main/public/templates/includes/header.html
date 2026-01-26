@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include 'includes/title.html' %}
+    <meta name="description" content="{{site.description}}">
+    <meta name="keywords" content="{{site.keywords}}">
+    <meta name="author" content="{{site.author}}">
+    <meta name="copyright" content="{{site.copyright}}">
+    <meta content="{{site.name}}" property="og:site_name">
+    <meta content="{{site.description}}" property="og:description">
+    <link rel="icon" href="/static/logo.svg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; text-decoration: none; color: white; }
+        nav ul { list-style: none; display: flex; gap: 1rem; }
+        nav a { color: white; text-decoration: none; font-weight: 500; font-size: 0.9rem; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .markdown-body{max-width: 1200px !important;}
+        /* 移动端汉堡菜单 */
+        .mobile-menu-toggle { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 0 15px; }
+            .header-content { flex-wrap: wrap; }
+            .mobile-menu-toggle { display: block; }
+            nav { display: none; width: 100%; order: 3; }
+            nav.active { display: block; }
+            nav ul { flex-direction: column; gap: 0.5rem; padding-top: 1rem; }
+            .logo { font-size: 1.2rem; }
+        }
+        main { min-height: calc(100vh - 236px); padding: 2rem 0; }
+        footer { background: #343a40; color: white; text-align: center; padding: 2rem 0; margin-top: 3rem; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .grid { display: grid; gap: 1.5rem; }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+        .grid-6 { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .btn { display: inline-block; padding: 0.4rem 0.8rem; background: #667eea; color: white; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; transition: all 0.3s; font-size: 0.8rem; }
+        .btn:hover { background: #5a6fd8; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .text-center { text-align: center; }
+        .text-muted { color: #6c757d; font-size:.8rem;}
+        .mt-2 { margin-top: 0.5rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        a { text-decoration: none; color: #667eea; }
+        a:hover { text-decoration: none; }
+        /* 移动端汉堡菜单 */
+        .mobile-menu-toggle { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 0 15px; }
+            .header-content { flex-wrap: wrap; }
+            .mobile-menu-toggle { display: block; }
+            nav { display: none; width: 100%; order: 3; }
+            nav.active { display: block; }
+            nav ul { flex-direction: column; gap: 0.5rem; padding-top: 1rem; }
+            .logo { font-size: 1.2rem; }
+            main { padding: 1rem 0; }
+            .card { padding: 1rem; margin-bottom: 1rem; }
+            .btn { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+            .grid-3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/views/home" class="logo">
+                    {{site.name}}
+                </a>
+                <button class="mobile-menu-toggle" onclick="toggleMenu()">☰</button>
+                <nav id="nav-menu">
+                    <ul>
+                        <li><a href="/views/home">首页</a></li>
+                        <li><a href="/views/tags">标签</a></li>
+                        <li><a href="/views/mps">公众号</a></li>
+                        <li><a href="/views/articles">搜索</a></li>
+                        <li><a href="https://github.com/rachelos/we-mp-rss" target="_blank" rel="noopener noreferrer">Github</a></li>
+                        <li><a href="https://gitee.com/rachel_os/we-mp-rss" target="_blank" rel="noopener noreferrer">Gitee</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <main>
+         <div class="container">
+           {% include "includes/breadcrumb.html" %}
+            {% if error %}
+            <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 4px; margin-bottom: 2rem;">
+                <strong>错误：</strong> {{error}}
+            </div>
+            {% endif %}

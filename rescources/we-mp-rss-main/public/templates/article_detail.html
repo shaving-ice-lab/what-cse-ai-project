@@ -1,0 +1,65 @@
+{% include "includes/header.html" %}
+{% include "includes/article_detail_styles.html" %}
+
+<!-- 文章头部信息 -->
+<div class="article-header">
+    <h1 style="margin-bottom: 1rem;font-weight: bold;font-size: 1.8rem;">{{article.title}}</h1>
+    <!-- 公众号信息 -->
+    <div class="mp-info">
+        <div style="width: 48px; height: 48px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+            {% if article.mp_cover %}
+                <img src="{{article.mp_cover}}" alt="{{article.title}}" width="50px"/>
+            {% endif %}
+        </div>
+        <div style="flex: 1;">
+            <div style="font-weight: 500; font-size: 1.1rem;">{{article.mp_name}}</div>
+            {% if article.mp_intro %}
+            <div class="text-muted" style="font-size: 0.9rem;">{{article.mp_intro}}</div>
+            {% endif %}
+        </div>
+        <a href="/views/articles?mp_id={{article.mp_id}}" class="btn" style="font-size: 0.9rem;">查看更多文章</a>
+    </div>
+    
+
+    <!-- 相关文章 -->
+    <div class="more-info">
+        {%for related_article in related_articles %}
+        <p><a href="/views/article/{{related_article.id}}"  style="font-size: 0.9rem;">{{related_article.title}}</a></p>
+        {% endfor %}
+    </div>
+
+      <div class="nav-article" style="text-align: justify; margin-top:2rem;border-top:1px solid #e9ecef;padding-top:1rem;">
+        {% if prev_article %}
+        <p>
+            <a href="/views/article/{{prev_article.id}}"  style="font-size: 0.9rem;">上一篇: {{prev_article.title}}</a>
+        </p>
+        {% endif %}
+        {% if next_article %}
+        <p><a href="/views/article/{{next_article.id}}"  style="font-size: 0.9rem;">下一篇: {{next_article.title}}</a></p>
+        {% endif %}
+    </div>
+    
+    <div class="article-meta">
+        <div>
+            <span style="margin-right: 1rem;">🕐 发布时间: {{article.publish_time}}</span>
+            <span>📅 创建时间: {{article.created_at}}</span>
+        </div>
+    </div>
+    
+    {% if article.description %}
+    <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; border-left: 4px solid #667eea; margin-bottom: 1rem;">
+        <strong>摘要：</strong> {{article.description}}
+    </div>
+    {% endif %}
+</div>
+<!-- 文章内容 -->
+<div class="article-content" style="clear: both;">
+        <p class="text-muted mt-2"> {{article.content}}</p>
+        <p style="margin-top: 1rem;">
+            <a href="{{article.url}}" target="_blank" class="btn" rel="noopener noreferrer">
+                🔗 原文链接
+            </a>
+        </p>
+</div>
+
+{% include "includes/footer.html" %}

@@ -1,0 +1,79 @@
+{% include "includes/header.html" %}
+
+
+{% include "includes/articles_styles.html" %}
+ <!-- 公众号信息 -->
+{% if info %}
+<div class="mp-info">
+    <div style="width: 48px; height: 48px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+        {% if info.mp_cover %}
+            <img src="{{info.mp_cover}}" alt="{{info.mp_name}}" width="50px"/>
+        {% endif %}
+    </div>
+    <div style="flex: 1;">
+        <div style="font-weight: 500; font-size: 1.1rem;">{{info.mp_name}}</div>
+        {% if info.mp_intro %}
+        <div class="text-muted" style="font-size: 0.9rem;">{{info.mp_intro}}</div>
+        {% endif %}
+    </div>
+</div>
+{%endif%}
+<!-- 搜索表单 -->
+<div class="search-form">
+    <form method="GET" action="/views/articles">
+        <div class="search-row">
+            <div class="form-group">
+                <label for="keyword">关键词搜索</label>
+                <input type="text" id="keyword" name="keyword" class="form-control" value="{{current_filters.keyword or ''}}" placeholder="搜索标题或内容...">
+            </div>
+            
+            <div class="form-group">
+                <label for="sort">排序方式</label>
+                <select id="sort" name="sort" class="form-control">
+                    <option value="publish_time">发布时间</option>
+                    <option value="created_at">创建时间</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="search-buttons">
+            <button type="submit" class="btn">🔍 搜索</button>
+            <a href="/views/articles" class="btn btn-secondary">🔄 清除筛选</a>
+        </div>
+    </form>
+</div>
+
+{% if articles %}
+<div class="card">
+    {% for article in articles %}
+    <div class="article-item">
+        <h3><a href="/views/article/{{article.id}}" style="color: inherit; text-decoration: none;">{{article.title}}</a></h3>
+        {% if article.description %}
+        <p class="text-muted" style="font-size: 0.9rem; margin: 0.5rem 0;text-indent: 2rem;">
+            {{article.description}}
+        </p>
+        {% endif %}
+        <div class="article-meta">
+            <a href="/views/articles?mp_id={{article.mp_id}}">
+            <span>
+                <img src="{{article.mp_cover}}" style="width: 20px; height: 20px; border-radius: 50%; margin-right: 0.5rem;"/>
+                 {{article.mp_name}}
+            </span>
+            </a>
+            <span>🕐 {{article.publish_time}}</span>
+            {% if article.is_read %}
+            <span style="color: #28a745;">✓ 已读</span>
+            {% else %}
+            <span style="color: #6c757d;">◯ 未读</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% set base_url = "/views/articles" %}
+{% set item_name = "篇文章" %}
+{% include "includes/pagination.html"%}
+
+
+{% include "includes/footer.html" %}

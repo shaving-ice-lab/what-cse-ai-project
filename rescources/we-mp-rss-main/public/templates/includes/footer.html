@@ -1,0 +1,28 @@
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>{{site.copyright}}</p>
+            <p class="text-muted mt-2">高效订阅您感兴趣的微信公众号内容</p>
+        </div>
+    </footer>
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('nav-menu');
+            nav.classList.toggle('active');
+        }
+        
+        // 点击外部关闭菜单
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('nav-menu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,71 @@
+{% include "includes/header.html" %}
+
+{% block title %}WeRSS - {{tag.name}}标签详情{% endblock %}
+
+{% include "includes/tag_style.html" %}
+{% if not error %}
+<!-- 面包屑导航 -->
+<div class="breadcrumb">
+    {% for item in breadcrumb %}
+        {% if item.url %}
+            <a href="{{item.url}}">{{item.name}}</a>
+        {% else %}
+            <span style="color: #6c757d;">{{item.name}}</span>
+        {% endif %}
+        {% if not loop.last %} / {% endif %}
+    {% endfor %}
+</div>
+
+<!-- 标签信息头部 -->
+<div class="card">
+    <div class="tag-header">
+        {% if tag.cover %}
+        <img src="{{tag.cover}}" alt="{{tag.name}}" class="tag-cover">
+        {% else %}
+        <div class="tag-cover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">📚</div>
+        {% endif %}
+        <div class="tag-info">
+            <h1>{{tag.name}}</h1>
+            <p class="text-muted">{{tag.intro or "暂无简介"}}</p>
+            <div class="tag-stats">
+                <span class="stat-item">📺 {{tag.mp_count}} 个公众号</span>
+                <span class="stat-item">📄 {{tag.article_count}} 篇文章</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 文章列表 -->
+{% if articles %}
+<div class="card">
+    <h2>📄 最新文章</h2>
+    
+    {% for article in articles %}
+    <div class="article-item">
+        <div class="article-title">
+            <a href="{{article.url}}" target="_blank">{{article.title}}</a>
+        </div>
+        {% if article.description %}
+        <p class="text-muted">{{article.description[:150]}}{% if article.description|length > 150 %}...{% endif %}</p>
+        {% endif %}
+        <div class="article-meta">
+            📺 {{article.mp_name}} | 🕒 {{article.publish_time}}
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- 分页 -->
+    {% set base_url = "/views/tag/" ~ tag.id %}
+    {% set item_name = "篇文章" %}
+    {% include "includes/pagination.html" with context %}
+</div>
+
+{% else %}
+{% include "includes/empty_state.html" with context %}
+{% set icon = '📭' %}
+{% set title = '暂无文章' %}
+{% set description = '该标签下还没有文章' %}
+{% endif %}
+{% endif %}
+
+{% include "includes/footer.html" %}
