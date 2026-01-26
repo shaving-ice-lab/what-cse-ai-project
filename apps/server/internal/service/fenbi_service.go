@@ -3,11 +3,12 @@ package service
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
+	cryptorand "crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
 	"sync"
@@ -652,6 +653,27 @@ func (s *FenbiService) CrawlAnnouncementDetail(id uint) (*model.FenbiAnnouncemen
 	// Update announcement with original URL
 	if detail.OriginalURL != "" {
 		announcement.OriginalURL = detail.OriginalURL
+
+		// If original URL is a short URL (t.fenbi.com), resolve it to get the final URL
+		if crawler.IsShortURL(detail.OriginalURL) {
+			s.logger.Info("Resolving short URL for announcement",
+				zap.Uint("id", announcement.ID),
+				zap.String("short_url", detail.OriginalURL),
+			)
+			finalURL, resolveErr := spider.ResolveShortURL(detail.OriginalURL)
+			if resolveErr != nil {
+				s.logger.Warn("Failed to resolve short URL",
+					zap.String("short_url", detail.OriginalURL),
+					zap.Error(resolveErr),
+				)
+			} else if finalURL != "" {
+				announcement.FinalURL = finalURL
+				s.logger.Info("Resolved short URL successfully",
+					zap.String("short_url", detail.OriginalURL),
+					zap.String("final_url", finalURL),
+				)
+			}
+		}
 	}
 	announcement.CrawlStatus = int(model.FenbiCrawlStatusDetailCrawled)
 
@@ -725,7 +747,31 @@ func (s *FenbiService) BatchCrawlDetails(limit int) (int, error) {
 
 		// Update announcement
 		if detail.OriginalURL != "" {
-			s.announcementRepo.UpdateOriginalURL(ann.ID, detail.OriginalURL)
+			originalURL := detail.OriginalURL
+			finalURL := ""
+
+			// If original URL is a short URL (t.fenbi.com), resolve it to get the final URL
+			if crawler.IsShortURL(originalURL) {
+				s.logger.Info("Resolving short URL for announcement",
+					zap.Uint("id", ann.ID),
+					zap.String("short_url", originalURL),
+				)
+				resolved, resolveErr := spider.ResolveShortURL(originalURL)
+				if resolveErr != nil {
+					s.logger.Warn("Failed to resolve short URL",
+						zap.String("short_url", originalURL),
+						zap.Error(resolveErr),
+					)
+				} else if resolved != "" {
+					finalURL = resolved
+					s.logger.Info("Resolved short URL successfully",
+						zap.String("short_url", originalURL),
+						zap.String("final_url", finalURL),
+					)
+				}
+			}
+
+			s.announcementRepo.UpdateURLs(ann.ID, originalURL, finalURL)
 		} else {
 			s.announcementRepo.UpdateCrawlStatus(ann.ID, int(model.FenbiCrawlStatusDetailCrawled))
 		}
@@ -818,10 +864,12 @@ type TestCrawlDetail struct {
 	Title          string                 `json:"title,omitempty"`
 	FenbiURL       string                 `json:"fenbi_url,omitempty"`
 	OriginalURL    string                 `json:"original_url,omitempty"`
+	FinalURL       string                 `json:"final_url,omitempty"`
 	RawData        map[string]interface{} `json:"raw_data,omitempty"`
 }
 
 // TestCrawl tests the cookie-based crawling by fetching a sample announcement
+// Each test fetches fresh data from Fenbi API and randomly selects an item to test
 func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 	// Check login status
 	credential, err := s.credRepo.FindDefault()
@@ -878,77 +926,67 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 		}, nil
 	}
 
-	// Find a sample announcement to test with (preferably one that hasn't been fully crawled)
-	pendingList, err := s.announcementRepo.ListPendingDetails(1)
-	var testAnnouncement *model.FenbiAnnouncement
+	// Always fetch fresh data from Fenbi API for testing
+	// Initialize random seed with current nanoseconds for true randomness
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	
+	// Use a random page (1-10) to get different results each time
+	randomPage := rng.Intn(10) + 1
+	// Also randomize the year between current year and previous year
+	currentYear := time.Now().Year()
+	randomYear := currentYear - rng.Intn(2) // Current year or last year
+	
+	s.logger.Info("Test crawl: fetching fresh data from Fenbi API",
+		zap.Int("random_page", randomPage),
+		zap.Int("random_year", randomYear),
+	)
 
-	if err == nil && len(pendingList) > 0 {
-		testAnnouncement = &pendingList[0]
-	} else {
-		// Fallback: get the most recent announcement
-		params := &repository.FenbiAnnouncementListParams{
-			Page:     1,
-			PageSize: 1,
-		}
-		announcements, _, err := s.announcementRepo.List(params)
-		if err != nil || len(announcements) == 0 {
-			// No existing announcements, try to crawl one from the list first
-			s.logger.Info("No existing announcements, attempting to crawl list first")
-
-			// Try to get a sample from the list
-			result, err := spider.CrawlAnnouncementList("", "", time.Now().Year(), 1)
-			if err != nil {
-				return &TestCrawlResult{
-					Success: false,
-					Message: "测试列表爬取失败: " + err.Error(),
-				}, nil
-			}
-
-			if len(result.Items) == 0 {
-				return &TestCrawlResult{
-					Success: true,
-					Message: "Cookie有效，但未找到可测试的公告数据",
-					TestResult: &TestCrawlDetail{
-						RawData: map[string]interface{}{
-							"list_crawl_result": result,
-						},
-					},
-				}, nil
-			}
-
-			// Return the list item data as test result
-			firstItem := result.Items[0]
-			return &TestCrawlResult{
-				Success: true,
-				Message: "Cookie有效，成功获取公告列表数据",
-				TestResult: &TestCrawlDetail{
-					Title:    firstItem.Title,
-					FenbiURL: firstItem.FenbiURL,
-					RawData: map[string]interface{}{
-						"fenbi_id":     firstItem.FenbiID,
-						"title":        firstItem.Title,
-						"fenbi_url":    firstItem.FenbiURL,
-						"region_code":  firstItem.RegionCode,
-						"region_name":  firstItem.RegionName,
-						"exam_type":    firstItem.ExamTypeCode,
-						"year":         firstItem.Year,
-						"publish_date": firstItem.PublishDate,
-						"total_found":  result.TotalFound,
-						"has_next":     result.HasNextPage,
-					},
+	result, err := spider.CrawlAnnouncementList("", "", randomYear, randomPage)
+	if err != nil {
+		return &TestCrawlResult{
+			Success: false,
+			Message: "测试列表爬取失败: " + err.Error(),
+			TestResult: &TestCrawlDetail{
+				RawData: map[string]interface{}{
+					"error":       err.Error(),
+					"random_page": randomPage,
+					"random_year": randomYear,
 				},
-			}, nil
-		}
-		testAnnouncement = &announcements[0]
+			},
+		}, nil
 	}
 
-	// Now test crawling the detail page to get original URL
-	s.logger.Info("Testing detail crawl", zap.String("fenbi_id", testAnnouncement.FenbiID))
+	if len(result.Items) == 0 {
+		return &TestCrawlResult{
+			Success: true,
+			Message: "Cookie有效，但未找到可测试的公告数据",
+			TestResult: &TestCrawlDetail{
+				RawData: map[string]interface{}{
+					"list_crawl_result": result,
+					"random_page":       randomPage,
+					"random_year":       randomYear,
+				},
+			},
+		}, nil
+	}
 
-	detail, rawHTML, err := spider.CrawlAnnouncementDetailWithHTML(testAnnouncement.FenbiID)
+	// Randomly select an item from the list for detailed testing
+	randomIndex := rng.Intn(len(result.Items))
+	selectedItem := result.Items[randomIndex]
 	
-	// Save the raw HTML to a file for debugging
-	htmlFilePath := fmt.Sprintf("fenbi_test_detail_%s.html", testAnnouncement.FenbiID)
+	s.logger.Info("Test crawl: randomly selected item",
+		zap.Int("random_index", randomIndex),
+		zap.Int("total_items", len(result.Items)),
+		zap.String("fenbi_id", selectedItem.FenbiID),
+		zap.String("title", selectedItem.Title),
+	)
+
+	// Now test crawling the detail page to get original URL
+	detail, rawHTML, err := spider.CrawlAnnouncementDetailWithHTML(selectedItem.FenbiID)
+	
+	// Save the raw HTML to a file for debugging (with timestamp to avoid overwriting)
+	timestamp := time.Now().Format("20060102_150405")
+	htmlFilePath := fmt.Sprintf("fenbi_test_detail_%s_%s.html", selectedItem.FenbiID, timestamp)
 	if writeErr := os.WriteFile(htmlFilePath, []byte(rawHTML), 0644); writeErr != nil {
 		s.logger.Warn("Failed to save HTML file", zap.Error(writeErr))
 	} else {
@@ -960,22 +998,49 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 			Success: false,
 			Message: "测试详情爬取失败: " + err.Error(),
 			TestResult: &TestCrawlDetail{
-				AnnouncementID: testAnnouncement.ID,
-				Title:          testAnnouncement.Title,
-				FenbiURL:       testAnnouncement.FenbiURL,
+				Title:    selectedItem.Title,
+				FenbiURL: selectedItem.FenbiURL,
 				RawData: map[string]interface{}{
-					"html_file":   htmlFilePath,
-					"html_length": len(rawHTML),
-					"error":       err.Error(),
+					"html_file":    htmlFilePath,
+					"html_length":  len(rawHTML),
+					"error":        err.Error(),
+					"fenbi_id":     selectedItem.FenbiID,
+					"random_page":  randomPage,
+					"random_year":  randomYear,
+					"random_index": randomIndex,
 				},
 			},
 		}, nil
+	}
+
+	// Try to resolve the short URL to get the final URL
+	finalURL := ""
+	if detail.OriginalURL != "" && crawler.IsShortURL(detail.OriginalURL) {
+		s.logger.Info("Test crawl: Resolving short URL",
+			zap.String("short_url", detail.OriginalURL),
+		)
+		resolved, resolveErr := spider.ResolveShortURL(detail.OriginalURL)
+		if resolveErr != nil {
+			s.logger.Warn("Test crawl: Failed to resolve short URL",
+				zap.String("short_url", detail.OriginalURL),
+				zap.Error(resolveErr),
+			)
+		} else if resolved != "" {
+			finalURL = resolved
+			s.logger.Info("Test crawl: Resolved short URL successfully",
+				zap.String("short_url", detail.OriginalURL),
+				zap.String("final_url", finalURL),
+			)
+		}
 	}
 
 	// Check if original_url was found
 	message := "Cookie有效，成功获取公告详情"
 	if detail.OriginalURL != "" {
 		message += "和原始链接"
+		if finalURL != "" {
+			message += "，并成功解析最终跳转URL"
+		}
 	} else {
 		message += "，但未找到原始链接（HTML已保存到文件供检查）"
 	}
@@ -985,22 +1050,28 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 		Success: true,
 		Message: message,
 		TestResult: &TestCrawlDetail{
-			AnnouncementID: testAnnouncement.ID,
-			Title:          testAnnouncement.Title,
-			FenbiURL:       testAnnouncement.FenbiURL,
-			OriginalURL:    detail.OriginalURL,
+			Title:       selectedItem.Title,
+			FenbiURL:    selectedItem.FenbiURL,
+			OriginalURL: detail.OriginalURL,
+			FinalURL:    finalURL,
 			RawData: map[string]interface{}{
-				"html_file":   htmlFilePath,
-				"html_length": len(rawHTML),
-				"fenbi_id":     testAnnouncement.FenbiID,
-				"title":        testAnnouncement.Title,
-				"fenbi_url":    testAnnouncement.FenbiURL,
+				"html_file":    htmlFilePath,
+				"html_length":  len(rawHTML),
+				"fenbi_id":     selectedItem.FenbiID,
+				"title":        selectedItem.Title,
+				"fenbi_url":    selectedItem.FenbiURL,
 				"original_url": detail.OriginalURL,
-				"region_code":  testAnnouncement.RegionCode,
-				"region_name":  testAnnouncement.RegionName,
-				"exam_type":    testAnnouncement.ExamTypeCode,
-				"year":         testAnnouncement.Year,
-				"crawl_status": testAnnouncement.CrawlStatus,
+				"final_url":    finalURL,
+				"region_code":  selectedItem.RegionCode,
+				"region_name":  selectedItem.RegionName,
+				"exam_type":    selectedItem.ExamTypeCode,
+				"year":         selectedItem.Year,
+				"publish_date": selectedItem.PublishDate,
+				"random_page":  randomPage,
+				"random_year":  randomYear,
+				"random_index": randomIndex,
+				"total_items":  len(result.Items),
+				"test_time":    time.Now().Format("2006-01-02 15:04:05"),
 			},
 		},
 	}, nil
@@ -1169,7 +1240,7 @@ func encryptPassword(password string) (string, error) {
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+	if _, err := io.ReadFull(cryptorand.Reader, iv); err != nil {
 		return "", err
 	}
 

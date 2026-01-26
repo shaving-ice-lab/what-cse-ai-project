@@ -20,13 +20,14 @@ import {
   Link,
   ChevronLeft,
   ChevronRight,
-  Activity,
   Zap,
-  TrendingUp,
   FileText,
   Cookie,
   Upload,
   FlaskConical,
+  Square,
+  Timer,
+  Activity,
 } from "lucide-react";
 import {
   Card,
@@ -57,6 +58,10 @@ import {
   SelectValue,
   ScrollArea,
   Textarea,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from "@what-cse/ui";
 import {
   fenbiApi,
@@ -101,6 +106,7 @@ export default function FenbiCrawlerPage() {
       title?: string;
       fenbi_url?: string;
       original_url?: string;
+      final_url?: string;
       raw_data?: Record<string, unknown>;
     };
   } | null>(null);
@@ -117,6 +123,18 @@ export default function FenbiCrawlerPage() {
   const [filterRegion, setFilterRegion] = useState("");
   const [filterExamType, setFilterExamType] = useState("");
   const [filterYear, setFilterYear] = useState("");
+
+  // Task queue - 公告任务队列
+  const [taskQueue, setTaskQueue] = useState<Array<{
+    id: number;
+    title: string;
+    status: "pending" | "running" | "completed" | "failed" | "skipped";
+    message?: string;
+    startTime?: Date;
+    endTime?: Date;
+  }>>([]);
+  const [crawlStartTime, setCrawlStartTime] = useState<Date | null>(null);
+  const [activeTab, setActiveTab] = useState("list");
 
   // Crawl config
   const [crawlRegions, setCrawlRegions] = useState<string[]>([]);
@@ -250,6 +268,9 @@ export default function FenbiCrawlerPage() {
     }
   };
 
+  // 已知公告ID的集合，用于检测新增公告
+  const knownAnnouncementIdsRef = useRef<Set<number>>(new Set());
+
   // 定义刷新函数，直接调用 API 避免闭包问题
   const refreshCrawlData = async () => {
     try {
@@ -263,7 +284,38 @@ export default function FenbiCrawlerPage() {
         }),
         fenbiApi.getStats(),
       ]);
-      setAnnouncements((announcementsRes as any).announcements || []);
+      
+      const newAnnouncements = (announcementsRes as any).announcements || [];
+      
+      // 检测新增的公告，添加到任务队列
+      const newTasks: Array<{
+        id: number;
+        title: string;
+        status: "pending" | "running" | "completed" | "failed" | "skipped";
+        message?: string;
+        startTime?: Date;
+        endTime?: Date;
+      }> = [];
+      
+      for (const ann of newAnnouncements) {
+        if (!knownAnnouncementIdsRef.current.has(ann.id)) {
+          knownAnnouncementIdsRef.current.add(ann.id);
+          newTasks.push({
+            id: ann.id,
+            title: ann.title,
+            status: "completed",
+            startTime: new Date(),
+            endTime: new Date(),
+          });
+        }
+      }
+      
+      // 将新任务添加到队列顶部
+      if (newTasks.length > 0) {
+        setTaskQueue((prev) => [...newTasks, ...prev].slice(0, 100)); // 最多保留100条
+      }
+      
+      setAnnouncements(newAnnouncements);
       setAnnouncementsTotal((announcementsRes as any).total || 0);
       setAnnouncementsPage(1); // 重置到第一页
       setStats(statsRes as any);
@@ -275,6 +327,17 @@ export default function FenbiCrawlerPage() {
   const handleTriggerCrawl = async () => {
     setCrawling(true);
     setCrawlProgress(null);
+    setActiveTab("tasks"); // 切换到任务 Tab
+    setCrawlStartTime(new Date());
+    setTaskQueue([]); // 清空任务队列
+    
+    // 初始化已知公告ID集合（当前已有的公告）
+    knownAnnouncementIdsRef.current = new Set(announcements.map((a) => a.id));
+    
+    const excludedExamTypes = ["shengkao", "guokao"];
+    const examTypesToCrawl = crawlExamTypes.length > 0 
+      ? crawlExamTypes 
+      : categories.exam_types.filter((type) => !excludedExamTypes.includes(type.code)).map((type) => type.code);
     
     // 创建 AbortController 用于取消请求
     crawlAbortControllerRef.current = new AbortController();
@@ -283,26 +346,19 @@ export default function FenbiCrawlerPage() {
     crawlIntervalRef.current = setInterval(refreshCrawlData, 1500);
     
     try {
-      // 排除省考和国考的考试类型
-      const excludedExamTypes = ["shengkao", "guokao"];
-      let examTypesToCrawl: string[] | undefined;
-      
-      if (crawlExamTypes.length > 0) {
-        // 用户选择了特定类型
-        examTypesToCrawl = crawlExamTypes;
-      } else {
-        // 用户选择"全部类型"时，自动排除省考和国考
-        examTypesToCrawl = categories.exam_types
-          .filter((type) => !excludedExamTypes.includes(type.code))
-          .map((type) => type.code);
-      }
-      
       const res = await fenbiApi.triggerCrawl({
         regions: crawlRegions.length > 0 ? crawlRegions : undefined,
         exam_types: examTypesToCrawl,
         years: crawlYears.length > 0 ? crawlYears : undefined,
       }, crawlAbortControllerRef.current.signal);
-      setCrawlProgress(res as FenbiCrawlProgress);
+      
+      const progress = res as FenbiCrawlProgress;
+      setCrawlProgress(progress);
+      
+      // 标记所有正在处理的任务为完成
+      setTaskQueue((prev) => prev.map((task) => 
+        task.status === "running" ? { ...task, status: "completed" as const, endTime: new Date() } : task
+      ));
     } catch (error: any) {
       // 忽略用户主动取消的错误
       const isCanceled = error?.name === 'CanceledError' || 
@@ -311,6 +367,15 @@ export default function FenbiCrawlerPage() {
                          error?.message === 'canceled';
       if (!isCanceled) {
         console.error("Failed to trigger crawl:", error);
+        // 标记正在处理的任务为失败
+        setTaskQueue((prev) => prev.map((task) => 
+          task.status === "running" ? { ...task, status: "failed" as const, message: "爬取失败", endTime: new Date() } : task
+        ));
+      } else {
+        // 标记正在处理的任务为已停止
+        setTaskQueue((prev) => prev.map((task) => 
+          task.status === "running" ? { ...task, status: "completed" as const, message: "已停止", endTime: new Date() } : task
+        ));
       }
     } finally {
       // 停止定时器
@@ -347,6 +412,7 @@ export default function FenbiCrawlerPage() {
     // 更新状态
     setCrawling(false);
     setCrawlProgress((prev) => prev ? { ...prev, status: "stopped", message: "爬取已停止" } : null);
+    
     // 最终刷新一次数据
     await refreshCrawlData();
   };
@@ -379,6 +445,7 @@ export default function FenbiCrawlerPage() {
           title?: string;
           fenbi_url?: string;
           original_url?: string;
+          final_url?: string;
           raw_data?: Record<string, unknown>;
         };
       });
@@ -418,6 +485,9 @@ export default function FenbiCrawlerPage() {
 
   const totalPages = Math.ceil(announcementsTotal / 20);
 
+  // Crawl config dialog state
+  const [crawlConfigDialogOpen, setCrawlConfigDialogOpen] = useState(false);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -430,503 +500,615 @@ export default function FenbiCrawlerPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] flex gap-5">
-      {/* Left Panel - Control & Stats */}
-      <div className="w-[360px] flex-shrink-0 flex flex-col gap-4 overflow-hidden">
-        <ScrollArea className="flex-1">
-          <div className="space-y-4 pr-3">
-            {/* Login Status Card */}
-            <Card className="border-l-4 border-l-primary/60">
-              <CardHeader className="pb-3">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] flex flex-col gap-2">
+      {/* Top Toolbar - Compact */}
+      <div className="flex-shrink-0 flex items-center gap-3">
+        {/* Tab Switcher */}
+        <TabsList className="h-8">
+          <TabsTrigger value="tasks" className="gap-1.5 text-xs px-3 h-7">
+            <Activity className="h-3.5 w-3.5" />
+            任务队列
+            {crawling && (
+              <span className="ml-1 h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            )}
+            {taskQueue.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+                {taskQueue.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="list" className="gap-1.5 text-xs px-3 h-7">
+            <FileText className="h-3.5 w-3.5" />
+            公告列表
+            <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+              {announcementsTotal}
+            </Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Account Status Indicator */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border">
+          {getStatusIcon(loginStatus?.status || 0)}
+          <span className="text-sm font-medium">
+            {loginStatus?.status_text || "未配置"}
+          </span>
+          {credential && (
+            <span className="text-xs text-muted-foreground">
+              {credential.phone_masked}
+            </span>
+          )}
+        </div>
+
+        {/* Quick Stats */}
+        <div className="flex items-center gap-4 px-3 py-1.5 bg-muted/30 rounded-lg">
+          <div className="flex items-center gap-1.5">
+            <Database className="h-3.5 w-3.5 text-violet-500" />
+            <span className="text-xs text-muted-foreground">总数</span>
+            <span className="text-sm font-bold text-violet-600">{stats?.total || 0}</span>
+          </div>
+          <div className="w-px h-4 bg-border" />
+          <div className="flex items-center gap-1.5">
+            <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="text-xs text-muted-foreground">已完成</span>
+            <span className="text-sm font-bold text-emerald-600">{stats?.by_crawl_status?.[2] || 0}</span>
+          </div>
+          <div className="w-px h-4 bg-border" />
+          <div className="flex items-center gap-1.5">
+            <Link className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-xs text-muted-foreground">待详情</span>
+            <span className="text-sm font-bold text-blue-600">{stats?.by_crawl_status?.[1] || 0}</span>
+          </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-1.5">
+          {!loginStatus?.is_logged_in && credential && (
+            <Button size="sm" variant="outline" onClick={handleLogin} disabled={loggingIn} className="h-8">
+              {loggingIn ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <LogIn className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              登录
+            </Button>
+          )}
+          
+          {crawling ? (
+            <Button size="sm" variant="destructive" onClick={handleStopCrawl} className="h-8">
+              <Square className="mr-1.5 h-3.5 w-3.5" />
+              停止
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={handleTriggerCrawl}
+              disabled={!loginStatus?.is_logged_in}
+              className="h-8"
+            >
+              <Play className="mr-1.5 h-3.5 w-3.5" />
+              开始爬取
+            </Button>
+          )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCrawlConfigDialogOpen(true)}
+            className="h-8"
+            title="爬虫配置"
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleTestCrawl}
+            disabled={!loginStatus?.is_logged_in || testing}
+            className="h-8"
+            title="测试爬取"
+          >
+            {testing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FlaskConical className="h-3.5 w-3.5" />
+            )}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setCookieDialogOpen(true)}
+            className="h-8"
+            title="导入Cookie"
+          >
+            <Cookie className="h-3.5 w-3.5" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (credential) {
+                setCredentialForm({
+                  phone: credential.phone || "",
+                  password: credential.password || "",
+                });
+              } else {
+                setCredentialForm({ phone: "", password: "" });
+              }
+              setCredentialDialogOpen(true);
+            }}
+            className="h-8"
+            title="账号设置"
+          >
+            <Key className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Login Warning */}
+      {!loginStatus?.is_logged_in && (
+        <div className="flex-shrink-0 px-3 py-2 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 rounded-lg text-xs flex items-center gap-2">
+          <AlertCircle className="h-3.5 w-3.5" />
+          请先登录粉笔账号或导入Cookie才能进行爬取
+        </div>
+      )}
+
+      {/* Tasks Tab */}
+      <TabsContent value="tasks" className="flex-1 overflow-hidden mt-0">
+            <Card className="h-full flex flex-col overflow-hidden">
+              <CardHeader className="flex-shrink-0 py-3 px-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-primary" />
-                    账号状态
-                  </CardTitle>
-                  {getStatusIcon(loginStatus?.status || 0)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold">
-                    {loginStatus?.status_text || "未配置"}
-                  </span>
-                  {credential && (
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                      {credential.phone_masked}
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  {!loginStatus?.is_logged_in && credential && (
-                    <Button size="sm" onClick={handleLogin} disabled={loggingIn} className="flex-1">
-                      {loggingIn ? (
-                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                      ) : (
-                        <LogIn className="mr-2 h-3 w-3" />
-                      )}
-                      登录
-                    </Button>
-                  )}
-                  <Button size="sm" variant="outline" onClick={handleCheckStatus} className="flex-1">
-                    检查状态
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setCookieDialogOpen(true)} title="导入Cookie">
-                    <Cookie className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => {
-                    // 打开对话框时预填充已保存的凭证
-                    if (credential) {
-                      setCredentialForm({
-                        phone: credential.phone || "",
-                        password: credential.password || "",
-                      });
-                    } else {
-                      setCredentialForm({ phone: "", password: "" });
-                    }
-                    setCredentialDialogOpen(true);
-                  }}>
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <Card className="bg-gradient-to-br from-violet-50 to-white dark:from-violet-950/20 dark:to-background">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 rounded-md bg-violet-100 dark:bg-violet-900/50">
-                      <Database className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">总公告</span>
-                  </div>
-                  <div className="text-2xl font-bold text-violet-700 dark:text-violet-300">
-                    {stats?.total || 0}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950/20 dark:to-background">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-900/50">
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">已完成</span>
-                  </div>
-                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
-                    {stats?.by_crawl_status?.[2] || 0}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-background">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/50">
-                      <Link className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">待详情</span>
-                  </div>
-                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                    {stats?.by_crawl_status?.[1] || 0}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/20 dark:to-background">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-900/50">
-                      <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">最后检查</span>
-                  </div>
-                  <div className="text-sm font-medium text-amber-700 dark:text-amber-300 truncate">
-                    {loginStatus?.last_check_at
-                      ? new Date(loginStatus.last_check_at).toLocaleString("zh-CN", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "-"}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Crawl Configuration */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-primary" />
-                  爬虫配置
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  选择筛选条件开始数据采集
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-xs flex items-center gap-1.5">
-                    <MapPin className="h-3 w-3" />
-                    地区
-                  </Label>
-                  <Select
-                    value={crawlRegions[0] || "all"}
-                    onValueChange={(value) => setCrawlRegions(value === "all" ? [] : [value])}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="选择地区" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部地区</SelectItem>
-                      {categories.regions.map((region) => (
-                        <SelectItem key={region.code} value={region.code}>
-                          {region.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs flex items-center gap-1.5">
-                    <Briefcase className="h-3 w-3" />
-                    考试类型
-                  </Label>
-                  <Select
-                    value={crawlExamTypes[0] || "all"}
-                    onValueChange={(value) => setCrawlExamTypes(value === "all" ? [] : [value])}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="选择考试类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部类型</SelectItem>
-                      {categories.exam_types
-                        .filter((type) => type.code !== "shengkao" && type.code !== "guokao")
-                        .map((type) => (
-                          <SelectItem key={type.code} value={type.code}>
-                            {type.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs flex items-center gap-1.5">
-                    <Calendar className="h-3 w-3" />
-                    年份
-                  </Label>
-                  <Select
-                    value={crawlYears[0]?.toString() || "all"}
-                    onValueChange={(value) =>
-                      setCrawlYears(value === "all" ? [] : [parseInt(value)])
-                    }
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="选择年份" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部年份</SelectItem>
-                      {categories.years.map((year) => (
-                        <SelectItem key={year.code} value={year.code}>
-                          {year.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-2">
-                  {crawling ? (
-                    <Button
-                      className="flex-1"
-                      variant="destructive"
-                      onClick={handleStopCrawl}
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      停止爬取
-                    </Button>
-                  ) : (
-                    <Button
-                      className="flex-1"
-                      onClick={handleTriggerCrawl}
-                      disabled={!loginStatus?.is_logged_in}
-                    >
-                      <Play className="mr-2 h-4 w-4" />
-                      开始爬取
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={handleTestCrawl}
-                    disabled={!loginStatus?.is_logged_in || testing}
-                    title="测试Cookie爬取"
-                  >
-                    {testing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FlaskConical className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-
-                {/* Crawl Progress - Show when crawling or when completed */}
-                {(crawling || crawlProgress) && (
-                  <div className="p-3 bg-muted rounded-lg space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium flex items-center gap-2">
-                        {crawling && <Loader2 className="h-3 w-3 animate-spin" />}
-                        爬取状态
-                      </span>
-                      <Badge 
-                        variant={
-                          crawlProgress?.status === "completed" ? "default" : 
-                          crawlProgress?.status === "stopped" ? "destructive" : 
-                          "secondary"
-                        } 
-                        className="text-xs"
-                      >
-                        {crawling ? "正在爬取" : 
-                         crawlProgress?.status === "completed" ? "已完成" : 
-                         crawlProgress?.status === "stopped" ? "已停止" : 
-                         "进行中"}
+                  <div className="flex items-center gap-3">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-primary" />
+                      任务队列
+                    </CardTitle>
+                    {crawling && (
+                      <Badge className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        爬取中
                       </Badge>
-                    </div>
-                    {crawlProgress && (
-                      <>
-                        <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all ${
-                              crawlProgress.status === "stopped" ? "bg-destructive" : "bg-primary"
-                            }`}
-                            style={{
-                              width: `${
-                                crawlProgress.total_tasks > 0
-                                  ? (crawlProgress.completed_tasks / crawlProgress.total_tasks) * 100
-                                  : 0
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          爬取 {crawlProgress.items_crawled} 项 · 保存 {crawlProgress.items_saved} 项
-                          {crawlProgress.status === "stopped" && " · 已手动停止"}
-                        </div>
-                      </>
                     )}
-                    {crawling && !crawlProgress && (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <span>正在获取数据，右侧列表将实时更新...</span>
+                    {crawlProgress && (
+                      <span className="text-xs text-muted-foreground">
+                        已爬取 {crawlProgress.items_crawled} 项 · 已保存 {crawlProgress.items_saved} 项
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {crawlStartTime && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Timer className="h-3 w-3" />
+                        开始于 {crawlStartTime.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                       </div>
                     )}
                     {crawling && (
-                      <div className="text-xs text-blue-600 dark:text-blue-400">
-                        当前公告总数: {stats?.total || 0}
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={handleStopCrawl}
+                        className="h-7 text-xs"
+                      >
+                        <Square className="h-3 w-3 mr-1" />
+                        停止
+                      </Button>
+                    )}
+                    {!crawling && taskQueue.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setTaskQueue([])}
+                        className="h-7 text-xs"
+                      >
+                        <XCircle className="h-3 w-3 mr-1" />
+                        清除
+                      </Button>
                     )}
                   </div>
-                )}
-
-                {!loginStatus?.is_logged_in && (
-                  <div className="p-3 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 rounded-lg text-xs">
-                    请先登录粉笔账号才能进行爬取
+                </div>
+                {/* Progress Bar */}
+                {crawling && crawlProgress && crawlProgress.total_tasks > 0 && (
+                  <div className="mt-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-300"
+                            style={{
+                              width: `${(crawlProgress.completed_tasks / crawlProgress.total_tasks) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {crawlProgress.completed_tasks}/{crawlProgress.total_tasks}
+                      </span>
+                    </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Right Panel - Data List */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Card className="flex-1 flex flex-col overflow-hidden">
-          <CardHeader className="flex-shrink-0 pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">公告列表</CardTitle>
-                  <CardDescription className="text-xs">
-                    共 {announcementsTotal} 条记录
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Select value={filterRegion || "_all"} onValueChange={(v) => { setFilterRegion(v === "_all" ? "" : v); setAnnouncementsPage(1); }}>
-                  <SelectTrigger className="w-28 h-8 text-xs">
-                    <SelectValue placeholder="地区" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_all">全部地区</SelectItem>
-                    {categories.regions.map((region) => (
-                      <SelectItem key={region.code} value={region.code}>
-                        {region.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterExamType || "_all"} onValueChange={(v) => { setFilterExamType(v === "_all" ? "" : v); setAnnouncementsPage(1); }}>
-                  <SelectTrigger className="w-28 h-8 text-xs">
-                    <SelectValue placeholder="类型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_all">全部类型</SelectItem>
-                    {categories.exam_types.map((type) => (
-                      <SelectItem key={type.code} value={type.code}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterYear || "_all"} onValueChange={(v) => { setFilterYear(v === "_all" ? "" : v); setAnnouncementsPage(1); }}>
-                  <SelectTrigger className="w-20 h-8 text-xs">
-                    <SelectValue placeholder="年份" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_all">全部</SelectItem>
-                    {categories.years.map((year) => (
-                      <SelectItem key={year.code} value={year.code}>
-                        {year.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-background z-10">
-                    <TableRow>
-                      <TableHead className="w-[40%]">标题</TableHead>
-                      <TableHead className="w-[12%]">地区</TableHead>
-                      <TableHead className="w-[15%]">考试类型</TableHead>
-                      <TableHead className="w-[8%]">年份</TableHead>
-                      <TableHead className="w-[12%]">状态</TableHead>
-                      <TableHead className="w-[13%]">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {announcements.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-16">
-                          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                            <Database className="h-8 w-8 opacity-50" />
-                            <p className="text-sm">暂无公告数据</p>
-                            <p className="text-xs">请先执行爬取任务</p>
-                          </div>
-                        </TableCell>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
+                <ScrollArea className="flex-1">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background z-10">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-12 py-2 text-xs">状态</TableHead>
+                        <TableHead className="py-2 text-xs">公告标题</TableHead>
+                        <TableHead className="w-24 py-2 text-xs">完成时间</TableHead>
                       </TableRow>
-                    ) : (
-                      announcements.map((announcement) => (
-                        <TableRow key={announcement.id} className="group">
-                          <TableCell className="py-3">
-                            <div className="max-w-[350px]">
-                              <a
-                                href={announcement.fenbi_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline font-medium text-sm line-clamp-2"
-                              >
-                                {announcement.title}
-                              </a>
-                              {announcement.original_url && (
-                                <a
-                                  href={announcement.original_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-1"
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                  原文链接
-                                </a>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm">{announcement.region_name || "-"}</TableCell>
-                          <TableCell className="text-sm">{announcement.exam_type_name || "-"}</TableCell>
-                          <TableCell className="text-sm">{announcement.year || "-"}</TableCell>
-                          <TableCell>{getCrawlStatusBadge(announcement.crawl_status)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleViewDetail(announcement)}
-                                className="h-7 text-xs"
-                                title="查看详情"
-                              >
-                                <FileText className="h-3 w-3" />
-                              </Button>
-                              {announcement.crawl_status < 2 && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleCrawlDetail(announcement.id)}
-                                  disabled={!loginStatus?.is_logged_in}
-                                  className="h-7 text-xs"
-                                  title="获取原文"
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {taskQueue.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center py-16">
+                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                              {crawling ? (
+                                <>
+                                  <Loader2 className="h-8 w-8 animate-spin opacity-50" />
+                                  <p className="text-sm">正在获取公告列表...</p>
+                                  <p className="text-xs">请稍候，新爬取的公告将显示在此处</p>
+                                </>
+                              ) : (
+                                <>
+                                  <Activity className="h-8 w-8 opacity-30" />
+                                  <p className="text-sm">暂无任务</p>
+                                  <p className="text-xs">点击"开始爬取"开始新任务</p>
+                                </>
                               )}
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </div>
+                      ) : (
+                        taskQueue.map((task) => (
+                          <TableRow key={task.id} className="group">
+                            <TableCell className="py-2">
+                              <div className="flex items-center justify-center">
+                                {task.status === "completed" && (
+                                  <CheckCircle className="h-4 w-4 text-emerald-500" />
+                                )}
+                                {task.status === "running" && (
+                                  <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                                )}
+                                {task.status === "pending" && (
+                                  <Clock className="h-4 w-4 text-gray-400" />
+                                )}
+                                {task.status === "failed" && (
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                                {task.status === "skipped" && (
+                                  <AlertCircle className="h-4 w-4 text-orange-500" />
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <span className={`text-sm ${
+                                task.status === "completed" ? "text-foreground" :
+                                task.status === "running" ? "text-blue-700 dark:text-blue-300 font-medium" :
+                                task.status === "failed" ? "text-red-700 dark:text-red-300" :
+                                "text-muted-foreground"
+                              }`}>
+                                {task.title}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-2 text-xs text-muted-foreground">
+                              {task.endTime ? task.endTime.toLocaleTimeString("zh-CN", { 
+                                hour: "2-digit", 
+                                minute: "2-digit", 
+                                second: "2-digit" 
+                              }) : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+      </TabsContent>
 
-            {/* Pagination */}
-            {announcementsTotal > 0 && (
-              <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-t bg-muted/30">
-                <div className="text-xs text-muted-foreground">
-                  第 {(announcementsPage - 1) * 20 + 1}-{Math.min(announcementsPage * 20, announcementsTotal)} 条，共 {announcementsTotal} 条
+      {/* List Tab */}
+      <TabsContent value="list" className="flex-1 overflow-hidden mt-0">
+        <Card className="h-full flex flex-col overflow-hidden">
+              <CardHeader className="flex-shrink-0 py-3 px-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      公告列表
+                    </CardTitle>
+                    <Badge variant="secondary" className="text-xs">
+                      {announcementsTotal} 条
+                    </Badge>
+                    {crawling && (
+                      <Badge className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        实时更新中
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={filterRegion || "_all"} onValueChange={(v) => { setFilterRegion(v === "_all" ? "" : v); setAnnouncementsPage(1); }}>
+                      <SelectTrigger className="w-24 h-7 text-xs">
+                        <SelectValue placeholder="地区" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_all">全部地区</SelectItem>
+                        {categories.regions.map((region) => (
+                          <SelectItem key={region.code} value={region.code}>
+                            {region.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={filterExamType || "_all"} onValueChange={(v) => { setFilterExamType(v === "_all" ? "" : v); setAnnouncementsPage(1); }}>
+                      <SelectTrigger className="w-24 h-7 text-xs">
+                        <SelectValue placeholder="类型" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_all">全部类型</SelectItem>
+                        {categories.exam_types.map((type) => (
+                          <SelectItem key={type.code} value={type.code}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={filterYear || "_all"} onValueChange={(v) => { setFilterYear(v === "_all" ? "" : v); setAnnouncementsPage(1); }}>
+                      <SelectTrigger className="w-20 h-7 text-xs">
+                        <SelectValue placeholder="年份" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_all">全部</SelectItem>
+                        {categories.years.map((year) => (
+                          <SelectItem key={year.code} value={year.code}>
+                            {year.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAnnouncementsPage((p) => Math.max(1, p - 1))}
-                    disabled={announcementsPage === 1}
-                    className="h-7 w-7 p-0"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-xs px-3 py-1 bg-background border rounded">
-                    {announcementsPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAnnouncementsPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={announcementsPage >= totalPages}
-                    className="h-7 w-7 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
+                <div className="flex-1 overflow-hidden">
+                  <ScrollArea className="h-full">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-background z-10">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="w-[45%] py-2 text-xs">标题</TableHead>
+                          <TableHead className="w-[10%] py-2 text-xs">地区</TableHead>
+                          <TableHead className="w-[12%] py-2 text-xs">考试类型</TableHead>
+                          <TableHead className="w-[8%] py-2 text-xs">年份</TableHead>
+                          <TableHead className="w-[12%] py-2 text-xs">状态</TableHead>
+                          <TableHead className="w-[13%] py-2 text-xs">操作</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {announcements.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12">
+                              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                <Database className="h-8 w-8 opacity-50" />
+                                <p className="text-sm">暂无公告数据</p>
+                                <p className="text-xs">请先执行爬取任务</p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          announcements.map((announcement) => (
+                            <TableRow key={announcement.id} className="group">
+                              <TableCell className="py-2">
+                                <div>
+                                  <a
+                                    href={announcement.fenbi_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline font-medium text-sm line-clamp-1"
+                                  >
+                                    {announcement.title}
+                                  </a>
+                                  {announcement.original_url && (
+                                    <a
+                                      href={announcement.original_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-0.5"
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                      原文
+                                    </a>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs py-2">{announcement.region_name || "-"}</TableCell>
+                              <TableCell className="text-xs py-2">{announcement.exam_type_name || "-"}</TableCell>
+                              <TableCell className="text-xs py-2">{announcement.year || "-"}</TableCell>
+                              <TableCell className="py-2">{getCrawlStatusBadge(announcement.crawl_status)}</TableCell>
+                              <TableCell className="py-2">
+                                <div className="flex items-center gap-0.5">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleViewDetail(announcement)}
+                                    className="h-6 w-6 p-0"
+                                    title="查看详情"
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                  </Button>
+                                  {announcement.crawl_status < 2 && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleCrawlDetail(announcement.id)}
+                                      disabled={!loginStatus?.is_logged_in}
+                                      className="h-6 w-6 p-0"
+                                      title="获取原文"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
                 </div>
-              </div>
-            )}
+
+                {/* Pagination */}
+                {announcementsTotal > 0 && (
+                  <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t bg-muted/20">
+                    <div className="text-xs text-muted-foreground">
+                      {(announcementsPage - 1) * 20 + 1}-{Math.min(announcementsPage * 20, announcementsTotal)} / {announcementsTotal}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAnnouncementsPage((p) => Math.max(1, p - 1))}
+                        disabled={announcementsPage === 1}
+                        className="h-6 w-6 p-0"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs px-2 min-w-[60px] text-center">
+                        {announcementsPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAnnouncementsPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={announcementsPage >= totalPages}
+                        className="h-6 w-6 p-0"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
           </CardContent>
         </Card>
-      </div>
+      </TabsContent>
+
+      {/* Crawl Config Dialog */}
+      <Dialog open={crawlConfigDialogOpen} onOpenChange={setCrawlConfigDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              爬虫配置
+            </DialogTitle>
+            <DialogDescription>
+              选择筛选条件开始数据采集
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5" />
+                地区
+              </Label>
+              <Select
+                value={crawlRegions[0] || "all"}
+                onValueChange={(value) => setCrawlRegions(value === "all" ? [] : [value])}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择地区" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部地区</SelectItem>
+                  {categories.regions.map((region) => (
+                    <SelectItem key={region.code} value={region.code}>
+                      {region.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5" />
+                考试类型
+              </Label>
+              <Select
+                value={crawlExamTypes[0] || "all"}
+                onValueChange={(value) => setCrawlExamTypes(value === "all" ? [] : [value])}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择考试类型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部类型</SelectItem>
+                  {categories.exam_types
+                    .filter((type) => type.code !== "shengkao" && type.code !== "guokao")
+                    .map((type) => (
+                      <SelectItem key={type.code} value={type.code}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                年份
+              </Label>
+              <Select
+                value={crawlYears[0]?.toString() || "all"}
+                onValueChange={(value) =>
+                  setCrawlYears(value === "all" ? [] : [parseInt(value)])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择年份" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部年份</SelectItem>
+                  {categories.years.map((year) => (
+                    <SelectItem key={year.code} value={year.code}>
+                      {year.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Current Config Summary */}
+            <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
+              <p className="font-medium">当前配置：</p>
+              <p>地区: {crawlRegions.length === 0 ? "全部" : categories.regions.find((r) => r.code === crawlRegions[0])?.name || crawlRegions[0]}</p>
+              <p>类型: {crawlExamTypes.length === 0 ? "全部（排除省考/国考）" : categories.exam_types.find((t) => t.code === crawlExamTypes[0])?.name || crawlExamTypes[0]}</p>
+              <p>年份: {crawlYears.length === 0 ? "全部" : crawlYears.join(", ")}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCrawlConfigDialogOpen(false)}>
+              关闭
+            </Button>
+            <Button
+              onClick={() => {
+                setCrawlConfigDialogOpen(false);
+                handleTriggerCrawl();
+              }}
+              disabled={!loginStatus?.is_logged_in || crawling}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              开始爬取
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Credential Dialog */}
       <Dialog open={credentialDialogOpen} onOpenChange={setCredentialDialogOpen}>
@@ -1114,11 +1296,11 @@ export default function FenbiCrawlerPage() {
                         )}
                       </div>
 
-                      {/* 原文链接 */}
+                      {/* 原文链接（短链接） */}
                       <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground flex items-center gap-1">
                           <ExternalLink className="h-3 w-3" />
-                          原文链接
+                          原文链接（短链接）
                         </Label>
                         {testResult.test_result.original_url ? (
                           <a
@@ -1132,6 +1314,27 @@ export default function FenbiCrawlerPage() {
                           </a>
                         ) : (
                           <p className="text-sm text-muted-foreground">未获取到原文链接</p>
+                        )}
+                      </div>
+
+                      {/* 最终跳转链接 */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Link className="h-3 w-3" />
+                          最终跳转链接
+                        </Label>
+                        {testResult.test_result.final_url ? (
+                          <a
+                            href={testResult.test_result.final_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline break-all flex items-center gap-1"
+                          >
+                            {testResult.test_result.final_url}
+                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                          </a>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">未解析或不是短链接</p>
                         )}
                       </div>
 
@@ -1287,7 +1490,7 @@ export default function FenbiCrawlerPage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
                       <ExternalLink className="h-3 w-3" />
-                      原文链接
+                      原文链接（短链接）
                     </Label>
                     {selectedAnnouncement.original_url ? (
                       <a
@@ -1301,6 +1504,25 @@ export default function FenbiCrawlerPage() {
                       </a>
                     ) : (
                       <p className="text-sm text-muted-foreground">未获取</p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Link className="h-3 w-3" />
+                      最终跳转链接
+                    </Label>
+                    {selectedAnnouncement.final_url ? (
+                      <a
+                        href={selectedAnnouncement.final_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all flex items-center gap-1"
+                      >
+                        {selectedAnnouncement.final_url}
+                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      </a>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">未解析</p>
                     )}
                   </div>
                 </div>
@@ -1346,6 +1568,6 @@ export default function FenbiCrawlerPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Tabs>
   );
 }

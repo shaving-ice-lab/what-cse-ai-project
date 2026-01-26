@@ -505,7 +505,8 @@ CREATE TABLE IF NOT EXISTS `what_fenbi_announcements` (
     `fenbi_id` VARCHAR(50) NOT NULL COMMENT '粉笔公告ID',
     `title` VARCHAR(500) NOT NULL COMMENT '公告标题',
     `fenbi_url` VARCHAR(500) NOT NULL COMMENT '粉笔页面URL',
-    `original_url` VARCHAR(500) DEFAULT NULL COMMENT '原文网址',
+    `original_url` VARCHAR(500) DEFAULT NULL COMMENT '原文网址(短链接)',
+    `final_url` VARCHAR(1000) DEFAULT NULL COMMENT '最终跳转URL(解析短链接后的真实URL)',
     `region_code` VARCHAR(50) DEFAULT NULL COMMENT '地区代码',
     `region_name` VARCHAR(100) DEFAULT NULL COMMENT '地区名称',
     `exam_type_code` VARCHAR(50) DEFAULT NULL COMMENT '考试类型代码',
@@ -526,6 +527,64 @@ CREATE TABLE IF NOT EXISTS `what_fenbi_announcements` (
     KEY `idx_fenbi_announcements_crawl_status` (`crawl_status`),
     KEY `idx_fenbi_announcements_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='粉笔公告表';
+
+-- ============================================================================
+-- 微信公众号RSS相关表
+-- ============================================================================
+
+-- 微信公众号RSS源表
+CREATE TABLE IF NOT EXISTS `what_wechat_rss_sources` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL COMMENT '公众号名称',
+    `wechat_id` VARCHAR(100) DEFAULT NULL COMMENT '公众号ID',
+    `rss_url` VARCHAR(500) NOT NULL COMMENT 'RSS订阅地址',
+    `source_type` VARCHAR(20) DEFAULT 'custom' COMMENT '来源类型: rsshub/werss/feeddd/custom',
+    `crawl_frequency` INT DEFAULT 60 COMMENT '抓取频率(分钟)',
+    `last_crawl_at` DATETIME(3) DEFAULT NULL COMMENT '最后抓取时间',
+    `next_crawl_at` DATETIME(3) DEFAULT NULL COMMENT '下次抓取时间',
+    `status` VARCHAR(20) DEFAULT 'active' COMMENT '状态: active/paused/error',
+    `error_message` TEXT DEFAULT NULL COMMENT '错误信息',
+    `error_count` INT DEFAULT 0 COMMENT '连续错误次数',
+    `article_count` INT DEFAULT 0 COMMENT '文章数量',
+    `description` TEXT DEFAULT NULL COMMENT '描述',
+    `icon_url` VARCHAR(500) DEFAULT NULL COMMENT '图标URL',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    `deleted_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_wechat_rss_url` (`rss_url`),
+    KEY `idx_wechat_rss_sources_wechat_id` (`wechat_id`),
+    KEY `idx_wechat_rss_sources_type` (`source_type`),
+    KEY `idx_wechat_rss_sources_status` (`status`),
+    KEY `idx_wechat_rss_sources_next_crawl` (`next_crawl_at`),
+    KEY `idx_wechat_rss_sources_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信公众号RSS源表';
+
+-- 微信公众号RSS文章表
+CREATE TABLE IF NOT EXISTS `what_wechat_rss_articles` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `source_id` BIGINT UNSIGNED NOT NULL COMMENT '关联RSS源ID',
+    `guid` VARCHAR(500) NOT NULL COMMENT '文章唯一标识',
+    `title` VARCHAR(500) NOT NULL COMMENT '文章标题',
+    `link` VARCHAR(1000) NOT NULL COMMENT '文章链接',
+    `description` TEXT DEFAULT NULL COMMENT '文章摘要',
+    `content` LONGTEXT DEFAULT NULL COMMENT '文章内容',
+    `author` VARCHAR(255) DEFAULT NULL COMMENT '作者',
+    `image_url` VARCHAR(1000) DEFAULT NULL COMMENT '封面图URL',
+    `pub_date` DATETIME(3) DEFAULT NULL COMMENT '发布时间',
+    `read_status` VARCHAR(20) DEFAULT 'unread' COMMENT '阅读状态: unread/read/starred',
+    `read_at` DATETIME(3) DEFAULT NULL COMMENT '阅读时间',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    `deleted_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_wechat_rss_article_guid` (`guid`),
+    KEY `idx_wechat_rss_articles_source` (`source_id`),
+    KEY `idx_wechat_rss_articles_pub_date` (`pub_date`),
+    KEY `idx_wechat_rss_articles_read_status` (`read_status`),
+    KEY `idx_wechat_rss_articles_deleted_at` (`deleted_at`),
+    CONSTRAINT `fk_wechat_rss_articles_source` FOREIGN KEY (`source_id`) REFERENCES `what_wechat_rss_sources` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信公众号RSS文章表';
 
 -- 插入粉笔筛选类别初始数据 - 地区（包含粉笔网站URL参数ID）
 INSERT INTO `what_fenbi_categories` (`category_type`, `code`, `name`, `fenbi_param_id`, `sort_order`, `is_enabled`, `created_at`, `updated_at`) VALUES

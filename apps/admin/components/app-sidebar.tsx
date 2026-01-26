@@ -65,6 +65,7 @@ const navMainItems: NavItem[] = [
       { title: "爬虫概览", url: "/crawlers" },
       { title: "粉笔爬虫", url: "/crawlers/fenbi" },
       { title: "公告爬虫", url: "/crawlers/announcement" },
+      { title: "公众号RSS", url: "/crawlers/wechat-rss" },
     ],
   },
   {

@@ -326,6 +326,7 @@ export interface FenbiAnnouncement {
   title: string;
   fenbi_url: string;
   original_url?: string;
+  final_url?: string;
   region_code?: string;
   region_name?: string;
   exam_type_code?: string;
@@ -603,6 +604,214 @@ export const llmConfigApi = {
     return request.get<{
       providers: LLMProvider[];
     }>("/admin/llm-configs/providers");
+  },
+};
+
+// ============================================
+// WeChat RSS Types
+// ============================================
+
+export type WechatRSSSourceType = 'rsshub' | 'werss' | 'feeddd' | 'custom';
+export type WechatRSSSourceStatus = 'active' | 'paused' | 'error';
+export type WechatRSSReadStatus = 'unread' | 'read' | 'starred';
+
+export interface WechatRSSSource {
+  id: number;
+  name: string;
+  wechat_id?: string;
+  rss_url: string;
+  source_type: WechatRSSSourceType;
+  source_type_text: string;
+  crawl_frequency: number;
+  last_crawl_at?: string;
+  next_crawl_at?: string;
+  status: WechatRSSSourceStatus;
+  status_text: string;
+  error_message?: string;
+  error_count: number;
+  article_count: number;
+  unread_count: number;
+  description?: string;
+  icon_url?: string;
+  created_at: string;
+}
+
+export interface WechatRSSArticle {
+  id: number;
+  source_id: number;
+  source_name?: string;
+  guid: string;
+  title: string;
+  link: string;
+  description?: string;
+  content?: string;
+  author?: string;
+  image_url?: string;
+  pub_date?: string;
+  read_status: WechatRSSReadStatus;
+  read_status_text: string;
+  read_at?: string;
+  created_at: string;
+}
+
+export interface WechatRSSStats {
+  total_sources: number;
+  active_sources: number;
+  paused_sources: number;
+  error_sources: number;
+  total_articles: number;
+  unread_articles: number;
+  starred_articles: number;
+  today_articles: number;
+}
+
+export interface CreateWechatRSSSourceRequest {
+  name: string;
+  wechat_id?: string;
+  rss_url: string;
+  source_type?: WechatRSSSourceType;
+  crawl_frequency?: number;
+  description?: string;
+}
+
+export interface UpdateWechatRSSSourceRequest {
+  name?: string;
+  wechat_id?: string;
+  rss_url?: string;
+  source_type?: WechatRSSSourceType;
+  crawl_frequency?: number;
+  status?: WechatRSSSourceStatus;
+  description?: string;
+}
+
+export interface WechatRSSArticleListParams {
+  source_id?: number;
+  read_status?: WechatRSSReadStatus;
+  keyword?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface CrawlSourceResult {
+  source_id: number;
+  total_items: number;
+  new_items: number;
+  crawl_time: string;
+  next_crawl_at: string;
+}
+
+// WeChat RSS APIs
+export const wechatRssApi = {
+  // Source management
+  getSources: (status?: WechatRSSSourceStatus) => {
+    return request.get<{
+      sources: WechatRSSSource[];
+      total: number;
+    }>("/admin/wechat-rss/sources", { params: status ? { status } : {} });
+  },
+
+  getSource: (id: number) => {
+    return request.get<WechatRSSSource>(`/admin/wechat-rss/sources/${id}`);
+  },
+
+  createSource: (data: CreateWechatRSSSourceRequest) => {
+    return request.post<{
+      message: string;
+      source: WechatRSSSource;
+    }>("/admin/wechat-rss/sources", data);
+  },
+
+  updateSource: (id: number, data: UpdateWechatRSSSourceRequest) => {
+    return request.put<{
+      message: string;
+      source: WechatRSSSource;
+    }>(`/admin/wechat-rss/sources/${id}`, data);
+  },
+
+  deleteSource: (id: number) => {
+    return request.delete<{ message: string }>(`/admin/wechat-rss/sources/${id}`);
+  },
+
+  crawlSource: (id: number) => {
+    return request.post<{
+      message: string;
+      result: CrawlSourceResult;
+    }>(`/admin/wechat-rss/sources/${id}/crawl`);
+  },
+
+  // Article management
+  getArticles: (params?: WechatRSSArticleListParams) => {
+    return request.get<{
+      articles: WechatRSSArticle[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>("/admin/wechat-rss/articles", { params });
+  },
+
+  getArticle: (id: number) => {
+    return request.get<WechatRSSArticle>(`/admin/wechat-rss/articles/${id}`);
+  },
+
+  markArticleRead: (id: number) => {
+    return request.put<{ message: string }>(`/admin/wechat-rss/articles/${id}/read`);
+  },
+
+  toggleArticleStar: (id: number) => {
+    return request.put<{
+      message: string;
+      article: WechatRSSArticle;
+    }>(`/admin/wechat-rss/articles/${id}/star`);
+  },
+
+  markAllAsRead: (sourceId?: number) => {
+    return request.put<{ message: string }>(
+      "/admin/wechat-rss/articles/read-all",
+      {},
+      { params: sourceId ? { source_id: sourceId } : {} }
+    );
+  },
+
+  batchMarkAsRead: (ids: number[]) => {
+    return request.put<{
+      message: string;
+      count: number;
+    }>("/admin/wechat-rss/articles/batch-read", { ids });
+  },
+
+  // Stats
+  getStats: () => {
+    return request.get<WechatRSSStats>("/admin/wechat-rss/stats");
+  },
+
+  // Validation
+  validateRSSURL: (url: string) => {
+    return request.get<{
+      valid: boolean;
+      title?: string;
+      description?: string;
+      item_count?: number;
+    }>("/admin/wechat-rss/validate", { params: { url } });
+  },
+
+  // Parse article URL
+  parseArticleURL: (url: string) => {
+    return request.get<{
+      biz: string;
+      title?: string;
+      author?: string;
+      article_url: string;
+      rss_urls: string[];
+      extraction_method?: string;
+    }>("/admin/wechat-rss/parse-article", { params: { url } });
+  },
+
+  // Create source from article URL
+  createFromArticle: (articleUrl: string) => {
+    return request.post<{
+      message: string;
+      source: WechatRSSSource;
+    }>("/admin/wechat-rss/create-from-article", { article_url: articleUrl });
   },
 };
 

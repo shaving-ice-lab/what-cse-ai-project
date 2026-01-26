@@ -334,6 +334,13 @@ func (h *LLMConfigHandler) GetProviders(c echo.Context) error {
 			"models":      []string{"deepseek-chat", "deepseek-coder"},
 		},
 		{
+			"id":          "gemini",
+			"name":        "Google Gemini",
+			"description": "Google Gemini系列模型",
+			"api_url":     "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+			"models":      []string{"gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"},
+		},
+		{
 			"id":          "ollama",
 			"name":        "Ollama",
 			"description": "本地部署的开源模型",

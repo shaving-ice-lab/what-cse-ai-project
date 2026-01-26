@@ -30,7 +30,8 @@ var (
 )
 
 // LLM encryption key (should be from config in production)
-var llmEncryptionKey = []byte("whatcse-llm-secret-key-aes256!!")
+// AES-256 requires exactly 32 bytes key
+var llmEncryptionKey = []byte("whatcse-llm-secret-key-aes256!@#")
 
 type LLMConfigService struct {
 	repo   *repository.LLMConfigRepository
@@ -343,6 +344,8 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 		reqBody, err = s.buildOpenAIRequest(config, prompt)
 	case model.LLMProviderAnthropic:
 		reqBody, err = s.buildAnthropicRequest(config, prompt)
+	case model.LLMProviderGemini:
+		reqBody, err = s.buildGeminiRequest(config, prompt)
 	case model.LLMProviderOllama:
 		reqBody, err = s.buildOllamaRequest(config, prompt)
 	default:
@@ -354,7 +357,17 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", config.APIURL, bytes.NewBuffer(reqBody))
+	// Build URL (Gemini needs API key in URL)
+	apiURL := config.APIURL
+	if model.LLMProvider(config.Provider) == model.LLMProviderGemini {
+		if strings.Contains(apiURL, "?") {
+			apiURL = apiURL + "&key=" + apiKey
+		} else {
+			apiURL = apiURL + "?key=" + apiKey
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return "", err
 	}
@@ -366,6 +379,8 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 	case model.LLMProviderAnthropic:
 		req.Header.Set("x-api-key", apiKey)
 		req.Header.Set("anthropic-version", "2023-06-01")
+	case model.LLMProviderGemini:
+		// Gemini uses API key in URL, no header needed
 	default:
 		req.Header.Set("Authorization", "Bearer "+apiKey)
 	}
@@ -432,16 +447,70 @@ func (s *LLMConfigService) buildOllamaRequest(config *model.LLMConfig, prompt st
 	return json.Marshal(reqData)
 }
 
+func (s *LLMConfigService) buildGeminiRequest(config *model.LLMConfig, prompt string) ([]byte, error) {
+	reqData := map[string]interface{}{
+		"contents": []map[string]interface{}{
+			{
+				"parts": []map[string]string{
+					{"text": prompt},
+				},
+			},
+		},
+		"generationConfig": map[string]interface{}{
+			"maxOutputTokens": config.MaxTokens,
+			"temperature":     config.Temperature,
+		},
+	}
+
+	return json.Marshal(reqData)
+}
+
 func (s *LLMConfigService) parseResponse(provider string, body []byte) (string, error) {
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return "", err
+		return "", fmt.Errorf("JSON parse error: %w, body: %s", err, string(body[:min(len(body), 500)]))
 	}
 
 	switch model.LLMProvider(provider) {
 	case model.LLMProviderOllama:
 		if response, ok := result["response"].(string); ok {
 			return response, nil
+		}
+	case model.LLMProviderAnthropic:
+		// Anthropic format: {"content": [{"type": "text", "text": "response"}], "role": "assistant"}
+		if content, ok := result["content"].([]interface{}); ok && len(content) > 0 {
+			if block, ok := content[0].(map[string]interface{}); ok {
+				if text, ok := block["text"].(string); ok {
+					return text, nil
+				}
+			}
+		}
+		// Check for error response
+		if errObj, ok := result["error"].(map[string]interface{}); ok {
+			if msg, ok := errObj["message"].(string); ok {
+				return "", fmt.Errorf("Anthropic API error: %s", msg)
+			}
+		}
+	case model.LLMProviderGemini:
+		// Gemini format: {"candidates": [{"content": {"parts": [{"text": "response"}]}}]}
+		if candidates, ok := result["candidates"].([]interface{}); ok && len(candidates) > 0 {
+			if candidate, ok := candidates[0].(map[string]interface{}); ok {
+				if content, ok := candidate["content"].(map[string]interface{}); ok {
+					if parts, ok := content["parts"].([]interface{}); ok && len(parts) > 0 {
+						if part, ok := parts[0].(map[string]interface{}); ok {
+							if text, ok := part["text"].(string); ok {
+								return text, nil
+							}
+						}
+					}
+				}
+			}
+		}
+		// Check for error response
+		if errObj, ok := result["error"].(map[string]interface{}); ok {
+			if msg, ok := errObj["message"].(string); ok {
+				return "", fmt.Errorf("Gemini API error: %s", msg)
+			}
 		}
 	default:
 		// OpenAI-compatible format
@@ -454,9 +523,15 @@ func (s *LLMConfigService) parseResponse(provider string, body []byte) (string, 
 				}
 			}
 		}
+		// Check for OpenAI error format
+		if errObj, ok := result["error"].(map[string]interface{}); ok {
+			if msg, ok := errObj["message"].(string); ok {
+				return "", fmt.Errorf("API error: %s", msg)
+			}
+		}
 	}
 
-	return "", errors.New("unable to parse response")
+	return "", fmt.Errorf("unable to parse response, raw: %s", string(body[:min(len(body), 500)]))
 }
 
 // Encryption helpers

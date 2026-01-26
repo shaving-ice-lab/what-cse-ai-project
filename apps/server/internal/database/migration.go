@@ -48,6 +48,10 @@ func AutoMigrate(db *gorm.DB) error {
 
 		// LLM config table
 		&model.LLMConfig{},
+
+		// WeChat RSS related tables
+		&model.WechatRSSSource{},
+		&model.WechatRSSArticle{},
 	)
 }
 

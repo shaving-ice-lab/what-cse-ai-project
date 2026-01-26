@@ -279,6 +279,20 @@ func (r *FenbiAnnouncementRepository) UpdateOriginalURL(id uint, originalURL str
 	}).Error
 }
 
+// UpdateURLs updates both original_url and final_url for an announcement
+func (r *FenbiAnnouncementRepository) UpdateURLs(id uint, originalURL, finalURL string) error {
+	return r.db.Model(&model.FenbiAnnouncement{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"original_url": originalURL,
+		"final_url":    finalURL,
+		"crawl_status": model.FenbiCrawlStatusDetailCrawled,
+	}).Error
+}
+
+// UpdateFinalURL updates only the final_url for an announcement
+func (r *FenbiAnnouncementRepository) UpdateFinalURL(id uint, finalURL string) error {
+	return r.db.Model(&model.FenbiAnnouncement{}).Where("id = ?", id).Update("final_url", finalURL).Error
+}
+
 func (r *FenbiAnnouncementRepository) UpdateSyncStatus(id uint, synced bool, announcementID *uint) error {
 	return r.db.Model(&model.FenbiAnnouncement{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"sync_to_announcement": synced,

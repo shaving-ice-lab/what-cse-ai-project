@@ -110,7 +110,8 @@ type FenbiListItem struct {
 type FenbiDetailInfo struct {
 	FenbiID     string `json:"fenbi_id"`
 	Title       string `json:"title"`
-	OriginalURL string `json:"original_url"`
+	OriginalURL string `json:"original_url"` // 短链接 (t.fenbi.com)
+	FinalURL    string `json:"final_url"`    // 最终跳转URL
 	Content     string `json:"content"`
 }
 
@@ -1102,6 +1103,78 @@ func (s *FenbiSpider) CrawlAnnouncementDetailWithHTML(fenbiID string) (*FenbiDet
 // GetCookiesString returns the current cookies as a string
 func (s *FenbiSpider) GetCookiesString() string {
 	return serializeCookies(s.cookies)
+}
+
+// ResolveShortURL resolves a short URL (t.fenbi.com/s/xxxxx) to its final destination URL
+// by following redirects with cookies
+func (s *FenbiSpider) ResolveShortURL(shortURL string) (string, error) {
+	if shortURL == "" {
+		return "", nil
+	}
+
+	// Create a client that follows redirects and records the final URL
+	// We need a separate client that follows redirects (unlike s.httpClient which doesn't)
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Allow up to 10 redirects
+			if len(via) >= 10 {
+				return errors.New("too many redirects")
+			}
+			return nil
+		},
+	}
+
+	req, err := http.NewRequest("GET", shortURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+	// Set cookies
+	if len(s.cookies) > 0 {
+		var cookieStrs []string
+		for _, c := range s.cookies {
+			cookieStrs = append(cookieStrs, fmt.Sprintf("%s=%s", c.Name, c.Value))
+		}
+		req.Header.Set("Cookie", strings.Join(cookieStrs, "; "))
+	}
+
+	s.logger.Debug("Resolving short URL",
+		zap.String("short_url", shortURL),
+	)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve short URL: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// The final URL after all redirects
+	finalURL := resp.Request.URL.String()
+
+	s.logger.Info("Resolved short URL",
+		zap.String("short_url", shortURL),
+		zap.String("final_url", finalURL),
+		zap.Int("status_code", resp.StatusCode),
+	)
+
+	// If we ended up at the same URL (no redirect), or at an error page, return empty
+	if finalURL == shortURL {
+		s.logger.Warn("Short URL did not redirect", zap.String("url", shortURL))
+		return "", nil
+	}
+
+	return finalURL, nil
+}
+
+// IsShortURL checks if the URL is a Fenbi short URL (t.fenbi.com)
+func IsShortURL(urlStr string) bool {
+	return strings.Contains(urlStr, "t.fenbi.com/s/")
 }
 
 // Helper functions

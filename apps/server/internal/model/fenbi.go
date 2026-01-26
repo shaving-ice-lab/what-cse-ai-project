@@ -67,7 +67,8 @@ type FenbiAnnouncement struct {
 	FenbiID            string         `gorm:"type:varchar(50);uniqueIndex:uk_fenbi_id;not null" json:"fenbi_id"`
 	Title              string         `gorm:"type:varchar(500);not null" json:"title"`
 	FenbiURL           string         `gorm:"type:varchar(500);not null" json:"fenbi_url"`
-	OriginalURL        string         `gorm:"type:varchar(500)" json:"original_url,omitempty"`
+	OriginalURL        string         `gorm:"type:varchar(500)" json:"original_url,omitempty"`  // 短链接 (t.fenbi.com)
+	FinalURL           string         `gorm:"type:varchar(1000)" json:"final_url,omitempty"`    // 最终跳转URL
 	RegionCode         string         `gorm:"type:varchar(50);index:idx_fenbi_announcements_region" json:"region_code,omitempty"`
 	RegionName         string         `gorm:"type:varchar(100)" json:"region_name,omitempty"`
 	ExamTypeCode       string         `gorm:"type:varchar(50);index:idx_fenbi_announcements_exam_type" json:"exam_type_code,omitempty"`

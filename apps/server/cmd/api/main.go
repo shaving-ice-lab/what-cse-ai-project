@@ -94,6 +94,10 @@ func main() {
 	// LLM config repository
 	llmConfigRepo := repository.NewLLMConfigRepository(db)
 
+	// WeChat RSS repositories
+	wechatRSSSourceRepo := repository.NewWechatRSSSourceRepository(db)
+	wechatRSSArticleRepo := repository.NewWechatRSSArticleRepository(db)
+
 	// ============================================
 	// Initialize Services
 	// ============================================
@@ -111,6 +115,9 @@ func main() {
 
 	// LLM config service
 	llmConfigService := service.NewLLMConfigService(llmConfigRepo, log.Logger)
+
+	// WeChat RSS service
+	wechatRSSService := service.NewWechatRSSService(wechatRSSSourceRepo, wechatRSSArticleRepo, log.Logger)
 
 	// Initialize SearchService (optional - requires Elasticsearch)
 	var searchService *service.SearchService
@@ -134,6 +141,7 @@ func main() {
 	crawlerHandler := handler.NewCrawlerHandler(crawlerService)
 	fenbiHandler := handler.NewFenbiHandler(fenbiService)
 	llmConfigHandler := handler.NewLLMConfigHandler(llmConfigService)
+	wechatRSSHandler := handler.NewWechatRSSHandler(wechatRSSService)
 
 	// Initialize SearchHandler (only if Elasticsearch is available)
 	var searchHandler *handler.SearchHandler
@@ -214,6 +222,11 @@ func main() {
 
 	// LLM config routes (admin only)
 	llmConfigHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// WeChat RSS routes (admin only)
+	wechatRSSHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
+	// WeChat RSS public routes (RSS feed output)
+	wechatRSSHandler.RegisterPublicRoutes(e)
 
 	// Search routes (public, only if Elasticsearch is available)
 	if searchHandler != nil {

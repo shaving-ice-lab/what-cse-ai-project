@@ -16,6 +16,7 @@ const (
 	LLMProviderAzure     LLMProvider = "azure"
 	LLMProviderAnthropic LLMProvider = "anthropic"
 	LLMProviderDeepSeek  LLMProvider = "deepseek"
+	LLMProviderGemini    LLMProvider = "gemini"
 	LLMProviderOllama    LLMProvider = "ollama"
 	LLMProviderCustom    LLMProvider = "custom"
 )

@@ -27,12 +27,14 @@ const routeMap: Record<string, string> = {
   crawlers: "爬虫管理",
   fenbi: "粉笔爬虫",
   announcement: "公告爬虫",
+  "wechat-rss": "公众号RSS",
   "list-pages": "列表页管理",
   dictionary: "数据字典",
   majors: "专业字典",
   regions: "地区字典",
   settings: "系统设置",
   admins: "管理员管理",
+  llm: "LLM 配置",
   logs: "系统日志",
 };
 
