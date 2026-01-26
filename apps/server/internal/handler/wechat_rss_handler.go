@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -9,7 +8,7 @@ import (
 	"github.com/what-cse/server/internal/service"
 )
 
-// WechatRSSHandler handles WeChat RSS API requests
+// WechatRSSHandler handles WeChat article subscription API requests
 type WechatRSSHandler struct {
 	wechatRSSService *service.WechatRSSService
 }
@@ -19,10 +18,10 @@ func NewWechatRSSHandler(wechatRSSService *service.WechatRSSService) *WechatRSSH
 	return &WechatRSSHandler{wechatRSSService: wechatRSSService}
 }
 
-// ListSources returns all RSS sources
-// @Summary List RSS Sources (Admin)
-// @Description Get all WeChat RSS sources
-// @Tags Admin - WeChat RSS
+// ListSources returns all sources
+// @Summary List Sources (Admin)
+// @Description Get all WeChat subscription sources
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -38,7 +37,7 @@ func (h *WechatRSSHandler) ListSources(c echo.Context) error {
 
 	sources, err := h.wechatRSSService.ListSources(status)
 	if err != nil {
-		return fail(c, 500, "获取RSS源列表失败: "+err.Error())
+		return fail(c, 500, "获取订阅源列表失败: "+err.Error())
 	}
 
 	return success(c, map[string]interface{}{
@@ -47,10 +46,10 @@ func (h *WechatRSSHandler) ListSources(c echo.Context) error {
 	})
 }
 
-// GetSource returns a single RSS source
-// @Summary Get RSS Source (Admin)
-// @Description Get a specific RSS source by ID
-// @Tags Admin - WeChat RSS
+// GetSource returns a single source
+// @Summary Get Source (Admin)
+// @Description Get a specific source by ID
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -66,52 +65,18 @@ func (h *WechatRSSHandler) GetSource(c echo.Context) error {
 	source, err := h.wechatRSSService.GetSource(uint(id))
 	if err != nil {
 		if err == service.ErrWechatRSSSourceNotFound {
-			return fail(c, 404, "RSS源不存在")
+			return fail(c, 404, "订阅源不存在")
 		}
-		return fail(c, 500, "获取RSS源失败: "+err.Error())
+		return fail(c, 500, "获取订阅源失败: "+err.Error())
 	}
 
 	return success(c, source)
 }
 
-// CreateSource creates a new RSS source
-// @Summary Create RSS Source (Admin)
-// @Description Create a new WeChat RSS source
-// @Tags Admin - WeChat RSS
-// @Accept json
-// @Produce json
-// @Security AdminAuth
-// @Param request body model.CreateWechatRSSSourceRequest true "Source data"
-// @Success 200 {object} Response
-// @Router /api/v1/admin/wechat-rss/sources [post]
-func (h *WechatRSSHandler) CreateSource(c echo.Context) error {
-	var req model.CreateWechatRSSSourceRequest
-	if err := c.Bind(&req); err != nil {
-		return fail(c, 400, "无效的请求参数")
-	}
-
-	if req.RSSURL == "" {
-		return fail(c, 400, "RSS地址不能为空")
-	}
-
-	source, err := h.wechatRSSService.CreateSource(&req)
-	if err != nil {
-		if err == service.ErrWechatRSSSourceExists {
-			return fail(c, 400, "该RSS源已存在")
-		}
-		return fail(c, 500, "创建RSS源失败: "+err.Error())
-	}
-
-	return success(c, map[string]interface{}{
-		"message": "RSS源创建成功",
-		"source":  source,
-	})
-}
-
-// UpdateSource updates an RSS source
-// @Summary Update RSS Source (Admin)
-// @Description Update an existing RSS source
-// @Tags Admin - WeChat RSS
+// UpdateSource updates a source
+// @Summary Update Source (Admin)
+// @Description Update an existing source
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -133,21 +98,21 @@ func (h *WechatRSSHandler) UpdateSource(c echo.Context) error {
 	source, err := h.wechatRSSService.UpdateSource(uint(id), &req)
 	if err != nil {
 		if err == service.ErrWechatRSSSourceNotFound {
-			return fail(c, 404, "RSS源不存在")
+			return fail(c, 404, "订阅源不存在")
 		}
-		return fail(c, 500, "更新RSS源失败: "+err.Error())
+		return fail(c, 500, "更新订阅源失败: "+err.Error())
 	}
 
 	return success(c, map[string]interface{}{
-		"message": "RSS源更新成功",
+		"message": "订阅源更新成功",
 		"source":  source,
 	})
 }
 
-// DeleteSource deletes an RSS source
-// @Summary Delete RSS Source (Admin)
-// @Description Delete an RSS source and all its articles
-// @Tags Admin - WeChat RSS
+// DeleteSource deletes a source
+// @Summary Delete Source (Admin)
+// @Description Delete a source and all its articles
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -161,18 +126,18 @@ func (h *WechatRSSHandler) DeleteSource(c echo.Context) error {
 	}
 
 	if err := h.wechatRSSService.DeleteSource(uint(id)); err != nil {
-		return fail(c, 500, "删除RSS源失败: "+err.Error())
+		return fail(c, 500, "删除订阅源失败: "+err.Error())
 	}
 
 	return success(c, map[string]interface{}{
-		"message": "RSS源已删除",
+		"message": "订阅源已删除",
 	})
 }
 
 // CrawlSource triggers a crawl for a specific source
-// @Summary Crawl RSS Source (Admin)
+// @Summary Crawl Source (Admin)
 // @Description Manually trigger a crawl for a specific source
-// @Tags Admin - WeChat RSS
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -188,7 +153,10 @@ func (h *WechatRSSHandler) CrawlSource(c echo.Context) error {
 	result, err := h.wechatRSSService.CrawlSource(uint(id))
 	if err != nil {
 		if err == service.ErrWechatRSSSourceNotFound {
-			return fail(c, 404, "RSS源不存在")
+			return fail(c, 404, "订阅源不存在")
+		}
+		if err == service.ErrWechatMPAuthRequired {
+			return fail(c, 401, "需要先进行微信公众平台授权")
 		}
 		return fail(c, 500, "抓取失败: "+err.Error())
 	}
@@ -200,9 +168,9 @@ func (h *WechatRSSHandler) CrawlSource(c echo.Context) error {
 }
 
 // ListArticles returns articles with filtering and pagination
-// @Summary List RSS Articles (Admin)
-// @Description Get RSS articles with filtering and pagination
-// @Tags Admin - WeChat RSS
+// @Summary List Articles (Admin)
+// @Description Get articles with filtering and pagination
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -260,9 +228,9 @@ func (h *WechatRSSHandler) ListArticles(c echo.Context) error {
 }
 
 // GetArticle returns a single article
-// @Summary Get RSS Article (Admin)
-// @Description Get a specific RSS article by ID
-// @Tags Admin - WeChat RSS
+// @Summary Get Article (Admin)
+// @Description Get a specific article by ID
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -289,7 +257,7 @@ func (h *WechatRSSHandler) GetArticle(c echo.Context) error {
 // MarkArticleRead marks an article as read
 // @Summary Mark Article as Read (Admin)
 // @Description Mark a specific article as read
-// @Tags Admin - WeChat RSS
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -317,7 +285,7 @@ func (h *WechatRSSHandler) MarkArticleRead(c echo.Context) error {
 // ToggleArticleStar toggles the starred status of an article
 // @Summary Toggle Article Star (Admin)
 // @Description Toggle the starred status of an article
-// @Tags Admin - WeChat RSS
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -347,7 +315,7 @@ func (h *WechatRSSHandler) ToggleArticleStar(c echo.Context) error {
 // MarkAllAsRead marks all articles as read
 // @Summary Mark All Articles as Read (Admin)
 // @Description Mark all articles as read, optionally for a specific source
-// @Tags Admin - WeChat RSS
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -374,7 +342,7 @@ func (h *WechatRSSHandler) MarkAllAsRead(c echo.Context) error {
 // BatchMarkAsRead marks multiple articles as read
 // @Summary Batch Mark Articles as Read (Admin)
 // @Description Mark multiple articles as read
-// @Tags Admin - WeChat RSS
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -406,10 +374,10 @@ type BatchReadRequest struct {
 	IDs []uint `json:"ids"`
 }
 
-// GetStats returns statistics for WeChat RSS
-// @Summary Get RSS Stats (Admin)
-// @Description Get statistics for WeChat RSS
-// @Tags Admin - WeChat RSS
+// GetStats returns statistics
+// @Summary Get Stats (Admin)
+// @Description Get statistics for WeChat subscriptions
+// @Tags Admin - WeChat Subscription
 // @Accept json
 // @Produce json
 // @Security AdminAuth
@@ -424,146 +392,14 @@ func (h *WechatRSSHandler) GetStats(c echo.Context) error {
 	return success(c, stats)
 }
 
-// ValidateRSSURL validates if a URL is a valid RSS feed
-// @Summary Validate RSS URL (Admin)
-// @Description Validate if a URL is a valid RSS feed
-// @Tags Admin - WeChat RSS
-// @Accept json
-// @Produce json
-// @Security AdminAuth
-// @Param url query string true "RSS URL to validate"
-// @Success 200 {object} Response
-// @Router /api/v1/admin/wechat-rss/validate [get]
-func (h *WechatRSSHandler) ValidateRSSURL(c echo.Context) error {
-	url := c.QueryParam("url")
-	if url == "" {
-		return fail(c, 400, "URL不能为空")
-	}
-
-	feed, err := h.wechatRSSService.ValidateRSSURL(url)
-	if err != nil {
-		return fail(c, 400, "无效的RSS地址: "+err.Error())
-	}
-
-	return success(c, map[string]interface{}{
-		"valid":       true,
-		"title":       feed.Title,
-		"description": feed.Description,
-		"item_count":  len(feed.Items),
-	})
-}
-
-// ParseArticleURL parses a WeChat article URL and extracts RSS info
-// @Summary Parse WeChat Article URL (Admin)
-// @Description Parse a WeChat article URL to extract public account info and generate RSS URLs
-// @Tags Admin - WeChat RSS
-// @Accept json
-// @Produce json
-// @Security AdminAuth
-// @Param url query string true "WeChat article URL"
-// @Success 200 {object} Response
-// @Router /api/v1/admin/wechat-rss/parse-article [get]
-func (h *WechatRSSHandler) ParseArticleURL(c echo.Context) error {
-	articleURL := c.QueryParam("url")
-	if articleURL == "" {
-		return fail(c, 400, "文章链接不能为空")
-	}
-
-	info, err := h.wechatRSSService.ParseWechatArticleURL(articleURL)
-	if err != nil {
-		return fail(c, 400, "解析文章链接失败: "+err.Error())
-	}
-
-	return success(c, map[string]interface{}{
-		"biz":         info.Biz,
-		"title":       info.Title,
-		"author":      info.Author,
-		"article_url": info.ArticleURL,
-		"rss_urls":    info.RSSURLs,
-	})
-}
-
-// CreateSourceFromArticle creates a new RSS source from a WeChat article URL
-// @Summary Create Source from Article URL (Admin)
-// @Description Automatically create an RSS source by parsing a WeChat article URL
-// @Tags Admin - WeChat RSS
-// @Accept json
-// @Produce json
-// @Security AdminAuth
-// @Param request body CreateFromArticleRequest true "Article URL"
-// @Success 200 {object} Response
-// @Router /api/v1/admin/wechat-rss/create-from-article [post]
-func (h *WechatRSSHandler) CreateSourceFromArticle(c echo.Context) error {
-	var req CreateFromArticleRequest
-	if err := c.Bind(&req); err != nil {
-		return fail(c, 400, "无效的请求参数")
-	}
-
-	if req.ArticleURL == "" {
-		return fail(c, 400, "文章链接不能为空")
-	}
-
-	source, err := h.wechatRSSService.CreateSourceFromArticleURL(req.ArticleURL)
-	if err != nil {
-		if err == service.ErrWechatRSSSourceExists {
-			return fail(c, 400, "该公众号已订阅")
-		}
-		return fail(c, 500, "创建订阅失败: "+err.Error())
-	}
-
-	return success(c, map[string]interface{}{
-		"message": "订阅创建成功",
-		"source":  source,
-	})
-}
-
-// CreateFromArticleRequest represents the request to create source from article
-type CreateFromArticleRequest struct {
-	ArticleURL string `json:"article_url"`
-}
-
-// GetRSSFeed returns an RSS feed for a source (public endpoint)
-// @Summary Get RSS Feed
-// @Description Get RSS feed XML for a specific source
-// @Tags WeChat RSS
-// @Produce xml
-// @Param id path int true "Source ID"
-// @Param limit query int false "Number of items (default: 50)"
-// @Success 200 {string} string "RSS XML"
-// @Router /rss/wechat/{id} [get]
-func (h *WechatRSSHandler) GetRSSFeed(c echo.Context) error {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		return c.String(http.StatusBadRequest, "Invalid source ID")
-	}
-
-	limit := 50
-	if limitStr := c.QueryParam("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
-
-	rssXML, err := h.wechatRSSService.GenerateRSSFeed(uint(id), limit)
-	if err != nil {
-		if err == service.ErrWechatRSSSourceNotFound {
-			return c.String(http.StatusNotFound, "Source not found")
-		}
-		return c.String(http.StatusInternalServerError, "Failed to generate RSS feed")
-	}
-
-	return c.Blob(http.StatusOK, "application/rss+xml; charset=utf-8", []byte(rssXML))
-}
-
-// RegisterRoutes registers all WeChat RSS API routes
+// RegisterRoutes registers all WeChat subscription API routes
 func (h *WechatRSSHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.MiddlewareFunc) {
 	// Admin routes (protected)
 	wechatRSS := g.Group("/wechat-rss", adminAuthMiddleware)
 
-	// Source management
+	// Source management (no create - use wechat-mp/create-source instead)
 	wechatRSS.GET("/sources", h.ListSources)
 	wechatRSS.GET("/sources/:id", h.GetSource)
-	wechatRSS.POST("/sources", h.CreateSource)
 	wechatRSS.PUT("/sources/:id", h.UpdateSource)
 	wechatRSS.DELETE("/sources/:id", h.DeleteSource)
 	wechatRSS.POST("/sources/:id/crawl", h.CrawlSource)
@@ -576,16 +412,6 @@ func (h *WechatRSSHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware ech
 	wechatRSS.PUT("/articles/read-all", h.MarkAllAsRead)
 	wechatRSS.PUT("/articles/batch-read", h.BatchMarkAsRead)
 
-	// Stats and validation
+	// Stats
 	wechatRSS.GET("/stats", h.GetStats)
-	wechatRSS.GET("/validate", h.ValidateRSSURL)
-
-	// Parse article URL and auto-create
-	wechatRSS.GET("/parse-article", h.ParseArticleURL)
-	wechatRSS.POST("/create-from-article", h.CreateSourceFromArticle)
-}
-
-// RegisterPublicRoutes registers public RSS feed routes
-func (h *WechatRSSHandler) RegisterPublicRoutes(e *echo.Echo) {
-	e.GET("/rss/wechat/:id", h.GetRSSFeed)
 }

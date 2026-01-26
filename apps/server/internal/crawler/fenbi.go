@@ -2,6 +2,8 @@
 package crawler
 
 import (
+	"bufio"
+	"compress/gzip"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
@@ -13,6 +15,8 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,6 +24,9 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
+	"golang.org/x/net/html/charset"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
 )
 
 const (
@@ -1175,6 +1182,325 @@ func (s *FenbiSpider) ResolveShortURL(shortURL string) (string, error) {
 // IsShortURL checks if the URL is a Fenbi short URL (t.fenbi.com)
 func IsShortURL(urlStr string) bool {
 	return strings.Contains(urlStr, "t.fenbi.com/s/")
+}
+
+// IsFenbiDetailURL checks if the URL is a Fenbi announcement detail page URL
+// e.g., https://www.fenbi.com/page/exam-information-detail/463xxx
+func IsFenbiDetailURL(urlStr string) bool {
+	return strings.Contains(urlStr, "fenbi.com/page/exam-information-detail/")
+}
+
+// ExtractFenbiIDFromURL extracts the Fenbi announcement ID from a detail page URL
+// e.g., from "https://www.fenbi.com/page/exam-information-detail/463811898787840" returns "463811898787840"
+func ExtractFenbiIDFromURL(urlStr string) string {
+	// Pattern: .../exam-information-detail/XXXXXX
+	parts := strings.Split(urlStr, "/exam-information-detail/")
+	if len(parts) < 2 {
+		return ""
+	}
+	// Get the ID part (may have query params or trailing slash)
+	idPart := parts[1]
+	// Remove query params
+	if idx := strings.Index(idPart, "?"); idx != -1 {
+		idPart = idPart[:idx]
+	}
+	// Remove trailing slash
+	idPart = strings.TrimSuffix(idPart, "/")
+	return idPart
+}
+
+// PageContent represents the content fetched from a page
+type PageContent struct {
+	URL         string            `json:"url"`
+	Title       string            `json:"title"`
+	HTML        string            `json:"html"`
+	Text        string            `json:"text"`
+	Attachments []PageAttachment  `json:"attachments"`
+}
+
+// PageAttachment represents an attachment found on a page
+type PageAttachment struct {
+	URL       string `json:"url"`
+	Name      string `json:"name"`
+	Type      string `json:"type"` // pdf, excel, word
+	LocalPath string `json:"local_path,omitempty"`
+}
+
+// FetchPageContent fetches and parses content from a URL
+func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
+	if targetURL == "" {
+		return nil, errors.New("target URL is empty")
+	}
+
+	s.logger.Info("Fetching page content", zap.String("url", targetURL))
+
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set headers to mimic browser
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+
+	// Use a client that follows redirects
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch page: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// Handle gzip encoding
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzReader.Close()
+		reader = gzReader
+	}
+
+	// Read body
+	bodyBytes, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Detect and convert encoding (handle GBK/GB2312 common on Chinese government sites)
+	htmlContent, detectedCharset := s.decodeHTML(bodyBytes, resp.Header.Get("Content-Type"))
+
+	s.logger.Debug("Detected charset",
+		zap.String("url", targetURL),
+		zap.String("charset", detectedCharset),
+	)
+
+	// Parse HTML using goquery
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse HTML: %w", err)
+	}
+
+	content := &PageContent{
+		URL:  targetURL,
+		HTML: htmlContent,
+	}
+
+	// Extract title
+	content.Title = strings.TrimSpace(doc.Find("title").First().Text())
+	if content.Title == "" {
+		content.Title = strings.TrimSpace(doc.Find("h1").First().Text())
+	}
+
+	// Extract main text content
+	// Remove script and style elements
+	doc.Find("script, style, nav, header, footer, aside").Remove()
+	
+	// Try to find main content area - common selectors for Chinese gov sites
+	mainContent := doc.Find("article, .article, .content, .main-content, #content, #main, .detail-content, .article-content, .TRS_Editor, .zwgk_cont, .news_cont, .art_content").First()
+	if mainContent.Length() == 0 {
+		mainContent = doc.Find("body")
+	}
+	
+	content.Text = strings.TrimSpace(mainContent.Text())
+	// Clean up excessive whitespace but preserve some structure
+	content.Text = regexp.MustCompile(`[ \t]+`).ReplaceAllString(content.Text, " ")
+	content.Text = regexp.MustCompile(`\n\s*\n`).ReplaceAllString(content.Text, "\n")
+
+	// Extract attachments
+	content.Attachments = s.extractPageAttachments(doc, targetURL)
+
+	s.logger.Info("Fetched page content",
+		zap.String("url", targetURL),
+		zap.String("title", content.Title),
+		zap.Int("text_length", len(content.Text)),
+		zap.Int("attachments_count", len(content.Attachments)),
+		zap.String("charset", detectedCharset),
+	)
+
+	return content, nil
+}
+
+// decodeHTML detects and converts HTML encoding to UTF-8
+func (s *FenbiSpider) decodeHTML(body []byte, contentType string) (string, string) {
+	// First try to detect from Content-Type header
+	detectedCharset := "utf-8"
+	
+	// Try to detect charset from HTML meta tags or Content-Type
+	reader := bufio.NewReader(strings.NewReader(string(body)))
+	encoding, name, certain := charset.DetermineEncoding(body, contentType)
+	
+	if certain || name != "" {
+		detectedCharset = name
+		if encoding != nil {
+			decoded, err := io.ReadAll(transform.NewReader(reader, encoding.NewDecoder()))
+			if err == nil {
+				return string(decoded), detectedCharset
+			}
+		}
+	}
+
+	// Check for common Chinese encodings in meta tag
+	htmlStr := string(body)
+	lowerHTML := strings.ToLower(htmlStr)
+	
+	// Check meta charset
+	if strings.Contains(lowerHTML, "charset=gb2312") || 
+	   strings.Contains(lowerHTML, "charset=gbk") ||
+	   strings.Contains(lowerHTML, "charset=\"gb2312\"") ||
+	   strings.Contains(lowerHTML, "charset=\"gbk\"") {
+		// Convert from GBK to UTF-8
+		decoded, err := io.ReadAll(transform.NewReader(
+			strings.NewReader(string(body)),
+			simplifiedchinese.GBK.NewDecoder(),
+		))
+		if err == nil {
+			if strings.Contains(lowerHTML, "gb2312") {
+				detectedCharset = "gb2312"
+			} else {
+				detectedCharset = "gbk"
+			}
+			return string(decoded), detectedCharset
+		}
+	}
+
+	// Default to UTF-8
+	return htmlStr, detectedCharset
+}
+
+// extractPageAttachments extracts file attachments from the page
+func (s *FenbiSpider) extractPageAttachments(doc *goquery.Document, baseURL string) []PageAttachment {
+	attachments := make([]PageAttachment, 0)
+
+	// Find links to common attachment types
+	extensions := map[string]string{
+		".pdf":  "pdf",
+		".xls":  "excel",
+		".xlsx": "excel",
+		".doc":  "word",
+		".docx": "word",
+	}
+
+	doc.Find("a[href]").Each(func(_ int, selection *goquery.Selection) {
+		href, exists := selection.Attr("href")
+		if !exists || href == "" {
+			return
+		}
+
+		hrefLower := strings.ToLower(href)
+		for ext, fileType := range extensions {
+			if strings.Contains(hrefLower, ext) {
+				// Resolve relative URL
+				fullURL := href
+				if !strings.HasPrefix(href, "http://") && !strings.HasPrefix(href, "https://") {
+					// Parse base URL
+					baseURLParsed, err := url.Parse(baseURL)
+					if err != nil {
+						continue
+					}
+					refURL, err := url.Parse(href)
+					if err != nil {
+						continue
+					}
+					fullURL = baseURLParsed.ResolveReference(refURL).String()
+				}
+
+				name := strings.TrimSpace(selection.Text())
+				if name == "" {
+					// Extract from URL
+					parts := strings.Split(href, "/")
+					name = parts[len(parts)-1]
+					// URL decode the name
+					if decoded, err := url.QueryUnescape(name); err == nil {
+						name = decoded
+					}
+				}
+
+				attachments = append(attachments, PageAttachment{
+					URL:  fullURL,
+					Name: name,
+					Type: fileType,
+				})
+				break
+			}
+		}
+	})
+
+	return attachments
+}
+
+// DownloadFile downloads a file from URL to the specified path
+func (s *FenbiSpider) DownloadFile(fileURL, savePath string) error {
+	if fileURL == "" {
+		return errors.New("file URL is empty")
+	}
+
+	s.logger.Info("Downloading file",
+		zap.String("url", fileURL),
+		zap.String("save_path", savePath),
+	)
+
+	req, err := http.NewRequest("GET", fileURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "*/*")
+
+	client := &http.Client{
+		Timeout: 120 * time.Second, // Longer timeout for file downloads
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to download file: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("download failed with status code: %d", resp.StatusCode)
+	}
+
+	// Create the directory if it doesn't exist
+	dir := filepath.Dir(savePath)
+	if dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory: %w", err)
+		}
+	}
+
+	// Create the file
+	out, err := os.Create(savePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer out.Close()
+
+	// Write the body to file
+	written, err := io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	s.logger.Info("Downloaded file successfully",
+		zap.String("url", fileURL),
+		zap.String("save_path", savePath),
+		zap.Int64("bytes", written),
+	)
+
+	return nil
 }
 
 // Helper functions

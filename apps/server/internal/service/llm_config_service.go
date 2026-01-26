@@ -22,11 +22,11 @@ import (
 )
 
 var (
-	ErrLLMConfigNotFound     = errors.New("LLM config not found")
-	ErrLLMConfigNameExists   = errors.New("LLM config name already exists")
-	ErrLLMConfigTestFailed   = errors.New("LLM config test failed")
-	ErrNoDefaultLLMConfig    = errors.New("no default LLM config")
-	ErrLLMConfigDisabled     = errors.New("LLM config is disabled")
+	ErrLLMConfigNotFound   = errors.New("LLM config not found")
+	ErrLLMConfigNameExists = errors.New("LLM config name already exists")
+	ErrLLMConfigTestFailed = errors.New("LLM config test failed")
+	ErrNoDefaultLLMConfig  = errors.New("no default LLM config")
+	ErrLLMConfigDisabled   = errors.New("LLM config is disabled")
 )
 
 // LLM encryption key (should be from config in production)
@@ -260,6 +260,82 @@ func (s *LLMConfigService) GetSelectOptions() ([]model.LLMSelectOption, error) {
 	return s.repo.GetSelectOptions()
 }
 
+// CallWithDefaultConfig calls the LLM using the default configuration
+func (s *LLMConfigService) CallWithDefaultConfig(prompt string) (string, error) {
+	config, err := s.repo.GetDefault()
+	if err != nil {
+		return "", ErrNoDefaultLLMConfig
+	}
+
+	if !config.IsEnabled {
+		return "", ErrLLMConfigDisabled
+	}
+
+	apiKey, err := decryptAPIKey(config.APIKeyEncrypted)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt API key: %w", err)
+	}
+
+	return s.callLLM(config, apiKey, prompt, 0, 0)
+}
+
+// CallWithDefaultConfigAndTimeout calls the LLM using the default configuration with custom timeout
+func (s *LLMConfigService) CallWithDefaultConfigAndTimeout(prompt string, timeoutSeconds int) (string, error) {
+	return s.CallWithOptions(prompt, timeoutSeconds, 0)
+}
+
+// CallWithOptions calls the LLM with custom timeout and max tokens
+// If maxTokens <= 0, it uses the config default
+func (s *LLMConfigService) CallWithOptions(prompt string, timeoutSeconds int, maxTokens int) (string, error) {
+	config, err := s.repo.GetDefault()
+	if err != nil {
+		return "", ErrNoDefaultLLMConfig
+	}
+
+	if !config.IsEnabled {
+		return "", ErrLLMConfigDisabled
+	}
+
+	apiKey, err := decryptAPIKey(config.APIKeyEncrypted)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt API key: %w", err)
+	}
+
+	return s.callLLM(config, apiKey, prompt, timeoutSeconds, maxTokens)
+}
+
+// CallWithConfigID calls the LLM using a specific config ID with custom timeout and max tokens
+// If configID is 0, it uses the default config
+func (s *LLMConfigService) CallWithConfigID(configID uint, prompt string, timeoutSeconds int, maxTokens int) (string, error) {
+	var config *model.LLMConfig
+	var err error
+
+	if configID == 0 {
+		// Use default config
+		config, err = s.repo.GetDefault()
+		if err != nil {
+			return "", ErrNoDefaultLLMConfig
+		}
+	} else {
+		// Use specified config
+		config, err = s.repo.GetByID(configID)
+		if err != nil {
+			return "", ErrLLMConfigNotFound
+		}
+	}
+
+	if !config.IsEnabled {
+		return "", ErrLLMConfigDisabled
+	}
+
+	apiKey, err := decryptAPIKey(config.APIKeyEncrypted)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt API key: %w", err)
+	}
+
+	return s.callLLM(config, apiKey, prompt, timeoutSeconds, maxTokens)
+}
+
 // Test tests an LLM config connection
 func (s *LLMConfigService) Test(id uint, prompt string) (string, error) {
 	config, err := s.repo.GetByID(id)
@@ -282,9 +358,9 @@ func (s *LLMConfigService) Test(id uint, prompt string) (string, error) {
 		prompt = "Hello, please respond with 'OK' if you can receive this message."
 	}
 
-	// Call the LLM API
-	response, err := s.callLLM(config, apiKey, prompt)
-	
+	// Call the LLM API (use default timeout and max tokens)
+	response, err := s.callLLM(config, apiKey, prompt, 0, 0)
+
 	// Update test result
 	status := 1
 	message := "测试成功"
@@ -331,26 +407,39 @@ func (s *LLMConfigService) GetConfigForUse(id uint) (*model.LLMConfig, string, e
 }
 
 // callLLM makes a test call to the LLM API
-func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, prompt string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Timeout)*time.Second)
+// If customTimeout > 0, it will override the config timeout
+// If customMaxTokens > 0, it will override the config max tokens
+func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, prompt string, customTimeout int, customMaxTokens int) (string, error) {
+	timeout := config.Timeout
+	if customTimeout > 0 {
+		timeout = customTimeout
+	}
+
+	// Create a copy of config to modify max tokens if needed
+	effectiveConfig := *config
+	if customMaxTokens > 0 {
+		effectiveConfig.MaxTokens = customMaxTokens
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	// Build request based on provider
 	var reqBody []byte
 	var err error
 
-	switch model.LLMProvider(config.Provider) {
+	switch model.LLMProvider(effectiveConfig.Provider) {
 	case model.LLMProviderOpenAI, model.LLMProviderDeepSeek, model.LLMProviderCustom:
-		reqBody, err = s.buildOpenAIRequest(config, prompt)
+		reqBody, err = s.buildOpenAIRequest(&effectiveConfig, prompt)
 	case model.LLMProviderAnthropic:
-		reqBody, err = s.buildAnthropicRequest(config, prompt)
+		reqBody, err = s.buildAnthropicRequest(&effectiveConfig, prompt)
 	case model.LLMProviderGemini:
-		reqBody, err = s.buildGeminiRequest(config, prompt)
+		reqBody, err = s.buildGeminiRequest(&effectiveConfig, prompt)
 	case model.LLMProviderOllama:
-		reqBody, err = s.buildOllamaRequest(config, prompt)
+		reqBody, err = s.buildOllamaRequest(&effectiveConfig, prompt)
 	default:
 		// Default to OpenAI format
-		reqBody, err = s.buildOpenAIRequest(config, prompt)
+		reqBody, err = s.buildOpenAIRequest(&effectiveConfig, prompt)
 	}
 
 	if err != nil {
@@ -358,8 +447,8 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 	}
 
 	// Build URL (Gemini needs API key in URL)
-	apiURL := config.APIURL
-	if model.LLMProvider(config.Provider) == model.LLMProviderGemini {
+	apiURL := effectiveConfig.APIURL
+	if model.LLMProvider(effectiveConfig.Provider) == model.LLMProviderGemini {
 		if strings.Contains(apiURL, "?") {
 			apiURL = apiURL + "&key=" + apiKey
 		} else {
@@ -375,7 +464,7 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 	req.Header.Set("Content-Type", "application/json")
 
 	// Set auth header based on provider
-	switch model.LLMProvider(config.Provider) {
+	switch model.LLMProvider(effectiveConfig.Provider) {
 	case model.LLMProviderAnthropic:
 		req.Header.Set("x-api-key", apiKey)
 		req.Header.Set("anthropic-version", "2023-06-01")
@@ -385,12 +474,12 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 		req.Header.Set("Authorization", "Bearer "+apiKey)
 	}
 
-	if config.OrganizationID != "" {
-		req.Header.Set("OpenAI-Organization", config.OrganizationID)
+	if effectiveConfig.OrganizationID != "" {
+		req.Header.Set("OpenAI-Organization", effectiveConfig.OrganizationID)
 	}
 
 	client := &http.Client{
-		Timeout: time.Duration(config.Timeout) * time.Second,
+		Timeout: time.Duration(timeout) * time.Second,
 	}
 
 	resp, err := client.Do(req)
@@ -409,7 +498,7 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 	}
 
 	// Parse response based on provider
-	return s.parseResponse(config.Provider, body)
+	return s.parseResponse(effectiveConfig.Provider, body)
 }
 
 func (s *LLMConfigService) buildOpenAIRequest(config *model.LLMConfig, prompt string) ([]byte, error) {

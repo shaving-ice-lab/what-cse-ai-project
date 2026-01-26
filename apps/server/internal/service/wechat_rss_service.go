@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -20,15 +19,16 @@ var (
 	ErrWechatRSSArticleNotFound = errors.New("wechat RSS article not found")
 	ErrWechatRSSSourceExists    = errors.New("wechat RSS source already exists")
 	ErrWechatRSSCrawlFailed     = errors.New("wechat RSS crawl failed")
-	ErrWechatRSSInvalidURL      = errors.New("invalid RSS URL")
+	ErrWechatMPAuthRequired     = errors.New("wechat MP authentication required")
 )
 
-// WechatRSSService handles WeChat RSS business logic
+// WechatRSSService handles WeChat article subscription business logic
 type WechatRSSService struct {
-	sourceRepo  *repository.WechatRSSSourceRepository
-	articleRepo *repository.WechatRSSArticleRepository
-	rssCrawler  *crawler.RSSCrawler
-	logger      *zap.Logger
+	sourceRepo    *repository.WechatRSSSourceRepository
+	articleRepo   *repository.WechatRSSArticleRepository
+	articleParser *crawler.WechatArticleParser
+	mpAuthService *WechatMPAuthService
+	logger        *zap.Logger
 
 	// Crawl control
 	crawlMutex   sync.Mutex
@@ -42,83 +42,60 @@ func NewWechatRSSService(
 	logger *zap.Logger,
 ) *WechatRSSService {
 	return &WechatRSSService{
-		sourceRepo:   sourceRepo,
-		articleRepo:  articleRepo,
-		rssCrawler:   crawler.NewRSSCrawler(logger),
-		logger:       logger,
-		crawlRunning: make(map[uint]bool),
+		sourceRepo:    sourceRepo,
+		articleRepo:   articleRepo,
+		articleParser: crawler.NewWechatArticleParser(logger),
+		logger:        logger,
+		crawlRunning:  make(map[uint]bool),
 	}
+}
+
+// SetMPAuthService sets the MP auth service (required for crawling)
+func (s *WechatRSSService) SetMPAuthService(mpAuthService *WechatMPAuthService) {
+	s.mpAuthService = mpAuthService
 }
 
 // === Source Management ===
 
-// CreateSource creates a new RSS source
-func (s *WechatRSSService) CreateSource(req *model.CreateWechatRSSSourceRequest) (*model.WechatRSSSourceResponse, error) {
-	// Check if URL already exists
-	exists, err := s.sourceRepo.ExistsByRSSURL(req.RSSURL)
+// GetSource gets a single source
+func (s *WechatRSSService) GetSource(id uint) (*model.WechatRSSSourceResponse, error) {
+	source, err := s.sourceRepo.FindByID(id)
 	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, ErrWechatRSSSourceExists
+		return nil, ErrWechatRSSSourceNotFound
 	}
 
-	// Validate RSS URL
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	resp := source.ToResponse()
 
-	feed, err := s.rssCrawler.ValidateRSSURL(ctx, req.RSSURL)
-	if err != nil {
-		s.logger.Warn("Failed to validate RSS URL", zap.String("url", req.RSSURL), zap.Error(err))
-		// Still allow creation, but log warning
-	}
+	// Get unread count
+	unreadCount, _ := s.articleRepo.GetUnreadCount(id)
+	resp.UnreadCount = int(unreadCount)
 
-	// Set default values
-	sourceType := req.SourceType
-	if sourceType == "" {
-		sourceType = model.WechatRSSSourceTypeCustom
-	}
-
-	crawlFrequency := req.CrawlFrequency
-	if crawlFrequency == 0 {
-		crawlFrequency = 60 // Default 60 minutes
-	}
-
-	name := req.Name
-	if name == "" && feed != nil {
-		name = feed.Title
-	}
-
-	// Calculate next crawl time
-	nextCrawl := time.Now().Add(time.Duration(crawlFrequency) * time.Minute)
-
-	source := &model.WechatRSSSource{
-		Name:           name,
-		WechatID:       req.WechatID,
-		RSSURL:         req.RSSURL,
-		SourceType:     sourceType,
-		CrawlFrequency: crawlFrequency,
-		NextCrawlAt:    &nextCrawl,
-		Status:         model.WechatRSSSourceStatusActive,
-		Description:    req.Description,
-	}
-
-	// Set icon URL from feed if available
-	if feed != nil && feed.IconURL != "" {
-		source.IconURL = feed.IconURL
-	}
-
-	if err := s.sourceRepo.Create(source); err != nil {
-		return nil, err
-	}
-
-	// Trigger initial crawl asynchronously
-	go s.CrawlSource(source.ID)
-
-	return source.ToResponse(), nil
+	return resp, nil
 }
 
-// UpdateSource updates an RSS source
+// ListSources lists all sources
+func (s *WechatRSSService) ListSources(status *model.WechatRSSSourceStatus) ([]*model.WechatRSSSourceResponse, error) {
+	sources, err := s.sourceRepo.List(status)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get unread counts
+	unreadCounts, _ := s.articleRepo.GetUnreadCountBySource()
+
+	responses := make([]*model.WechatRSSSourceResponse, len(sources))
+	for i, source := range sources {
+		resp := source.ToResponse()
+		if count, ok := unreadCounts[source.ID]; ok {
+			resp.UnreadCount = int(count)
+		}
+		responses[i] = resp
+	}
+
+	return responses, nil
+}
+
+// UpdateSource updates an existing source
 func (s *WechatRSSService) UpdateSource(id uint, req *model.UpdateWechatRSSSourceRequest) (*model.WechatRSSSourceResponse, error) {
 	source, err := s.sourceRepo.FindByID(id)
 	if err != nil {
@@ -130,12 +107,6 @@ func (s *WechatRSSService) UpdateSource(id uint, req *model.UpdateWechatRSSSourc
 	}
 	if req.WechatID != nil {
 		source.WechatID = *req.WechatID
-	}
-	if req.RSSURL != nil {
-		source.RSSURL = *req.RSSURL
-	}
-	if req.SourceType != nil {
-		source.SourceType = *req.SourceType
 	}
 	if req.CrawlFrequency != nil {
 		source.CrawlFrequency = *req.CrawlFrequency
@@ -158,45 +129,7 @@ func (s *WechatRSSService) UpdateSource(id uint, req *model.UpdateWechatRSSSourc
 	return source.ToResponse(), nil
 }
 
-// GetSource gets a single RSS source
-func (s *WechatRSSService) GetSource(id uint) (*model.WechatRSSSourceResponse, error) {
-	source, err := s.sourceRepo.FindByID(id)
-	if err != nil {
-		return nil, ErrWechatRSSSourceNotFound
-	}
-
-	resp := source.ToResponse()
-
-	// Get unread count
-	unreadCount, _ := s.articleRepo.GetUnreadCount(id)
-	resp.UnreadCount = int(unreadCount)
-
-	return resp, nil
-}
-
-// ListSources lists all RSS sources
-func (s *WechatRSSService) ListSources(status *model.WechatRSSSourceStatus) ([]*model.WechatRSSSourceResponse, error) {
-	sources, err := s.sourceRepo.List(status)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get unread counts
-	unreadCounts, _ := s.articleRepo.GetUnreadCountBySource()
-
-	responses := make([]*model.WechatRSSSourceResponse, len(sources))
-	for i, source := range sources {
-		resp := source.ToResponse()
-		if count, ok := unreadCounts[source.ID]; ok {
-			resp.UnreadCount = int(count)
-		}
-		responses[i] = resp
-	}
-
-	return responses, nil
-}
-
-// DeleteSource deletes an RSS source and its articles
+// DeleteSource deletes a source and its articles
 func (s *WechatRSSService) DeleteSource(id uint) error {
 	// Delete all articles first
 	if err := s.articleRepo.DeleteBySourceID(id); err != nil {
@@ -209,7 +142,7 @@ func (s *WechatRSSService) DeleteSource(id uint) error {
 
 // === Crawl Operations ===
 
-// CrawlSource crawls a single RSS source
+// CrawlSource crawls a single source using WeChat API
 func (s *WechatRSSService) CrawlSource(sourceID uint) (*CrawlSourceResult, error) {
 	source, err := s.sourceRepo.FindByID(sourceID)
 	if err != nil {
@@ -231,39 +164,66 @@ func (s *WechatRSSService) CrawlSource(sourceID uint) (*CrawlSourceResult, error
 		s.crawlMutex.Unlock()
 	}()
 
-	s.logger.Info("Starting RSS crawl", zap.Uint("source_id", sourceID), zap.String("url", source.RSSURL))
+	return s.crawlSourceViaWechatAPI(source)
+}
+
+// crawlSourceViaWechatAPI crawls a source using WeChat MP platform API
+func (s *WechatRSSService) crawlSourceViaWechatAPI(source *model.WechatRSSSource) (*CrawlSourceResult, error) {
+	s.logger.Info("Starting WeChat API crawl", zap.Uint("source_id", source.ID), zap.String("fake_id", source.FakeID))
+
+	if s.mpAuthService == nil {
+		return nil, ErrWechatMPAuthRequired
+	}
+
+	if source.FakeID == "" {
+		s.logger.Error("FakeID is empty for source", zap.Uint("source_id", source.ID))
+		s.sourceRepo.UpdateStatus(source.ID, model.WechatRSSSourceStatusError, "FakeID is empty")
+		return nil, fmt.Errorf("fakeid is required for source")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	// Fetch and parse feed
-	feed, err := s.rssCrawler.FetchAndParse(ctx, source.RSSURL)
+	// Get articles from WeChat API
+	articleResp, err := s.mpAuthService.GetArticleList(ctx, source.FakeID, 0, 10)
 	if err != nil {
-		s.logger.Error("Failed to fetch RSS feed", zap.Error(err))
-		s.sourceRepo.UpdateStatus(sourceID, model.WechatRSSSourceStatusError, err.Error())
+		s.logger.Error("Failed to get articles from WeChat API", zap.Error(err))
+		s.sourceRepo.UpdateStatus(source.ID, model.WechatRSSSourceStatusError, err.Error())
 		return nil, err
 	}
 
 	// Process articles
 	newCount := 0
-	for _, item := range feed.Items {
+	for _, item := range articleResp.Articles {
+		// Use link as GUID
+		guid := item.Link
+		if guid == "" {
+			guid = item.AID
+		}
+
 		// Check if article already exists
-		exists, _ := s.articleRepo.ExistsByGUID(item.GUID)
+		exists, _ := s.articleRepo.ExistsByGUID(guid)
 		if exists {
 			continue
 		}
 
+		// Convert timestamp to time
+		var pubDate *time.Time
+		if item.CreateTime > 0 {
+			t := time.Unix(item.CreateTime, 0)
+			pubDate = &t
+		}
+
 		article := &model.WechatRSSArticle{
-			SourceID:    sourceID,
-			GUID:        item.GUID,
+			SourceID:    source.ID,
+			GUID:        guid,
 			Title:       item.Title,
 			Link:        item.Link,
-			Description: item.Description,
-			Content:     item.Content,
-			Author:      item.Author,
-			ImageURL:    item.ImageURL,
-			PubDate:     item.PubDate,
+			Description: item.Digest,
+			ImageURL:    item.Cover,
+			PubDate:     pubDate,
 			ReadStatus:  model.WechatRSSReadStatusUnread,
+			Author:      source.Name,
 		}
 
 		if err := s.articleRepo.Create(article); err != nil {
@@ -276,19 +236,19 @@ func (s *WechatRSSService) CrawlSource(sourceID uint) (*CrawlSourceResult, error
 	// Update source
 	now := time.Now()
 	nextCrawl := now.Add(time.Duration(source.CrawlFrequency) * time.Minute)
-	s.sourceRepo.UpdateCrawlTime(sourceID, now, nextCrawl)
-	s.sourceRepo.UpdateStatus(sourceID, model.WechatRSSSourceStatusActive, "")
-	s.sourceRepo.IncrementArticleCount(sourceID, newCount)
+	s.sourceRepo.UpdateCrawlTime(source.ID, now, nextCrawl)
+	s.sourceRepo.UpdateStatus(source.ID, model.WechatRSSSourceStatusActive, "")
+	s.sourceRepo.IncrementArticleCount(source.ID, newCount)
 
-	s.logger.Info("RSS crawl completed",
-		zap.Uint("source_id", sourceID),
-		zap.Int("total_items", len(feed.Items)),
+	s.logger.Info("WeChat API crawl completed",
+		zap.Uint("source_id", source.ID),
+		zap.Int("total_items", len(articleResp.Articles)),
 		zap.Int("new_items", newCount),
 	)
 
 	return &CrawlSourceResult{
-		SourceID:    sourceID,
-		TotalItems:  len(feed.Items),
+		SourceID:    source.ID,
+		TotalItems:  len(articleResp.Articles),
 		NewItems:    newCount,
 		CrawlTime:   now,
 		NextCrawlAt: nextCrawl,
@@ -405,7 +365,7 @@ func (s *WechatRSSService) BatchMarkAsRead(ids []uint) error {
 
 // === Statistics ===
 
-// GetStats returns statistics for WeChat RSS
+// GetStats returns statistics
 func (s *WechatRSSService) GetStats() (*model.WechatRSSStats, error) {
 	stats := &model.WechatRSSStats{}
 
@@ -438,119 +398,27 @@ func (s *WechatRSSService) GetStats() (*model.WechatRSSStats, error) {
 	return stats, nil
 }
 
-// === RSS Output ===
-
-// GenerateRSSFeed generates an RSS feed XML for a source
-func (s *WechatRSSService) GenerateRSSFeed(sourceID uint, limit int) (string, error) {
-	source, err := s.sourceRepo.FindByID(sourceID)
-	if err != nil {
-		return "", ErrWechatRSSSourceNotFound
-	}
-
-	if limit <= 0 {
-		limit = 50
-	}
-
-	articles, err := s.articleRepo.ListBySourceID(sourceID, limit)
-	if err != nil {
-		return "", err
-	}
-
-	// Generate RSS XML
-	rss := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-<channel>
-<title>%s</title>
-<link>%s</link>
-<description>%s - 微信公众号RSS订阅</description>
-<language>zh-cn</language>
-<lastBuildDate>%s</lastBuildDate>
-`, escapeXML(source.Name), escapeXML(source.RSSURL), escapeXML(source.Name), time.Now().Format(time.RFC1123Z))
-
-	for _, article := range articles {
-		pubDate := ""
-		if article.PubDate != nil {
-			pubDate = article.PubDate.Format(time.RFC1123Z)
-		}
-
-		rss += fmt.Sprintf(`<item>
-<title>%s</title>
-<link>%s</link>
-<guid>%s</guid>
-<pubDate>%s</pubDate>
-<description><![CDATA[%s]]></description>
-</item>
-`, escapeXML(article.Title), escapeXML(article.Link), escapeXML(article.GUID), pubDate, article.Description)
-	}
-
-	rss += `</channel>
-</rss>`
-
-	return rss, nil
-}
-
-// escapeXML escapes special characters for XML
-func escapeXML(s string) string {
-	// Order matters: & must be replaced first
-	s = replaceAll(s, "&", "&amp;")
-	s = replaceAll(s, "<", "&lt;")
-	s = replaceAll(s, ">", "&gt;")
-	s = replaceAll(s, "'", "&apos;")
-	s = replaceAll(s, "\"", "&quot;")
-	return s
-}
-
-func replaceAll(s, old, new string) string {
-	if old == "" || old == new {
-		return s
-	}
-	result := ""
-	for {
-		i := indexOf(s, old)
-		if i < 0 {
-			return result + s
-		}
-		result += s[:i] + new
-		s = s[i+len(old):]
-	}
-}
-
-func indexOf(s, substr string) int {
-	if len(substr) > len(s) {
-		return -1
-	}
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
-}
-
 // === Helper Functions ===
 
-// ValidateRSSURL validates if a URL is a valid RSS feed
-func (s *WechatRSSService) ValidateRSSURL(url string) (*crawler.ParsedFeed, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	return s.rssCrawler.ValidateRSSURL(ctx, url)
-}
-
-// ParseWechatArticleURL parses a WeChat article URL and extracts RSS info
+// ParseWechatArticleURL parses a WeChat article URL and extracts biz info
 func (s *WechatRSSService) ParseWechatArticleURL(articleURL string) (*crawler.WechatArticleInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	return s.rssCrawler.FetchWechatArticleInfo(ctx, articleURL)
+	return s.articleParser.FetchWechatArticleInfo(ctx, articleURL)
 }
 
-// CreateSourceFromArticleURL creates a new RSS source from a WeChat article URL
-func (s *WechatRSSService) CreateSourceFromArticleURL(articleURL string) (*model.WechatRSSSourceResponse, error) {
-	s.logger.Info("=== 开始创建订阅 ===", zap.String("article_url", articleURL))
+// CreateSourceViaWechatAPI creates a source using WeChat MP platform API
+// This requires valid WeChat MP authentication
+func (s *WechatRSSService) CreateSourceViaWechatAPI(articleURL string) (*model.WechatRSSSourceResponse, error) {
+	s.logger.Info("=== 通过微信API创建订阅 ===", zap.String("article_url", articleURL))
 
-	// Step 1: Parse article URL
-	s.logger.Info("[步骤1] 解析文章URL获取公众号信息...")
+	if s.mpAuthService == nil {
+		return nil, ErrWechatMPAuthRequired
+	}
+
+	// Step 1: Parse article URL to get biz
+	s.logger.Info("[步骤1] 解析文章URL获取biz参数...")
 	info, err := s.ParseWechatArticleURL(articleURL)
 	if err != nil {
 		s.logger.Error("解析文章URL失败", zap.Error(err))
@@ -559,99 +427,67 @@ func (s *WechatRSSService) CreateSourceFromArticleURL(articleURL string) (*model
 	s.logger.Info("解析成功",
 		zap.String("biz", info.Biz),
 		zap.String("author", info.Author),
-		zap.Strings("rss_urls", info.RSSURLs),
+		zap.String("title", info.Title),
 	)
 
-	if len(info.RSSURLs) == 0 {
-		return nil, fmt.Errorf("could not generate RSS URL")
+	// Step 2: Get fakeid from WeChat API
+	s.logger.Info("[步骤2] 通过微信API获取fakeid...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	account, err := s.mpAuthService.GetFakeIDFromBiz(ctx, info.Biz)
+	if err != nil {
+		s.logger.Error("获取fakeid失败", zap.Error(err))
+		return nil, fmt.Errorf("failed to get fakeid: %w", err)
+	}
+	s.logger.Info("获取fakeid成功",
+		zap.String("fakeid", account.FakeID),
+		zap.String("nickname", account.Nickname),
+	)
+
+	// Step 3: Check if source already exists
+	exists, _ := s.sourceRepo.ExistsByFakeID(account.FakeID)
+	if exists {
+		s.logger.Warn("订阅源已存在", zap.String("fakeid", account.FakeID))
+		return nil, ErrWechatRSSSourceExists
 	}
 
-	// Step 2: Try each RSS URL until one works
-	s.logger.Info("[步骤2] 验证RSS源可用性...")
-	var lastErr error
-	var validatedFeed *crawler.ParsedFeed
-	var validRSSURL string
-
-	for i, rssURL := range info.RSSURLs {
-		s.logger.Info(fmt.Sprintf("  尝试RSS源 %d/%d: %s", i+1, len(info.RSSURLs), rssURL))
-
-		// Validate the RSS URL
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		feed, err := s.rssCrawler.ValidateRSSURL(ctx, rssURL)
-		cancel()
-
-		if err != nil {
-			lastErr = err
-			s.logger.Warn("  ✗ RSS源验证失败",
-				zap.String("url", rssURL),
-				zap.Error(err))
-			continue
-		}
-
-		s.logger.Info("  ✓ RSS源验证成功",
-			zap.String("url", rssURL),
-			zap.String("feed_title", feed.Title),
-			zap.Int("item_count", len(feed.Items)),
-		)
-		validatedFeed = feed
-		validRSSURL = rssURL
-		break
-	}
-
-	if validRSSURL == "" {
-		s.logger.Error("所有RSS源都不可用", zap.Error(lastErr))
-		if lastErr != nil {
-			return nil, fmt.Errorf("all RSS URLs failed, last error: %w", lastErr)
-		}
-		return nil, fmt.Errorf("no valid RSS URL found")
-	}
-
-	// Step 3: Create the source
+	// Step 4: Create the source
 	s.logger.Info("[步骤3] 创建订阅源记录...")
 
-	name := info.Author
-	if name == "" && validatedFeed != nil {
-		name = validatedFeed.Title
+	name := account.Nickname
+	if name == "" {
+		name = info.Author
 	}
 	if name == "" {
 		name = "微信公众号"
 	}
 
-	// Determine source type from URL
-	sourceType := model.WechatRSSSourceTypeCustom
-	if strings.Contains(validRSSURL, "rsshub.app") {
-		sourceType = model.WechatRSSSourceTypeRSSHub
-	} else if strings.Contains(validRSSURL, "feeddd.org") {
-		sourceType = model.WechatRSSSourceTypeFeeddd
-	} else if strings.Contains(validRSSURL, "werss.app") {
-		sourceType = model.WechatRSSSourceTypeWeRSS
-	}
-
-	req := &model.CreateWechatRSSSourceRequest{
+	nextCrawl := time.Now().Add(60 * time.Minute)
+	source := &model.WechatRSSSource{
 		Name:           name,
 		WechatID:       info.Biz,
-		RSSURL:         validRSSURL,
-		SourceType:     sourceType,
+		FakeID:         account.FakeID,
+		SourceType:     model.WechatRSSSourceTypeWechatAPI,
 		CrawlFrequency: 60,
+		NextCrawlAt:    &nextCrawl,
+		Status:         model.WechatRSSSourceStatusActive,
+		IconURL:        account.RoundHeadImg,
 	}
 
-	s.logger.Info("订阅源信息",
-		zap.String("name", name),
-		zap.String("wechat_id", info.Biz),
-		zap.String("rss_url", validRSSURL),
-		zap.String("source_type", string(sourceType)),
-	)
-
-	result, err := s.CreateSource(req)
-	if err != nil {
+	if err := s.sourceRepo.Create(source); err != nil {
 		s.logger.Error("创建订阅源失败", zap.Error(err))
 		return nil, err
 	}
 
-	s.logger.Info("=== 订阅创建成功 ===",
-		zap.Uint("source_id", result.ID),
-		zap.String("name", result.Name),
+	s.logger.Info("=== 订阅创建成功 (微信API) ===",
+		zap.Uint("source_id", source.ID),
+		zap.String("name", source.Name),
+		zap.String("fakeid", source.FakeID),
 	)
 
-	return result, nil
+	// Trigger initial crawl asynchronously
+	go s.CrawlSource(source.ID)
+
+	return source.ToResponse(), nil
 }

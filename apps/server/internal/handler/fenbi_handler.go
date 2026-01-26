@@ -392,6 +392,46 @@ func (h *FenbiHandler) TestCrawl(c echo.Context) error {
 	return success(c, result)
 }
 
+// ParseURLRequest is the request body for parsing a URL
+type ParseURLRequest struct {
+	URL         string `json:"url"`
+	LLMConfigID uint   `json:"llm_config_id"` // Optional: 0 means use default config
+}
+
+// ParseURL parses a specific Fenbi URL and returns detailed results
+// @Summary Parse Fenbi URL (Admin)
+// @Description Parse a specific Fenbi URL and return detailed analysis
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Param request body ParseURLRequest true "URL to parse"
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-url [post]
+func (h *FenbiHandler) ParseURL(c echo.Context) error {
+	var req ParseURLRequest
+	if err := c.Bind(&req); err != nil {
+		return fail(c, 400, "Invalid request parameters")
+	}
+
+	if req.URL == "" {
+		return fail(c, 400, "URL不能为空")
+	}
+
+	result, err := h.fenbiService.ParseURL(req.URL, req.LLMConfigID)
+	if err != nil {
+		if err == service.ErrCredentialNotFound {
+			return fail(c, 400, "请先配置粉笔账号")
+		}
+		if err == service.ErrNotLoggedIn {
+			return fail(c, 401, "请先登录粉笔账号")
+		}
+		return fail(c, 500, "解析URL失败: "+err.Error())
+	}
+
+	return success(c, result)
+}
+
 // RegisterRoutes registers all Fenbi API routes
 func (h *FenbiHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.MiddlewareFunc) {
 	fenbi := g.Group("/fenbi", adminAuthMiddleware)
@@ -413,6 +453,7 @@ func (h *FenbiHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.Mi
 	fenbi.POST("/crawl/stop", h.StopCrawl)
 	fenbi.POST("/crawl-details", h.BatchCrawlDetails)
 	fenbi.POST("/test-crawl", h.TestCrawl)
+	fenbi.POST("/parse-url", h.ParseURL)
 
 	// Announcements
 	fenbi.GET("/announcements", h.ListAnnouncements)

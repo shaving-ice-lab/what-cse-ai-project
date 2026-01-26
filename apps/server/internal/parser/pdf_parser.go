@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/pdfcpu/pdfcpu/pkg/api"
-	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
+	"github.com/ledongthuc/pdf"
 	"go.uber.org/zap"
 )
 
@@ -70,81 +68,92 @@ func (p *PDFPositionParser) Parse(filePath string) ([]ParsedPosition, error) {
 	return positions, nil
 }
 
-// ExtractText extracts all text from a PDF file
+// ExtractText extracts all text from a PDF file using ledongthuc/pdf library
 func (p *PDFPositionParser) ExtractText(filePath string) (string, error) {
-	file, err := os.Open(filePath)
+	// Open the PDF file
+	f, r, err := pdf.Open(filePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open PDF: %w", err)
 	}
-	defer file.Close()
+	defer f.Close()
 
-	// Get file info for size
-	info, err := file.Stat()
-	if err != nil {
-		return "", fmt.Errorf("failed to get file info: %w", err)
-	}
+	// Get file info for logging
+	info, _ := f.Stat()
+	pageCount := r.NumPage()
 
-	// Create a configuration
-	conf := model.NewDefaultConfiguration()
-
-	// Read the PDF content
-	ctx, err := api.ReadContext(file, conf)
-	if err != nil {
-		return "", fmt.Errorf("failed to read PDF context: %w", err)
-	}
-
-	// Extract text from all pages
-	var textBuffer bytes.Buffer
-
-	pageCount := ctx.PageCount
 	if p.Logger != nil {
-		p.Logger.Debug("PDF info",
+		p.Logger.Info("PDF info",
 			zap.String("file", filePath),
 			zap.Int64("size", info.Size()),
 			zap.Int("pages", pageCount),
 		)
 	}
 
-	// pdfcpu has limited text extraction capability
-	// For production, consider using a more robust library like unidoc/unipdf
-	// For now, we use a temporary directory to extract content
-	tempDir, err := os.MkdirTemp("", "pdf_extract_*")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temp dir: %w", err)
-	}
-	defer os.RemoveAll(tempDir)
+	var textBuffer bytes.Buffer
+	totalChars := 0
 
-	// Extract content to temp directory
-	if err := api.ExtractContentFile(filePath, tempDir, nil, conf); err != nil {
-		// If extraction fails, return empty string (PDF might be image-based)
-		if p.Logger != nil {
-			p.Logger.Debug("PDF content extraction failed, might be image-based",
-				zap.String("file", filePath),
-				zap.Error(err),
-			)
-		}
-		return "", nil
-	}
-
-	// Read extracted content files
-	files, err := os.ReadDir(tempDir)
-	if err != nil {
-		return "", nil
-	}
-
-	for _, f := range files {
-		if f.IsDir() {
+	// Extract text from all pages
+	for pageNum := 1; pageNum <= pageCount; pageNum++ {
+		page := r.Page(pageNum)
+		if page.V.IsNull() {
+			if p.Logger != nil {
+				p.Logger.Warn("Page is null",
+					zap.Int("page", pageNum),
+				)
+			}
 			continue
 		}
-		content, err := os.ReadFile(fmt.Sprintf("%s/%s", tempDir, f.Name()))
-		if err != nil {
-			continue
+
+		// Try multiple methods to extract text
+		var pageText string
+		var extractErr error
+
+		// Method 1: GetPlainText
+		pageText, extractErr = page.GetPlainText(nil)
+		
+		if extractErr != nil || len(strings.TrimSpace(pageText)) == 0 {
+			// Method 2: Try using Content().Text directly
+			content := page.Content()
+			for _, text := range content.Text {
+				pageText += text.S + " "
+			}
 		}
-		textBuffer.Write(content)
-		textBuffer.WriteString("\n")
+
+		pageText = strings.TrimSpace(pageText)
+		if pageText != "" {
+			textBuffer.WriteString(fmt.Sprintf("=== 第 %d 页 ===\n", pageNum))
+			textBuffer.WriteString(pageText)
+			textBuffer.WriteString("\n\n")
+			totalChars += len(pageText)
+			
+			if p.Logger != nil {
+				p.Logger.Debug("Extracted text from page",
+					zap.Int("page", pageNum),
+					zap.Int("chars", len(pageText)),
+				)
+			}
+		} else {
+			if p.Logger != nil {
+				p.Logger.Warn("No text extracted from page",
+					zap.Int("page", pageNum),
+					zap.Error(extractErr),
+				)
+			}
+		}
 	}
 
-	return textBuffer.String(), nil
+	extractedText := textBuffer.String()
+
+	if p.Logger != nil {
+		p.Logger.Info("PDF text extraction completed",
+			zap.String("file", filePath),
+			zap.Int("pages", pageCount),
+			zap.Int("total_chars", totalChars),
+			zap.Int("final_length", len(extractedText)),
+		)
+	}
+
+	return extractedText, nil
 }
 
 // parseTextContent attempts to parse position data from extracted text
@@ -282,19 +291,13 @@ func (p *PDFPositionParser) extractFieldsFromLine(pos *ParsedPosition, line stri
 
 // GetPageCount returns the number of pages in a PDF
 func (p *PDFPositionParser) GetPageCount(filePath string) (int, error) {
-	file, err := os.Open(filePath)
+	f, r, err := pdf.Open(filePath)
 	if err != nil {
 		return 0, err
 	}
-	defer file.Close()
+	defer f.Close()
 
-	conf := model.NewDefaultConfiguration()
-	ctx, err := api.ReadContext(file, conf)
-	if err != nil {
-		return 0, err
-	}
-
-	return ctx.PageCount, nil
+	return r.NumPage(), nil
 }
 
 // IsScannedPDF checks if a PDF is likely a scanned document

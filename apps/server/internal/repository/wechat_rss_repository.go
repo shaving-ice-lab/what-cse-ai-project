@@ -44,6 +44,27 @@ func (r *WechatRSSSourceRepository) ExistsByRSSURL(rssURL string) (bool, error) 
 	return count > 0, err
 }
 
+func (r *WechatRSSSourceRepository) FindByFakeID(fakeID string) (*model.WechatRSSSource, error) {
+	var source model.WechatRSSSource
+	err := r.db.Where("fake_id = ?", fakeID).First(&source).Error
+	if err != nil {
+		return nil, err
+	}
+	return &source, nil
+}
+
+func (r *WechatRSSSourceRepository) ExistsByFakeID(fakeID string) (bool, error) {
+	var count int64
+	err := r.db.Model(&model.WechatRSSSource{}).Where("fake_id = ?", fakeID).Count(&count).Error
+	return count > 0, err
+}
+
+func (r *WechatRSSSourceRepository) ListBySourceType(sourceType model.WechatRSSSourceType) ([]model.WechatRSSSource, error) {
+	var sources []model.WechatRSSSource
+	err := r.db.Where("source_type = ?", sourceType).Order("created_at DESC").Find(&sources).Error
+	return sources, err
+}
+
 func (r *WechatRSSSourceRepository) List(status *model.WechatRSSSourceStatus) ([]model.WechatRSSSource, error) {
 	var sources []model.WechatRSSSource
 	query := r.db.Model(&model.WechatRSSSource{})

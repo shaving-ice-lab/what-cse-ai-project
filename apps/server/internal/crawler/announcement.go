@@ -341,10 +341,3 @@ func cleanText(text string) string {
 
 	return strings.TrimSpace(text)
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}

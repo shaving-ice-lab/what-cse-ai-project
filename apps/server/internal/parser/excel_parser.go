@@ -2,9 +2,11 @@ package parser
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/extrame/xls"
 	"github.com/xuri/excelize/v2"
 	"go.uber.org/zap"
 )
@@ -236,4 +238,94 @@ func (p *ExcelPositionParser) GetSheetData(filePath, sheetName string) ([][]stri
 	defer f.Close()
 
 	return f.GetRows(sheetName)
+}
+
+// ExtractText extracts all text content from an Excel file
+// Supports both .xlsx and .xls formats
+func (p *ExcelPositionParser) ExtractText(filePath string) (string, error) {
+	ext := strings.ToLower(filepath.Ext(filePath))
+	
+	if ext == ".xls" {
+		return p.extractTextFromXLS(filePath)
+	}
+	
+	return p.extractTextFromXLSX(filePath)
+}
+
+// extractTextFromXLSX extracts text from .xlsx files
+func (p *ExcelPositionParser) extractTextFromXLSX(filePath string) (string, error) {
+	f, err := excelize.OpenFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open excel file: %w", err)
+	}
+	defer f.Close()
+
+	var builder strings.Builder
+
+	// Process all sheets
+	for _, sheetName := range f.GetSheetList() {
+		rows, err := f.GetRows(sheetName)
+		if err != nil {
+			continue
+		}
+
+		builder.WriteString(fmt.Sprintf("=== Sheet: %s ===\n", sheetName))
+		
+		for _, row := range rows {
+			// Join cells with tab separator
+			line := strings.Join(row, "\t")
+			if strings.TrimSpace(line) != "" {
+				builder.WriteString(line)
+				builder.WriteString("\n")
+			}
+		}
+		builder.WriteString("\n")
+	}
+
+	return builder.String(), nil
+}
+
+// extractTextFromXLS extracts text from .xls files (legacy Excel format)
+func (p *ExcelPositionParser) extractTextFromXLS(filePath string) (string, error) {
+	xlsFile, err := xls.Open(filePath, "utf-8")
+	if err != nil {
+		return "", fmt.Errorf("failed to open xls file: %w", err)
+	}
+
+	var builder strings.Builder
+
+	// Process all sheets
+	for sheetIdx := 0; sheetIdx < xlsFile.NumSheets(); sheetIdx++ {
+		sheet := xlsFile.GetSheet(sheetIdx)
+		if sheet == nil {
+			continue
+		}
+
+		builder.WriteString(fmt.Sprintf("=== Sheet: %s ===\n", sheet.Name))
+
+		// Get max row
+		maxRow := int(sheet.MaxRow)
+		for rowIdx := 0; rowIdx <= maxRow; rowIdx++ {
+			row := sheet.Row(rowIdx)
+			if row == nil {
+				continue
+			}
+
+			var cells []string
+			lastCol := row.LastCol()
+			for colIdx := 0; colIdx < lastCol; colIdx++ {
+				cell := row.Col(colIdx)
+				cells = append(cells, cell)
+			}
+
+			line := strings.Join(cells, "\t")
+			if strings.TrimSpace(line) != "" {
+				builder.WriteString(line)
+				builder.WriteString("\n")
+			}
+		}
+		builder.WriteString("\n")
+	}
+
+	return builder.String(), nil
 }

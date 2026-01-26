@@ -52,6 +52,9 @@ func AutoMigrate(db *gorm.DB) error {
 		// WeChat RSS related tables
 		&model.WechatRSSSource{},
 		&model.WechatRSSArticle{},
+
+		// WeChat MP Auth table
+		&model.WechatMPAuth{},
 	)
 }
 

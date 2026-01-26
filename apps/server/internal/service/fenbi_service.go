@@ -5,11 +5,13 @@ import (
 	"crypto/cipher"
 	cryptorand "crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +20,7 @@ import (
 
 	"github.com/what-cse/server/internal/crawler"
 	"github.com/what-cse/server/internal/model"
+	"github.com/what-cse/server/internal/parser"
 	"github.com/what-cse/server/internal/repository"
 )
 
@@ -38,6 +41,7 @@ type FenbiService struct {
 	categoryRepo     *repository.FenbiCategoryRepository
 	announcementRepo *repository.FenbiAnnouncementRepository
 	spiderConfig     *crawler.SpiderConfig
+	llmConfigService *LLMConfigService
 	logger           *zap.Logger
 
 	// Crawl control
@@ -51,6 +55,7 @@ func NewFenbiService(
 	categoryRepo *repository.FenbiCategoryRepository,
 	announcementRepo *repository.FenbiAnnouncementRepository,
 	spiderConfig *crawler.SpiderConfig,
+	llmConfigService *LLMConfigService,
 	logger *zap.Logger,
 ) *FenbiService {
 	return &FenbiService{
@@ -58,6 +63,7 @@ func NewFenbiService(
 		categoryRepo:     categoryRepo,
 		announcementRepo: announcementRepo,
 		spiderConfig:     spiderConfig,
+		llmConfigService: llmConfigService,
 		logger:           logger,
 	}
 }
@@ -865,7 +871,82 @@ type TestCrawlDetail struct {
 	FenbiURL       string                 `json:"fenbi_url,omitempty"`
 	OriginalURL    string                 `json:"original_url,omitempty"`
 	FinalURL       string                 `json:"final_url,omitempty"`
+	PageContent    *PageContentResult     `json:"page_content,omitempty"`
+	Attachments    []AttachmentResult     `json:"attachments,omitempty"`
+	LLMAnalysis    *LLMAnalysisResult     `json:"llm_analysis,omitempty"`
 	RawData        map[string]interface{} `json:"raw_data,omitempty"`
+}
+
+// PageContentResult holds the fetched page content
+type PageContentResult struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+	HTML    string `json:"html,omitempty"`
+}
+
+// AttachmentResult holds information about a downloaded and parsed attachment
+type AttachmentResult struct {
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	Type      string `json:"type"`
+	LocalPath string `json:"local_path,omitempty"`
+	Content   string `json:"content,omitempty"`
+	Error     string `json:"error,omitempty"`
+}
+
+// LLMAnalysisResult holds the LLM analysis results
+type LLMAnalysisResult struct {
+	Summary     string                  `json:"summary"`
+	Positions   []ExtractedPositionInfo `json:"positions,omitempty"`
+	ExamInfo    *ExtractedExamInfo      `json:"exam_info,omitempty"`
+	Confidence  int                     `json:"confidence"`
+	RawResponse string                  `json:"raw_response,omitempty"`
+	Error       string                  `json:"error,omitempty"`
+}
+
+// ExtractedPositionInfo is a simplified position info for TestCrawl result
+type ExtractedPositionInfo struct {
+	PositionName   string   `json:"position_name"`
+	DepartmentName string   `json:"department_name"`
+	RecruitCount   int      `json:"recruit_count"`
+	Education      string   `json:"education,omitempty"`
+	Major          []string `json:"major,omitempty"`
+	WorkLocation   string   `json:"work_location,omitempty"`
+}
+
+// ExtractedExamInfo holds exam information extracted by LLM
+type ExtractedExamInfo struct {
+	ExamType          string `json:"exam_type,omitempty"`
+	RegistrationStart string `json:"registration_start,omitempty"`
+	RegistrationEnd   string `json:"registration_end,omitempty"`
+	ExamDate          string `json:"exam_date,omitempty"`
+}
+
+// ParseURLResult represents the result of parsing a URL
+type ParseURLResult struct {
+	Success bool          `json:"success"`
+	Steps   []ParseStep   `json:"steps"`
+	Data    *ParseURLData `json:"data,omitempty"`
+	Error   string        `json:"error,omitempty"`
+}
+
+// ParseStep represents a step in the parsing process
+type ParseStep struct {
+	Name     string `json:"name"`
+	Status   string `json:"status"` // "success", "error", "skipped"
+	Message  string `json:"message"`
+	Duration int64  `json:"duration_ms"`
+	Details  string `json:"details,omitempty"`
+}
+
+// ParseURLData contains the parsed data from the URL
+type ParseURLData struct {
+	InputURL    string             `json:"input_url"`
+	FinalURL    string             `json:"final_url,omitempty"`
+	PageTitle   string             `json:"page_title,omitempty"`
+	PageContent string             `json:"page_content,omitempty"`
+	Attachments []AttachmentResult `json:"attachments,omitempty"`
+	LLMAnalysis *LLMAnalysisResult `json:"llm_analysis,omitempty"`
 }
 
 // TestCrawl tests the cookie-based crawling by fetching a sample announcement
@@ -906,10 +987,10 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 	// First, get detailed login status for debugging
 	loginDetails := spider.CheckLoginStatusWithDetails()
 	isValid := loginDetails["any_valid"].(bool)
-	
+
 	if !isValid {
 		s.logger.Warn("Test crawl: cookies invalid", zap.Any("login_details", loginDetails))
-		
+
 		return &TestCrawlResult{
 			Success: false,
 			Message: "Cookie已失效，请重新登录或导入新的Cookie",
@@ -929,13 +1010,13 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 	// Always fetch fresh data from Fenbi API for testing
 	// Initialize random seed with current nanoseconds for true randomness
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	
+
 	// Use a random page (1-10) to get different results each time
 	randomPage := rng.Intn(10) + 1
 	// Also randomize the year between current year and previous year
 	currentYear := time.Now().Year()
 	randomYear := currentYear - rng.Intn(2) // Current year or last year
-	
+
 	s.logger.Info("Test crawl: fetching fresh data from Fenbi API",
 		zap.Int("random_page", randomPage),
 		zap.Int("random_year", randomYear),
@@ -973,7 +1054,7 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 	// Randomly select an item from the list for detailed testing
 	randomIndex := rng.Intn(len(result.Items))
 	selectedItem := result.Items[randomIndex]
-	
+
 	s.logger.Info("Test crawl: randomly selected item",
 		zap.Int("random_index", randomIndex),
 		zap.Int("total_items", len(result.Items)),
@@ -983,16 +1064,21 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 
 	// Now test crawling the detail page to get original URL
 	detail, rawHTML, err := spider.CrawlAnnouncementDetailWithHTML(selectedItem.FenbiID)
-	
+
 	// Save the raw HTML to a file for debugging (with timestamp to avoid overwriting)
+	// Files are saved to temp folder to avoid cluttering the root directory
+	tempDir := "temp"
+	if mkdirErr := os.MkdirAll(tempDir, 0755); mkdirErr != nil {
+		s.logger.Warn("Failed to create temp directory", zap.Error(mkdirErr))
+	}
 	timestamp := time.Now().Format("20060102_150405")
-	htmlFilePath := fmt.Sprintf("fenbi_test_detail_%s_%s.html", selectedItem.FenbiID, timestamp)
+	htmlFilePath := fmt.Sprintf("%s/fenbi_test_detail_%s_%s.html", tempDir, selectedItem.FenbiID, timestamp)
 	if writeErr := os.WriteFile(htmlFilePath, []byte(rawHTML), 0644); writeErr != nil {
 		s.logger.Warn("Failed to save HTML file", zap.Error(writeErr))
 	} else {
 		s.logger.Info("Saved HTML to file", zap.String("path", htmlFilePath))
 	}
-	
+
 	if err != nil {
 		return &TestCrawlResult{
 			Success: false,
@@ -1034,47 +1120,700 @@ func (s *FenbiService) TestCrawl() (*TestCrawlResult, error) {
 		}
 	}
 
-	// Check if original_url was found
+	// Initialize test result with basic info
+	testResult := &TestCrawlDetail{
+		Title:       selectedItem.Title,
+		FenbiURL:    selectedItem.FenbiURL,
+		OriginalURL: detail.OriginalURL,
+		FinalURL:    finalURL,
+		RawData: map[string]interface{}{
+			"html_file":    htmlFilePath,
+			"html_length":  len(rawHTML),
+			"fenbi_id":     selectedItem.FenbiID,
+			"title":        selectedItem.Title,
+			"fenbi_url":    selectedItem.FenbiURL,
+			"original_url": detail.OriginalURL,
+			"final_url":    finalURL,
+			"region_code":  selectedItem.RegionCode,
+			"region_name":  selectedItem.RegionName,
+			"exam_type":    selectedItem.ExamTypeCode,
+			"year":         selectedItem.Year,
+			"publish_date": selectedItem.PublishDate,
+			"random_page":  randomPage,
+			"random_year":  randomYear,
+			"random_index": randomIndex,
+			"total_items":  len(result.Items),
+			"test_time":    time.Now().Format("2006-01-02 15:04:05"),
+		},
+	}
+
+	// === Enhanced flow: Fetch page content, download attachments, LLM analysis ===
+	if finalURL != "" {
+		s.logger.Info("Test crawl: Starting enhanced flow - fetching final URL content",
+			zap.String("final_url", finalURL),
+		)
+
+		// Step 1: Fetch page content
+		pageContent, fetchErr := spider.FetchPageContent(finalURL)
+		if fetchErr != nil {
+			s.logger.Warn("Test crawl: Failed to fetch page content",
+				zap.String("url", finalURL),
+				zap.Error(fetchErr),
+			)
+			testResult.PageContent = &PageContentResult{
+				Title:   "",
+				Content: fmt.Sprintf("获取页面内容失败: %v", fetchErr),
+			}
+		} else {
+			s.logger.Info("Test crawl: Fetched page content successfully",
+				zap.String("title", pageContent.Title),
+				zap.Int("text_length", len(pageContent.Text)),
+				zap.Int("attachments_count", len(pageContent.Attachments)),
+			)
+
+			// Truncate content for display (max 5000 chars)
+			contentPreview := pageContent.Text
+			if len(contentPreview) > 5000 {
+				contentPreview = contentPreview[:5000] + "...(内容已截断)"
+			}
+
+			testResult.PageContent = &PageContentResult{
+				Title:   pageContent.Title,
+				Content: contentPreview,
+			}
+
+			// Step 2: Download and parse attachments
+			if len(pageContent.Attachments) > 0 {
+				testResult.Attachments = s.processAttachments(spider, pageContent.Attachments)
+			}
+
+			// Step 3: LLM Analysis (use default LLM config)
+			testResult.LLMAnalysis = s.performLLMAnalysis(pageContent, testResult.Attachments, 0)
+		}
+	}
+
+	// Build message
 	message := "Cookie有效，成功获取公告详情"
 	if detail.OriginalURL != "" {
 		message += "和原始链接"
 		if finalURL != "" {
 			message += "，并成功解析最终跳转URL"
+			if testResult.PageContent != nil && testResult.PageContent.Title != "" {
+				message += "，已获取原文页面内容"
+			}
+			if len(testResult.Attachments) > 0 {
+				message += fmt.Sprintf("，发现%d个附件", len(testResult.Attachments))
+			}
+			if testResult.LLMAnalysis != nil && testResult.LLMAnalysis.Error == "" {
+				message += "，LLM分析完成"
+			}
 		}
 	} else {
 		message += "，但未找到原始链接（HTML已保存到文件供检查）"
 	}
 
-	// Success - we got the original URL and other data
 	return &TestCrawlResult{
-		Success: true,
-		Message: message,
-		TestResult: &TestCrawlDetail{
-			Title:       selectedItem.Title,
-			FenbiURL:    selectedItem.FenbiURL,
-			OriginalURL: detail.OriginalURL,
-			FinalURL:    finalURL,
-			RawData: map[string]interface{}{
-				"html_file":    htmlFilePath,
-				"html_length":  len(rawHTML),
-				"fenbi_id":     selectedItem.FenbiID,
-				"title":        selectedItem.Title,
-				"fenbi_url":    selectedItem.FenbiURL,
-				"original_url": detail.OriginalURL,
-				"final_url":    finalURL,
-				"region_code":  selectedItem.RegionCode,
-				"region_name":  selectedItem.RegionName,
-				"exam_type":    selectedItem.ExamTypeCode,
-				"year":         selectedItem.Year,
-				"publish_date": selectedItem.PublishDate,
-				"random_page":  randomPage,
-				"random_year":  randomYear,
-				"random_index": randomIndex,
-				"total_items":  len(result.Items),
-				"test_time":    time.Now().Format("2006-01-02 15:04:05"),
-			},
-		},
+		Success:    true,
+		Message:    message,
+		TestResult: testResult,
 	}, nil
+}
+
+// ParseURL parses a specific URL and returns detailed analysis with process steps
+// llmConfigID: optional LLM config ID to use (0 = use default)
+func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLResult, error) {
+	result := &ParseURLResult{
+		Steps: make([]ParseStep, 0),
+		Data: &ParseURLData{
+			InputURL: inputURL,
+		},
+	}
+
+	// Check login status
+	credential, err := s.credRepo.FindDefault()
+	if err != nil {
+		result.Success = false
+		result.Error = "未配置粉笔账号"
+		return result, ErrCredentialNotFound
+	}
+
+	if credential.LoginStatus != int(model.FenbiLoginStatusLoggedIn) || credential.Cookies == "" {
+		result.Success = false
+		result.Error = "未登录或Cookie为空，请先登录或导入Cookie"
+		return result, ErrNotLoggedIn
+	}
+
+	// Create spider and set cookies
+	spider := crawler.NewFenbiSpider(s.spiderConfig, s.logger)
+	spider.SetCookies(credential.Cookies)
+
+	// Step 0: If this is a Fenbi detail page URL, extract the original short URL first
+	stepStart := time.Now()
+	currentURL := inputURL
+	if crawler.IsFenbiDetailURL(inputURL) {
+		s.logger.Info("ParseURL: Detected Fenbi detail page URL, extracting original URL",
+			zap.String("url", inputURL),
+		)
+
+		fenbiID := crawler.ExtractFenbiIDFromURL(inputURL)
+		if fenbiID == "" {
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "提取粉笔原文链接",
+				Status:   "error",
+				Message:  "无法从URL提取粉笔公告ID",
+				Duration: time.Since(stepStart).Milliseconds(),
+				Details:  fmt.Sprintf("输入URL: %s", inputURL),
+			})
+		} else {
+			// Crawl the Fenbi detail page to get the original URL
+			detail, crawlErr := spider.CrawlAnnouncementDetail(fenbiID)
+			if crawlErr != nil {
+				result.Steps = append(result.Steps, ParseStep{
+					Name:     "提取粉笔原文链接",
+					Status:   "error",
+					Message:  fmt.Sprintf("爬取粉笔详情页失败: %v", crawlErr),
+					Duration: time.Since(stepStart).Milliseconds(),
+					Details:  fmt.Sprintf("粉笔ID: %s\n输入URL: %s", fenbiID, inputURL),
+				})
+			} else if detail.OriginalURL == "" {
+				result.Steps = append(result.Steps, ParseStep{
+					Name:     "提取粉笔原文链接",
+					Status:   "error",
+					Message:  "粉笔详情页未找到原文链接",
+					Duration: time.Since(stepStart).Milliseconds(),
+					Details:  fmt.Sprintf("粉笔ID: %s\n标题: %s", fenbiID, detail.Title),
+				})
+			} else {
+				currentURL = detail.OriginalURL
+				result.Steps = append(result.Steps, ParseStep{
+					Name:     "提取粉笔原文链接",
+					Status:   "success",
+					Message:  fmt.Sprintf("成功提取原文链接: %s", detail.OriginalURL),
+					Duration: time.Since(stepStart).Milliseconds(),
+					Details:  fmt.Sprintf("粉笔ID: %s\n标题: %s\n原文短链接: %s", fenbiID, detail.Title, detail.OriginalURL),
+				})
+				s.logger.Info("ParseURL: Extracted original URL from Fenbi detail page",
+					zap.String("fenbi_id", fenbiID),
+					zap.String("original_url", detail.OriginalURL),
+				)
+			}
+		}
+	} else {
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "提取粉笔原文链接",
+			Status:   "skipped",
+			Message:  "非粉笔详情页链接，跳过提取",
+			Duration: time.Since(stepStart).Milliseconds(),
+		})
+	}
+
+	// Step 1: Resolve short URL if needed
+	stepStart = time.Now()
+	finalURL := currentURL
+	if crawler.IsShortURL(currentURL) {
+		s.logger.Info("ParseURL: Resolving short URL", zap.String("url", currentURL))
+		resolved, resolveErr := spider.ResolveShortURL(currentURL)
+		if resolveErr != nil {
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "解析短链接",
+				Status:   "error",
+				Message:  fmt.Sprintf("解析失败: %v", resolveErr),
+				Duration: time.Since(stepStart).Milliseconds(),
+			})
+		} else if resolved != "" {
+			finalURL = resolved
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "解析短链接",
+				Status:   "success",
+				Message:  "成功解析短链接",
+				Duration: time.Since(stepStart).Milliseconds(),
+				Details:  fmt.Sprintf("短链接: %s\n最终URL: %s", currentURL, finalURL),
+			})
+		}
+	} else {
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "解析短链接",
+			Status:   "skipped",
+			Message:  "非粉笔短链接，跳过解析",
+			Duration: time.Since(stepStart).Milliseconds(),
+		})
+	}
+	result.Data.FinalURL = finalURL
+
+	// Step 2: Fetch page content
+	stepStart = time.Now()
+	pageContent, fetchErr := spider.FetchPageContent(finalURL)
+	if fetchErr != nil {
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "获取页面内容",
+			Status:   "error",
+			Message:  fmt.Sprintf("获取失败: %v", fetchErr),
+			Duration: time.Since(stepStart).Milliseconds(),
+		})
+		result.Success = false
+		result.Error = fmt.Sprintf("获取页面内容失败: %v", fetchErr)
+		return result, nil
+	}
+
+	result.Steps = append(result.Steps, ParseStep{
+		Name:     "获取页面内容",
+		Status:   "success",
+		Message:  fmt.Sprintf("成功获取页面，标题: %s", pageContent.Title),
+		Duration: time.Since(stepStart).Milliseconds(),
+		Details:  fmt.Sprintf("内容长度: %d 字符\n发现附件: %d 个", len(pageContent.Text), len(pageContent.Attachments)),
+	})
+	result.Data.PageTitle = pageContent.Title
+
+	// Truncate content for response
+	contentPreview := pageContent.Text
+	if len(contentPreview) > 10000 {
+		contentPreview = contentPreview[:10000] + "\n\n...(内容已截断，共" + fmt.Sprintf("%d", len(pageContent.Text)) + "字符)"
+	}
+	result.Data.PageContent = contentPreview
+
+	// Step 3: Process attachments
+	if len(pageContent.Attachments) > 0 {
+		stepStart = time.Now()
+		attachmentResults := s.processAttachments(spider, pageContent.Attachments)
+		result.Data.Attachments = attachmentResults
+
+		successCount := 0
+		errorCount := 0
+		for _, att := range attachmentResults {
+			if att.Error == "" {
+				successCount++
+			} else {
+				errorCount++
+			}
+		}
+
+		stepStatus := "success"
+		if errorCount > 0 && successCount == 0 {
+			stepStatus = "error"
+		} else if errorCount > 0 {
+			stepStatus = "partial"
+		}
+
+		var detailsBuilder strings.Builder
+		for _, att := range attachmentResults {
+			if att.Error != "" {
+				detailsBuilder.WriteString(fmt.Sprintf("- %s (%s): 失败 - %s\n", att.Name, att.Type, att.Error))
+			} else {
+				contentLen := len(att.Content)
+				detailsBuilder.WriteString(fmt.Sprintf("- %s (%s): 成功，提取 %d 字符\n", att.Name, att.Type, contentLen))
+			}
+		}
+
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "下载解析附件",
+			Status:   stepStatus,
+			Message:  fmt.Sprintf("处理 %d 个附件，成功 %d 个，失败 %d 个", len(attachmentResults), successCount, errorCount),
+			Duration: time.Since(stepStart).Milliseconds(),
+			Details:  detailsBuilder.String(),
+		})
+	} else {
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "下载解析附件",
+			Status:   "skipped",
+			Message:  "页面无附件",
+			Duration: 0,
+		})
+	}
+
+	// Step 4: LLM Analysis
+	stepStart = time.Now()
+	llmResult := s.performLLMAnalysis(pageContent, result.Data.Attachments, llmConfigID)
+	result.Data.LLMAnalysis = llmResult
+
+	if llmResult.Error != "" {
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "LLM智能分析",
+			Status:   "error",
+			Message:  llmResult.Error,
+			Duration: time.Since(stepStart).Milliseconds(),
+		})
+	} else {
+		posCount := len(llmResult.Positions)
+		var llmDetails strings.Builder
+		llmDetails.WriteString(fmt.Sprintf("摘要: %s\n", llmResult.Summary))
+		if posCount > 0 {
+			llmDetails.WriteString(fmt.Sprintf("\n提取职位数: %d\n", posCount))
+			for i, pos := range llmResult.Positions {
+				if i >= 3 {
+					llmDetails.WriteString(fmt.Sprintf("...还有 %d 个职位\n", posCount-3))
+					break
+				}
+				llmDetails.WriteString(fmt.Sprintf("- %s (%s)\n", pos.PositionName, pos.DepartmentName))
+			}
+		}
+		if llmResult.ExamInfo != nil {
+			llmDetails.WriteString(fmt.Sprintf("\n考试类型: %s\n", llmResult.ExamInfo.ExamType))
+			if llmResult.ExamInfo.RegistrationEnd != "" {
+				llmDetails.WriteString(fmt.Sprintf("报名截止: %s\n", llmResult.ExamInfo.RegistrationEnd))
+			}
+		}
+
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "LLM智能分析",
+			Status:   "success",
+			Message:  fmt.Sprintf("分析完成，置信度: %d%%，提取职位: %d 个", llmResult.Confidence, posCount),
+			Duration: time.Since(stepStart).Milliseconds(),
+			Details:  llmDetails.String(),
+		})
+	}
+
+	result.Success = true
+	return result, nil
+}
+
+// processAttachments downloads and parses attachments
+func (s *FenbiService) processAttachments(spider *crawler.FenbiSpider, attachments []crawler.PageAttachment) []AttachmentResult {
+	results := make([]AttachmentResult, 0, len(attachments))
+
+	// Create temp directory for attachments
+	tempDir := filepath.Join("temp", "fenbi_attachments", time.Now().Format("20060102_150405"))
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		s.logger.Warn("Failed to create temp directory", zap.Error(err))
+	}
+
+	for i, att := range attachments {
+		// Limit to first 3 attachments for testing
+		if i >= 3 {
+			break
+		}
+
+		result := AttachmentResult{
+			Name: att.Name,
+			URL:  att.URL,
+			Type: att.Type,
+		}
+
+		// Generate local path
+		fileName := fmt.Sprintf("%d_%s", i+1, att.Name)
+		// Sanitize filename
+		fileName = strings.ReplaceAll(fileName, "/", "_")
+		fileName = strings.ReplaceAll(fileName, "\\", "_")
+		localPath := filepath.Join(tempDir, fileName)
+
+		s.logger.Info("Downloading attachment",
+			zap.String("name", att.Name),
+			zap.String("url", att.URL),
+			zap.String("type", att.Type),
+			zap.String("local_path", localPath),
+		)
+
+		// Download file
+		if err := spider.DownloadFile(att.URL, localPath); err != nil {
+			s.logger.Warn("Failed to download attachment",
+				zap.String("name", att.Name),
+				zap.Error(err),
+			)
+			result.Error = fmt.Sprintf("下载失败: %v", err)
+			results = append(results, result)
+			continue
+		}
+
+		result.LocalPath = localPath
+
+		// Parse content based on type
+		content, parseErr := s.parseAttachmentContent(localPath, att.Type)
+		if parseErr != nil {
+			s.logger.Warn("Failed to parse attachment",
+				zap.String("name", att.Name),
+				zap.Error(parseErr),
+			)
+			result.Error = fmt.Sprintf("解析失败: %v", parseErr)
+		} else {
+			// Store full content - no truncation for LLM analysis
+			result.Content = content
+			s.logger.Info("Parsed attachment content",
+				zap.String("name", att.Name),
+				zap.Int("content_length", len(content)),
+			)
+		}
+
+		results = append(results, result)
+	}
+
+	return results
+}
+
+// parseAttachmentContent parses attachment content based on file type
+func (s *FenbiService) parseAttachmentContent(filePath, fileType string) (string, error) {
+	switch fileType {
+	case "pdf":
+		pdfParser := parser.NewPDFParser(s.logger)
+		return pdfParser.ExtractText(filePath)
+	case "word":
+		wordParser := parser.NewWordParser(s.logger)
+		return wordParser.ExtractText(filePath)
+	case "excel":
+		excelParser := parser.NewExcelParser(s.logger)
+		return excelParser.ExtractText(filePath)
+	default:
+		return "", fmt.Errorf("unsupported file type: %s", fileType)
+	}
+}
+
+// performLLMAnalysis uses LLM to analyze page content and attachments
+// llmConfigID: optional LLM config ID to use (0 = use default)
+func (s *FenbiService) performLLMAnalysis(pageContent *crawler.PageContent, attachments []AttachmentResult, llmConfigID uint) *LLMAnalysisResult {
+	result := &LLMAnalysisResult{}
+
+	// Check if LLM service is available
+	if s.llmConfigService == nil {
+		result.Error = "LLM服务未配置"
+		return result
+	}
+
+	// Build prompt for LLM analysis
+	var promptBuilder strings.Builder
+	promptBuilder.WriteString(`你是一个专业的公务员/事业单位招聘公告分析助手。请仔细分析以下招聘公告内容，**特别注意从附件（如岗位表、职位表）中提取详细的职位信息**。
+
+## 分析任务
+1. 提取公告摘要（包含招录总人数、招录单位数量、报名时间等关键信息）
+2. **重点任务**：从附件的职位表/岗位表中提取每个具体职位的详细信息
+3. 提取考试相关时间信息
+
+`)
+	promptBuilder.WriteString("## 公告标题\n")
+	promptBuilder.WriteString(pageContent.Title)
+	promptBuilder.WriteString("\n\n## 公告正文\n")
+
+	// Include full content - Gemini supports 1M tokens
+	promptBuilder.WriteString(pageContent.Text)
+
+	// Add attachment content - NO truncation for attachments as they contain the position table
+	// Gemini 1.5 Pro supports 1M tokens, so we can include very large attachment content
+	hasAttachments := false
+	totalAttachmentChars := 0
+	const maxTotalAttachmentChars = 2000000 // 2M chars total for all attachments (~500k tokens)
+
+	for _, att := range attachments {
+		if att.Content != "" && att.Error == "" {
+			hasAttachments = true
+			promptBuilder.WriteString(fmt.Sprintf("\n\n## 附件: %s\n", att.Name))
+			promptBuilder.WriteString("**请从此附件中提取所有职位信息**\n")
+
+			attContent := att.Content
+			remainingChars := maxTotalAttachmentChars - totalAttachmentChars
+
+			// Only truncate if we're approaching the total limit
+			if len(attContent) > remainingChars && remainingChars > 0 {
+				attContent = attContent[:remainingChars] + fmt.Sprintf("...(附件内容已截断，原始长度: %d 字符)", len(att.Content))
+				s.logger.Warn("Attachment content truncated due to total limit",
+					zap.String("attachment", att.Name),
+					zap.Int("original_length", len(att.Content)),
+					zap.Int("truncated_to", remainingChars),
+				)
+			}
+
+			promptBuilder.WriteString(attContent)
+			totalAttachmentChars += len(attContent)
+
+			s.logger.Info("Added attachment content to LLM prompt",
+				zap.String("attachment", att.Name),
+				zap.Int("content_length", len(attContent)),
+				zap.Int("total_attachment_chars", totalAttachmentChars),
+			)
+		}
+	}
+
+	if hasAttachments {
+		promptBuilder.WriteString("\n\n**重要提示**：请务必从上述附件中提取所有职位信息，每个职位单独列出。\n")
+	}
+
+	promptBuilder.WriteString("\n\n请严格按照以下JSON格式返回分析结果（直接返回JSON，不要添加markdown代码块）：\n")
+	promptBuilder.WriteString(`{
+  "summary": "公告摘要，需包含：招录总人数、涉及单位数量、报名方式、考试方式等(150-300字)",
+  "positions": [
+    {
+      "position_name": "具体职位名称（必填）",
+      "department_name": "招录单位/部门名称",
+      "recruit_count": 招录人数(数字，必填),
+      "education": "学历要求（如：本科及以上、研究生等）",
+      "major": ["专业要求列表，多个专业用数组"],
+      "work_location": "工作地点"
+    }
+  ],
+  "exam_info": {
+    "exam_type": "考试类型（如：事业单位公开招聘、省考、选调等）",
+    "registration_start": "报名开始时间",
+    "registration_end": "报名截止时间",
+    "exam_date": "笔试/考试时间"
+  },
+  "confidence": 分析置信度(0-100的整数，如果能完整提取职位信息则为80以上)
+}
+
+注意事项：
+1. positions数组必须包含从附件职位表中提取的所有职位，不要遗漏
+2. 如果职位表内容很多，至少提取前30个职位
+3. recruit_count必须是数字类型
+4. 如果某个字段信息不明确，可以省略该字段，但position_name和recruit_count是必填项`)
+
+	s.logger.Info("Calling LLM for analysis",
+		zap.Int("prompt_length", promptBuilder.Len()),
+		zap.Uint("llm_config_id", llmConfigID),
+	)
+
+	// Call LLM with extended timeout (5 minutes) and large max_tokens (32k) for complete position extraction
+	// Use specified config ID or default if 0
+	response, err := s.llmConfigService.CallWithConfigID(llmConfigID, promptBuilder.String(), 300, 32768)
+	if err != nil {
+		s.logger.Warn("LLM analysis failed", zap.Error(err), zap.Uint("llm_config_id", llmConfigID))
+		result.Error = fmt.Sprintf("LLM调用失败: %v", err)
+		return result
+	}
+
+	result.RawResponse = response
+
+	// Parse LLM response as JSON
+	s.parseLLMAnalysisResponse(response, result)
+
+	s.logger.Info("LLM analysis completed",
+		zap.Int("response_length", len(response)),
+		zap.String("summary", result.Summary),
+		zap.Int("positions_count", len(result.Positions)),
+	)
+
+	return result
+}
+
+// LLMAnalysisJSON is the expected JSON structure from LLM
+type LLMAnalysisJSON struct {
+	Summary   string `json:"summary"`
+	Positions []struct {
+		PositionName   string   `json:"position_name"`
+		DepartmentName string   `json:"department_name"`
+		RecruitCount   int      `json:"recruit_count"`
+		Education      string   `json:"education"`
+		Major          []string `json:"major"`
+		WorkLocation   string   `json:"work_location"`
+	} `json:"positions"`
+	ExamInfo struct {
+		ExamType          string `json:"exam_type"`
+		RegistrationStart string `json:"registration_start"`
+		RegistrationEnd   string `json:"registration_end"`
+		ExamDate          string `json:"exam_date"`
+	} `json:"exam_info"`
+	Confidence int `json:"confidence"`
+}
+
+// parseLLMAnalysisResponse parses the LLM response JSON into result struct
+func (s *FenbiService) parseLLMAnalysisResponse(response string, result *LLMAnalysisResult) {
+	// Try to extract JSON from response (LLM might include markdown code blocks)
+	jsonStr := s.extractJSONFromResponse(response)
+
+	var parsed LLMAnalysisJSON
+	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
+		s.logger.Warn("Failed to parse LLM response as JSON, using fallback",
+			zap.Error(err),
+			zap.String("json_str", jsonStr[:min(500, len(jsonStr))]),
+		)
+		// Fallback: try to extract summary manually
+		result.Summary = s.extractSummaryManually(response)
+		result.Confidence = 50
+		return
+	}
+
+	// Map parsed data to result
+	result.Summary = parsed.Summary
+	result.Confidence = parsed.Confidence
+	if result.Confidence == 0 {
+		result.Confidence = 70 // Default
+	}
+
+	// Map positions
+	for _, pos := range parsed.Positions {
+		result.Positions = append(result.Positions, ExtractedPositionInfo{
+			PositionName:   pos.PositionName,
+			DepartmentName: pos.DepartmentName,
+			RecruitCount:   pos.RecruitCount,
+			Education:      pos.Education,
+			Major:          pos.Major,
+			WorkLocation:   pos.WorkLocation,
+		})
+	}
+
+	// Map exam info
+	if parsed.ExamInfo.ExamType != "" || parsed.ExamInfo.RegistrationStart != "" {
+		result.ExamInfo = &ExtractedExamInfo{
+			ExamType:          parsed.ExamInfo.ExamType,
+			RegistrationStart: parsed.ExamInfo.RegistrationStart,
+			RegistrationEnd:   parsed.ExamInfo.RegistrationEnd,
+			ExamDate:          parsed.ExamInfo.ExamDate,
+		}
+	}
+}
+
+// extractJSONFromResponse extracts JSON content from LLM response
+// which might be wrapped in markdown code blocks
+func (s *FenbiService) extractJSONFromResponse(response string) string {
+	// Remove markdown code blocks if present
+	response = strings.TrimSpace(response)
+
+	// Check for ```json ... ``` pattern
+	if strings.HasPrefix(response, "```json") {
+		response = strings.TrimPrefix(response, "```json")
+		if idx := strings.LastIndex(response, "```"); idx != -1 {
+			response = response[:idx]
+		}
+	} else if strings.HasPrefix(response, "```") {
+		response = strings.TrimPrefix(response, "```")
+		if idx := strings.LastIndex(response, "```"); idx != -1 {
+			response = response[:idx]
+		}
+	}
+
+	response = strings.TrimSpace(response)
+
+	// Try to find JSON object boundaries
+	startIdx := strings.Index(response, "{")
+	endIdx := strings.LastIndex(response, "}")
+
+	if startIdx != -1 && endIdx != -1 && endIdx > startIdx {
+		return response[startIdx : endIdx+1]
+	}
+
+	return response
+}
+
+// extractSummaryManually extracts summary when JSON parsing fails
+func (s *FenbiService) extractSummaryManually(response string) string {
+	// Try to find "summary" field in the response
+	if idx := strings.Index(response, `"summary"`); idx != -1 {
+		start := strings.Index(response[idx:], `:`)
+		if start != -1 {
+			start += idx + 1
+			// Skip whitespace and opening quote
+			for start < len(response) && (response[start] == ' ' || response[start] == '\n' || response[start] == '\t') {
+				start++
+			}
+			if start < len(response) && response[start] == '"' {
+				start++
+				// Find closing quote
+				end := start
+				for end < len(response) {
+					if response[end] == '"' && (end == 0 || response[end-1] != '\\') {
+						break
+					}
+					end++
+				}
+				if end > start {
+					summary := response[start:end]
+					summary = strings.ReplaceAll(summary, `\"`, `"`)
+					summary = strings.ReplaceAll(summary, `\n`, "\n")
+					return summary
+				}
+			}
+		}
+	}
+
+	// Fallback: return first 500 chars
+	if len(response) > 500 {
+		return response[:500] + "..."
+	}
+	return response
 }
 
 // === Helper Functions ===

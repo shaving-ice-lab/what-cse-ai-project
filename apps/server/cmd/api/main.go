@@ -98,6 +98,9 @@ func main() {
 	wechatRSSSourceRepo := repository.NewWechatRSSSourceRepository(db)
 	wechatRSSArticleRepo := repository.NewWechatRSSArticleRepository(db)
 
+	// WeChat MP Auth repository
+	wechatMPAuthRepo := repository.NewWechatMPAuthRepository(db)
+
 	// ============================================
 	// Initialize Services
 	// ============================================
@@ -110,14 +113,19 @@ func main() {
 	adminService := service.NewAdminService(adminRepo, userRepo, positionRepo, &cfg.JWT)
 	crawlerService := service.NewCrawlerServiceSimple(listPageRepo)
 
-	// Fenbi service
-	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, nil, log.Logger)
-
-	// LLM config service
+	// LLM config service (initialized first as it's needed by FenbiService)
 	llmConfigService := service.NewLLMConfigService(llmConfigRepo, log.Logger)
+
+	// Fenbi service
+	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, nil, llmConfigService, log.Logger)
+
+	// WeChat MP Auth service
+	wechatMPAuthService := service.NewWechatMPAuthService(wechatMPAuthRepo, log.Logger)
 
 	// WeChat RSS service
 	wechatRSSService := service.NewWechatRSSService(wechatRSSSourceRepo, wechatRSSArticleRepo, log.Logger)
+	// Inject MP auth service for wechat_api source type support
+	wechatRSSService.SetMPAuthService(wechatMPAuthService)
 
 	// Initialize SearchService (optional - requires Elasticsearch)
 	var searchService *service.SearchService
@@ -142,6 +150,7 @@ func main() {
 	fenbiHandler := handler.NewFenbiHandler(fenbiService)
 	llmConfigHandler := handler.NewLLMConfigHandler(llmConfigService)
 	wechatRSSHandler := handler.NewWechatRSSHandler(wechatRSSService)
+	wechatMPAuthHandler := handler.NewWechatMPAuthHandler(wechatMPAuthService, wechatRSSService)
 
 	// Initialize SearchHandler (only if Elasticsearch is available)
 	var searchHandler *handler.SearchHandler
@@ -225,8 +234,17 @@ func main() {
 
 	// WeChat RSS routes (admin only)
 	wechatRSSHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
-	// WeChat RSS public routes (RSS feed output)
-	wechatRSSHandler.RegisterPublicRoutes(e)
+
+	// WeChat MP Auth routes (admin only)
+	wechatMPGroup := adminGroup.Group("/wechat-mp")
+	wechatMPGroup.Use(adminAuthMiddleware.JWT())
+	wechatMPGroup.GET("/auth", wechatMPAuthHandler.GetAuthStatus)
+	wechatMPGroup.GET("/qrcode", wechatMPAuthHandler.GetQRCode)
+	wechatMPGroup.GET("/status", wechatMPAuthHandler.CheckLoginStatus)
+	wechatMPGroup.POST("/logout", wechatMPAuthHandler.Logout)
+	wechatMPGroup.GET("/search", wechatMPAuthHandler.SearchAccount)
+	wechatMPGroup.POST("/create-source", wechatMPAuthHandler.CreateSourceViaAPI)
+	wechatMPGroup.GET("/articles", wechatMPAuthHandler.GetArticles)
 
 	// Search routes (public, only if Elasticsearch is available)
 	if searchHandler != nil {

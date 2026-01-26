@@ -452,7 +452,7 @@ export const fenbiApi = {
     }>("/admin/fenbi/stats");
   },
 
-  // Test crawl with cookie
+  // Test crawl with cookie (longer timeout for downloading files and LLM analysis)
   testCrawl: () => {
     return request.post<{
       success: boolean;
@@ -464,9 +464,84 @@ export const fenbiApi = {
         original_url?: string;
         raw_data?: Record<string, unknown>;
       };
-    }>("/admin/fenbi/test-crawl");
+    }>("/admin/fenbi/test-crawl", {}, { timeout: 500000 });
+  },
+
+  // Parse specific URL (longer timeout for downloading files and LLM analysis)
+  // Uses dedicated Next.js API route to avoid proxy timeout issues
+  // llmConfigId: optional LLM config ID to use (0 or undefined = use default)
+  parseUrl: async (url: string, llmConfigId?: number) => {
+    const { adminToken } = await import("@/stores/authStore").then(m => m.useAuthStore.getState());
+    const response = await fetch("/api/fenbi/parse-url", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {}),
+      },
+      body: JSON.stringify({ url, llm_config_id: llmConfigId || 0 }),
+    });
+    const data = await response.json();
+    if (data.code !== 0) {
+      throw new Error(data.message || "请求失败");
+    }
+    return data.data as ParseURLResult;
   },
 };
+
+// ParseURL Types
+export interface ParseStep {
+  name: string;
+  status: "success" | "error" | "skipped" | "partial";
+  message: string;
+  duration_ms: number;
+  details?: string;
+}
+
+export interface AttachmentResultAPI {
+  name: string;
+  url: string;
+  type: string;
+  local_path?: string;
+  content?: string;
+  error?: string;
+}
+
+export interface LLMAnalysisResultAPI {
+  summary?: string;
+  positions?: Array<{
+    position_name?: string;
+    department_name?: string;
+    recruit_count?: number;
+    education?: string;
+    major?: string[];
+    work_location?: string;
+  }>;
+  exam_info?: {
+    exam_type?: string;
+    registration_start?: string;
+    registration_end?: string;
+    exam_date?: string;
+  };
+  confidence?: number;
+  raw_response?: string;
+  error?: string;
+}
+
+export interface ParseURLData {
+  input_url: string;
+  final_url?: string;
+  page_title?: string;
+  page_content?: string;
+  attachments?: AttachmentResultAPI[];
+  llm_analysis?: LLMAnalysisResultAPI;
+}
+
+export interface ParseURLResult {
+  success: boolean;
+  steps: ParseStep[];
+  data?: ParseURLData;
+  error?: string;
+}
 
 // LLM Config Types
 export interface LLMConfig {
@@ -608,10 +683,9 @@ export const llmConfigApi = {
 };
 
 // ============================================
-// WeChat RSS Types
+// WeChat Subscription Types
 // ============================================
 
-export type WechatRSSSourceType = 'rsshub' | 'werss' | 'feeddd' | 'custom';
 export type WechatRSSSourceStatus = 'active' | 'paused' | 'error';
 export type WechatRSSReadStatus = 'unread' | 'read' | 'starred';
 
@@ -619,9 +693,7 @@ export interface WechatRSSSource {
   id: number;
   name: string;
   wechat_id?: string;
-  rss_url: string;
-  source_type: WechatRSSSourceType;
-  source_type_text: string;
+  fake_id?: string;
   crawl_frequency: number;
   last_crawl_at?: string;
   next_crawl_at?: string;
@@ -665,20 +737,9 @@ export interface WechatRSSStats {
   today_articles: number;
 }
 
-export interface CreateWechatRSSSourceRequest {
-  name: string;
-  wechat_id?: string;
-  rss_url: string;
-  source_type?: WechatRSSSourceType;
-  crawl_frequency?: number;
-  description?: string;
-}
-
 export interface UpdateWechatRSSSourceRequest {
   name?: string;
   wechat_id?: string;
-  rss_url?: string;
-  source_type?: WechatRSSSourceType;
   crawl_frequency?: number;
   status?: WechatRSSSourceStatus;
   description?: string;
@@ -700,7 +761,7 @@ export interface CrawlSourceResult {
   next_crawl_at: string;
 }
 
-// WeChat RSS APIs
+// WeChat Subscription APIs
 export const wechatRssApi = {
   // Source management
   getSources: (status?: WechatRSSSourceStatus) => {
@@ -712,13 +773,6 @@ export const wechatRssApi = {
 
   getSource: (id: number) => {
     return request.get<WechatRSSSource>(`/admin/wechat-rss/sources/${id}`);
-  },
-
-  createSource: (data: CreateWechatRSSSourceRequest) => {
-    return request.post<{
-      message: string;
-      source: WechatRSSSource;
-    }>("/admin/wechat-rss/sources", data);
   },
 
   updateSource: (id: number, data: UpdateWechatRSSSourceRequest) => {
@@ -783,35 +837,100 @@ export const wechatRssApi = {
   getStats: () => {
     return request.get<WechatRSSStats>("/admin/wechat-rss/stats");
   },
+};
 
-  // Validation
-  validateRSSURL: (url: string) => {
-    return request.get<{
-      valid: boolean;
-      title?: string;
-      description?: string;
-      item_count?: number;
-    }>("/admin/wechat-rss/validate", { params: { url } });
+// WeChat MP Auth Types
+export type WechatMPAuthStatus = "active" | "expiring" | "expired" | "invalid";
+
+export interface WechatMPAuthResponse {
+  id: number;
+  account_name: string;
+  account_id: string;
+  status: WechatMPAuthStatus;
+  status_text: string;
+  expires_at?: string;
+  expires_in: number;
+  last_used_at?: string;
+  created_at: string;
+  message: string;
+}
+
+export interface WechatMPQRCodeResponse {
+  qrcode_url: string;
+  uuid: string;
+  expires_in: number;
+}
+
+export interface WechatMPLoginStatusResponse {
+  status: "waiting" | "scanned" | "confirmed" | "expired" | "cancelled" | "error";
+  message: string;
+}
+
+export interface WechatMPAccountInfo {
+  fake_id: string;
+  nickname: string;
+  alias: string;
+  round_head_img: string;
+  service_type: number;
+}
+
+export interface WechatMPArticle {
+  aid: string;
+  title: string;
+  digest: string;
+  link: string;
+  cover: string;
+  create_time: number;
+  update_time: number;
+}
+
+// WeChat MP Auth APIs
+export const wechatMpAuthApi = {
+  // Get current auth status
+  getAuthStatus: () => {
+    return request.get<WechatMPAuthResponse>("/admin/wechat-mp/auth");
   },
 
-  // Parse article URL
-  parseArticleURL: (url: string) => {
-    return request.get<{
-      biz: string;
-      title?: string;
-      author?: string;
-      article_url: string;
-      rss_urls: string[];
-      extraction_method?: string;
-    }>("/admin/wechat-rss/parse-article", { params: { url } });
+  // Get QR code for login
+  getQRCode: () => {
+    return request.get<WechatMPQRCodeResponse>("/admin/wechat-mp/qrcode");
   },
 
-  // Create source from article URL
-  createFromArticle: (articleUrl: string) => {
-    return request.post<{
-      message: string;
-      source: WechatRSSSource;
-    }>("/admin/wechat-rss/create-from-article", { article_url: articleUrl });
+  // Check login status (polling)
+  checkLoginStatus: (uuid: string) => {
+    return request.get<WechatMPLoginStatusResponse>("/admin/wechat-mp/status", {
+      params: { uuid },
+    });
+  },
+
+  // Logout
+  logout: () => {
+    return request.post<{ message: string }>("/admin/wechat-mp/logout");
+  },
+
+  // Search public accounts
+  searchAccount: (keyword: string) => {
+    return request.get<{
+      accounts: WechatMPAccountInfo[];
+      total: number;
+    }>("/admin/wechat-mp/search", { params: { keyword } });
+  },
+
+  // Create source via WeChat API
+  createSourceViaAPI: (articleUrl: string) => {
+    return request.post<WechatRSSSource>("/admin/wechat-mp/create-source", {
+      article_url: articleUrl,
+    });
+  },
+
+  // Get articles from a public account
+  getArticles: (fakeid: string, begin?: number, count?: number) => {
+    return request.get<{
+      app_msg_cnt: number;
+      articles: WechatMPArticle[];
+    }>("/admin/wechat-mp/articles", {
+      params: { fakeid, begin: begin || 0, count: count || 5 },
+    });
   },
 };
 

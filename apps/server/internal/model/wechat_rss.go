@@ -10,19 +10,16 @@ import (
 type WechatRSSSourceType string
 
 const (
-	WechatRSSSourceTypeRSSHub  WechatRSSSourceType = "rsshub"
-	WechatRSSSourceTypeWeRSS   WechatRSSSourceType = "werss"
-	WechatRSSSourceTypeFeeddd  WechatRSSSourceType = "feeddd"
-	WechatRSSSourceTypeCustom  WechatRSSSourceType = "custom"
+	WechatRSSSourceTypeWechatAPI WechatRSSSourceType = "wechat_api" // 微信公众平台API
 )
 
 // WechatRSSSourceStatus represents the source status constants
 type WechatRSSSourceStatus string
 
 const (
-	WechatRSSSourceStatusActive  WechatRSSSourceStatus = "active"
-	WechatRSSSourceStatusPaused  WechatRSSSourceStatus = "paused"
-	WechatRSSSourceStatusError   WechatRSSSourceStatus = "error"
+	WechatRSSSourceStatusActive WechatRSSSourceStatus = "active"
+	WechatRSSSourceStatusPaused WechatRSSSourceStatus = "paused"
+	WechatRSSSourceStatusError  WechatRSSSourceStatus = "error"
 )
 
 // WechatRSSReadStatus represents the article read status constants
@@ -34,13 +31,14 @@ const (
 	WechatRSSReadStatusStarred WechatRSSReadStatus = "starred"
 )
 
-// WechatRSSSource represents a WeChat RSS subscription source
+// WechatRSSSource represents a WeChat subscription source
 type WechatRSSSource struct {
 	ID             uint                  `gorm:"primaryKey" json:"id"`
 	Name           string                `gorm:"type:varchar(255);not null" json:"name"`
-	WechatID       string                `gorm:"type:varchar(100);index:idx_wechat_rss_sources_wechat_id" json:"wechat_id,omitempty"`
-	RSSURL         string                `gorm:"type:varchar(500);not null;uniqueIndex:uk_wechat_rss_url" json:"rss_url"`
-	SourceType     WechatRSSSourceType   `gorm:"type:varchar(20);default:'custom';index:idx_wechat_rss_sources_type" json:"source_type"`
+	WechatID       string                `gorm:"type:varchar(100);index:idx_wechat_rss_sources_wechat_id" json:"wechat_id,omitempty"` // biz参数
+	FakeID         string                `gorm:"type:varchar(100);uniqueIndex:uk_wechat_rss_fake_id" json:"fake_id,omitempty"`        // 微信公众号fakeid
+	RSSURL         string                `gorm:"type:varchar(500)" json:"rss_url,omitempty"`                                          // 保留字段兼容性，不再使用
+	SourceType     WechatRSSSourceType   `gorm:"type:varchar(20);default:'wechat_api';index:idx_wechat_rss_sources_type" json:"source_type"`
 	CrawlFrequency int                   `gorm:"default:60" json:"crawl_frequency"` // 抓取频率（分钟）
 	LastCrawlAt    *time.Time            `gorm:"type:datetime" json:"last_crawl_at,omitempty"`
 	NextCrawlAt    *time.Time            `gorm:"type:datetime;index:idx_wechat_rss_sources_next_crawl" json:"next_crawl_at,omitempty"`
@@ -59,7 +57,7 @@ func (WechatRSSSource) TableName() string {
 	return "what_wechat_rss_sources"
 }
 
-// WechatRSSArticle represents a WeChat RSS article
+// WechatRSSArticle represents a WeChat article
 type WechatRSSArticle struct {
 	ID          uint                `gorm:"primaryKey" json:"id"`
 	SourceID    uint                `gorm:"not null;index:idx_wechat_rss_articles_source" json:"source_id"`
@@ -85,33 +83,21 @@ func (WechatRSSArticle) TableName() string {
 
 // Request/Response DTOs
 
-// CreateWechatRSSSourceRequest is the request for creating a new RSS source
-type CreateWechatRSSSourceRequest struct {
-	Name           string              `json:"name" validate:"required,max=255"`
-	WechatID       string              `json:"wechat_id,omitempty" validate:"max=100"`
-	RSSURL         string              `json:"rss_url" validate:"required,url,max=500"`
-	SourceType     WechatRSSSourceType `json:"source_type,omitempty"`
-	CrawlFrequency int                 `json:"crawl_frequency,omitempty" validate:"min=5,max=1440"`
-	Description    string              `json:"description,omitempty"`
-}
-
-// UpdateWechatRSSSourceRequest is the request for updating an RSS source
+// UpdateWechatRSSSourceRequest is the request for updating a source
 type UpdateWechatRSSSourceRequest struct {
 	Name           *string                `json:"name,omitempty" validate:"omitempty,max=255"`
 	WechatID       *string                `json:"wechat_id,omitempty" validate:"omitempty,max=100"`
-	RSSURL         *string                `json:"rss_url,omitempty" validate:"omitempty,url,max=500"`
-	SourceType     *WechatRSSSourceType   `json:"source_type,omitempty"`
 	CrawlFrequency *int                   `json:"crawl_frequency,omitempty" validate:"omitempty,min=5,max=1440"`
 	Status         *WechatRSSSourceStatus `json:"status,omitempty"`
 	Description    *string                `json:"description,omitempty"`
 }
 
-// WechatRSSSourceResponse is the response for RSS source API
+// WechatRSSSourceResponse is the response for source API
 type WechatRSSSourceResponse struct {
 	ID             uint                  `json:"id"`
 	Name           string                `json:"name"`
 	WechatID       string                `json:"wechat_id,omitempty"`
-	RSSURL         string                `json:"rss_url"`
+	FakeID         string                `json:"fake_id,omitempty"`
 	SourceType     WechatRSSSourceType   `json:"source_type"`
 	SourceTypeText string                `json:"source_type_text"`
 	CrawlFrequency int                   `json:"crawl_frequency"`
@@ -130,15 +116,7 @@ type WechatRSSSourceResponse struct {
 
 // ToResponse converts WechatRSSSource to WechatRSSSourceResponse
 func (s *WechatRSSSource) ToResponse() *WechatRSSSourceResponse {
-	sourceTypeText := "自定义"
-	switch s.SourceType {
-	case WechatRSSSourceTypeRSSHub:
-		sourceTypeText = "RSSHub"
-	case WechatRSSSourceTypeWeRSS:
-		sourceTypeText = "WeRSS"
-	case WechatRSSSourceTypeFeeddd:
-		sourceTypeText = "Feeddd"
-	}
+	sourceTypeText := "微信API"
 
 	statusText := "未知"
 	switch s.Status {
@@ -154,7 +132,7 @@ func (s *WechatRSSSource) ToResponse() *WechatRSSSourceResponse {
 		ID:             s.ID,
 		Name:           s.Name,
 		WechatID:       s.WechatID,
-		RSSURL:         s.RSSURL,
+		FakeID:         s.FakeID,
 		SourceType:     s.SourceType,
 		SourceTypeText: sourceTypeText,
 		CrawlFrequency: s.CrawlFrequency,
@@ -171,7 +149,7 @@ func (s *WechatRSSSource) ToResponse() *WechatRSSSourceResponse {
 	}
 }
 
-// WechatRSSArticleResponse is the response for RSS article API
+// WechatRSSArticleResponse is the response for article API
 type WechatRSSArticleResponse struct {
 	ID             uint                `json:"id"`
 	SourceID       uint                `json:"source_id"`
@@ -224,16 +202,16 @@ func (a *WechatRSSArticle) ToResponse() *WechatRSSArticleResponse {
 	}
 }
 
-// WechatRSSStats represents statistics for WeChat RSS
+// WechatRSSStats represents statistics
 type WechatRSSStats struct {
-	TotalSources   int64 `json:"total_sources"`
-	ActiveSources  int64 `json:"active_sources"`
-	PausedSources  int64 `json:"paused_sources"`
-	ErrorSources   int64 `json:"error_sources"`
-	TotalArticles  int64 `json:"total_articles"`
-	UnreadArticles int64 `json:"unread_articles"`
+	TotalSources    int64 `json:"total_sources"`
+	ActiveSources   int64 `json:"active_sources"`
+	PausedSources   int64 `json:"paused_sources"`
+	ErrorSources    int64 `json:"error_sources"`
+	TotalArticles   int64 `json:"total_articles"`
+	UnreadArticles  int64 `json:"unread_articles"`
 	StarredArticles int64 `json:"starred_articles"`
-	TodayArticles  int64 `json:"today_articles"`
+	TodayArticles   int64 `json:"today_articles"`
 }
 
 // WechatRSSArticleListParams represents the parameters for listing articles

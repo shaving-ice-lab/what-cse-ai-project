@@ -29,6 +29,7 @@ import {
   Timer,
   Activity,
 } from "lucide-react";
+import { ParseUrlDialog } from "./components/ParseUrlDialog";
 import {
   Card,
   CardContent,
@@ -107,6 +108,39 @@ export default function FenbiCrawlerPage() {
       fenbi_url?: string;
       original_url?: string;
       final_url?: string;
+      page_content?: {
+        title?: string;
+        content?: string;
+        html?: string;
+      };
+      attachments?: Array<{
+        name: string;
+        url: string;
+        type: string;
+        local_path?: string;
+        content?: string;
+        error?: string;
+      }>;
+      llm_analysis?: {
+        summary?: string;
+        positions?: Array<{
+          position_name?: string;
+          department_name?: string;
+          recruit_count?: number;
+          education?: string;
+          major?: string[];
+          work_location?: string;
+        }>;
+        exam_info?: {
+          exam_type?: string;
+          registration_start?: string;
+          registration_end?: string;
+          exam_date?: string;
+        };
+        confidence?: number;
+        raw_response?: string;
+        error?: string;
+      };
       raw_data?: Record<string, unknown>;
     };
   } | null>(null);
@@ -118,6 +152,9 @@ export default function FenbiCrawlerPage() {
   const [crawling, setCrawling] = useState(false);
   const [crawlProgress, setCrawlProgress] = useState<FenbiCrawlProgress | null>(null);
   const [testing, setTesting] = useState(false);
+
+  // URL Parse dialog states
+  const [parseDialogOpen, setParseDialogOpen] = useState(false);
 
   // Filter states
   const [filterRegion, setFilterRegion] = useState("");
@@ -437,18 +474,7 @@ export default function FenbiCrawlerPage() {
     setTestDialogOpen(true);
     try {
       const res = await fenbiApi.testCrawl();
-      setTestResult(res as {
-        success: boolean;
-        message: string;
-        test_result?: {
-          announcement_id?: number;
-          title?: string;
-          fenbi_url?: string;
-          original_url?: string;
-          final_url?: string;
-          raw_data?: Record<string, unknown>;
-        };
-      });
+      setTestResult(res as typeof testResult);
     } catch (error: any) {
       setTestResult({
         success: false,
@@ -616,6 +642,17 @@ export default function FenbiCrawlerPage() {
             ) : (
               <FlaskConical className="h-3.5 w-3.5" />
             )}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setParseDialogOpen(true)}
+            disabled={!loginStatus?.is_logged_in}
+            className="h-8"
+            title="解析URL"
+          >
+            <Link className="h-3.5 w-3.5" />
           </Button>
 
           <Button
@@ -1338,18 +1375,174 @@ export default function FenbiCrawlerPage() {
                         )}
                       </div>
 
-                      {/* 原始数据 */}
-                      {testResult.test_result.raw_data && (
-                        <div className="space-y-2">
+                      {/* 页面内容 */}
+                      {testResult.test_result.page_content && (
+                        <div className="space-y-2 pt-3 border-t">
                           <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Database className="h-3 w-3" />
-                            原始响应数据
+                            <FileText className="h-3 w-3" />
+                            原文页面内容
                           </Label>
-                          <div className="p-3 bg-muted rounded-lg overflow-auto max-h-[300px]">
-                            <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-                              {JSON.stringify(testResult.test_result.raw_data, null, 2)}
-                            </pre>
+                          <div className="p-3 bg-muted rounded-lg space-y-2">
+                            <p className="text-sm font-medium">{testResult.test_result.page_content.title || "无标题"}</p>
+                            <div className="text-xs text-muted-foreground max-h-[200px] overflow-y-auto whitespace-pre-wrap">
+                              {testResult.test_result.page_content.content?.substring(0, 2000) || "无内容"}
+                              {(testResult.test_result.page_content.content?.length || 0) > 2000 && "..."}
+                            </div>
                           </div>
+                        </div>
+                      )}
+
+                      {/* 附件列表 */}
+                      {testResult.test_result.attachments && testResult.test_result.attachments.length > 0 && (
+                        <div className="space-y-2 pt-3 border-t">
+                          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            附件 ({testResult.test_result.attachments.length})
+                          </Label>
+                          <div className="space-y-3">
+                            {testResult.test_result.attachments.map((att, idx) => (
+                              <div key={idx} className="p-3 bg-muted rounded-lg space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">{att.type.toUpperCase()}</Badge>
+                                    <span className="text-sm font-medium">{att.name}</span>
+                                  </div>
+                                  {att.url && (
+                                    <a
+                                      href={att.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                                    >
+                                      下载
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                </div>
+                                {att.error && (
+                                  <p className="text-xs text-red-500">{att.error}</p>
+                                )}
+                                {att.content && !att.error && (
+                                  <div className="text-xs text-muted-foreground max-h-[150px] overflow-y-auto whitespace-pre-wrap bg-background p-2 rounded">
+                                    {att.content.substring(0, 1500)}
+                                    {att.content.length > 1500 && "..."}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* LLM 分析结果 */}
+                      {testResult.test_result.llm_analysis && (
+                        <div className="space-y-2 pt-3 border-t">
+                          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            LLM 智能分析
+                          </Label>
+                          {testResult.test_result.llm_analysis.error ? (
+                            <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
+                              {testResult.test_result.llm_analysis.error}
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {/* 摘要 */}
+                              {testResult.test_result.llm_analysis.summary && (
+                                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                                  <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">摘要</p>
+                                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                                    {testResult.test_result.llm_analysis.summary}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* 考试信息 */}
+                              {testResult.test_result.llm_analysis.exam_info && (
+                                <div className="p-3 bg-muted rounded-lg">
+                                  <p className="text-xs font-medium mb-2">考试信息</p>
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {testResult.test_result.llm_analysis.exam_info.exam_type && (
+                                      <div>
+                                        <span className="text-muted-foreground">考试类型：</span>
+                                        {testResult.test_result.llm_analysis.exam_info.exam_type}
+                                      </div>
+                                    )}
+                                    {testResult.test_result.llm_analysis.exam_info.registration_start && (
+                                      <div>
+                                        <span className="text-muted-foreground">报名开始：</span>
+                                        {testResult.test_result.llm_analysis.exam_info.registration_start}
+                                      </div>
+                                    )}
+                                    {testResult.test_result.llm_analysis.exam_info.registration_end && (
+                                      <div>
+                                        <span className="text-muted-foreground">报名截止：</span>
+                                        {testResult.test_result.llm_analysis.exam_info.registration_end}
+                                      </div>
+                                    )}
+                                    {testResult.test_result.llm_analysis.exam_info.exam_date && (
+                                      <div>
+                                        <span className="text-muted-foreground">考试时间：</span>
+                                        {testResult.test_result.llm_analysis.exam_info.exam_date}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 职位信息 */}
+                              {testResult.test_result.llm_analysis.positions && testResult.test_result.llm_analysis.positions.length > 0 && (
+                                <div className="p-3 bg-muted rounded-lg">
+                                  <p className="text-xs font-medium mb-2">提取的职位 ({testResult.test_result.llm_analysis.positions.length}个)</p>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                                    {testResult.test_result.llm_analysis.positions.slice(0, 5).map((pos, idx) => (
+                                      <div key={idx} className="text-xs p-2 bg-background rounded">
+                                        <div className="font-medium">{pos.position_name || "未知职位"}</div>
+                                        <div className="text-muted-foreground mt-1 grid grid-cols-2 gap-1">
+                                          {pos.department_name && <span>单位：{pos.department_name}</span>}
+                                          {pos.recruit_count && <span>招录：{pos.recruit_count}人</span>}
+                                          {pos.education && <span>学历：{pos.education}</span>}
+                                          {pos.work_location && <span>地点：{pos.work_location}</span>}
+                                        </div>
+                                        {pos.major && pos.major.length > 0 && (
+                                          <div className="text-muted-foreground mt-1">
+                                            专业：{pos.major.join("、")}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {testResult.test_result.llm_analysis.positions.length > 5 && (
+                                      <p className="text-xs text-muted-foreground text-center">
+                                        还有 {testResult.test_result.llm_analysis.positions.length - 5} 个职位...
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 置信度 */}
+                              {testResult.test_result.llm_analysis.confidence !== undefined && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>分析置信度：</span>
+                                  <Badge variant={testResult.test_result.llm_analysis.confidence >= 80 ? "default" : "secondary"}>
+                                    {testResult.test_result.llm_analysis.confidence}%
+                                  </Badge>
+                                </div>
+                              )}
+
+                              {/* 原始响应（可展开） */}
+                              {testResult.test_result.llm_analysis.raw_response && (
+                                <details className="text-xs">
+                                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                                    查看 LLM 原始响应
+                                  </summary>
+                                  <div className="mt-2 p-2 bg-muted rounded max-h-[200px] overflow-auto whitespace-pre-wrap font-mono text-[10px]">
+                                    {testResult.test_result.llm_analysis.raw_response}
+                                  </div>
+                                </details>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1376,6 +1569,9 @@ export default function FenbiCrawlerPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Parse URL Dialog */}
+      <ParseUrlDialog open={parseDialogOpen} onOpenChange={setParseDialogOpen} />
 
       {/* Announcement Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
