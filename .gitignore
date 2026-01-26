@@ -39,3 +39,6 @@ lerna-debug.log*
 # Typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Server temp files
+apps/server/temp
