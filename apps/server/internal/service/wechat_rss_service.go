@@ -491,3 +491,57 @@ func (s *WechatRSSService) CreateSourceViaWechatAPI(articleURL string) (*model.W
 
 	return source.ToResponse(), nil
 }
+
+// CreateSourceViaAccountInfo creates a source using account info from search results
+// This allows subscribing directly from search results without needing an article URL
+func (s *WechatRSSService) CreateSourceViaAccountInfo(fakeID, nickname, alias, headImg string) (*model.WechatRSSSourceResponse, error) {
+	s.logger.Info("=== 通过账号信息创建订阅 ===",
+		zap.String("fakeid", fakeID),
+		zap.String("nickname", nickname),
+	)
+
+	if fakeID == "" {
+		return nil, fmt.Errorf("fakeid is required")
+	}
+
+	// Check if source already exists
+	exists, _ := s.sourceRepo.ExistsByFakeID(fakeID)
+	if exists {
+		s.logger.Warn("订阅源已存在", zap.String("fakeid", fakeID))
+		return nil, ErrWechatRSSSourceExists
+	}
+
+	// Create the source
+	name := nickname
+	if name == "" {
+		name = "微信公众号"
+	}
+
+	nextCrawl := time.Now().Add(60 * time.Minute)
+	source := &model.WechatRSSSource{
+		Name:           name,
+		WechatID:       alias, // Use alias as wechat_id if available
+		FakeID:         fakeID,
+		SourceType:     model.WechatRSSSourceTypeWechatAPI,
+		CrawlFrequency: 60,
+		NextCrawlAt:    &nextCrawl,
+		Status:         model.WechatRSSSourceStatusActive,
+		IconURL:        headImg,
+	}
+
+	if err := s.sourceRepo.Create(source); err != nil {
+		s.logger.Error("创建订阅源失败", zap.Error(err))
+		return nil, err
+	}
+
+	s.logger.Info("=== 订阅创建成功 (账号搜索) ===",
+		zap.Uint("source_id", source.ID),
+		zap.String("name", source.Name),
+		zap.String("fakeid", source.FakeID),
+	)
+
+	// Trigger initial crawl asynchronously
+	go s.CrawlSource(source.ID)
+
+	return source.ToResponse(), nil
+}

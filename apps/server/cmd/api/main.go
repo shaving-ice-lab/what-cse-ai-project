@@ -244,6 +244,7 @@ func main() {
 	wechatMPGroup.POST("/logout", wechatMPAuthHandler.Logout)
 	wechatMPGroup.GET("/search", wechatMPAuthHandler.SearchAccount)
 	wechatMPGroup.POST("/create-source", wechatMPAuthHandler.CreateSourceViaAPI)
+	wechatMPGroup.POST("/create-source-by-account", wechatMPAuthHandler.CreateSourceViaAccount)
 	wechatMPGroup.GET("/articles", wechatMPAuthHandler.GetArticles)
 
 	// Search routes (public, only if Elasticsearch is available)

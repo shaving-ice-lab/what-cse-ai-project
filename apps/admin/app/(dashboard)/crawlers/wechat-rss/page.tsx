@@ -77,15 +77,583 @@ import {
   WechatRSSSourceStatus,
   WechatRSSReadStatus,
   WechatMPAuthResponse,
+  WechatMPAccountInfo,
+  WechatMPArticle,
 } from "@/services/api";
 
+// ============================================================
+// 添加订阅对话框组件
+// ============================================================
+function AddSubscriptionDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [mode, setMode] = useState<"article" | "search">("article");
+  const [articleUrl, setArticleUrl] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState<WechatMPAccountInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [subscribingId, setSubscribingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  // 重置状态
+  const resetState = useCallback(() => {
+    setMode("article");
+    setArticleUrl("");
+    setSearchKeyword("");
+    setSearchResults([]);
+    setLoading(false);
+    setSubscribingId(null);
+    setError("");
+  }, []);
+
+  // 关闭时重置
+  useEffect(() => {
+    if (!open) {
+      const timer = setTimeout(resetState, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [open, resetState]);
+
+  // 通过文章链接添加
+  const handleAddViaArticle = async () => {
+    if (!articleUrl.trim()) return;
+    setLoading(true);
+    setError("");
+    try {
+      await wechatMpAuthApi.createSourceViaAPI(articleUrl.trim());
+      onSuccess();
+      onOpenChange(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "添加失败，请检查链接是否正确");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 搜索公众号
+  const handleSearch = async () => {
+    if (!searchKeyword.trim()) return;
+    setLoading(true);
+    setError("");
+    setSearchResults([]);
+    try {
+      const res = await wechatMpAuthApi.searchAccount(searchKeyword.trim());
+      if (res?.accounts?.length) {
+        setSearchResults(res.accounts);
+      } else {
+        setError("未找到相关公众号，请尝试其他关键词");
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "搜索失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 订阅公众号
+  const handleSubscribe = async (account: WechatMPAccountInfo) => {
+    setSubscribingId(account.fake_id);
+    setError("");
+    try {
+      await wechatMpAuthApi.createSourceViaAccount(account);
+      onSuccess();
+      onOpenChange(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "订阅失败");
+    } finally {
+      setSubscribingId(null);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-[480px]">
+        {/* Header */}
+        <div className="border-b bg-muted/30 px-6 py-4">
+          <DialogTitle className="text-base">添加订阅</DialogTitle>
+          <DialogDescription className="mt-1 text-xs">
+            通过文章链接或搜索公众号名称添加
+          </DialogDescription>
+        </div>
+
+        {/* Mode Selector */}
+        <div className="border-b px-6 py-3">
+          <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1">
+            <button
+              onClick={() => { setMode("article"); setError(""); }}
+              className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                mode === "article"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Link2 className="mr-1.5 h-3.5 w-3.5" />
+              文章链接
+            </button>
+            <button
+              onClick={() => { setMode("search"); setError(""); }}
+              className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                mode === "search"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Search className="mr-1.5 h-3.5 w-3.5" />
+              搜索公众号
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-4">
+          {mode === "article" ? (
+            /* 文章链接模式 */
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="relative">
+                  <Input
+                    placeholder="粘贴微信公众号文章链接..."
+                    value={articleUrl}
+                    onChange={(e) => { setArticleUrl(e.target.value); setError(""); }}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddViaArticle()}
+                    className="h-10 pr-10 text-sm"
+                  />
+                  {articleUrl && (
+                    <button
+                      onClick={() => setArticleUrl("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  支持 mp.weixin.qq.com 的文章链接，系统将自动识别公众号
+                </p>
+              </div>
+
+              {/* 示例提示 */}
+              <div className="rounded-lg border border-dashed bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground">示例链接格式</p>
+                <code className="mt-1 block truncate text-xs text-muted-foreground/80">
+                  https://mp.weixin.qq.com/s/xxxxxxxx
+                </code>
+              </div>
+            </div>
+          ) : (
+            /* 搜索模式 */
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="输入公众号名称搜索..."
+                  value={searchKeyword}
+                  onChange={(e) => { setSearchKeyword(e.target.value); setError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  className="h-10 text-sm"
+                />
+                <Button
+                  onClick={handleSearch}
+                  disabled={!searchKeyword.trim() || loading}
+                  className="h-10 px-4"
+                >
+                  {loading && !subscribingId ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              {/* 搜索结果 */}
+              {searchResults.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    找到 {searchResults.length} 个公众号
+                  </p>
+                  <div className="max-h-[240px] space-y-1.5 overflow-y-auto">
+                    {searchResults.map((account) => (
+                      <div
+                        key={account.fake_id}
+                        className="group flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                      >
+                        {account.round_head_img ? (
+                          <img
+                            src={account.round_head_img}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-border"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500">
+                            <Rss className="h-4 w-4 text-white" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{account.nickname}</p>
+                          {account.alias && (
+                            <p className="truncate text-xs text-muted-foreground">微信号: {account.alias}</p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleSubscribe(account)}
+                          disabled={subscribingId === account.fake_id}
+                          className="h-8 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[disabled]:opacity-100"
+                        >
+                          {subscribingId === account.fake_id ? (
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Plus className="mr-1.5 h-3.5 w-3.5" />
+                          )}
+                          订阅
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : !loading && !error && (
+                <div className="flex flex-col items-center py-8 text-center">
+                  <div className="rounded-full bg-muted p-3">
+                    <Search className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">输入公众号名称开始搜索</p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">如：人民日报、腾讯科技</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 错误提示 */}
+          {error && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <p className="text-xs text-destructive">{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 border-t bg-muted/30 px-6 py-3">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          {mode === "article" && (
+            <Button
+              size="sm"
+              onClick={handleAddViaArticle}
+              disabled={!articleUrl.trim() || loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  添加中...
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  添加订阅
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================================
+// 订阅源详情面板（查看最近文章）
+// ============================================================
+function SourceDetailSheet({
+  source,
+  open,
+  onOpenChange,
+}: {
+  source: WechatRSSSource | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [articles, setArticles] = useState<WechatMPArticle[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 10;
+
+  // 重置状态
+  const resetState = useCallback(() => {
+    setArticles([]);
+    setTotalCount(0);
+    setError("");
+  }, []);
+
+  // 初始加载文章
+  const loadArticles = useCallback(async () => {
+    if (!source?.fake_id) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await wechatMpAuthApi.getArticles(source.fake_id, 0, PAGE_SIZE);
+      if (res) {
+        setArticles(res.articles || []);
+        setTotalCount(res.app_msg_cnt || 0);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "加载失败");
+    } finally {
+      setLoading(false);
+    }
+  }, [source?.fake_id]);
+
+  // 加载更多文章
+  const loadMoreArticles = async () => {
+    if (!source?.fake_id || loadingMore) return;
+    setLoadingMore(true);
+    setError("");
+    try {
+      const res = await wechatMpAuthApi.getArticles(source.fake_id, articles.length, PAGE_SIZE);
+      if (res?.articles?.length) {
+        setArticles(prev => [...prev, ...res.articles]);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "加载失败");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // 打开时加载，关闭时重置
+  useEffect(() => {
+    if (open && source?.fake_id) {
+      loadArticles();
+    } else if (!open) {
+      // 延迟重置，等动画结束
+      const timer = setTimeout(resetState, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [open, source?.fake_id, loadArticles, resetState]);
+
+  // 格式化时间
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString("zh-CN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  // 是否还有更多
+  const hasMore = articles.length < totalCount;
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full overflow-hidden p-0 sm:max-w-lg">
+        {source && (
+          <div className="flex h-full flex-col">
+            {/* Header */}
+            <div className="border-b bg-muted/30 px-6 py-4">
+              <div className="flex items-center gap-3">
+                {source.icon_url ? (
+                  <img
+                    src={source.icon_url}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-border"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500">
+                    <Rss className="h-5 w-5 text-white" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <SheetTitle className="truncate text-base">{source.name}</SheetTitle>
+                  {source.wechat_id && (
+                    <p className="text-xs text-muted-foreground">@{source.wechat_id}</p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      source.status === "active" ? "bg-emerald-500" : "bg-stone-400"
+                    }`}
+                  />
+                  <span className="text-muted-foreground">
+                    {source.status === "active" ? "运行中" : "已暂停"}
+                  </span>
+                </div>
+                <span className="text-muted-foreground">
+                  已收录 {source.article_count} 篇
+                </span>
+                {totalCount > 0 && (
+                  <span className="text-muted-foreground">
+                    平台共 {totalCount} 篇
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : error && articles.length === 0 ? (
+                <div className="flex flex-col items-center py-12 text-center">
+                  <AlertCircle className="h-8 w-8 text-destructive/50" />
+                  <p className="mt-2 text-sm text-destructive">{error}</p>
+                  <Button variant="outline" size="sm" className="mt-4" onClick={loadArticles}>
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                    重试
+                  </Button>
+                </div>
+              ) : articles.length === 0 ? (
+                <div className="flex flex-col items-center py-12 text-center">
+                  <BookOpen className="h-8 w-8 text-muted-foreground/30" />
+                  {totalCount > 0 ? (
+                    <>
+                      <p className="mt-2 text-sm text-muted-foreground">平台共 {totalCount} 篇文章</p>
+                      <p className="mt-1 text-xs text-muted-foreground/70">点击下方按钮加载文章列表</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-2 text-sm text-muted-foreground">暂无文章</p>
+                      <p className="mt-1 text-xs text-muted-foreground/70">可能尚未获取到文章列表</p>
+                    </>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={loadArticles}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        加载中...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                        {totalCount > 0 ? "加载文章" : "尝试加载"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {articles.map((article, index) => (
+                    <a
+                      key={`${article.aid}-${index}`}
+                      href={article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex gap-3 p-4 transition-colors hover:bg-muted/50"
+                    >
+                      {article.cover && (
+                        <img
+                          src={article.cover}
+                          alt=""
+                          className="h-16 w-24 shrink-0 rounded-md object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-medium leading-snug line-clamp-2">
+                          {article.title}
+                        </h4>
+                        {article.digest && (
+                          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                            {article.digest}
+                          </p>
+                        )}
+                        <p className="mt-1.5 text-xs text-muted-foreground/70">
+                          {formatTime(article.create_time)}
+                        </p>
+                      </div>
+                      <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                    </a>
+                  ))}
+
+                  {/* 加载更多按钮 */}
+                  {hasMore && (
+                    <div className="p-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={loadMoreArticles}
+                        disabled={loadingMore}
+                      >
+                        {loadingMore ? (
+                          <>
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            加载中...
+                          </>
+                        ) : (
+                          <>
+                            <ChevronRight className="mr-1.5 h-3.5 w-3.5 rotate-90" />
+                            加载更早的文章
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* 加载更多时的错误提示 */}
+                  {error && articles.length > 0 && (
+                    <div className="p-4">
+                      <div className="flex items-center justify-center gap-2 text-xs text-destructive">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        <span>{error}</span>
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={loadMoreArticles}>
+                          重试
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {articles.length > 0 && !loading && (
+              <div className="border-t bg-muted/30 px-6 py-3">
+                <p className="text-center text-xs text-muted-foreground">
+                  已加载 {articles.length} / {totalCount} 篇文章
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ============================================================
 // 订阅源卡片组件
+// ============================================================
 function SourceCard({
   source,
   onCrawl,
   onToggleStatus,
   onEdit,
   onDelete,
+  onClick,
   crawling,
 }: {
   source: WechatRSSSource;
@@ -93,10 +661,13 @@ function SourceCard({
   onToggleStatus: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onClick: () => void;
   crawling: boolean;
 }) {
   return (
-    <div className="group rounded-lg border bg-card p-4 transition-colors hover:border-stone-300 dark:hover:border-stone-600">
+    <div
+      onClick={onClick}
+      className="group cursor-pointer rounded-lg border bg-card p-4 transition-colors hover:border-stone-300 dark:hover:border-stone-600">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -179,7 +750,7 @@ function SourceCard({
       )}
 
       {/* Actions */}
-      <div className="mt-3 flex items-center gap-1 border-t pt-3">
+      <div className="mt-3 flex items-center gap-1 border-t pt-3" onClick={(e) => e.stopPropagation()}>
         <TooltipProvider delayDuration={300}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -368,14 +939,15 @@ export default function WechatRSSPage() {
   });
   const [articleSheetOpen, setArticleSheetOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<WechatRSSArticle | null>(null);
+  
+  // Source detail sheet (查看公众号最近文章)
+  const [sourceDetailOpen, setSourceDetailOpen] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<WechatRSSSource | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sourceToDelete, setSourceToDelete] = useState<WechatRSSSource | null>(null);
 
   // Add subscription dialog
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [articleUrlInput, setArticleUrlInput] = useState("");
-  const [creatingSource, setCreatingSource] = useState(false);
-  const [createError, setCreateError] = useState("");
 
   // WeChat MP Auth states
   const [mpAuthStatus, setMpAuthStatus] = useState<WechatMPAuthResponse | null>(null);
@@ -392,8 +964,8 @@ export default function WechatRSSPage() {
   const [crawling, setCrawling] = useState<number | null>(null);
 
   // Filter states
-  const [filterSource, setFilterSource] = useState<string>("");
-  const [filterReadStatus, setFilterReadStatus] = useState<string>("");
+  const [filterSource, setFilterSource] = useState<string>("all");
+  const [filterReadStatus, setFilterReadStatus] = useState<string>("all");
   const [filterKeyword, setFilterKeyword] = useState("");
 
   // Active tab
@@ -415,8 +987,8 @@ export default function WechatRSSPage() {
   const fetchArticles = useCallback(async () => {
     try {
       const res = await wechatRssApi.getArticles({
-        source_id: filterSource ? parseInt(filterSource) : undefined,
-        read_status: (filterReadStatus as WechatRSSReadStatus) || undefined,
+        source_id: filterSource !== "all" ? parseInt(filterSource) : undefined,
+        read_status: filterReadStatus !== "all" ? (filterReadStatus as WechatRSSReadStatus) : undefined,
         keyword: filterKeyword || undefined,
         page: articlesPage,
         page_size: 20,
@@ -530,27 +1102,11 @@ export default function WechatRSSPage() {
     }
   };
 
-  // Add subscription via WeChat API
-  const handleAddSubscription = async () => {
-    if (!articleUrlInput.trim()) return;
-
-    try {
-      setCreatingSource(true);
-      setCreateError("");
-      const res = await wechatMpAuthApi.createSourceViaAPI(articleUrlInput.trim());
-      if (res) {
-        setAddDialogOpen(false);
-        setArticleUrlInput("");
-        fetchSources();
-        fetchStats();
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "创建失败";
-      setCreateError(message);
-    } finally {
-      setCreatingSource(false);
-    }
-  };
+  // 添加订阅成功回调
+  const handleAddSubscriptionSuccess = useCallback(() => {
+    fetchSources();
+    fetchStats();
+  }, [fetchSources, fetchStats]);
 
   // Initial fetch
   useEffect(() => {
@@ -659,7 +1215,7 @@ export default function WechatRSSPage() {
   // Mark all as read
   const handleMarkAllRead = async () => {
     try {
-      const sourceId = filterSource ? parseInt(filterSource) : undefined;
+      const sourceId = filterSource !== "all" ? parseInt(filterSource) : undefined;
       await wechatRssApi.markAllAsRead(sourceId);
       fetchArticles();
       fetchStats();
@@ -732,11 +1288,7 @@ export default function WechatRSSPage() {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            onClick={() => {
-              setArticleUrlInput("");
-              setCreateError("");
-              setAddDialogOpen(true);
-            }}
+            onClick={() => setAddDialogOpen(true)}
             disabled={!isAuthValid}
           >
             <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -811,29 +1363,78 @@ export default function WechatRSSPage() {
               </p>
             </div>
           </div>
+          {/* 显示登录的公众号信息 */}
+          {isAuthValid && mpAuthStatus?.account_name && (
+            <>
+              <div className="h-8 w-px bg-border" />
+              <div>
+                <p className="text-xs text-muted-foreground">公众号</p>
+                <p className="text-sm font-medium">{mpAuthStatus.account_name}</p>
+              </div>
+              {mpAuthStatus.account_id && (
+                <>
+                  <div className="h-8 w-px bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">账号ID</p>
+                    <p className="text-sm font-mono text-muted-foreground">{mpAuthStatus.account_id}</p>
+                  </div>
+                </>
+              )}
+              {mpAuthStatus.expires_at && (
+                <>
+                  <div className="h-8 w-px bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">过期时间</p>
+                    <p className={`text-sm ${mpAuthStatus.status === "expiring" ? "text-amber-600" : "text-muted-foreground"}`}>
+                      {new Date(mpAuthStatus.expires_at).toLocaleString("zh-CN", {
+                        month: "numeric",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </>
+              )}
+            </>
+          )}
           {mpAuthStatus?.status === "active" ||
           mpAuthStatus?.status === "expiring" ? (
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={handleMpLogout}>
-                <LogOut className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleGetQRCode}
-                disabled={qrCodeLoading}
-              >
-                {qrCodeLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <QrCode className="h-3.5 w-3.5" />
-                )}
-              </Button>
+            <div className="flex items-center gap-1 ml-auto">
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleMpLogout}>
+                      <LogOut className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">退出登录</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={handleGetQRCode}
+                      disabled={qrCodeLoading}
+                    >
+                      {qrCodeLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <QrCode className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">重新授权</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           ) : (
             <Button
               variant="outline"
               size="sm"
+              className="ml-auto"
               onClick={handleGetQRCode}
               disabled={qrCodeLoading}
             >
@@ -919,11 +1520,7 @@ export default function WechatRSSPage() {
                   <Button
                     size="sm"
                     className="mt-4"
-                    onClick={() => {
-                      setArticleUrlInput("");
-                      setCreateError("");
-                      setAddDialogOpen(true);
-                    }}
+                    onClick={() => setAddDialogOpen(true)}
                   >
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                     添加订阅
@@ -943,6 +1540,10 @@ export default function WechatRSSPage() {
                   onDelete={() => {
                     setSourceToDelete(source);
                     setDeleteDialogOpen(true);
+                  }}
+                  onClick={() => {
+                    setSelectedSource(source);
+                    setSourceDetailOpen(true);
                   }}
                   crawling={crawling === source.id}
                 />
@@ -1101,7 +1702,7 @@ export default function WechatRSSPage() {
                 <SelectValue placeholder="全部订阅源" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部订阅源</SelectItem>
+                <SelectItem value="all">全部订阅源</SelectItem>
                 {sources.map((source) => (
                   <SelectItem key={source.id} value={source.id.toString()}>
                     {source.name}
@@ -1114,7 +1715,7 @@ export default function WechatRSSPage() {
                 <SelectValue placeholder="状态" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部</SelectItem>
+                <SelectItem value="all">全部</SelectItem>
                 <SelectItem value="unread">未读</SelectItem>
                 <SelectItem value="read">已读</SelectItem>
                 <SelectItem value="starred">收藏</SelectItem>
@@ -1210,74 +1811,11 @@ export default function WechatRSSPage() {
       </Tabs>
 
       {/* Add Subscription Dialog */}
-      <Dialog
+      <AddSubscriptionDialog
         open={addDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setArticleUrlInput("");
-            setCreateError("");
-          }
-          setAddDialogOpen(open);
-        }}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>添加订阅</DialogTitle>
-            <DialogDescription>
-              粘贴微信公众号文章链接，自动识别并创建订阅
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="article_url" className="text-xs">
-                文章链接
-              </Label>
-              <Input
-                id="article_url"
-                placeholder="https://mp.weixin.qq.com/s/..."
-                value={articleUrlInput}
-                onChange={(e) => {
-                  setArticleUrlInput(e.target.value);
-                  if (createError) setCreateError("");
-                }}
-                className="h-8 text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                复制任意一篇公众号文章的链接
-              </p>
-            </div>
-
-            {createError && (
-              <div className="rounded border border-destructive/30 bg-destructive/5 p-3 text-xs">
-                <div className="flex items-center gap-1.5 text-destructive">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  <span>创建失败</span>
-                </div>
-                <p className="mt-1 text-muted-foreground">{createError}</p>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAddDialogOpen(false)}
-            >
-              取消
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleAddSubscription}
-              disabled={!articleUrlInput.trim() || creatingSource}
-            >
-              {creatingSource && (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-              )}
-              添加订阅
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setAddDialogOpen}
+        onSuccess={handleAddSubscriptionSuccess}
+      />
 
       {/* Edit Source Dialog */}
       <Dialog
@@ -1461,6 +1999,13 @@ export default function WechatRSSPage() {
           </p>
         </DialogContent>
       </Dialog>
+
+      {/* Source Detail Sheet (查看公众号最近文章) */}
+      <SourceDetailSheet
+        source={selectedSource}
+        open={sourceDetailOpen}
+        onOpenChange={setSourceDetailOpen}
+      />
 
       {/* Article Detail Sheet */}
       <Sheet open={articleSheetOpen} onOpenChange={setArticleSheetOpen}>

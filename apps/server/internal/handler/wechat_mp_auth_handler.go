@@ -176,6 +176,45 @@ type CreateSourceViaAPIRequest struct {
 	ArticleURL string `json:"article_url"`
 }
 
+// CreateSourceViaAccountRequest represents the request for creating source via account info
+type CreateSourceViaAccountRequest struct {
+	FakeID   string `json:"fake_id"`
+	Nickname string `json:"nickname"`
+	Alias    string `json:"alias"`
+	HeadImg  string `json:"head_img"`
+}
+
+// CreateSourceViaAccount creates a subscription source using account info from search
+// @Summary Create Source via Account Info (Admin)
+// @Description Create a subscription source using account info from search results
+// @Tags Admin - WeChat MP Auth
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Param request body CreateSourceViaAccountRequest true "Account Info"
+// @Success 200 {object} Response
+// @Router /api/v1/admin/wechat-mp/create-source-by-account [post]
+func (h *WechatMPAuthHandler) CreateSourceViaAccount(c echo.Context) error {
+	var req CreateSourceViaAccountRequest
+	if err := c.Bind(&req); err != nil {
+		return fail(c, http.StatusBadRequest, "无效的请求参数")
+	}
+
+	if req.FakeID == "" {
+		return fail(c, http.StatusBadRequest, "fakeid不能为空")
+	}
+
+	source, err := h.wechatRSSService.CreateSourceViaAccountInfo(req.FakeID, req.Nickname, req.Alias, req.HeadImg)
+	if err != nil {
+		if err == service.ErrWechatRSSSourceExists {
+			return fail(c, http.StatusConflict, "该公众号已订阅")
+		}
+		return fail(c, http.StatusInternalServerError, "创建订阅失败: "+err.Error())
+	}
+
+	return success(c, source)
+}
+
 // GetArticles gets articles from a public account via WeChat API
 // @Summary Get Articles via API (Admin)
 // @Description Get articles from a public account using WeChat MP platform API

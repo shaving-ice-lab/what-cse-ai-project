@@ -61,28 +61,28 @@ type LoginStatus struct {
 
 // MPAccountInfo represents a WeChat MP account info
 type MPAccountInfo struct {
-	FakeID      string `json:"fake_id"`
-	Nickname    string `json:"nickname"`
-	Alias       string `json:"alias"`       // 微信号
+	FakeID       string `json:"fake_id"`
+	Nickname     string `json:"nickname"`
+	Alias        string `json:"alias"` // 微信号
 	RoundHeadImg string `json:"round_head_img"`
-	ServiceType int    `json:"service_type"`
+	ServiceType  int    `json:"service_type"`
 }
 
 // MPArticle represents a single article from WeChat MP
 type MPArticle struct {
-	AID         string     `json:"aid"`
-	Title       string     `json:"title"`
-	Digest      string     `json:"digest"`
-	Link        string     `json:"link"`
-	Cover       string     `json:"cover"`
-	CreateTime  int64      `json:"create_time"`
-	UpdateTime  int64      `json:"update_time"`
+	AID        string `json:"aid"`
+	Title      string `json:"title"`
+	Digest     string `json:"digest"`
+	Link       string `json:"link"`
+	Cover      string `json:"cover"`
+	CreateTime int64  `json:"create_time"`
+	UpdateTime int64  `json:"update_time"`
 }
 
 // MPArticleListResponse represents the response from article list API
 type MPArticleListResponse struct {
-	AppMsgCnt   int         `json:"app_msg_cnt"`
-	Articles    []MPArticle `json:"articles"`
+	AppMsgCnt int         `json:"app_msg_cnt"`
+	Articles  []MPArticle `json:"articles"`
 }
 
 // GetQRCode gets a new login QR code from WeChat MP platform
@@ -104,15 +104,15 @@ func (c *WechatMPCrawler) GetQRCode(ctx context.Context) (*QRCodeInfo, error) {
 	}
 	io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
-	
-	c.logger.Info("Main page response", 
+
+	c.logger.Info("Main page response",
 		zap.Int("status", resp.StatusCode),
 		zap.String("final_url", resp.Request.URL.String()))
 
 	// Step 2: Call startlogin to initiate login process and get UUID
 	uuid := generateUUID()
 	fingerprint := generateUUID()
-	
+
 	startLoginURL := fmt.Sprintf("%s/cgi-bin/bizlogin?action=startlogin", c.baseURL)
 	formData := url.Values{
 		"fingerprint":  {fingerprint},
@@ -123,7 +123,7 @@ func (c *WechatMPCrawler) GetQRCode(ctx context.Context) (*QRCodeInfo, error) {
 		"redirect_url": {""},
 		"login_type":   {"3"},
 	}
-	
+
 	req, err = http.NewRequestWithContext(ctx, "POST", startLoginURL, strings.NewReader(formData.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create startlogin request: %w", err)
@@ -137,11 +137,11 @@ func (c *WechatMPCrawler) GetQRCode(ctx context.Context) (*QRCodeInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to start login: %w", err)
 	}
-	
+
 	startLoginBody, _ := io.ReadAll(resp.Body)
 	resp.Body.Close()
-	
-	c.logger.Info("Start login response", 
+
+	c.logger.Info("Start login response",
 		zap.Int("status", resp.StatusCode),
 		zap.String("body", string(startLoginBody)))
 
@@ -154,16 +154,16 @@ func (c *WechatMPCrawler) GetQRCode(ctx context.Context) (*QRCodeInfo, error) {
 			break
 		}
 	}
-	
+
 	c.logger.Info("Using UUID for QR code", zap.String("uuid", uuid))
 
 	// Step 3: Get the QR code image using scanloginqrcode endpoint
 	timestamp := time.Now().UnixMilli()
-	qrcodeURL := fmt.Sprintf("%s/cgi-bin/scanloginqrcode?action=getqrcode&uuid=%s&random=%d", 
+	qrcodeURL := fmt.Sprintf("%s/cgi-bin/scanloginqrcode?action=getqrcode&uuid=%s&random=%d",
 		c.baseURL, uuid, timestamp)
-	
+
 	c.logger.Info("Fetching QR code", zap.String("url", qrcodeURL))
-	
+
 	req, err = http.NewRequestWithContext(ctx, "GET", qrcodeURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create QR code request: %w", err)
@@ -181,7 +181,7 @@ func (c *WechatMPCrawler) GetQRCode(ctx context.Context) (*QRCodeInfo, error) {
 	}
 	defer resp.Body.Close()
 
-	c.logger.Info("QR code response", 
+	c.logger.Info("QR code response",
 		zap.Int("status", resp.StatusCode),
 		zap.String("content_type", resp.Header.Get("Content-Type")),
 		zap.Int64("content_length", resp.ContentLength))
@@ -212,7 +212,7 @@ func (c *WechatMPCrawler) GetQRCode(ctx context.Context) (*QRCodeInfo, error) {
 	}
 
 	// Convert to base64 for frontend display
-	qrcodeBase64 := fmt.Sprintf("data:image/%s;base64,%s", 
+	qrcodeBase64 := fmt.Sprintf("data:image/%s;base64,%s",
 		imageType, encodeToBase64(qrcodeBytes))
 
 	c.logger.Info("QR code generated successfully", zap.String("uuid", uuid), zap.Int("image_size", len(qrcodeBytes)))
@@ -297,7 +297,7 @@ func (c *WechatMPCrawler) CheckLoginStatus(ctx context.Context, uuid string) (*L
 	case 1, 3:
 		status.Status = "confirmed"
 		status.Message = "登录成功"
-		
+
 		// Try to complete login and get token
 		loginResult, err := c.completeLogin(ctx, fingerprint)
 		if err != nil {
@@ -414,7 +414,7 @@ func (c *WechatMPCrawler) completeLogin(ctx context.Context, fingerprint string)
 // extractTokenFromHome extracts token from the home page
 func (c *WechatMPCrawler) extractTokenFromHome(ctx context.Context) (string, error) {
 	homeURL := fmt.Sprintf("%s/cgi-bin/home?t=home/index&lang=zh_CN", c.baseURL)
-	
+
 	req, err := http.NewRequestWithContext(ctx, "GET", homeURL, nil)
 	if err != nil {
 		return "", err
@@ -443,38 +443,101 @@ func (c *WechatMPCrawler) extractTokenFromHome(ctx context.Context) (string, err
 
 // getAccountInfo gets the logged-in account information
 func (c *WechatMPCrawler) getAccountInfo(ctx context.Context, token string) (name, id string) {
-	infoURL := fmt.Sprintf("%s/cgi-bin/settingpage?t=setting/index&action=index&token=%s&lang=zh_CN", 
-		c.baseURL, token)
+	// First try to get account info from home page which usually has the data
+	homeURL := fmt.Sprintf("%s/cgi-bin/home?t=home/index&token=%s&lang=zh_CN", c.baseURL, token)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", infoURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", homeURL, nil)
 	if err != nil {
-		return "", ""
+		c.logger.Error("Failed to create home request", zap.Error(err))
+		return c.getAccountInfoFromCookies()
 	}
 	c.setDefaultHeaders(req)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return "", ""
+		c.logger.Error("Failed to fetch home page", zap.Error(err))
+		return c.getAccountInfoFromCookies()
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", ""
+		c.logger.Error("Failed to read home page", zap.Error(err))
+		return c.getAccountInfoFromCookies()
 	}
 
 	content := string(body)
+	c.logger.Debug("Home page content length", zap.Int("length", len(content)))
 
-	// Extract account name
-	nameRegex := regexp.MustCompile(`nickname\s*[:=]\s*["']([^"']+)["']`)
-	if matches := nameRegex.FindStringSubmatch(content); len(matches) > 1 {
-		name = matches[1]
+	// Try multiple patterns to extract account name
+	namePatterns := []string{
+		`"nick_name"\s*:\s*"([^"]+)"`,                              // JSON format: "nick_name": "xxx"
+		`nick_name\s*[:=]\s*["']([^"']+)["']`,                      // JS format: nick_name: 'xxx' or nick_name = "xxx"
+		`nickname\s*[:=]\s*["']([^"']+)["']`,                       // Alternative: nickname
+		`<span[^>]*class="[^"]*nickname[^"]*"[^>]*>([^<]+)</span>`, // HTML format
+		`"user_name"\s*:\s*"([^"]+)"`,                              // Alternative JSON format
 	}
 
-	// Extract account ID
-	idRegex := regexp.MustCompile(`fakeid\s*[:=]\s*["']([^"']+)["']`)
-	if matches := idRegex.FindStringSubmatch(content); len(matches) > 1 {
-		id = matches[1]
+	for _, pattern := range namePatterns {
+		nameRegex := regexp.MustCompile(pattern)
+		if matches := nameRegex.FindStringSubmatch(content); len(matches) > 1 {
+			name = matches[1]
+			c.logger.Info("Found account name", zap.String("name", name), zap.String("pattern", pattern))
+			break
+		}
+	}
+
+	// Try multiple patterns to extract account ID (fakeid)
+	idPatterns := []string{
+		`"user_name"\s*:\s*"(gh_[a-zA-Z0-9]+)"`, // JSON format for original ID: "user_name": "gh_xxx"
+		`fakeid\s*[:=]\s*["']([^"']+)["']`,      // JS format: fakeid
+		`"fakeid"\s*:\s*"([^"]+)"`,              // JSON format
+		`uin\s*[:=]\s*["']?(\d+)["']?`,          // UIN number
+	}
+
+	for _, pattern := range idPatterns {
+		idRegex := regexp.MustCompile(pattern)
+		if matches := idRegex.FindStringSubmatch(content); len(matches) > 1 {
+			id = matches[1]
+			c.logger.Info("Found account ID", zap.String("id", id), zap.String("pattern", pattern))
+			break
+		}
+	}
+
+	// If still no name or id, try from cookies
+	if name == "" || id == "" {
+		cookieName, cookieID := c.getAccountInfoFromCookies()
+		if name == "" {
+			name = cookieName
+		}
+		if id == "" {
+			id = cookieID
+		}
+	}
+
+	c.logger.Info("Account info extracted", zap.String("name", name), zap.String("id", id))
+	return name, id
+}
+
+// getAccountInfoFromCookies extracts account info from stored cookies
+func (c *WechatMPCrawler) getAccountInfoFromCookies() (name, id string) {
+	cookies := c.getCookiesMap()
+
+	// slave_user usually contains the original ID like "gh_xxxxx"
+	if slaveUser, ok := cookies["slave_user"]; ok && strings.HasPrefix(slaveUser, "gh_") {
+		id = slaveUser
+		c.logger.Info("Got account ID from cookie slave_user", zap.String("id", id))
+	}
+
+	// data_bizuin or bizuin contains the numeric ID
+	if id == "" {
+		if bizuin, ok := cookies["data_bizuin"]; ok && bizuin != "" {
+			id = bizuin
+			c.logger.Info("Got account ID from cookie data_bizuin", zap.String("id", id))
+		} else if bizuin, ok := cookies["bizuin"]; ok && bizuin != "" {
+			id = bizuin
+			c.logger.Info("Got account ID from cookie bizuin", zap.String("id", id))
+		}
 	}
 
 	return name, id
@@ -541,11 +604,11 @@ func (c *WechatMPCrawler) SearchAccount(ctx context.Context, keyword, token stri
 	accounts := make([]MPAccountInfo, 0, len(result.List))
 	for _, item := range result.List {
 		accounts = append(accounts, MPAccountInfo{
-			FakeID:      item.FakeID,
-			Nickname:    item.Nickname,
-			Alias:       item.Alias,
+			FakeID:       item.FakeID,
+			Nickname:     item.Nickname,
+			Alias:        item.Alias,
 			RoundHeadImg: item.RoundHeadImg,
-			ServiceType: item.ServiceType,
+			ServiceType:  item.ServiceType,
 		})
 	}
 
@@ -636,24 +699,16 @@ func (c *WechatMPCrawler) GetArticleList(ctx context.Context, fakeid, token stri
 }
 
 // parsePublishPage parses the publish_page JSON string to extract articles
+// Note: publish_info is a JSON string inside publish_list, needs double unmarshal
 func (c *WechatMPCrawler) parsePublishPage(publishPage string) ([]MPArticle, error) {
 	if publishPage == "" {
 		return nil, nil
 	}
 
+	// First level: parse publish_page with publish_info as raw JSON string
 	var pageData struct {
 		PublishList []struct {
-			PublishInfo struct {
-				AppMsgInfo []struct {
-					Title      string `json:"title"`
-					Digest     string `json:"digest"`
-					Link       string `json:"content_url"`
-					Cover      string `json:"cover"`
-					CreateTime int64  `json:"create_time"`
-					UpdateTime int64  `json:"update_time"`
-					AID        string `json:"aid"`
-				} `json:"appmsg_info"`
-			} `json:"publish_info"`
+			PublishInfo json.RawMessage `json:"publish_info"` // This is a JSON string, not a struct
 		} `json:"publish_list"`
 	}
 
@@ -663,16 +718,65 @@ func (c *WechatMPCrawler) parsePublishPage(publishPage string) ([]MPArticle, err
 
 	var articles []MPArticle
 	for _, pub := range pageData.PublishList {
-		for _, info := range pub.PublishInfo.AppMsgInfo {
-			articles = append(articles, MPArticle{
-				AID:        info.AID,
-				Title:      info.Title,
-				Digest:     info.Digest,
-				Link:       info.Link,
-				Cover:      info.Cover,
-				CreateTime: info.CreateTime,
-				UpdateTime: info.UpdateTime,
-			})
+		// publish_info can be either a JSON string or an object
+		// Try to unmarshal as string first (double encoded JSON)
+		var publishInfoStr string
+		if err := json.Unmarshal(pub.PublishInfo, &publishInfoStr); err == nil {
+			// It's a JSON string, parse it again
+			var publishInfo struct {
+				AppMsgEx []struct {
+					Title      string `json:"title"`
+					Digest     string `json:"digest"`
+					Link       string `json:"link"`
+					Cover      string `json:"cover"`
+					CreateTime int64  `json:"create_time"`
+					UpdateTime int64  `json:"update_time"`
+					AID        string `json:"aid"`
+				} `json:"appmsgex"`
+			}
+			if err := json.Unmarshal([]byte(publishInfoStr), &publishInfo); err != nil {
+				c.logger.Debug("Failed to parse publish_info string", zap.Error(err), zap.String("raw", publishInfoStr[:min(200, len(publishInfoStr))]))
+				continue
+			}
+			for _, info := range publishInfo.AppMsgEx {
+				articles = append(articles, MPArticle{
+					AID:        info.AID,
+					Title:      info.Title,
+					Digest:     info.Digest,
+					Link:       info.Link,
+					Cover:      info.Cover,
+					CreateTime: info.CreateTime,
+					UpdateTime: info.UpdateTime,
+				})
+			}
+		} else {
+			// Try direct unmarshal (it's already a JSON object)
+			var publishInfo struct {
+				AppMsgInfo []struct {
+					Title      string `json:"title"`
+					Digest     string `json:"digest"`
+					Link       string `json:"content_url"`
+					Cover      string `json:"cover"`
+					CreateTime int64  `json:"create_time"`
+					UpdateTime int64  `json:"update_time"`
+					AID        string `json:"aid"`
+				} `json:"appmsg_info"`
+			}
+			if err := json.Unmarshal(pub.PublishInfo, &publishInfo); err != nil {
+				c.logger.Debug("Failed to parse publish_info object", zap.Error(err))
+				continue
+			}
+			for _, info := range publishInfo.AppMsgInfo {
+				articles = append(articles, MPArticle{
+					AID:        info.AID,
+					Title:      info.Title,
+					Digest:     info.Digest,
+					Link:       info.Link,
+					Cover:      info.Cover,
+					CreateTime: info.CreateTime,
+					UpdateTime: info.UpdateTime,
+				})
+			}
 		}
 	}
 
@@ -720,12 +824,12 @@ func (c *WechatMPCrawler) getCookiesMap() map[string]string {
 
 func encodeToBase64(data []byte) string {
 	const base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-	
+
 	result := make([]byte, 0, ((len(data)+2)/3)*4)
 	for i := 0; i < len(data); i += 3 {
 		var n uint32
 		remaining := len(data) - i
-		
+
 		n = uint32(data[i]) << 16
 		if remaining > 1 {
 			n |= uint32(data[i+1]) << 8
@@ -733,23 +837,23 @@ func encodeToBase64(data []byte) string {
 		if remaining > 2 {
 			n |= uint32(data[i+2])
 		}
-		
+
 		result = append(result, base64Chars[(n>>18)&0x3F])
 		result = append(result, base64Chars[(n>>12)&0x3F])
-		
+
 		if remaining > 1 {
 			result = append(result, base64Chars[(n>>6)&0x3F])
 		} else {
 			result = append(result, '=')
 		}
-		
+
 		if remaining > 2 {
 			result = append(result, base64Chars[n&0x3F])
 		} else {
 			result = append(result, '=')
 		}
 	}
-	
+
 	return string(result)
 }
 

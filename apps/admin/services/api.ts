@@ -916,10 +916,20 @@ export const wechatMpAuthApi = {
     }>("/admin/wechat-mp/search", { params: { keyword } });
   },
 
-  // Create source via WeChat API
+  // Create source via WeChat API (article URL)
   createSourceViaAPI: (articleUrl: string) => {
     return request.post<WechatRSSSource>("/admin/wechat-mp/create-source", {
       article_url: articleUrl,
+    });
+  },
+
+  // Create source via account info (from search results)
+  createSourceViaAccount: (account: WechatMPAccountInfo) => {
+    return request.post<WechatRSSSource>("/admin/wechat-mp/create-source-by-account", {
+      fake_id: account.fake_id,
+      nickname: account.nickname,
+      alias: account.alias,
+      head_img: account.round_head_img,
     });
   },
 
