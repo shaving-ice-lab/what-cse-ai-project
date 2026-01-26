@@ -536,9 +536,10 @@ CREATE TABLE IF NOT EXISTS `what_fenbi_announcements` (
 CREATE TABLE IF NOT EXISTS `what_wechat_rss_sources` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL COMMENT '公众号名称',
-    `wechat_id` VARCHAR(100) DEFAULT NULL COMMENT '公众号ID',
-    `rss_url` VARCHAR(500) NOT NULL COMMENT 'RSS订阅地址',
-    `source_type` VARCHAR(20) DEFAULT 'custom' COMMENT '来源类型: rsshub/werss/feeddd/custom',
+    `wechat_id` VARCHAR(100) DEFAULT NULL COMMENT '公众号ID (__biz参数)',
+    `fake_id` VARCHAR(100) DEFAULT NULL COMMENT '公众号fakeid (用于微信API)',
+    `rss_url` VARCHAR(500) DEFAULT NULL COMMENT 'RSS订阅地址 (RSS类型必填)',
+    `source_type` VARCHAR(20) DEFAULT 'custom' COMMENT '来源类型: rsshub/werss/feeddd/custom/wechat_api',
     `crawl_frequency` INT DEFAULT 60 COMMENT '抓取频率(分钟)',
     `last_crawl_at` DATETIME(3) DEFAULT NULL COMMENT '最后抓取时间',
     `next_crawl_at` DATETIME(3) DEFAULT NULL COMMENT '下次抓取时间',
@@ -554,11 +555,30 @@ CREATE TABLE IF NOT EXISTS `what_wechat_rss_sources` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_wechat_rss_url` (`rss_url`),
     KEY `idx_wechat_rss_sources_wechat_id` (`wechat_id`),
+    KEY `idx_wechat_rss_sources_fake_id` (`fake_id`),
     KEY `idx_wechat_rss_sources_type` (`source_type`),
     KEY `idx_wechat_rss_sources_status` (`status`),
     KEY `idx_wechat_rss_sources_next_crawl` (`next_crawl_at`),
     KEY `idx_wechat_rss_sources_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信公众号RSS源表';
+
+-- 微信公众平台认证信息表 (管理员使用)
+CREATE TABLE IF NOT EXISTS `what_wechat_mp_auth` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `token` VARCHAR(100) DEFAULT NULL COMMENT '登录token',
+    `cookies` TEXT DEFAULT NULL COMMENT 'JSON格式cookies',
+    `fingerprint` VARCHAR(100) DEFAULT NULL COMMENT '设备指纹',
+    `account_name` VARCHAR(255) DEFAULT NULL COMMENT '授权的公众号名称',
+    `account_id` VARCHAR(100) DEFAULT NULL COMMENT '公众号原始ID',
+    `expires_at` DATETIME(3) DEFAULT NULL COMMENT '过期时间',
+    `status` VARCHAR(20) DEFAULT 'active' COMMENT '状态: active/expiring/expired/invalid',
+    `last_used_at` DATETIME(3) DEFAULT NULL COMMENT '最后使用时间',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_wechat_mp_auth_status` (`status`),
+    KEY `idx_wechat_mp_auth_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信公众平台认证信息表';
 
 -- 微信公众号RSS文章表
 CREATE TABLE IF NOT EXISTS `what_wechat_rss_articles` (
