@@ -147,6 +147,87 @@ var PromptTemplates = map[string]string{
 {{content}}
 
 请提取并输出JSON：`,
+
+	"list_page_verification": `你是网页结构分析专家。请判断以下页面是否是一个"公告列表页/栏目页"。
+
+## 当前页面URL
+{{page_url}}
+
+## 目标文章URL（需要在列表页中找到）
+{{article_url}}
+
+## 页面HTML内容
+{{html_content}}
+
+## 判断标准
+
+**公告列表页的特征：**
+1. 主体内容是多篇文章/公告的标题列表（通常是ul/li或table结构）
+2. 通常有发布日期列表
+3. 可能有分页导航（上一页/下一页）
+4. URL通常包含 channelList、channel、list、index 等关键词
+5. 页面标题通常是栏目名称（如"公告公示"、"通知公告"）
+
+**文章详情页（引用其他文章）的特征：**
+1. 主体内容是一篇完整的文章正文
+2. 可能有"相关阅读"、"推荐文章"、"热门文章"等区域引用其他文章
+3. URL通常包含 content、article、detail、news 加数字ID
+4. 页面标题通常是具体的文章标题
+
+## 请返回JSON格式
+
+{
+  "is_list_page": true或false,
+  "confidence": 0-100的整数,
+  "page_type": "list_page" 或 "article_page" 或 "other",
+  "reason": "判断理由"
+}
+
+请分析并输出JSON：`,
+
+	"list_page_extraction": `你是网页结构分析专家。请分析以下HTML内容，找出当前文章所属的列表页/栏目页URL。
+
+## 核心目标：
+找到包含当前文章链接的上级列表页。列表页通常是一个栏目页面，显示多篇同类文章的标题和链接。
+
+## 分析要点（按优先级）：
+1. 【最高优先】面包屑导航中的上级链接（通常显示：首页 > 栏目名 > 当前文章）
+2. 【高优先】包含"返回列表"、"更多公告"、"返回"等文字的链接
+3. 【中优先】URL中包含channel、channelList、list、category、column等关键词的链接
+4. 【中优先】侧边栏中的栏目导航链接
+5. 【低优先】通过URL结构推断（去掉文章ID部分）
+
+## 列表页URL特征：
+- 通常包含：/channelList/、/channel/、/list/、/index、/column/、/category/
+- 通常不包含纯数字ID作为最后路径段（纯数字ID通常是文章详情页）
+- 示例：/channelList/10808.html 是列表页，/content/43033.html 是文章页
+
+## 当前页面URL：
+{{current_url}}
+
+## HTML内容（部分）：
+{{html_content}}
+
+## 输出JSON格式（必须严格遵守）：
+{
+  "list_page_urls": [
+    {
+      "url": "完整的列表页URL（必须是绝对URL）",
+      "confidence": 置信度(0-100的整数),
+      "reason": "判断依据说明"
+    }
+  ],
+  "analysis": "分析过程说明"
+}
+
+## 重要注意：
+- 只返回可能是公告列表页/栏目页的URL
+- 不要返回：首页、登录页、搜索页、其他文章详情页
+- url必须是完整的绝对URL
+- 按置信度从高到低排序
+- 如果找不到，返回空数组
+
+请分析并输出JSON：`,
 }
 
 // AnnouncementTypes defines the possible announcement types

@@ -696,6 +696,7 @@ export default function FenbiCrawlerPage() {
           { name: "下载解析附件", status: "pending" },
           { name: "LLM智能分析", status: "pending" },
           { name: "保存到数据库", status: "pending" },
+          { name: "提取列表页URL", status: "pending" },
         ];
         let currentSteps = initialSteps;
 

@@ -11,12 +11,15 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
 
 	"github.com/what-cse/server/internal/ai"
@@ -1132,12 +1135,22 @@ type ParseStep struct {
 
 // ParseURLData contains the parsed data from the URL
 type ParseURLData struct {
-	InputURL    string             `json:"input_url"`
-	FinalURL    string             `json:"final_url,omitempty"`
-	PageTitle   string             `json:"page_title,omitempty"`
-	PageContent string             `json:"page_content,omitempty"`
-	Attachments []AttachmentResult `json:"attachments,omitempty"`
-	LLMAnalysis *LLMAnalysisResult `json:"llm_analysis,omitempty"`
+	InputURL       string             `json:"input_url"`
+	FinalURL       string             `json:"final_url,omitempty"`
+	PageTitle      string             `json:"page_title,omitempty"`
+	PageContent    string             `json:"page_content,omitempty"`
+	Attachments    []AttachmentResult `json:"attachments,omitempty"`
+	LLMAnalysis    *LLMAnalysisResult `json:"llm_analysis,omitempty"`
+	ListPageURL    string             `json:"list_page_url,omitempty"`    // 列表页URL (用于监控)
+	ListPageSource string             `json:"list_page_source,omitempty"` // 列表页来源 (url_parse/html_extract/llm)
+}
+
+// ListPageCandidate represents a candidate list page URL
+type ListPageCandidate struct {
+	URL        string `json:"url"`
+	Source     string `json:"source"`     // url_parse, html_extract, llm
+	Confidence int    `json:"confidence"` // 0-100
+	Reason     string `json:"reason,omitempty"`
 }
 
 // TestCrawl tests the cookie-based crawling by fetching a sample announcement
@@ -1688,6 +1701,56 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 		}
 	}
 
+	// Step 6: Extract and validate list page URL for monitoring using DFS algorithm
+	if finalURL != "" && pageContent != nil {
+		stepStart = time.Now()
+
+		// Use DFS algorithm to find the real list page that contains this article
+		dfsResult := s.findListPageDFS(finalURL, pageContent.HTML, spider)
+
+		if dfsResult.Found {
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "提取列表页URL",
+				Status:   "success",
+				Message:  fmt.Sprintf("成功提取列表页 (策略: %s, 深度: %d)", dfsResult.Source, dfsResult.Depth),
+				Duration: time.Since(stepStart).Milliseconds(),
+				Details:  fmt.Sprintf("列表页: %s\n原因: %s\n搜索路径: %s", dfsResult.ListURL, dfsResult.Reason, strings.Join(dfsResult.Path, " → ")),
+			})
+			result.Data.ListPageURL = dfsResult.ListURL
+			result.Data.ListPageSource = dfsResult.Source
+
+			// Update database with list page URL if fenbiID exists
+			if fenbiID != "" {
+				s.updateAnnouncementListPage(fenbiID, dfsResult.ListURL, dfsResult.Source)
+			}
+
+			s.logger.Info("List page found via DFS",
+				zap.String("list_page_url", dfsResult.ListURL),
+				zap.String("source", dfsResult.Source),
+				zap.Int("depth", dfsResult.Depth),
+				zap.Int("confidence", dfsResult.Confidence),
+			)
+		} else {
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "提取列表页URL",
+				Status:   "skipped",
+				Message:  "DFS搜索未找到包含当前文章的列表页",
+				Duration: time.Since(stepStart).Milliseconds(),
+				Details:  "尝试了多种策略(URL分析、HTML链接、LLM)，但未找到包含当前文章链接的上级页面",
+			})
+			s.logger.Info("DFS search did not find valid list page",
+				zap.String("article_url", finalURL),
+			)
+		}
+	} else {
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "提取列表页URL",
+			Status:   "skipped",
+			Message:  "无最终URL或页面内容，跳过列表页提取",
+			Duration: 0,
+		})
+	}
+
 	return result, nil
 }
 
@@ -1731,6 +1794,38 @@ func (s *FenbiService) saveOrUpdateFenbiAnnouncement(fenbiID string, detail *cra
 	return s.announcementRepo.Create(announcement)
 }
 
+// updateAnnouncementListPage updates the list page URL for an announcement
+func (s *FenbiService) updateAnnouncementListPage(fenbiID string, listPageURL string, listPageSource string) {
+	if fenbiID == "" || listPageURL == "" {
+		return
+	}
+
+	existing, err := s.announcementRepo.FindByFenbiID(fenbiID)
+	if err != nil {
+		s.logger.Debug("Cannot find announcement to update list page",
+			zap.String("fenbi_id", fenbiID),
+			zap.Error(err),
+		)
+		return
+	}
+
+	existing.ListPageURL = listPageURL
+	existing.ListPageSource = listPageSource
+
+	if err := s.announcementRepo.Update(existing); err != nil {
+		s.logger.Warn("Failed to update announcement list page",
+			zap.String("fenbi_id", fenbiID),
+			zap.Error(err),
+		)
+	} else {
+		s.logger.Debug("Updated announcement list page",
+			zap.String("fenbi_id", fenbiID),
+			zap.String("list_page_url", listPageURL),
+			zap.String("source", listPageSource),
+		)
+	}
+}
+
 // processAttachments downloads and parses attachments
 func (s *FenbiService) processAttachments(spider *crawler.FenbiSpider, attachments []crawler.PageAttachment) []AttachmentResult {
 	results := make([]AttachmentResult, 0, len(attachments))
@@ -1753,11 +1848,45 @@ func (s *FenbiService) processAttachments(spider *crawler.FenbiSpider, attachmen
 			Type: att.Type,
 		}
 
-		// Generate local path
+		// Generate local path with correct extension
 		fileName := fmt.Sprintf("%d_%s", i+1, att.Name)
 		// Sanitize filename
 		fileName = strings.ReplaceAll(fileName, "/", "_")
 		fileName = strings.ReplaceAll(fileName, "\\", "_")
+
+		// Ensure file has correct extension based on detected type
+		// This is needed because Name may come from link text without extension
+		fileExt := strings.ToLower(filepath.Ext(fileName))
+		expectedExtMap := map[string][]string{
+			"pdf":   {".pdf"},
+			"excel": {".xls", ".xlsx"},
+			"word":  {".doc", ".docx"},
+		}
+		if expectedExts, ok := expectedExtMap[att.Type]; ok {
+			hasCorrectExt := false
+			for _, ext := range expectedExts {
+				if fileExt == ext {
+					hasCorrectExt = true
+					break
+				}
+			}
+			if !hasCorrectExt {
+				// Add default extension for this type
+				defaultExt := expectedExts[0]
+				if att.Type == "excel" {
+					defaultExt = ".xlsx" // Prefer xlsx for excel
+				} else if att.Type == "word" {
+					defaultExt = ".docx" // Prefer docx for word
+				}
+				fileName = fileName + defaultExt
+				s.logger.Debug("Added missing extension to filename",
+					zap.String("original_name", att.Name),
+					zap.String("new_filename", fileName),
+					zap.String("type", att.Type),
+				)
+			}
+		}
+
 		localPath := filepath.Join(tempDir, fileName)
 
 		s.logger.Info("Downloading attachment",
@@ -2514,4 +2643,843 @@ func (s *FenbiService) DeleteAllParseTasks() error {
 // GetParseTaskStats returns parse task statistics
 func (s *FenbiService) GetParseTaskStats() (map[string]int64, error) {
 	return s.parseTaskRepo.GetStats()
+}
+
+// === List Page Extraction Methods ===
+
+// extractListPageURLs uses multiple strategies to extract list page URLs (including LLM when needed)
+func (s *FenbiService) extractListPageURLs(finalURL string, pageHTML string) []ListPageCandidate {
+	candidates := s.extractListPageURLsWithoutLLM(finalURL, pageHTML)
+
+	// Strategy 3: LLM analysis (only when no high confidence result from other methods)
+	hasHighConfidence := false
+	for _, c := range candidates {
+		if c.Confidence >= 80 {
+			hasHighConfidence = true
+			break
+		}
+	}
+	if !hasHighConfidence && pageHTML != "" {
+		seen := make(map[string]bool)
+		for _, c := range candidates {
+			seen[c.URL] = true
+		}
+		if llmCandidates := s.extractByLLM(finalURL, pageHTML); len(llmCandidates) > 0 {
+			for _, c := range llmCandidates {
+				if !seen[c.URL] {
+					candidates = append(candidates, c)
+					seen[c.URL] = true
+				}
+			}
+		}
+		// Re-sort after adding LLM candidates
+		sort.Slice(candidates, func(i, j int) bool {
+			return candidates[i].Confidence > candidates[j].Confidence
+		})
+	}
+
+	return candidates
+}
+
+// extractListPageURLsWithoutLLM extracts list page URLs using URL and HTML analysis only (no LLM)
+func (s *FenbiService) extractListPageURLsWithoutLLM(finalURL string, pageHTML string) []ListPageCandidate {
+	candidates := make([]ListPageCandidate, 0)
+	seen := make(map[string]bool)
+
+	// Strategy 1: URL path analysis (fast, no cost)
+	if urls := s.extractByURLPath(finalURL); len(urls) > 0 {
+		for _, u := range urls {
+			if !seen[u] {
+				candidates = append(candidates, ListPageCandidate{
+					URL:        u,
+					Source:     "url_parse",
+					Confidence: 60,
+					Reason:     "通过URL路径分析提取",
+				})
+				seen[u] = true
+			}
+		}
+	}
+
+	// Strategy 2: HTML link extraction (medium reliability)
+	if htmlCandidates := s.extractByHTMLLinks(finalURL, pageHTML); len(htmlCandidates) > 0 {
+		for _, c := range htmlCandidates {
+			if !seen[c.URL] {
+				candidates = append(candidates, c)
+				seen[c.URL] = true
+			}
+		}
+	}
+
+	// Sort by confidence (descending)
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].Confidence > candidates[j].Confidence
+	})
+
+	return candidates
+}
+
+// extractByURLPath extracts list page URLs by analyzing URL path structure
+func (s *FenbiService) extractByURLPath(finalURL string) []string {
+	if finalURL == "" {
+		return nil
+	}
+
+	parsedURL, err := url.Parse(finalURL)
+	if err != nil || parsedURL.Path == "" || parsedURL.Path == "/" {
+		return nil
+	}
+
+	results := make([]string, 0)
+	path := strings.TrimSuffix(parsedURL.Path, "/")
+
+	// Method 1: Remove the file name (e.g., detail.html, content.shtml)
+	if idx := strings.LastIndex(path, "/"); idx > 0 {
+		// Check if last segment looks like a file
+		lastSegment := path[idx+1:]
+		if strings.Contains(lastSegment, ".") {
+			dir := path[:idx+1]
+			parentURL := &url.URL{Scheme: parsedURL.Scheme, Host: parsedURL.Host, Path: dir}
+			results = append(results, parentURL.String())
+		}
+	}
+
+	// Method 2: Remove the last path segment
+	parts := strings.Split(path, "/")
+	if len(parts) > 2 {
+		parentPath := strings.Join(parts[:len(parts)-1], "/") + "/"
+		parentURL := &url.URL{Scheme: parsedURL.Scheme, Host: parsedURL.Host, Path: parentPath}
+		parentURLStr := parentURL.String()
+		if !stringSliceContains(results, parentURLStr) {
+			results = append(results, parentURLStr)
+		}
+	}
+
+	// Method 3: Try common list page suffixes
+	listSuffixes := []string{"list.html", "index.html", "index.shtml", "index.htm", ""}
+	if len(parts) > 2 {
+		basePath := strings.Join(parts[:len(parts)-1], "/") + "/"
+		for _, suffix := range listSuffixes {
+			listPath := basePath + suffix
+			listURL := &url.URL{Scheme: parsedURL.Scheme, Host: parsedURL.Host, Path: listPath}
+			listURLStr := listURL.String()
+			if !stringSliceContains(results, listURLStr) {
+				results = append(results, listURLStr)
+			}
+		}
+	}
+
+	s.logger.Debug("extractByURLPath results",
+		zap.String("final_url", finalURL),
+		zap.Strings("candidates", results),
+	)
+
+	return results
+}
+
+// extractByHTMLLinks extracts list page URLs by analyzing HTML links
+func (s *FenbiService) extractByHTMLLinks(baseURL string, html string) []ListPageCandidate {
+	if html == "" {
+		return nil
+	}
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		s.logger.Warn("Failed to parse HTML for link extraction", zap.Error(err))
+		return nil
+	}
+
+	candidates := make([]ListPageCandidate, 0)
+	seen := make(map[string]bool)
+	baseParsed, _ := url.Parse(baseURL)
+
+	addCandidate := func(url string, confidence int, reason string) {
+		if url == "" || url == baseURL || seen[url] || strings.Contains(url, "login") {
+			return
+		}
+		seen[url] = true
+		candidates = append(candidates, ListPageCandidate{
+			URL:        url,
+			Source:     "html_extract",
+			Confidence: confidence,
+			Reason:     reason,
+		})
+	}
+
+	// 1. Search for links with list-related text patterns (highest priority)
+	textPatterns := []struct {
+		keywords   []string
+		confidence int
+	}{
+		{[]string{"返回列表", "回到列表", "返回上一页", "back to list"}, 95},
+		{[]string{"更多公告", "更多信息", "查看更多", "more"}, 90},
+		{[]string{"公告列表", "招聘公告", "考试公告", "通知公告", "信息公开"}, 85},
+		{[]string{"列表", "目录", "栏目"}, 75},
+	}
+
+	doc.Find("a[href]").Each(func(_ int, sel *goquery.Selection) {
+		href, exists := sel.Attr("href")
+		if !exists || href == "" || href == "#" || strings.HasPrefix(href, "javascript:") {
+			return
+		}
+
+		text := strings.TrimSpace(sel.Text())
+		title, _ := sel.Attr("title")
+		searchText := strings.ToLower(text + " " + title)
+
+		for _, p := range textPatterns {
+			for _, kw := range p.keywords {
+				if strings.Contains(searchText, strings.ToLower(kw)) {
+					fullURL := resolveURL(baseParsed, href)
+					addCandidate(fullURL, p.confidence, fmt.Sprintf("链接文字包含'%s'", kw))
+					return
+				}
+			}
+		}
+	})
+
+	// 2. Search breadcrumb navigation (very reliable)
+	breadcrumbSelectors := []string{
+		".breadcrumb a", ".crumb a", ".nav-path a", ".location a",
+		".position a", ".path a", ".site-path a", ".current-position a",
+		"[class*='bread'] a", "[class*='crumb'] a", "[class*='path'] a",
+		"[id*='bread'] a", "[id*='crumb'] a", "[id*='path'] a",
+		// Chinese government website common patterns
+		".weizhi a", ".dqwz a", ".subnav a", ".channel-nav a",
+		"[class*='位置'] a", "[class*='导航'] a",
+	}
+	for _, selector := range breadcrumbSelectors {
+		doc.Find(selector).Each(func(_ int, sel *goquery.Selection) {
+			href, exists := sel.Attr("href")
+			if !exists || href == "" || href == "#" {
+				return
+			}
+			fullURL := resolveURL(baseParsed, href)
+			addCandidate(fullURL, 90, "面包屑导航链接")
+		})
+	}
+
+	// 3. Search for links with list-related URL patterns
+	urlPatterns := []struct {
+		pattern    string
+		confidence int
+	}{
+		{"channelList", 95},
+		{"channel", 90},
+		{"/list", 90},
+		{"/index", 85},
+		{"/news", 80},
+		{"/info", 75},
+		{"/article", 75},
+		{"/notice", 80},
+		{"/gonggao", 80},
+		{"/xinxi", 75},
+	}
+
+	doc.Find("a[href]").Each(func(_ int, sel *goquery.Selection) {
+		href, exists := sel.Attr("href")
+		if !exists || href == "" || href == "#" || strings.HasPrefix(href, "javascript:") {
+			return
+		}
+
+		fullURL := resolveURL(baseParsed, href)
+		if fullURL == "" {
+			return
+		}
+
+		hrefLower := strings.ToLower(href)
+		for _, p := range urlPatterns {
+			if strings.Contains(hrefLower, strings.ToLower(p.pattern)) {
+				// Don't add if it looks like a detail page (has numeric ID at end)
+				if !looksLikeDetailPage(fullURL) {
+					addCandidate(fullURL, p.confidence, fmt.Sprintf("URL包含'%s'", p.pattern))
+				}
+				break
+			}
+		}
+	})
+
+	// 4. Search sidebar/navigation areas
+	navSelectors := []string{
+		".sidebar a", ".side-nav a", ".left-nav a", ".right-nav a",
+		".nav-list a", ".menu a", ".channel a",
+		"[class*='sidebar'] a", "[class*='sidenav'] a",
+	}
+	for _, selector := range navSelectors {
+		doc.Find(selector).Each(func(_ int, sel *goquery.Selection) {
+			href, exists := sel.Attr("href")
+			if !exists || href == "" || href == "#" {
+				return
+			}
+			fullURL := resolveURL(baseParsed, href)
+			if !looksLikeDetailPage(fullURL) {
+				addCandidate(fullURL, 70, "侧边栏导航链接")
+			}
+		})
+	}
+
+	s.logger.Debug("extractByHTMLLinks results",
+		zap.String("base_url", baseURL),
+		zap.Int("candidates_count", len(candidates)),
+	)
+
+	return candidates
+}
+
+// looksLikeDetailPage checks if a URL looks like a detail/article page
+func looksLikeDetailPage(urlStr string) bool {
+	parsed, err := url.Parse(urlStr)
+	if err != nil {
+		return false
+	}
+	path := parsed.Path
+	// Check if path ends with a numeric ID
+	parts := strings.Split(strings.TrimSuffix(path, "/"), "/")
+	if len(parts) > 0 {
+		lastPart := parts[len(parts)-1]
+		// Remove extension
+		lastPart = strings.TrimSuffix(lastPart, ".html")
+		lastPart = strings.TrimSuffix(lastPart, ".shtml")
+		lastPart = strings.TrimSuffix(lastPart, ".htm")
+		// Check if it's mostly numeric (article ID)
+		digitCount := 0
+		for _, c := range lastPart {
+			if c >= '0' && c <= '9' {
+				digitCount++
+			}
+		}
+		// If more than half is digits, likely a detail page
+		if len(lastPart) > 0 && float64(digitCount)/float64(len(lastPart)) > 0.5 {
+			return true
+		}
+	}
+	return false
+}
+
+// extractByLLM uses LLM to analyze HTML and extract list page URLs
+func (s *FenbiService) extractByLLM(currentURL string, html string) []ListPageCandidate {
+	if s.llmConfigService == nil {
+		s.logger.Debug("LLM service not available for list page extraction")
+		return nil
+	}
+
+	// Truncate HTML to avoid token limit issues (keep first 30k chars)
+	truncatedHTML := html
+	if len(html) > 30000 {
+		truncatedHTML = html[:30000]
+	}
+
+	// Build prompt using template
+	template := ai.GetPromptTemplate("list_page_extraction")
+	if template == "" {
+		s.logger.Warn("list_page_extraction prompt template not found")
+		return nil
+	}
+
+	prompt := strings.Replace(template, "{{current_url}}", currentURL, 1)
+	prompt = strings.Replace(prompt, "{{html_content}}", truncatedHTML, 1)
+
+	s.logger.Info("Calling LLM for list page extraction",
+		zap.String("current_url", currentURL),
+		zap.Int("html_length", len(truncatedHTML)),
+	)
+
+	// Call LLM with shorter timeout
+	response, err := s.llmConfigService.CallWithConfigID(0, prompt, 60, 2048)
+	if err != nil {
+		s.logger.Warn("LLM list page extraction failed", zap.Error(err))
+		return nil
+	}
+
+	// Parse LLM response
+	var result struct {
+		ListPageURLs []struct {
+			URL        string `json:"url"`
+			Confidence int    `json:"confidence"`
+			Reason     string `json:"reason"`
+		} `json:"list_page_urls"`
+		Analysis string `json:"analysis"`
+	}
+
+	jsonStr := s.extractJSONFromResponse(response)
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		s.logger.Warn("Failed to parse LLM list page extraction response",
+			zap.Error(err),
+			zap.String("response", response[:min(500, len(response))]),
+		)
+		return nil
+	}
+
+	candidates := make([]ListPageCandidate, 0)
+	for _, u := range result.ListPageURLs {
+		if u.URL != "" && u.URL != currentURL {
+			candidates = append(candidates, ListPageCandidate{
+				URL:        u.URL,
+				Source:     "llm",
+				Confidence: u.Confidence,
+				Reason:     u.Reason,
+			})
+		}
+	}
+
+	s.logger.Info("LLM list page extraction completed",
+		zap.Int("candidates_count", len(candidates)),
+		zap.String("analysis", result.Analysis),
+	)
+
+	return candidates
+}
+
+// DFSListPageResult represents the result of DFS list page search
+type DFSListPageResult struct {
+	Found      bool
+	ListURL    string
+	Source     string // url_parse, html_extract, llm
+	Confidence int
+	Reason     string
+	Depth      int
+	Path       []string // Search path taken
+}
+
+// findListPageDFS uses DFS algorithm to find the real list page that contains the article
+func (s *FenbiService) findListPageDFS(articleURL string, articleHTML string, spider *crawler.FenbiSpider) *DFSListPageResult {
+	const maxDepth = 3 // Maximum search depth to avoid infinite recursion
+	visited := make(map[string]bool)
+	visited[articleURL] = true // Mark article URL as visited
+
+	s.logger.Info("Starting DFS list page search",
+		zap.String("article_url", articleURL),
+		zap.Int("max_depth", maxDepth),
+	)
+
+	// Phase 1: Try with URL analysis and HTML link extraction (fast, no LLM cost)
+	result := s.searchListPageRecursive(articleURL, articleHTML, articleURL, 0, maxDepth, visited, []string{articleURL}, spider, false)
+
+	if result.Found {
+		s.logger.Info("DFS found valid list page (phase 1)",
+			zap.String("list_url", result.ListURL),
+			zap.String("source", result.Source),
+			zap.Int("depth", result.Depth),
+			zap.Strings("path", result.Path),
+		)
+		return result
+	}
+
+	// Phase 2: If not found, try with LLM analysis
+	s.logger.Info("Phase 1 failed, trying with LLM analysis")
+	llmCandidates := s.extractByLLM(articleURL, articleHTML)
+	if len(llmCandidates) > 0 {
+		for _, candidate := range llmCandidates {
+			if visited[candidate.URL] {
+				continue
+			}
+			visited[candidate.URL] = true
+
+			s.logger.Debug("Checking LLM candidate",
+				zap.String("url", candidate.URL),
+				zap.Int("confidence", candidate.Confidence),
+			)
+
+			content, err := spider.FetchPageContent(candidate.URL)
+			if err != nil {
+				continue
+			}
+
+			containsArticle, matchReason := s.pageContainsArticleLink(content.HTML, articleURL, candidate.URL)
+			if containsArticle {
+				s.logger.Info("DFS found valid list page via LLM (phase 2)",
+					zap.String("list_url", candidate.URL),
+				)
+				return &DFSListPageResult{
+					Found:      true,
+					ListURL:    candidate.URL,
+					Source:     "llm",
+					Confidence: candidate.Confidence,
+					Reason:     fmt.Sprintf("%s; %s", candidate.Reason, matchReason),
+					Depth:      1,
+					Path:       []string{articleURL, candidate.URL},
+				}
+			}
+
+			// Continue DFS from LLM candidate
+			if maxDepth > 1 {
+				subResult := s.searchListPageRecursive(
+					candidate.URL,
+					content.HTML,
+					articleURL,
+					1,
+					maxDepth,
+					visited,
+					[]string{articleURL, candidate.URL},
+					spider,
+					false,
+				)
+				if subResult.Found {
+					return subResult
+				}
+			}
+		}
+	}
+
+	s.logger.Info("DFS did not find valid list page",
+		zap.Int("visited_count", len(visited)),
+	)
+
+	return &DFSListPageResult{Found: false}
+}
+
+// searchListPageRecursive performs recursive DFS search for list page
+// useLLM parameter is reserved for future use (LLM is now called separately in findListPageDFS)
+func (s *FenbiService) searchListPageRecursive(
+	currentURL string,
+	currentHTML string,
+	articleURL string,
+	depth int,
+	maxDepth int,
+	visited map[string]bool,
+	path []string,
+	spider *crawler.FenbiSpider,
+	useLLM bool,
+) *DFSListPageResult {
+
+	s.logger.Debug("DFS searching at depth",
+		zap.Int("depth", depth),
+		zap.String("current_url", currentURL),
+		zap.Int("visited_count", len(visited)),
+	)
+
+	// Get candidate list pages from current page (without LLM - LLM is called separately in phase 2)
+	candidates := s.extractListPageURLsWithoutLLM(currentURL, currentHTML)
+
+	s.logger.Debug("Found candidates at current level",
+		zap.Int("count", len(candidates)),
+		zap.String("current_url", currentURL),
+	)
+
+	// Try each candidate
+	for _, candidate := range candidates {
+		if visited[candidate.URL] {
+			continue
+		}
+		visited[candidate.URL] = true
+
+		s.logger.Debug("Checking candidate",
+			zap.String("url", candidate.URL),
+			zap.String("source", candidate.Source),
+			zap.Int("confidence", candidate.Confidence),
+		)
+
+		// Fetch candidate page content
+		content, err := spider.FetchPageContent(candidate.URL)
+		if err != nil {
+			s.logger.Debug("Failed to fetch candidate page",
+				zap.String("url", candidate.URL),
+				zap.Error(err),
+			)
+			continue
+		}
+
+		// Check if this candidate page contains a link to our article
+		containsArticle, matchReason := s.pageContainsArticleLink(content.HTML, articleURL, candidate.URL)
+
+		if containsArticle {
+			// Found it! This is the real list page
+			newPath := append(path, candidate.URL)
+			return &DFSListPageResult{
+				Found:      true,
+				ListURL:    candidate.URL,
+				Source:     candidate.Source,
+				Confidence: candidate.Confidence,
+				Reason:     fmt.Sprintf("%s; %s", candidate.Reason, matchReason),
+				Depth:      depth + 1,
+				Path:       newPath,
+			}
+		}
+
+		// If not found and not at max depth, continue DFS on this candidate
+		if depth < maxDepth-1 {
+			newPath := append(path, candidate.URL)
+			result := s.searchListPageRecursive(
+				candidate.URL,
+				content.HTML,
+				articleURL,
+				depth+1,
+				maxDepth,
+				visited,
+				newPath,
+				spider,
+				false,
+			)
+			if result.Found {
+				return result
+			}
+		}
+	}
+
+	// Not found at this level
+	return &DFSListPageResult{Found: false}
+}
+
+// pageContainsArticleLink checks if a page contains a link to the specified article
+// AND verifies that the page looks like a proper list page (has multiple article-like links)
+func (s *FenbiService) pageContainsArticleLink(pageHTML string, articleURL string, pageURL string) (bool, string) {
+	if pageHTML == "" || articleURL == "" {
+		return false, ""
+	}
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(pageHTML))
+	if err != nil {
+		return false, ""
+	}
+
+	// Parse article URL to extract key parts for matching
+	articleParsed, err := url.Parse(articleURL)
+	if err != nil {
+		return false, ""
+	}
+
+	pageParsed, _ := url.Parse(pageURL)
+
+	// Extract article identifier (e.g., "43033" from "/content/43033.html")
+	articlePath := articleParsed.Path
+	articleID := extractArticleID(articlePath)
+	// Get the article's directory pattern (e.g., "/content/" from "/content/43033.html")
+	articleDirPattern := extractDirPattern(articlePath)
+
+	s.logger.Debug("Checking if page contains article link",
+		zap.String("article_url", articleURL),
+		zap.String("article_id", articleID),
+		zap.String("article_dir_pattern", articleDirPattern),
+		zap.String("page_url", pageURL),
+	)
+
+	foundArticleLink := false
+	matchReason := ""
+	similarLinkCount := 0 // Count links with similar pattern to verify it's a list page
+
+	doc.Find("a[href]").Each(func(_ int, sel *goquery.Selection) {
+		href, exists := sel.Attr("href")
+		if !exists || href == "" || href == "#" || strings.HasPrefix(href, "javascript:") {
+			return
+		}
+
+		// Resolve relative URL
+		fullHref := resolveURL(pageParsed, href)
+		if fullHref == "" {
+			return
+		}
+
+		hrefParsed, err := url.Parse(fullHref)
+		if err != nil {
+			return
+		}
+
+		// Check if this link points to our article
+		if !foundArticleLink {
+			// Method 1: Exact URL match
+			if fullHref == articleURL {
+				foundArticleLink = true
+				matchReason = "完整URL匹配"
+			}
+
+			// Method 2: Path match (same host and path)
+			if !foundArticleLink && hrefParsed.Host == articleParsed.Host && hrefParsed.Path == articlePath {
+				foundArticleLink = true
+				matchReason = "路径匹配"
+			}
+
+			// Method 3: Strict article ID match - ID must be in the path segment
+			if !foundArticleLink && articleID != "" && hrefParsed.Host == articleParsed.Host {
+				// Check if the href path ends with the article ID (with extension)
+				hrefPath := hrefParsed.Path
+				if strings.Contains(hrefPath, "/"+articleID+".") || strings.HasSuffix(hrefPath, "/"+articleID) {
+					foundArticleLink = true
+					matchReason = fmt.Sprintf("文章ID'%s'路径匹配", articleID)
+				}
+			}
+		}
+
+		// Count similar links to verify this is a list page
+		// A valid list page should have multiple links with similar URL patterns
+		if articleDirPattern != "" && strings.Contains(hrefParsed.Path, articleDirPattern) {
+			similarLinkCount++
+		}
+	})
+
+	// Validation: A valid list page should have at least 3 similar article links
+	isValidListPage := similarLinkCount >= 3
+
+	s.logger.Debug("Page analysis result",
+		zap.String("page_url", pageURL),
+		zap.Bool("found_article_link", foundArticleLink),
+		zap.String("match_reason", matchReason),
+		zap.Int("similar_link_count", similarLinkCount),
+		zap.Bool("is_valid_list_page", isValidListPage),
+	)
+
+	if foundArticleLink && isValidListPage {
+		// Use LLM to verify this is a real list page (not an article page with references)
+		isRealListPage, llmReason := s.verifyListPageWithLLM(pageURL, pageHTML, articleURL)
+		if isRealListPage {
+			return true, fmt.Sprintf("%s (列表页包含%d个同类链接); %s", matchReason, similarLinkCount, llmReason)
+		}
+
+		s.logger.Info("LLM rejected candidate as list page",
+			zap.String("page_url", pageURL),
+			zap.String("reason", llmReason),
+		)
+		return false, ""
+	}
+
+	// If found article link but not enough similar links, it's probably not the right list page
+	if foundArticleLink && !isValidListPage {
+		s.logger.Debug("Found article link but page doesn't look like a list page",
+			zap.String("page_url", pageURL),
+			zap.Int("similar_links", similarLinkCount),
+		)
+	}
+
+	return false, ""
+}
+
+// verifyListPageWithLLM uses LLM to verify if a page is a real list page
+// Returns (isListPage, reason)
+func (s *FenbiService) verifyListPageWithLLM(pageURL string, pageHTML string, articleURL string) (bool, string) {
+	if s.llmConfigService == nil {
+		return true, "LLM服务不可用，跳过验证"
+	}
+
+	// Truncate HTML to avoid token limit (keep first 20k chars)
+	truncatedHTML := pageHTML
+	if len(pageHTML) > 20000 {
+		truncatedHTML = pageHTML[:20000]
+	}
+
+	template := ai.GetPromptTemplate("list_page_verification")
+	if template == "" {
+		return true, "验证模板不存在，跳过验证"
+	}
+
+	prompt := strings.Replace(template, "{{page_url}}", pageURL, 1)
+	prompt = strings.Replace(prompt, "{{article_url}}", articleURL, 1)
+	prompt = strings.Replace(prompt, "{{html_content}}", truncatedHTML, 1)
+
+	s.logger.Info("Calling LLM for list page verification",
+		zap.String("page_url", pageURL),
+		zap.String("article_url", articleURL),
+	)
+
+	response, err := s.llmConfigService.CallWithConfigID(0, prompt, 30, 1024)
+	if err != nil {
+		s.logger.Warn("LLM list page verification failed", zap.Error(err))
+		return true, "LLM调用失败，跳过验证"
+	}
+
+	var result struct {
+		IsListPage bool   `json:"is_list_page"`
+		Confidence int    `json:"confidence"`
+		PageType   string `json:"page_type"`
+		Reason     string `json:"reason"`
+	}
+
+	jsonStr := s.extractJSONFromResponse(response)
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		s.logger.Warn("Failed to parse LLM verification response", zap.Error(err))
+		return true, "LLM响应解析失败，跳过验证"
+	}
+
+	s.logger.Info("LLM list page verification result",
+		zap.String("page_url", pageURL),
+		zap.Bool("is_list_page", result.IsListPage),
+		zap.Int("confidence", result.Confidence),
+		zap.String("page_type", result.PageType),
+		zap.String("reason", result.Reason),
+	)
+
+	// Only accept if LLM confirms it's a list page with confidence >= 70
+	if result.IsListPage && result.Confidence >= 70 {
+		return true, fmt.Sprintf("LLM验证通过: %s (置信度%d%%)", result.Reason, result.Confidence)
+	}
+
+	return false, fmt.Sprintf("LLM判定非列表页: %s", result.Reason)
+}
+
+// extractDirPattern extracts the directory pattern from a URL path
+// e.g., "/content/43033.html" -> "/content/"
+// e.g., "/news/2024/12345.shtml" -> "/news/"
+func extractDirPattern(path string) string {
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return ""
+	}
+	// Return the first meaningful directory segment
+	for _, part := range parts {
+		if part != "" && !strings.Contains(part, ".") {
+			return "/" + part + "/"
+		}
+	}
+	return ""
+}
+
+// extractArticleID extracts the article identifier from a URL path
+// e.g., "/content/43033.html" -> "43033"
+// e.g., "/news/2024/article_12345.shtml" -> "12345"
+func extractArticleID(path string) string {
+	// Remove file extension
+	path = strings.TrimSuffix(path, ".html")
+	path = strings.TrimSuffix(path, ".shtml")
+	path = strings.TrimSuffix(path, ".htm")
+	path = strings.TrimSuffix(path, ".aspx")
+	path = strings.TrimSuffix(path, ".jsp")
+	path = strings.TrimSuffix(path, ".php")
+
+	// Get the last segment
+	parts := strings.Split(path, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	lastPart := parts[len(parts)-1]
+
+	// Try to extract numeric ID
+	// Pattern: may have prefix like "article_", "content_", etc.
+	if idx := strings.LastIndex(lastPart, "_"); idx >= 0 {
+		lastPart = lastPart[idx+1:]
+	}
+
+	// If it's purely numeric or looks like an ID, return it
+	if len(lastPart) >= 3 && len(lastPart) <= 20 {
+		return lastPart
+	}
+
+	return ""
+}
+
+// Helper function to resolve relative URL to absolute URL
+func resolveURL(base *url.URL, href string) string {
+	if base == nil || href == "" {
+		return ""
+	}
+
+	// Already absolute URL
+	if strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") {
+		return href
+	}
+
+	// Parse and resolve relative URL
+	refURL, err := url.Parse(href)
+	if err != nil {
+		return ""
+	}
+
+	return base.ResolveReference(refURL).String()
+}
+
+// Helper function to check if a slice contains a string
+func stringSliceContains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }

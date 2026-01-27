@@ -311,6 +311,25 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                 </a>
               </div>
             )}
+          {task.parseResult?.data?.list_page_url && (
+              <div className="flex items-center gap-2 ml-auto text-muted-foreground">
+                <ArrowRight className="h-4 w-4" />
+                <a
+                  href={task.parseResult.data.list_page_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  列表页
+                  <Badge variant="outline" className="text-[10px] h-4 ml-1">
+                    {task.parseResult.data.list_page_source === 'url_parse' ? 'URL' : 
+                     task.parseResult.data.list_page_source === 'html_extract' ? 'HTML' : 
+                     task.parseResult.data.list_page_source === 'llm' ? 'LLM' : ''}
+                  </Badge>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
         </div>
 
         {/* ===== 主内容区 - 左右分栏 ===== */}
