@@ -186,7 +186,10 @@ function AddSubscriptionDialog({
         <div className="border-b px-6 py-3">
           <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1">
             <button
-              onClick={() => { setMode("article"); setError(""); }}
+              onClick={() => {
+                setMode("article");
+                setError("");
+              }}
               className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 mode === "article"
                   ? "bg-background text-foreground shadow-sm"
@@ -197,7 +200,10 @@ function AddSubscriptionDialog({
               文章链接
             </button>
             <button
-              onClick={() => { setMode("search"); setError(""); }}
+              onClick={() => {
+                setMode("search");
+                setError("");
+              }}
               className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 mode === "search"
                   ? "bg-background text-foreground shadow-sm"
@@ -220,7 +226,10 @@ function AddSubscriptionDialog({
                   <Input
                     placeholder="粘贴微信公众号文章链接..."
                     value={articleUrl}
-                    onChange={(e) => { setArticleUrl(e.target.value); setError(""); }}
+                    onChange={(e) => {
+                      setArticleUrl(e.target.value);
+                      setError("");
+                    }}
                     onKeyDown={(e) => e.key === "Enter" && handleAddViaArticle()}
                     className="h-10 pr-10 text-sm"
                   />
@@ -229,8 +238,18 @@ function AddSubscriptionDialog({
                       onClick={() => setArticleUrl("")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   )}
@@ -255,7 +274,10 @@ function AddSubscriptionDialog({
                 <Input
                   placeholder="输入公众号名称搜索..."
                   value={searchKeyword}
-                  onChange={(e) => { setSearchKeyword(e.target.value); setError(""); }}
+                  onChange={(e) => {
+                    setSearchKeyword(e.target.value);
+                    setError("");
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   className="h-10 text-sm"
                 />
@@ -298,7 +320,9 @@ function AddSubscriptionDialog({
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{account.nickname}</p>
                           {account.alias && (
-                            <p className="truncate text-xs text-muted-foreground">微信号: {account.alias}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              微信号: {account.alias}
+                            </p>
                           )}
                         </div>
                         <Button
@@ -319,14 +343,17 @@ function AddSubscriptionDialog({
                     ))}
                   </div>
                 </div>
-              ) : !loading && !error && (
-                <div className="flex flex-col items-center py-8 text-center">
-                  <div className="rounded-full bg-muted p-3">
-                    <Search className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                !loading &&
+                !error && (
+                  <div className="flex flex-col items-center py-8 text-center">
+                    <div className="rounded-full bg-muted p-3">
+                      <Search className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">输入公众号名称开始搜索</p>
+                    <p className="mt-1 text-xs text-muted-foreground/70">如：人民日报、腾讯科技</p>
                   </div>
-                  <p className="mt-3 text-sm text-muted-foreground">输入公众号名称开始搜索</p>
-                  <p className="mt-1 text-xs text-muted-foreground/70">如：人民日报、腾讯科技</p>
-                </div>
+                )
               )}
             </div>
           )}
@@ -422,7 +449,7 @@ function SourceDetailSheet({
     try {
       const res = await wechatMpAuthApi.getArticles(source.fake_id, articles.length, PAGE_SIZE);
       if (res?.articles?.length) {
-        setArticles(prev => [...prev, ...res.articles]);
+        setArticles((prev) => [...prev, ...res.articles]);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "加载失败");
@@ -491,13 +518,9 @@ function SourceDetailSheet({
                     {source.status === "active" ? "运行中" : "已暂停"}
                   </span>
                 </div>
-                <span className="text-muted-foreground">
-                  已收录 {source.article_count} 篇
-                </span>
+                <span className="text-muted-foreground">已收录 {source.article_count} 篇</span>
                 {totalCount > 0 && (
-                  <span className="text-muted-foreground">
-                    平台共 {totalCount} 篇
-                  </span>
+                  <span className="text-muted-foreground">平台共 {totalCount} 篇</span>
                 )}
               </div>
             </div>
@@ -522,13 +545,19 @@ function SourceDetailSheet({
                   <BookOpen className="h-8 w-8 text-muted-foreground/30" />
                   {totalCount > 0 ? (
                     <>
-                      <p className="mt-2 text-sm text-muted-foreground">平台共 {totalCount} 篇文章</p>
-                      <p className="mt-1 text-xs text-muted-foreground/70">点击下方按钮加载文章列表</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        平台共 {totalCount} 篇文章
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground/70">
+                        点击下方按钮加载文章列表
+                      </p>
                     </>
                   ) : (
                     <>
                       <p className="mt-2 text-sm text-muted-foreground">暂无文章</p>
-                      <p className="mt-1 text-xs text-muted-foreground/70">可能尚未获取到文章列表</p>
+                      <p className="mt-1 text-xs text-muted-foreground/70">
+                        可能尚未获取到文章列表
+                      </p>
                     </>
                   )}
                   <Button
@@ -619,7 +648,12 @@ function SourceDetailSheet({
                       <div className="flex items-center justify-center gap-2 text-xs text-destructive">
                         <AlertCircle className="h-3.5 w-3.5" />
                         <span>{error}</span>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={loadMoreArticles}>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={loadMoreArticles}
+                        >
                           重试
                         </Button>
                       </div>
@@ -667,7 +701,8 @@ function SourceCard({
   return (
     <div
       onClick={onClick}
-      className="group cursor-pointer rounded-lg border bg-card p-4 transition-colors hover:border-stone-300 dark:hover:border-stone-600">
+      className="group cursor-pointer rounded-lg border bg-card p-4 transition-colors hover:border-stone-300 dark:hover:border-stone-600"
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -688,9 +723,7 @@ function SourceCard({
           <div className="min-w-0">
             <h3 className="font-medium truncate text-sm">{source.name}</h3>
             {source.wechat_id && (
-              <p className="text-xs text-muted-foreground truncate">
-                @{source.wechat_id}
-              </p>
+              <p className="text-xs text-muted-foreground truncate">@{source.wechat_id}</p>
             )}
           </div>
         </div>
@@ -700,16 +733,12 @@ function SourceCard({
               source.status === "active"
                 ? "bg-emerald-500"
                 : source.status === "error"
-                ? "bg-red-500"
-                : "bg-stone-400"
+                  ? "bg-red-500"
+                  : "bg-stone-400"
             }`}
           />
           <span className="text-xs text-muted-foreground">
-            {source.status === "active"
-              ? "运行中"
-              : source.status === "error"
-              ? "错误"
-              : "已暂停"}
+            {source.status === "active" ? "运行中" : source.status === "error" ? "错误" : "已暂停"}
           </span>
         </div>
       </div>
@@ -722,11 +751,7 @@ function SourceCard({
         </div>
         <div>
           <span className="text-muted-foreground">未读</span>
-          <span
-            className={`ml-1 font-medium ${
-              source.unread_count > 0 ? "text-amber-600" : ""
-            }`}
-          >
+          <span className={`ml-1 font-medium ${source.unread_count > 0 ? "text-amber-600" : ""}`}>
             {source.unread_count}
           </span>
         </div>
@@ -750,7 +775,10 @@ function SourceCard({
       )}
 
       {/* Actions */}
-      <div className="mt-3 flex items-center gap-1 border-t pt-3" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="mt-3 flex items-center gap-1 border-t pt-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <TooltipProvider delayDuration={300}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -773,12 +801,7 @@ function SourceCard({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0"
-                onClick={onToggleStatus}
-              >
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onToggleStatus}>
                 {source.status === "active" ? (
                   <Pause className="h-3.5 w-3.5" />
                 ) : (
@@ -793,12 +816,7 @@ function SourceCard({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0"
-                onClick={onEdit}
-              >
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onEdit}>
                 <Settings className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
@@ -873,9 +891,7 @@ function ArticleItem({
             )}
             {article.title}
           </h4>
-          {isStarred && (
-            <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />
-          )}
+          {isStarred && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
         </div>
 
         <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
@@ -890,24 +906,14 @@ function ArticleItem({
           )}
           <div className="flex-1" />
           <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={onToggleStar}
-            >
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onToggleStar}>
               {isStarred ? (
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
               ) : (
                 <StarOff className="h-3 w-3" />
               )}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={onOpenOriginal}
-            >
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onOpenOriginal}>
               <ExternalLink className="h-3 w-3" />
             </Button>
           </div>
@@ -939,7 +945,7 @@ export default function WechatRSSPage() {
   });
   const [articleSheetOpen, setArticleSheetOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<WechatRSSArticle | null>(null);
-  
+
   // Source detail sheet (查看公众号最近文章)
   const [sourceDetailOpen, setSourceDetailOpen] = useState(false);
   const [selectedSource, setSelectedSource] = useState<WechatRSSSource | null>(null);
@@ -988,7 +994,8 @@ export default function WechatRSSPage() {
     try {
       const res = await wechatRssApi.getArticles({
         source_id: filterSource !== "all" ? parseInt(filterSource) : undefined,
-        read_status: filterReadStatus !== "all" ? (filterReadStatus as WechatRSSReadStatus) : undefined,
+        read_status:
+          filterReadStatus !== "all" ? (filterReadStatus as WechatRSSReadStatus) : undefined,
         keyword: filterKeyword || undefined,
         page: articlesPage,
         page_size: 20,
@@ -1180,8 +1187,7 @@ export default function WechatRSSPage() {
 
   // Toggle source status
   const handleToggleSourceStatus = async (source: WechatRSSSource) => {
-    const newStatus: WechatRSSSourceStatus =
-      source.status === "active" ? "paused" : "active";
+    const newStatus: WechatRSSSourceStatus = source.status === "active" ? "paused" : "active";
     try {
       await wechatRssApi.updateSource(source.id, { status: newStatus });
       fetchSources();
@@ -1281,16 +1287,10 @@ export default function WechatRSSPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">公众号订阅</h1>
-          <p className="text-sm text-muted-foreground">
-            订阅微信公众号，自动同步最新文章
-          </p>
+          <p className="text-sm text-muted-foreground">订阅微信公众号，自动同步最新文章</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={() => setAddDialogOpen(true)}
-            disabled={!isAuthValid}
-          >
+          <Button size="sm" onClick={() => setAddDialogOpen(true)} disabled={!isAuthValid}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             添加订阅
           </Button>
@@ -1305,17 +1305,13 @@ export default function WechatRSSPage() {
             <Rss className="h-4 w-4 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">订阅源</p>
-              <p className="text-lg font-semibold leading-none">
-                {stats?.total_sources || 0}
-              </p>
+              <p className="text-lg font-semibold leading-none">{stats?.total_sources || 0}</p>
             </div>
           </div>
           <div className="h-8 w-px bg-border" />
           <div>
             <p className="text-xs text-muted-foreground">文章总数</p>
-            <p className="text-lg font-semibold leading-none">
-              {stats?.total_articles || 0}
-            </p>
+            <p className="text-lg font-semibold leading-none">{stats?.total_articles || 0}</p>
           </div>
           <div className="h-8 w-px bg-border" />
           <div>
@@ -1327,16 +1323,12 @@ export default function WechatRSSPage() {
           <div className="h-8 w-px bg-border" />
           <div>
             <p className="text-xs text-muted-foreground">收藏</p>
-            <p className="text-lg font-semibold leading-none">
-              {stats?.starred_articles || 0}
-            </p>
+            <p className="text-lg font-semibold leading-none">{stats?.starred_articles || 0}</p>
           </div>
           <div className="h-8 w-px bg-border" />
           <div>
             <p className="text-xs text-muted-foreground">今日新增</p>
-            <p className="text-lg font-semibold leading-none">
-              {stats?.today_articles || 0}
-            </p>
+            <p className="text-lg font-semibold leading-none">{stats?.today_articles || 0}</p>
           </div>
         </div>
 
@@ -1348,8 +1340,8 @@ export default function WechatRSSPage() {
                 mpAuthStatus?.status === "active"
                   ? "text-emerald-500"
                   : mpAuthStatus?.status === "expiring"
-                  ? "text-amber-500"
-                  : "text-muted-foreground"
+                    ? "text-amber-500"
+                    : "text-muted-foreground"
               }`}
             />
             <div>
@@ -1358,8 +1350,8 @@ export default function WechatRSSPage() {
                 {mpAuthStatus?.status === "active"
                   ? "已授权"
                   : mpAuthStatus?.status === "expiring"
-                  ? "即将过期"
-                  : "未授权"}
+                    ? "即将过期"
+                    : "未授权"}
               </p>
             </div>
           </div>
@@ -1376,7 +1368,9 @@ export default function WechatRSSPage() {
                   <div className="h-8 w-px bg-border" />
                   <div>
                     <p className="text-xs text-muted-foreground">账号ID</p>
-                    <p className="text-sm font-mono text-muted-foreground">{mpAuthStatus.account_id}</p>
+                    <p className="text-sm font-mono text-muted-foreground">
+                      {mpAuthStatus.account_id}
+                    </p>
                   </div>
                 </>
               )}
@@ -1385,7 +1379,9 @@ export default function WechatRSSPage() {
                   <div className="h-8 w-px bg-border" />
                   <div>
                     <p className="text-xs text-muted-foreground">过期时间</p>
-                    <p className={`text-sm ${mpAuthStatus.status === "expiring" ? "text-amber-600" : "text-muted-foreground"}`}>
+                    <p
+                      className={`text-sm ${mpAuthStatus.status === "expiring" ? "text-amber-600" : "text-muted-foreground"}`}
+                    >
                       {new Date(mpAuthStatus.expires_at).toLocaleString("zh-CN", {
                         month: "numeric",
                         day: "numeric",
@@ -1398,13 +1394,17 @@ export default function WechatRSSPage() {
               )}
             </>
           )}
-          {mpAuthStatus?.status === "active" ||
-          mpAuthStatus?.status === "expiring" ? (
+          {mpAuthStatus?.status === "active" || mpAuthStatus?.status === "expiring" ? (
             <div className="flex items-center gap-1 ml-auto">
               <TooltipProvider delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleMpLogout}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={handleMpLogout}
+                    >
                       <LogOut className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
@@ -1512,16 +1512,10 @@ export default function WechatRSSPage() {
                 <Rss className="h-8 w-8 text-muted-foreground/50" />
                 <p className="mt-3 text-sm font-medium">暂无订阅源</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {isAuthValid
-                    ? "粘贴微信公众号文章链接添加订阅"
-                    : "请先扫码授权后添加订阅"}
+                  {isAuthValid ? "粘贴微信公众号文章链接添加订阅" : "请先扫码授权后添加订阅"}
                 </p>
                 {isAuthValid && (
-                  <Button
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => setAddDialogOpen(true)}
-                  >
+                  <Button size="sm" className="mt-4" onClick={() => setAddDialogOpen(true)}>
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                     添加订阅
                   </Button>
@@ -1582,9 +1576,7 @@ export default function WechatRSSPage() {
                           <div>
                             <p className="font-medium text-sm">{source.name}</p>
                             {source.wechat_id && (
-                              <p className="text-xs text-muted-foreground">
-                                @{source.wechat_id}
-                              </p>
+                              <p className="text-xs text-muted-foreground">@{source.wechat_id}</p>
                             )}
                           </div>
                         </div>
@@ -1596,22 +1588,20 @@ export default function WechatRSSPage() {
                               source.status === "active"
                                 ? "bg-emerald-500"
                                 : source.status === "error"
-                                ? "bg-red-500"
-                                : "bg-stone-400"
+                                  ? "bg-red-500"
+                                  : "bg-stone-400"
                             }`}
                           />
                           <span className="text-xs">
                             {source.status === "active"
                               ? "运行"
                               : source.status === "error"
-                              ? "错误"
-                              : "暂停"}
+                                ? "错误"
+                                : "暂停"}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right text-sm">
-                        {source.article_count}
-                      </TableCell>
+                      <TableCell className="text-right text-sm">{source.article_count}</TableCell>
                       <TableCell className="text-right">
                         {source.unread_count > 0 ? (
                           <Badge variant="secondary" className="text-xs">
@@ -1621,20 +1611,15 @@ export default function WechatRSSPage() {
                           <span className="text-xs text-muted-foreground">0</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs">
-                        {source.crawl_frequency}分钟
-                      </TableCell>
+                      <TableCell className="text-xs">{source.crawl_frequency}分钟</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {source.last_crawl_at
-                          ? new Date(source.last_crawl_at).toLocaleString(
-                              "zh-CN",
-                              {
-                                month: "numeric",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )
+                          ? new Date(source.last_crawl_at).toLocaleString("zh-CN", {
+                              month: "numeric",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
                           : "-"}
                       </TableCell>
                       <TableCell className="text-right">
@@ -1779,9 +1764,7 @@ export default function WechatRSSPage() {
           {/* Pagination */}
           {articlesTotal > 20 && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                共 {articlesTotal} 篇文章
-              </span>
+              <span className="text-muted-foreground">共 {articlesTotal} 篇文章</span>
               <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
@@ -1837,9 +1820,7 @@ export default function WechatRSSPage() {
               <Input
                 id="name"
                 value={editForm.name}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, name: e.target.value })
-                }
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                 className="h-8 text-sm"
               />
             </div>
@@ -1869,27 +1850,17 @@ export default function WechatRSSPage() {
               <Textarea
                 id="description"
                 value={editForm.description}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, description: e.target.value })
-                }
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                 rows={2}
                 className="text-sm"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditDialogOpen(false)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(false)}>
               取消
             </Button>
-            <Button
-              size="sm"
-              onClick={handleUpdateSource}
-              disabled={!editForm.name || saving}
-            >
+            <Button size="sm" onClick={handleUpdateSource} disabled={!editForm.name || saving}>
               {saving && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
               保存
             </Button>
@@ -1907,11 +1878,7 @@ export default function WechatRSSPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(false)}>
               取消
             </Button>
             <Button variant="destructive" size="sm" onClick={handleDeleteSource}>
@@ -1942,11 +1909,7 @@ export default function WechatRSSPage() {
             {qrCodeUrl ? (
               <>
                 <div className="rounded border bg-white p-2">
-                  <img
-                    src={qrCodeUrl}
-                    alt="Login QR Code"
-                    className="h-40 w-40 object-contain"
-                  />
+                  <img src={qrCodeUrl} alt="Login QR Code" className="h-40 w-40 object-contain" />
                 </div>
                 <div className="mt-3 text-center text-sm">
                   {loginStatus === "waiting" && (
@@ -1994,9 +1957,7 @@ export default function WechatRSSPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             )}
           </div>
-          <p className="text-center text-xs text-muted-foreground">
-            需要微信公众号管理员账号
-          </p>
+          <p className="text-center text-xs text-muted-foreground">需要微信公众号管理员账号</p>
         </DialogContent>
       </Dialog>
 
@@ -2052,9 +2013,7 @@ export default function WechatRSSPage() {
                 </div>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                   {selectedArticle.content ? (
-                    <div
-                      dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
-                    />
+                    <div dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
                   ) : selectedArticle.description ? (
                     <div
                       dangerouslySetInnerHTML={{
@@ -2062,9 +2021,7 @@ export default function WechatRSSPage() {
                       }}
                     />
                   ) : (
-                    <p className="text-muted-foreground">
-                      暂无内容，请点击"查看原文"阅读
-                    </p>
+                    <p className="text-muted-foreground">暂无内容，请点击"查看原文"阅读</p>
                   )}
                 </div>
               </div>

@@ -30,14 +30,14 @@ node mqtt-client-test.js
 ### 3. 单独测试特定功能
 
 ```javascript
-const MQTTClientTest = require('./mqtt-client-test');
+const MQTTClientTest = require("./mqtt-client-test");
 
 // 创建测试客户端
 const testClient = new MQTTClientTest({
-    host: 'localhost',    // MQTT服务器地址
-    port: 1883,           // MQTT端口
-    wsPort: 8083,         // WebSocket端口
-    clientId: 'my_test_client'
+  host: "localhost", // MQTT服务器地址
+  port: 1883, // MQTT端口
+  wsPort: 8083, // WebSocket端口
+  clientId: "my_test_client",
 });
 
 // 只测试MQTT连接
@@ -74,6 +74,7 @@ await testClient.runAllTests();
 ## 测试结果
 
 测试完成后会显示详细的测试结果：
+
 - 总测试数
 - 通过/失败的测试数
 - 每个测试的详细状态
@@ -100,9 +101,9 @@ await testClient.runAllTests();
 
 ```javascript
 const testClient = new MQTTClientTest({
-    host: '192.168.1.100',  // 自定义服务器地址
-    port: 8883,             // 自定义MQTT端口
-    wsPort: 8884,           // 自定义WebSocket端口
-    clientId: 'custom_client_id'
+  host: "192.168.1.100", // 自定义服务器地址
+  port: 8883, // 自定义MQTT端口
+  wsPort: 8884, // 自定义WebSocket端口
+  clientId: "custom_client_id",
 });
 ```

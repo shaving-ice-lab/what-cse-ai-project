@@ -75,9 +75,7 @@ export default function SettingsPage() {
               <Input
                 id="siteName"
                 value={settings.siteName}
-                onChange={(e) =>
-                  setSettings({ ...settings, siteName: e.target.value })
-                }
+                onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -85,9 +83,7 @@ export default function SettingsPage() {
               <Textarea
                 id="siteDescription"
                 value={settings.siteDescription}
-                onChange={(e) =>
-                  setSettings({ ...settings, siteDescription: e.target.value })
-                }
+                onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
                 rows={3}
               />
             </div>
@@ -109,9 +105,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>允许用户注册</Label>
-                <p className="text-sm text-muted-foreground">
-                  关闭后新用户无法注册
-                </p>
+                <p className="text-sm text-muted-foreground">关闭后新用户无法注册</p>
               </div>
               <Switch
                 checked={settings.allowRegistration}
@@ -124,9 +118,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>邮箱验证</Label>
-                <p className="text-sm text-muted-foreground">
-                  注册时要求验证邮箱
-                </p>
+                <p className="text-sm text-muted-foreground">注册时要求验证邮箱</p>
               </div>
               <Switch
                 checked={settings.requireEmailVerification}
@@ -154,9 +146,7 @@ export default function SettingsPage() {
               <Label htmlFor="pageSize">默认分页大小</Label>
               <Select
                 value={settings.defaultPageSize}
-                onValueChange={(value) =>
-                  setSettings({ ...settings, defaultPageSize: value })
-                }
+                onValueChange={(value) => setSettings({ ...settings, defaultPageSize: value })}
               >
                 <SelectTrigger id="pageSize">
                   <SelectValue placeholder="选择分页大小" />
@@ -177,9 +167,7 @@ export default function SettingsPage() {
                 min="1"
                 max="168"
                 value={settings.crawlerInterval}
-                onChange={(e) =>
-                  setSettings({ ...settings, crawlerInterval: e.target.value })
-                }
+                onChange={(e) => setSettings({ ...settings, crawlerInterval: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
                 设置爬虫自动运行的时间间隔，范围1-168小时
@@ -203,9 +191,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>系统通知</Label>
-                <p className="text-sm text-muted-foreground">
-                  接收重要系统事件通知
-                </p>
+                <p className="text-sm text-muted-foreground">接收重要系统事件通知</p>
               </div>
               <Switch
                 checked={settings.systemNotification}
@@ -218,9 +204,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>爬虫异常通知</Label>
-                <p className="text-sm text-muted-foreground">
-                  爬虫任务异常时发送通知
-                </p>
+                <p className="text-sm text-muted-foreground">爬虫任务异常时发送通知</p>
               </div>
               <Switch
                 checked={settings.crawlerErrorNotification}

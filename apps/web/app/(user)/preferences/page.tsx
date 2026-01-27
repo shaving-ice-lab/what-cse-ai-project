@@ -14,18 +14,7 @@ import {
 } from "lucide-react";
 
 const examTypes = ["国考", "省考", "事业单位", "选调生"];
-const regions = [
-  "北京",
-  "上海",
-  "广东",
-  "江苏",
-  "浙江",
-  "四川",
-  "重庆",
-  "山东",
-  "湖北",
-  "湖南",
-];
+const regions = ["北京", "上海", "广东", "江苏", "浙江", "四川", "重庆", "山东", "湖北", "湖南"];
 const educationLevels = ["大专及以上", "本科及以上", "硕士及以上", "博士及以上"];
 
 export default function PreferencesPage() {
@@ -118,9 +107,7 @@ export default function PreferencesPage() {
                 >
                   <div
                     className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                      isSelected
-                        ? "border-amber-500 bg-amber-500"
-                        : "border-stone-300"
+                      isSelected ? "border-amber-500 bg-amber-500" : "border-stone-300"
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -138,9 +125,7 @@ export default function PreferencesPage() {
             <MapPin className="w-5 h-5 text-amber-500" />
             地区偏好
           </h3>
-          <p className="text-sm text-stone-500 mb-4">
-            选择您意向的工作地区，可多选
-          </p>
+          <p className="text-sm text-stone-500 mb-4">选择您意向的工作地区，可多选</p>
           <div className="flex flex-wrap gap-2">
             {regions.map((region) => {
               const isSelected = preferences.regions.includes(region);
@@ -167,9 +152,7 @@ export default function PreferencesPage() {
             <GraduationCap className="w-5 h-5 text-amber-500" />
             学历要求偏好
           </h3>
-          <p className="text-sm text-stone-500 mb-4">
-            选择您符合的学历条件，用于筛选匹配的职位
-          </p>
+          <p className="text-sm text-stone-500 mb-4">选择您符合的学历条件，用于筛选匹配的职位</p>
           <div className="space-y-3">
             {educationLevels.map((level) => {
               const isSelected = preferences.education_levels.includes(level);
@@ -188,9 +171,7 @@ export default function PreferencesPage() {
                       : "border-stone-200 hover:border-stone-300"
                   }`}
                 >
-                  <span
-                    className={isSelected ? "text-amber-700 font-medium" : "text-stone-600"}
-                  >
+                  <span className={isSelected ? "text-amber-700 font-medium" : "text-stone-600"}>
                     {level}
                   </span>
                   <div

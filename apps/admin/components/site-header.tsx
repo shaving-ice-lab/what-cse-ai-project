@@ -94,11 +94,7 @@ export function SiteHeader() {
         {/* 搜索框 */}
         <div className="relative hidden md:block">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="搜索..."
-            className="w-[200px] pl-8 lg:w-[280px]"
-          />
+          <Input type="search" placeholder="搜索..." className="w-[200px] pl-8 lg:w-[280px]" />
         </div>
 
         {/* 移动端搜索按钮 */}

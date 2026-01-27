@@ -254,9 +254,7 @@ export default function LogsPage() {
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       {getLevelIcon(log.level)}
                       <div className="flex-1 min-w-0 space-y-1">
-                        <p className="text-sm font-medium leading-relaxed">
-                          {log.message}
-                        </p>
+                        <p className="text-sm font-medium leading-relaxed">{log.message}</p>
                         <div className="flex flex-wrap items-center gap-2">
                           {getLevelBadge(log.level)}
                           <Badge variant="outline" className="text-xs">

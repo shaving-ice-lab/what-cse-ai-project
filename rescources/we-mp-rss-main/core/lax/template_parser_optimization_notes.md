@@ -3,6 +3,7 @@
 ## 主要改进
 
 ### 1. 增强的过滤器支持
+
 - **语法**: `{{ variable|filter }}` 和 `{{ variable|filter(arg1, arg2) }}`
 - **内置过滤器**:
   - `default`: 设置默认值
@@ -18,22 +19,26 @@
   - `join`: 列表转字符串
 
 ### 2. elif 条件链支持
+
 - **语法**: `{% if condition %}...{% elif condition %}...{% else %}...{% endif %}`
 - 支持多重条件判断
 - 正确处理条件链的逻辑流程
 
 ### 3. 增强的变量表达式
+
 - **嵌套属性**: `{{ user.name }}`
 - **默认值**: `{{ missing_var or 'default' }}`
 - **过滤器链**: `{{ text|upper|truncate(10) }}`
 - **复杂过滤器**: `{{ list|join(', ')|default('empty') }}`
 
 ### 4. 自定义过滤器注册
+
 - `register_filter(name, func)`: 注册单个过滤器
 - `register_filters(dict)`: 批量注册过滤器
 - 支持带参数的自定义过滤器
 
 ### 5. 改进的参数解析
+
 - 支持字符串字面量（单/双引号）
 - 支持数字、布尔值、None
 - 支持变量引用作为参数
@@ -41,6 +46,7 @@
 ## 使用示例
 
 ### 基础过滤器
+
 ```jinja
 {{ user.name|capitalize|default('匿名用户') }}
 {{ long_text|truncate(50) }}
@@ -49,6 +55,7 @@
 ```
 
 ### elif 条件链
+
 ```jinja
 {% if score >= 90 %}
     <p>优秀成绩: {{ score }}分</p>
@@ -62,6 +69,7 @@
 ```
 
 ### 自定义过滤器
+
 ```python
 def currency(value, currency_symbol='¥'):
     return f"{currency_symbol}{value:,.2f}"

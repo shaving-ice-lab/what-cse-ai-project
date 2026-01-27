@@ -12,15 +12,7 @@ export interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
 
 const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
   (
-    {
-      className,
-      variant = "light",
-      blur = "md",
-      hover = false,
-      border = true,
-      children,
-      ...props
-    },
+    { className, variant = "light", blur = "md", hover = false, border = true, children, ...props },
     ref
   ) => {
     const baseStyles = "rounded-2xl transition-all duration-300";
@@ -43,9 +35,7 @@ const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
         : "border border-white/20"
       : "";
 
-    const hoverStyles = hover
-      ? "hover:-translate-y-1 hover:shadow-card-hover cursor-pointer"
-      : "";
+    const hoverStyles = hover ? "hover:-translate-y-1 hover:shadow-card-hover cursor-pointer" : "";
 
     return (
       <div

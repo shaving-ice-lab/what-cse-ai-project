@@ -363,9 +363,7 @@ export default function ProfilePage() {
               <div className="text-center py-8">
                 <Award className="w-12 h-12 mx-auto text-stone-200 mb-3" />
                 <p className="text-stone-500">暂无证书信息</p>
-                {isEditing && (
-                  <p className="text-sm text-stone-400 mt-1">点击上方按钮添加证书</p>
-                )}
+                {isEditing && <p className="text-sm text-stone-400 mt-1">点击上方按钮添加证书</p>}
               </div>
             ) : (
               <div className="grid gap-4">

@@ -114,9 +114,7 @@ function FilterSection({
         <div className="flex items-center gap-2.5">
           <span className="text-stone-400">{icon}</span>
           <span className="font-medium text-stone-700">{title}</span>
-          {hasValue && (
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse-ring" />
-          )}
+          {hasValue && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse-ring" />}
         </div>
         {expanded ? (
           <ChevronUp className="w-4 h-4 text-stone-400" />
@@ -124,9 +122,7 @@ function FilterSection({
           <ChevronDown className="w-4 h-4 text-stone-400" />
         )}
       </button>
-      {expanded && (
-        <div className="px-4 pb-4 animate-fade-in">{children}</div>
-      )}
+      {expanded && <div className="px-4 pb-4 animate-fade-in">{children}</div>}
     </div>
   );
 }
@@ -148,7 +144,10 @@ function MultiSelect({ options, values, onChange, columns = 4 }: MultiSelectProp
   };
 
   return (
-    <div className={`grid gap-2 grid-cols-${columns}`} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+    <div
+      className={`grid gap-2 grid-cols-${columns}`}
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+    >
       {options.map((option) => (
         <button
           key={option.value}
@@ -194,11 +193,13 @@ function RangeSlider({ min, max, value, onChange, step = 1, suffix = "" }: Range
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
         <span className="font-display font-semibold text-amber-600">
-          {value[0]}{suffix}
+          {value[0]}
+          {suffix}
         </span>
         <span className="text-stone-400">-</span>
         <span className="font-display font-semibold text-amber-600">
-          {value[1]}{suffix}
+          {value[1]}
+          {suffix}
         </span>
       </div>
       <div className="relative h-2 bg-stone-100 rounded-full overflow-hidden">
@@ -264,16 +265,11 @@ export default function PositionFilters({
   onSave,
   resultCount,
 }: PositionFiltersProps) {
-  const [expandedSections, setExpandedSections] = useState<string[]>([
-    "examType",
-    "region",
-  ]);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["examType", "region"]);
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSections((prev) =>
-      prev.includes(section)
-        ? prev.filter((s) => s !== section)
-        : [...prev, section]
+      prev.includes(section) ? prev.filter((s) => s !== section) : [...prev, section]
     );
   }, []);
 
@@ -552,7 +548,9 @@ export default function PositionFilters({
         <div className="px-5 py-4 border-t border-stone-100 bg-gradient-to-r from-amber-50/50 to-transparent">
           <div className="flex items-center justify-between">
             <span className="text-sm text-stone-500">
-              共找到 <span className="font-display font-bold text-amber-600 text-lg">{resultCount}</span> 个职位
+              共找到{" "}
+              <span className="font-display font-bold text-amber-600 text-lg">{resultCount}</span>{" "}
+              个职位
             </span>
             <button className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-amber-md btn-shine">
               应用筛选

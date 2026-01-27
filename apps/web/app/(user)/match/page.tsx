@@ -165,11 +165,7 @@ function ScoreRing({
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      <svg
-        className="transform -rotate-90"
-        width={size}
-        height={size}
-      >
+      <svg className="transform -rotate-90" width={size} height={size}>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -262,9 +258,7 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">匹配职位</p>
-              <p className="text-2xl font-display font-bold text-stone-800">
-                {stats.total}
-              </p>
+              <p className="text-2xl font-display font-bold text-stone-800">{stats.total}</p>
             </div>
           </div>
         </div>
@@ -275,9 +269,7 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">完美匹配</p>
-              <p className="text-2xl font-display font-bold text-emerald-600">
-                {stats.perfect}
-              </p>
+              <p className="text-2xl font-display font-bold text-emerald-600">{stats.perfect}</p>
             </div>
           </div>
         </div>
@@ -288,9 +280,7 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">高度匹配</p>
-              <p className="text-2xl font-display font-bold text-amber-600">
-                {stats.high}
-              </p>
+              <p className="text-2xl font-display font-bold text-amber-600">{stats.high}</p>
             </div>
           </div>
         </div>
@@ -301,9 +291,7 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">平均匹配度</p>
-              <p className="text-2xl font-display font-bold text-violet-600">
-                {stats.average}%
-              </p>
+              <p className="text-2xl font-display font-bold text-violet-600">{stats.average}%</p>
             </div>
           </div>
         </div>
@@ -334,10 +322,10 @@ export default function MatchPage() {
                     color === "emerald"
                       ? "from-emerald-500 to-emerald-600"
                       : color === "amber"
-                      ? "from-amber-500 to-amber-600"
-                      : color === "orange"
-                      ? "from-orange-500 to-orange-600"
-                      : "from-stone-400 to-stone-500"
+                        ? "from-amber-500 to-amber-600"
+                        : color === "orange"
+                          ? "from-orange-500 to-orange-600"
+                          : "from-stone-400 to-stone-500"
                   }`}
                 />
 
@@ -366,8 +354,8 @@ export default function MatchPage() {
                             color === "emerald"
                               ? "bg-emerald-100 text-emerald-700"
                               : color === "amber"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-orange-100 text-orange-700"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-orange-100 text-orange-700"
                           }`}
                         >
                           {getScoreLabel(result.total_score)}
@@ -395,15 +383,11 @@ export default function MatchPage() {
                   <div className="flex items-center gap-6 mt-4 pt-4 border-t border-stone-100 text-sm">
                     <span className="text-stone-500">
                       硬性条件:{" "}
-                      <span className="font-medium text-stone-700">
-                        {result.hard_score}%
-                      </span>
+                      <span className="font-medium text-stone-700">{result.hard_score}%</span>
                     </span>
                     <span className="text-stone-500">
                       软性条件:{" "}
-                      <span className="font-medium text-stone-700">
-                        {result.soft_score}%
-                      </span>
+                      <span className="font-medium text-stone-700">{result.soft_score}%</span>
                     </span>
                     <Link
                       href={`/positions/${result.id}`}
@@ -432,12 +416,8 @@ export default function MatchPage() {
                 {/* Score Display */}
                 <div className="text-center py-6 border-b border-stone-100">
                   <ScoreRing score={selectedResult.total_score} size={100} strokeWidth={10} />
-                  <p className="text-stone-600 mt-3 font-medium">
-                    {selectedResult.position_name}
-                  </p>
-                  <p className="text-sm text-stone-500">
-                    {selectedResult.department_name}
-                  </p>
+                  <p className="text-stone-600 mt-3 font-medium">{selectedResult.position_name}</p>
+                  <p className="text-sm text-stone-500">{selectedResult.department_name}</p>
                 </div>
 
                 {/* Match Details */}

@@ -22,10 +22,7 @@ export function PositionTimeline({ items, className }: PositionTimelineProps) {
         const isLast = index === items.length - 1;
 
         return (
-          <div
-            key={index}
-            className="relative pl-8 pb-6 last:pb-0"
-          >
+          <div key={index} className="relative pl-8 pb-6 last:pb-0">
             {/* Connecting Line */}
             {!isLast && (
               <div
@@ -40,12 +37,10 @@ export function PositionTimeline({ items, className }: PositionTimelineProps) {
             <div
               className={cn(
                 "absolute left-0 top-0.5 w-6 h-6 rounded-full flex items-center justify-center border-2",
-                item.status === "completed" &&
-                  "bg-emerald-500 border-emerald-500 text-white",
+                item.status === "completed" && "bg-emerald-500 border-emerald-500 text-white",
                 item.status === "active" &&
                   "bg-amber-500 border-amber-500 text-white animate-pulse-ring",
-                item.status === "pending" &&
-                  "bg-white border-stone-300 text-stone-400"
+                item.status === "pending" && "bg-white border-stone-300 text-stone-400"
               )}
             >
               {item.status === "completed" ? (

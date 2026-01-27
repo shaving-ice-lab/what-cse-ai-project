@@ -16,11 +16,7 @@ interface FilterTag {
   color: string;
 }
 
-export default function ActiveFilters({
-  values,
-  onRemove,
-  onClearAll,
-}: ActiveFiltersProps) {
+export default function ActiveFilters({ values, onRemove, onClearAll }: ActiveFiltersProps) {
   const tags: FilterTag[] = [];
 
   // 考试类型
@@ -178,7 +174,7 @@ export default function ActiveFilters({
           <Sparkles className="w-4 h-4 text-amber-500" />
           <span>已选条件:</span>
         </div>
-        
+
         {tags.map((tag, index) => {
           const colors = colorClasses[tag.color] || colorClasses.blue;
           return (

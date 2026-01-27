@@ -106,8 +106,7 @@ export default function AdminUsersPage() {
     const matchesSearch =
       user.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || user.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -180,31 +179,19 @@ export default function AdminUsersPage() {
                               src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.nickname}`}
                               alt={user.nickname}
                             />
-                            <AvatarFallback>
-                              {user.nickname.slice(0, 2)}
-                            </AvatarFallback>
+                            <AvatarFallback>{user.nickname.slice(0, 2)}</AvatarFallback>
                           </Avatar>
                           <span className="font-medium">{user.nickname}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {user.phone}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {user.email}
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.phone}</TableCell>
+                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            user.status === "active" ? "default" : "secondary"
-                          }
-                        >
+                        <Badge variant={user.status === "active" ? "default" : "secondary"}>
                           {user.status === "active" ? "正常" : "禁用"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {user.created_at}
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.created_at}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

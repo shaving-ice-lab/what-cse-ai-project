@@ -115,9 +115,7 @@ export default function FavoritesPage() {
   };
 
   const filteredFavorites = favorites.filter(
-    (f) =>
-      f.position_name.includes(searchQuery) ||
-      f.department_name.includes(searchQuery)
+    (f) => f.position_name.includes(searchQuery) || f.department_name.includes(searchQuery)
   );
 
   return (
@@ -190,17 +188,12 @@ export default function FavoritesPage() {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               {/* Match Score Bar */}
-              <div
-                className={`h-1 bg-gradient-to-r ${getScoreColor(position.match_score)}`}
-              />
+              <div className={`h-1 bg-gradient-to-r ${getScoreColor(position.match_score)}`} />
 
               <div className="p-5 lg:p-6">
                 <div className="flex items-start gap-4">
                   {/* Checkbox */}
-                  <button
-                    onClick={() => toggleSelect(position.id)}
-                    className="mt-1 flex-shrink-0"
-                  >
+                  <button onClick={() => toggleSelect(position.id)} className="mt-1 flex-shrink-0">
                     {selectedIds.includes(position.id) ? (
                       <CheckSquare className="w-5 h-5 text-amber-500" />
                     ) : (
@@ -246,8 +239,7 @@ export default function FavoritesPage() {
                         {position.education_requirement}
                       </span>
                       <span className="flex items-center gap-1 px-2.5 py-1 bg-stone-100 rounded-lg text-stone-600">
-                        <Users className="w-3.5 h-3.5" />
-                        招{position.recruit_count}人
+                        <Users className="w-3.5 h-3.5" />招{position.recruit_count}人
                       </span>
                     </div>
                   </div>

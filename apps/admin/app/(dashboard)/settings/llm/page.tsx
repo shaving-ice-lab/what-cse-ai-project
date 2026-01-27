@@ -51,7 +51,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@what-cse/ui";
-import { llmConfigApi, LLMConfig, LLMProvider, CreateLLMConfigRequest, UpdateLLMConfigRequest } from "@/services/api";
+import {
+  llmConfigApi,
+  LLMConfig,
+  LLMProvider,
+  CreateLLMConfigRequest,
+  UpdateLLMConfigRequest,
+} from "@/services/api";
 
 interface ConfigFormData {
   name: string;
@@ -95,7 +101,11 @@ export default function LLMConfigPage() {
   const [deletingConfig, setDeletingConfig] = useState<LLMConfig | null>(null);
   const [formData, setFormData] = useState<ConfigFormData>(defaultFormData);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [testResult, setTestResult] = useState<{ configId: number; success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{
+    configId: number;
+    success: boolean;
+    message: string;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
 
   const loadConfigs = useCallback(async () => {
@@ -276,7 +286,10 @@ export default function LLMConfigPage() {
     }
     if (config.last_test_status === 1) {
       return (
-        <Badge variant="outline" className="gap-1 text-xs border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+        <Badge
+          variant="outline"
+          className="gap-1 text-xs border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
+        >
           <CheckCircle2 className="h-3 w-3" />
           正常
         </Badge>
@@ -324,9 +337,7 @@ export default function LLMConfigPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">LLM 配置管理</h1>
-          <p className="text-sm text-muted-foreground">
-            管理大语言模型服务商配置
-          </p>
+          <p className="text-sm text-muted-foreground">管理大语言模型服务商配置</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={loadConfigs}>
@@ -346,9 +357,7 @@ export default function LLMConfigPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Bot className="h-10 w-10 text-muted-foreground/50" />
             <h3 className="mt-4 font-semibold">暂无 LLM 配置</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              添加你的第一个 LLM 服务商配置
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">添加你的第一个 LLM 服务商配置</p>
             <Button size="sm" className="mt-4" onClick={handleCreate}>
               <Plus className="mr-1.5 h-4 w-4" />
               添加配置
@@ -358,8 +367,8 @@ export default function LLMConfigPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {configs.map((config) => (
-            <Card 
-              key={config.id} 
+            <Card
+              key={config.id}
               className={`relative transition-shadow hover:shadow-md ${
                 config.is_default ? "ring-1 ring-primary" : ""
               }`}
@@ -385,7 +394,7 @@ export default function LLMConfigPage() {
                   {getStatusBadge(config)}
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-3 pt-0">
                 {/* 配置详情 */}
                 <div className="text-xs space-y-1.5 text-muted-foreground">
@@ -401,15 +410,15 @@ export default function LLMConfigPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>最大 Tokens / 温度</span>
-                    <span>{config.max_tokens} / {config.temperature}</span>
+                    <span>
+                      {config.max_tokens} / {config.temperature}
+                    </span>
                   </div>
                 </div>
 
                 {/* 描述 */}
                 {config.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {config.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{config.description}</p>
                 )}
 
                 {/* 测试结果 */}
@@ -455,11 +464,11 @@ export default function LLMConfigPage() {
                       </>
                     )}
                   </Button>
-                  
+
                   <div className="flex items-center gap-1">
                     {!config.is_default && config.is_enabled && (
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => handleSetDefault(config)}
@@ -468,8 +477,8 @@ export default function LLMConfigPage() {
                         <Star className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       className="h-8 w-8"
                       onClick={() => handleEdit(config)}
@@ -496,26 +505,34 @@ export default function LLMConfigPage() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>
-              {editingConfig ? "编辑 LLM 配置" : "添加 LLM 配置"}
-            </DialogTitle>
-            <DialogDescription>
-              配置大语言模型服务商信息
-            </DialogDescription>
+            <DialogTitle>{editingConfig ? "编辑 LLM 配置" : "添加 LLM 配置"}</DialogTitle>
+            <DialogDescription>配置大语言模型服务商信息</DialogDescription>
           </DialogHeader>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
+
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex-1 overflow-hidden flex flex-col"
+          >
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic" className="text-xs">基本信息</TabsTrigger>
-              <TabsTrigger value="api" className="text-xs">API 配置</TabsTrigger>
-              <TabsTrigger value="params" className="text-xs">参数设置</TabsTrigger>
+              <TabsTrigger value="basic" className="text-xs">
+                基本信息
+              </TabsTrigger>
+              <TabsTrigger value="api" className="text-xs">
+                API 配置
+              </TabsTrigger>
+              <TabsTrigger value="params" className="text-xs">
+                参数设置
+              </TabsTrigger>
             </TabsList>
-            
+
             <div className="flex-1 overflow-y-auto py-4">
               <TabsContent value="basic" className="space-y-4 mt-0">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-sm">配置名称 *</Label>
+                    <Label htmlFor="name" className="text-sm">
+                      配置名称 *
+                    </Label>
                     <Input
                       id="name"
                       placeholder="例如：OpenAI GPT-4"
@@ -524,7 +541,9 @@ export default function LLMConfigPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="provider" className="text-sm">服务商 *</Label>
+                    <Label htmlFor="provider" className="text-sm">
+                      服务商 *
+                    </Label>
                     <Select value={formData.provider} onValueChange={handleProviderChange}>
                       <SelectTrigger id="provider">
                         <SelectValue placeholder="选择服务商" />
@@ -541,7 +560,9 @@ export default function LLMConfigPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="model" className="text-sm">模型名称 *</Label>
+                  <Label htmlFor="model" className="text-sm">
+                    模型名称 *
+                  </Label>
                   <Input
                     id="model"
                     placeholder="例如：gpt-4-turbo"
@@ -550,22 +571,26 @@ export default function LLMConfigPage() {
                   />
                   {getProviderInfo(formData.provider)?.models && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
-                      {getProviderInfo(formData.provider)?.models?.slice(0, 4).map((model) => (
-                        <button
-                          key={model}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, model })}
-                          className="text-xs px-2 py-0.5 rounded bg-muted hover:bg-muted/80 transition-colors"
-                        >
-                          {model}
-                        </button>
-                      ))}
+                      {getProviderInfo(formData.provider)
+                        ?.models?.slice(0, 4)
+                        .map((model) => (
+                          <button
+                            key={model}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, model })}
+                            className="text-xs px-2 py-0.5 rounded bg-muted hover:bg-muted/80 transition-colors"
+                          >
+                            {model}
+                          </button>
+                        ))}
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="description" className="text-sm">描述（可选）</Label>
+                  <Label htmlFor="description" className="text-sm">
+                    描述（可选）
+                  </Label>
                   <Textarea
                     id="description"
                     placeholder="配置说明..."
@@ -579,7 +604,9 @@ export default function LLMConfigPage() {
 
               <TabsContent value="api" className="space-y-4 mt-0">
                 <div className="space-y-1.5">
-                  <Label htmlFor="api_url" className="text-sm">API 地址 *</Label>
+                  <Label htmlFor="api_url" className="text-sm">
+                    API 地址 *
+                  </Label>
                   <Input
                     id="api_url"
                     placeholder="https://api.openai.com/v1/chat/completions"
@@ -628,7 +655,9 @@ export default function LLMConfigPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="organization_id" className="text-sm">组织 ID（可选）</Label>
+                  <Label htmlFor="organization_id" className="text-sm">
+                    组织 ID（可选）
+                  </Label>
                   <Input
                     id="organization_id"
                     placeholder="org-..."
@@ -642,18 +671,24 @@ export default function LLMConfigPage() {
               <TabsContent value="params" className="space-y-4 mt-0">
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="max_tokens" className="text-sm">最大 Tokens</Label>
+                    <Label htmlFor="max_tokens" className="text-sm">
+                      最大 Tokens
+                    </Label>
                     <Input
                       id="max_tokens"
                       type="number"
                       min="1"
                       max="128000"
                       value={formData.max_tokens}
-                      onChange={(e) => setFormData({ ...formData, max_tokens: parseInt(e.target.value) || 4096 })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, max_tokens: parseInt(e.target.value) || 4096 })
+                      }
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="temperature" className="text-sm">温度 (0-2)</Label>
+                    <Label htmlFor="temperature" className="text-sm">
+                      温度 (0-2)
+                    </Label>
                     <Input
                       id="temperature"
                       type="number"
@@ -661,18 +696,24 @@ export default function LLMConfigPage() {
                       max="2"
                       step="0.1"
                       value={formData.temperature}
-                      onChange={(e) => setFormData({ ...formData, temperature: parseFloat(e.target.value) || 0.7 })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, temperature: parseFloat(e.target.value) || 0.7 })
+                      }
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="timeout" className="text-sm">超时（秒）</Label>
+                    <Label htmlFor="timeout" className="text-sm">
+                      超时（秒）
+                    </Label>
                     <Input
                       id="timeout"
                       type="number"
                       min="1"
                       max="300"
                       value={formData.timeout}
-                      onChange={(e) => setFormData({ ...formData, timeout: parseInt(e.target.value) || 60 })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, timeout: parseInt(e.target.value) || 60 })
+                      }
                     />
                   </div>
                 </div>
@@ -681,19 +722,27 @@ export default function LLMConfigPage() {
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="is_enabled" className="text-sm cursor-pointer">启用配置</Label>
+                    <Label htmlFor="is_enabled" className="text-sm cursor-pointer">
+                      启用配置
+                    </Label>
                     <Switch
                       id="is_enabled"
                       checked={formData.is_enabled}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, is_enabled: checked })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="is_default" className="text-sm cursor-pointer">设为默认</Label>
+                    <Label htmlFor="is_default" className="text-sm cursor-pointer">
+                      设为默认
+                    </Label>
                     <Switch
                       id="is_default"
                       checked={formData.is_default}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_default: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, is_default: checked })
+                      }
                     />
                   </div>
                 </div>

@@ -175,7 +175,7 @@ export default function FenbiCrawlerPage() {
 
   // URL Parse dialog states
   const [parseDialogOpen, setParseDialogOpen] = useState(false);
-  
+
   // Parse result dialog states (for viewing task results)
   const [parseResultDialogOpen, setParseResultDialogOpen] = useState(false);
   const [selectedTaskResult, setSelectedTaskResult] = useState<{
@@ -187,7 +187,9 @@ export default function FenbiCrawlerPage() {
   const [filterRegion, setFilterRegion] = useState("");
   const [filterExamType, setFilterExamType] = useState("");
   const [filterYear, setFilterYear] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "tasks" | "completed" | "pending" | "failed">("all"); // 状态筛选
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "tasks" | "completed" | "pending" | "failed"
+  >("all"); // 状态筛选
   const [filterKeyword, setFilterKeyword] = useState(""); // 关键词搜索
 
   // 任务步骤类型
@@ -256,11 +258,7 @@ export default function FenbiCrawlerPage() {
     steps.map((step) => ({
       name: step.name,
       status:
-        step.status === "completed"
-          ? "success"
-          : step.status === "failed"
-          ? "error"
-          : step.status,
+        step.status === "completed" ? "success" : step.status === "failed" ? "error" : step.status,
       message: step.message || "",
       duration_ms: step.data?.duration_ms ?? 0,
       details: typeof step.data?.details === "string" ? step.data.details : undefined,
@@ -293,9 +291,7 @@ export default function FenbiCrawlerPage() {
     message: string
   ) => {
     if (tasks.length === 0) return;
-    await Promise.all(
-      tasks.map((task) => persistParseTaskUpdate(task.id, { status, message }))
-    );
+    await Promise.all(tasks.map((task) => persistParseTaskUpdate(task.id, { status, message })));
   };
 
   const [taskQueue, setTaskQueue] = useState<TaskItem[]>([]);
@@ -311,8 +307,8 @@ export default function FenbiCrawlerPage() {
       Array.isArray(summary?.positions) && summary.positions.length > 0
         ? summary.positions
         : (summary?.positions_count || 0) > 0
-        ? Array(summary?.positions_count || 0).fill({ position_name: "已解析职位" })
-        : [];
+          ? Array(summary?.positions_count || 0).fill({ position_name: "已解析职位" })
+          : [];
     const llmAnalysis =
       summary &&
       (summary.summary ||
@@ -331,13 +327,9 @@ export default function FenbiCrawlerPage() {
           }
         : undefined;
     const hasAnyData = Boolean(
-      summary?.page_title ||
-        summary?.page_content ||
-        attachments.length > 0 ||
-        llmAnalysis
+      summary?.page_title || summary?.page_content || attachments.length > 0 || llmAnalysis
     );
-    const success =
-      typeof summary?.success === "boolean" ? summary.success : hasAnyData;
+    const success = typeof summary?.success === "boolean" ? summary.success : hasAnyData;
 
     return {
       id: task.id,
@@ -397,11 +389,11 @@ export default function FenbiCrawlerPage() {
   useEffect(() => {
     loadTaskQueueFromDB();
   }, [loadTaskQueueFromDB]);
-  
+
   // 任务详情 dialog
   const [taskDetailDialogOpen, setTaskDetailDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<typeof taskQueue[0] | null>(null);
-  
+  const [selectedTask, setSelectedTask] = useState<(typeof taskQueue)[0] | null>(null);
+
   // 任务队列的 ref（用于在异步操作中获取最新值）
   const taskQueueRef = useRef(taskQueue);
   useEffect(() => {
@@ -589,13 +581,13 @@ export default function FenbiCrawlerPage() {
           page_size: 100,
         }),
       ]);
-      
+
       const newAnnouncements = (announcementsRes as any).announcements || [];
       const latestAnnouncements = (latestRes as any).announcements || [];
-      
+
       // 检测新增的公告，创建任务到数据库
       const newTaskItems: CreateParseTaskItem[] = [];
-      
+
       // 从最新的数据中检测新公告
       for (const ann of latestAnnouncements) {
         if (!knownAnnouncementIdsRef.current.has(ann.id)) {
@@ -608,7 +600,7 @@ export default function FenbiCrawlerPage() {
           });
         }
       }
-      
+
       // 调用 API 创建任务到数据库
       let createdTasks: TaskItem[] = [];
       if (newTaskItems.length > 0) {
@@ -616,7 +608,7 @@ export default function FenbiCrawlerPage() {
           const result = await fenbiApi.createParseTasks(newTaskItems);
           // 将 API 返回的任务转换为 TaskItem 格式并添加到队列
           createdTasks = (result.tasks || []).map(mapApiTaskToTaskItem);
-          
+
           // 将新任务添加到队列顶部
           if (createdTasks.length > 0) {
             setTaskQueue((prev) => [...createdTasks, ...prev].slice(0, 500)); // 最多保留500条
@@ -625,19 +617,19 @@ export default function FenbiCrawlerPage() {
           console.error("Failed to create parse tasks:", error);
         }
       }
-      
+
       setAnnouncements(newAnnouncements);
       setAnnouncementsTotal((announcementsRes as any).total || 0);
       setAnnouncementsPage(1); // 重置到第一页
       setStats(statsRes as any);
-      
+
       return createdTasks; // 返回新增的任务列表，用于后续解析
     } catch (error) {
       console.error("Failed to refresh during crawl:", error);
       return [];
     }
   };
-  
+
   // 更新任务步骤的辅助函数
   const updateTaskStep = (taskId: number, stepName: string, updates: Partial<TaskStep>) => {
     setTaskQueue((prev) =>
@@ -680,22 +672,22 @@ export default function FenbiCrawlerPage() {
     concurrency: number
   ) => {
     const executing: Promise<void>[] = [];
-    
+
     // 创建一个 Map 用于快速查找任务信息
-    const taskMap = new Map(tasks.map(t => [t.id, t]));
-    
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+
     for (const task of tasks) {
       const taskId = task.id;
-      
+
       // 检查是否应该停止
       if (stopParsingRef.current) {
         break;
       }
-      
+
       const p = (async () => {
         // 直接使用传入的任务信息，而不是从 ref 中查找
         const currentTask = taskMap.get(taskId);
-        
+
         // 初始化任务步骤（与后端 ParseURL 步骤一致）
         const initialSteps: TaskStep[] = [
           { name: "提取粉笔原文链接", status: "pending" },
@@ -706,12 +698,17 @@ export default function FenbiCrawlerPage() {
           { name: "保存到数据库", status: "pending" },
         ];
         let currentSteps = initialSteps;
-        
+
         // 更新任务状态为解析中
         setTaskQueue((prev) =>
           prev.map((t) =>
-            t.id === taskId 
-              ? { ...t, status: "parsing" as const, startTime: new Date().toISOString(), steps: initialSteps } 
+            t.id === taskId
+              ? {
+                  ...t,
+                  status: "parsing" as const,
+                  startTime: new Date().toISOString(),
+                  steps: initialSteps,
+                }
               : t
           )
         );
@@ -720,7 +717,7 @@ export default function FenbiCrawlerPage() {
           message: "解析中",
           steps: toParseTaskSteps(currentSteps),
         });
-        
+
         // 检查 fenbiUrl 是否存在
         if (!currentTask?.fenbiUrl) {
           // 更新第一个步骤为失败
@@ -730,16 +727,21 @@ export default function FenbiCrawlerPage() {
             startTime: new Date(),
             endTime: new Date(),
           });
-          updateTaskStep(taskId, "提取粉笔原文链接", { 
-            status: "failed", 
-            message: "公告URL为空", 
+          updateTaskStep(taskId, "提取粉笔原文链接", {
+            status: "failed",
+            message: "公告URL为空",
             startTime: new Date(),
-            endTime: new Date() 
+            endTime: new Date(),
           });
           setTaskQueue((prev) =>
             prev.map((t) =>
               t.id === taskId
-                ? { ...t, status: "failed" as const, message: "无URL", endTime: new Date().toISOString() }
+                ? {
+                    ...t,
+                    status: "failed" as const,
+                    message: "无URL",
+                    endTime: new Date().toISOString(),
+                  }
                 : t
             )
           );
@@ -750,26 +752,26 @@ export default function FenbiCrawlerPage() {
           });
           return;
         }
-        
+
         // 标记第一个步骤为运行中
-        currentSteps = applyStepUpdate(currentSteps, "提取粉笔原文链接", { 
-          status: "running", 
+        currentSteps = applyStepUpdate(currentSteps, "提取粉笔原文链接", {
+          status: "running",
           startTime: new Date(),
-          message: "正在解析..."
+          message: "正在解析...",
         });
-        updateTaskStep(taskId, "提取粉笔原文链接", { 
-          status: "running", 
+        updateTaskStep(taskId, "提取粉笔原文链接", {
+          status: "running",
           startTime: new Date(),
-          message: "正在解析..."
+          message: "正在解析...",
         });
         await persistParseTaskUpdate(taskId, {
           steps: toParseTaskSteps(currentSteps),
         });
-        
+
         try {
           // 调用解析API（后端会返回详细的步骤信息）
           const result = await fenbiApi.parseUrl(currentTask.fenbiUrl);
-          
+
           // 根据后端返回的 steps 更新前端任务步骤
           if (result.steps && result.steps.length > 0) {
             // 使用后端返回的步骤信息更新前端显示
@@ -779,129 +781,135 @@ export default function FenbiCrawlerPage() {
               message: step.message,
               startTime: new Date(), // 后端没有返回具体时间，使用当前时间
               endTime: new Date(),
-              data: step.details ? { details: step.details, duration_ms: step.duration_ms } : { duration_ms: step.duration_ms },
+              data: step.details
+                ? { details: step.details, duration_ms: step.duration_ms }
+                : { duration_ms: step.duration_ms },
             }));
             currentSteps = updatedSteps;
-            
+
             // 更新任务的所有步骤
             setTaskQueue((prev) =>
-              prev.map((t) =>
-                t.id === taskId
-                  ? { ...t, steps: updatedSteps }
-                  : t
-              )
+              prev.map((t) => (t.id === taskId ? { ...t, steps: updatedSteps } : t))
             );
           }
-          
+
           // 判断整体是否成功
           const hasError = result.steps?.some((s) => s.status === "error");
-          const finalStatus = result.success ? "completed" : (hasError ? "failed" : "completed");
-          const finalMessage = result.success 
-            ? (result.data?.llm_analysis?.summary 
-                ? `解析完成，提取 ${result.data.llm_analysis.positions?.length || 0} 个岗位` 
-                : "解析完成")
-            : (result.error || "解析失败");
-          
+          const finalStatus = result.success ? "completed" : hasError ? "failed" : "completed";
+          const finalMessage = result.success
+            ? result.data?.llm_analysis?.summary
+              ? `解析完成，提取 ${result.data.llm_analysis.positions?.length || 0} 个岗位`
+              : "解析完成"
+            : result.error || "解析失败";
+
           // 更新前端状态
           setTaskQueue((prev) =>
             prev.map((t) =>
               t.id === taskId
-                ? { 
-                    ...t, 
-                    status: finalStatus as "completed" | "failed", 
-                    parseResult: result, 
+                ? {
+                    ...t,
+                    status: finalStatus as "completed" | "failed",
+                    parseResult: result,
                     message: finalMessage,
-                    endTime: new Date().toISOString() 
+                    endTime: new Date().toISOString(),
                   }
                 : t
             )
           );
-          
+
           // 同步更新到数据库（保存完整解析结果，用于刷新后恢复）
-        await persistParseTaskUpdate(taskId, {
-          status: finalStatus,
-          message: finalMessage,
-          steps: result.steps,
-          parse_result_summary: {
-            success: result.success,
-            error: result.error,
-            positions_count: result.data?.llm_analysis?.positions?.length || 0,
-            summary: result.data?.llm_analysis?.summary,
-            confidence: result.data?.llm_analysis?.confidence,
-            // 保存完整数据用于刷新后恢复
-            page_title: result.data?.page_title,
-            page_content: truncateText(result.data?.page_content, 60000),
-            final_url: result.data?.final_url,
-            attachments: result.data?.attachments?.map(att => ({
-              name: att.name,
-              url: att.url,
-              type: att.type,
-              content: truncateText(att.content, 20000),
-              error: att.error,
-            })),
-            positions: result.data?.llm_analysis?.positions,
-            exam_info: result.data?.llm_analysis?.exam_info,
-            raw_response: truncateText(result.data?.llm_analysis?.raw_response, 20000),
-            llm_error: result.data?.llm_analysis?.error,
-          },
-        });
+          await persistParseTaskUpdate(taskId, {
+            status: finalStatus,
+            message: finalMessage,
+            steps: result.steps,
+            parse_result_summary: {
+              success: result.success,
+              error: result.error,
+              positions_count: result.data?.llm_analysis?.positions?.length || 0,
+              summary: result.data?.llm_analysis?.summary,
+              confidence: result.data?.llm_analysis?.confidence,
+              // 保存完整数据用于刷新后恢复
+              page_title: result.data?.page_title,
+              page_content: truncateText(result.data?.page_content, 60000),
+              final_url: result.data?.final_url,
+              attachments: result.data?.attachments?.map((att) => ({
+                name: att.name,
+                url: att.url,
+                type: att.type,
+                content: truncateText(att.content, 20000),
+                error: att.error,
+              })),
+              positions: result.data?.llm_analysis?.positions,
+              exam_info: result.data?.llm_analysis?.exam_info,
+              raw_response: truncateText(result.data?.llm_analysis?.raw_response, 20000),
+              llm_error: result.data?.llm_analysis?.error,
+            },
+          });
         } catch (error: any) {
           // 标记任务失败
-        currentSteps = applyStepUpdate(currentSteps, "提取粉笔原文链接", { 
-          status: "failed", 
-          message: error?.message || "请求失败",
-          endTime: new Date() 
-        });
-          updateTaskStep(taskId, "提取粉笔原文链接", { 
-            status: "failed", 
+          currentSteps = applyStepUpdate(currentSteps, "提取粉笔原文链接", {
+            status: "failed",
             message: error?.message || "请求失败",
-            endTime: new Date() 
+            endTime: new Date(),
           });
-          
+          updateTaskStep(taskId, "提取粉笔原文链接", {
+            status: "failed",
+            message: error?.message || "请求失败",
+            endTime: new Date(),
+          });
+
           if (!stopParsingRef.current) {
             // 更新前端状态
             setTaskQueue((prev) =>
               prev.map((t) =>
                 t.id === taskId
-                  ? { ...t, status: "failed" as const, message: error?.message || "解析失败", endTime: new Date().toISOString() }
+                  ? {
+                      ...t,
+                      status: "failed" as const,
+                      message: error?.message || "解析失败",
+                      endTime: new Date().toISOString(),
+                    }
                   : t
-            )
+              )
             );
-            
+
             // 同步更新到数据库
-          await persistParseTaskUpdate(taskId, {
-            status: "failed",
-            message: error?.message || "解析失败",
-            steps: toParseTaskSteps(currentSteps),
-          });
+            await persistParseTaskUpdate(taskId, {
+              status: "failed",
+              message: error?.message || "解析失败",
+              steps: toParseTaskSteps(currentSteps),
+            });
           }
         }
       })();
-      
+
       const pWithCleanup = p.then(() => {
         executing.splice(executing.indexOf(pWithCleanup), 1);
       });
       executing.push(pWithCleanup);
-      
+
       if (executing.length >= concurrency) {
         await Promise.race(executing);
       }
     }
-    
+
     await Promise.all(executing);
   };
 
   // 爬取单页数据的核心函数
   const crawlSinglePage = async (isReset: boolean) => {
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
     const excludedExamTypes = ["shengkao", "guokao"];
-    const examTypesToCrawl = crawlExamTypes.length > 0 
-      ? crawlExamTypes 
-      : categories.exam_types.filter((type) => !excludedExamTypes.includes(type.code)).map((type) => type.code);
-    
+    const examTypesToCrawl =
+      crawlExamTypes.length > 0
+        ? crawlExamTypes
+        : categories.exam_types
+            .filter((type) => !excludedExamTypes.includes(type.code))
+            .map((type) => type.code);
+
     const pageNum = isReset ? 1 : currentPageCount + 1;
-    
+
     // 更新进度显示：正在爬取第N页
     setCrawlProgress({
       total_tasks: 0,
@@ -912,94 +920,109 @@ export default function FenbiCrawlerPage() {
       status: "running",
       message: `正在爬取第 ${pageNum} 页数据...`,
     });
-    
+
     // 调用爬取 API，设置 max_pages: 1 只爬取一页
     let crawlResult: FenbiCrawlProgress | null = null;
-    crawlResult = await fenbiApi.triggerCrawl({
+    crawlResult = (await fenbiApi.triggerCrawl({
       regions: crawlRegions.length > 0 ? crawlRegions : undefined,
       exam_types: examTypesToCrawl,
       years: crawlYears.length > 0 ? crawlYears : undefined,
       max_pages: 1, // 每次只爬取一页
       reset: isReset, // 是否重置位置
       // 不跳过保存，数据先存入数据库，refreshCrawlData 从数据库获取新数据创建任务
-    }) as FenbiCrawlProgress;
-    
+    })) as FenbiCrawlProgress;
+
     // 获取新爬取的数据
     const newTasks = await refreshCrawlData();
-    
+
     // 更新状态
     const hasMore = crawlResult?.has_more_data ?? false;
     setHasMorePages(hasMore);
     setCurrentPageCount(pageNum);
-    
+
     // 更新进度
     setCrawlProgress({
       total_tasks: newTasks.length,
       completed_tasks: 0,
-      current_task: hasMore ? `第 ${pageNum} 页完成，共 ${newTasks.length} 条` : `爬取完成，共 ${newTasks.length} 条`,
+      current_task: hasMore
+        ? `第 ${pageNum} 页完成，共 ${newTasks.length} 条`
+        : `爬取完成，共 ${newTasks.length} 条`,
       items_crawled: crawlResult?.items_crawled || 0,
       items_saved: crawlResult?.items_saved || 0,
       status: hasMore ? "paused" : "completed",
       message: hasMore ? `第 ${pageNum} 页爬取完成，点击"下一页"继续` : "全部爬取完成",
     });
-    
+
     // 如果有新数据，执行LLM解析
     if (newTasks.length > 0) {
       // 更新进度：开始解析
-      setCrawlProgress((prev) => prev ? {
-        ...prev,
-        current_task: `第 ${pageNum} 页：解析 ${newTasks.length} 条数据...`,
-        status: "running",
-        message: `正在解析第 ${pageNum} 页数据 (${newTasks.length} 条)...`,
-      } : null);
-      
+      setCrawlProgress((prev) =>
+        prev
+          ? {
+              ...prev,
+              current_task: `第 ${pageNum} 页：解析 ${newTasks.length} 条数据...`,
+              status: "running",
+              message: `正在解析第 ${pageNum} 页数据 (${newTasks.length} 条)...`,
+            }
+          : null
+      );
+
       // 执行并行LLM解析 - 直接传入任务数组，避免依赖异步更新的 ref
       await parseWithConcurrencyLimit(newTasks, parseParallelCount);
-      
+
       // 解析完成，更新进度
-      setCrawlProgress((prev) => prev ? {
-        ...prev,
-        current_task: hasMore ? `第 ${pageNum} 页完成` : "全部完成",
-        status: hasMore ? "paused" : "completed",
-        message: hasMore ? `第 ${pageNum} 页解析完成，点击"下一页"继续` : "全部爬取和解析完成",
-      } : null);
+      setCrawlProgress((prev) =>
+        prev
+          ? {
+              ...prev,
+              current_task: hasMore ? `第 ${pageNum} 页完成` : "全部完成",
+              status: hasMore ? "paused" : "completed",
+              message: hasMore
+                ? `第 ${pageNum} 页解析完成，点击"下一页"继续`
+                : "全部爬取和解析完成",
+            }
+          : null
+      );
     }
-    
+
     return { hasMore, newTasksCount: newTasks.length };
   };
 
   const handleTriggerCrawl = async () => {
     // 辅助函数：延迟
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
     setCrawling(true);
     setCrawlProgress(null);
     setActiveTab("tasks"); // 切换到任务 Tab
     setCrawlStartTime(new Date());
     // 不再清空任务队列，保留之前的任务记录
-    // setTaskQueue([]); 
+    // setTaskQueue([]);
     stopParsingRef.current = false; // 重置停止标志
     setHasMorePages(false); // 重置更多页面标志
     setCurrentPageCount(0); // 重置页数计数
-    
+
     // 等待 UI 更新
     await sleep(100);
-    
+
     // 初始化已知公告ID集合（包括当前任务队列中的ID + 数据库中的公告ID）
     // 这样可以避免重复添加已存在的任务
     const existingTaskIds = new Set(taskQueue.map((t) => t.id));
-    knownAnnouncementIdsRef.current = new Set([...existingTaskIds, ...announcements.map((a) => a.id)]);
-    
+    knownAnnouncementIdsRef.current = new Set([
+      ...existingTaskIds,
+      ...announcements.map((a) => a.id),
+    ]);
+
     try {
       // 只爬取第一页，不自动继续
       await crawlSinglePage(true);
-      
     } catch (error: any) {
       // 忽略用户主动取消的错误
-      const isCanceled = error?.name === 'CanceledError' || 
-                         error?.name === 'AbortError' || 
-                         error?.code === 'ERR_CANCELED' ||
-                         error?.message === 'canceled';
+      const isCanceled =
+        error?.name === "CanceledError" ||
+        error?.name === "AbortError" ||
+        error?.code === "ERR_CANCELED" ||
+        error?.message === "canceled";
       const runningTasks = taskQueueRef.current.filter(
         (task) => task.status === "running" || task.status === "parsing"
       );
@@ -1007,19 +1030,33 @@ export default function FenbiCrawlerPage() {
         console.error("Failed to trigger crawl:", error);
         // 标记正在处理的任务为失败
         await persistTasksByStatus(runningTasks, "failed", "爬取失败");
-        setTaskQueue((prev) => prev.map((task) => 
-          task.status === "running" || task.status === "parsing"
-            ? { ...task, status: "failed" as const, message: "爬取失败", endTime: new Date().toISOString() }
-            : task
-        ));
+        setTaskQueue((prev) =>
+          prev.map((task) =>
+            task.status === "running" || task.status === "parsing"
+              ? {
+                  ...task,
+                  status: "failed" as const,
+                  message: "爬取失败",
+                  endTime: new Date().toISOString(),
+                }
+              : task
+          )
+        );
       } else {
         // 标记正在处理的任务为已停止
         await persistTasksByStatus(runningTasks, "skipped", "已停止");
-        setTaskQueue((prev) => prev.map((task) => 
-          task.status === "running" || task.status === "parsing"
-            ? { ...task, status: "skipped" as const, message: "已停止", endTime: new Date().toISOString() }
-            : task
-        ));
+        setTaskQueue((prev) =>
+          prev.map((task) =>
+            task.status === "running" || task.status === "parsing"
+              ? {
+                  ...task,
+                  status: "skipped" as const,
+                  message: "已停止",
+                  endTime: new Date().toISOString(),
+                }
+              : task
+          )
+        );
       }
     } finally {
       // 停止定时器（如果有）
@@ -1038,10 +1075,10 @@ export default function FenbiCrawlerPage() {
   // 手动触发下一页爬取
   const handleNextPage = async () => {
     if (!hasMorePages || crawling) return;
-    
+
     setCrawling(true);
     stopParsingRef.current = false;
-    
+
     try {
       await crawlSinglePage(false); // 不重置，继续下一页
     } catch (error: any) {
@@ -1050,11 +1087,18 @@ export default function FenbiCrawlerPage() {
         (task) => task.status === "running" || task.status === "parsing"
       );
       await persistTasksByStatus(runningTasks, "failed", "爬取失败");
-      setTaskQueue((prev) => prev.map((task) => 
-        task.status === "running" || task.status === "parsing"
-          ? { ...task, status: "failed" as const, message: "爬取失败", endTime: new Date().toISOString() }
-          : task
-      ));
+      setTaskQueue((prev) =>
+        prev.map((task) =>
+          task.status === "running" || task.status === "parsing"
+            ? {
+                ...task,
+                status: "failed" as const,
+                message: "爬取失败",
+                endTime: new Date().toISOString(),
+              }
+            : task
+        )
+      );
     } finally {
       await refreshCrawlData();
       setCrawling(false);
@@ -1064,14 +1108,14 @@ export default function FenbiCrawlerPage() {
   const handleStopCrawl = async () => {
     // 设置停止解析标志
     stopParsingRef.current = true;
-    
+
     try {
       // 调用后端停止爬取 API
       await fenbiApi.stopCrawl();
     } catch (error) {
       console.error("Failed to stop crawl on server:", error);
     }
-    
+
     // 取消正在进行的请求
     if (crawlAbortControllerRef.current) {
       crawlAbortControllerRef.current.abort();
@@ -1082,22 +1126,31 @@ export default function FenbiCrawlerPage() {
       clearInterval(crawlIntervalRef.current);
       crawlIntervalRef.current = null;
     }
-    
+
     // 标记所有待处理的任务为已跳过
     const pendingTasks = taskQueueRef.current.filter(
       (task) => task.status === "pending" || task.status === "parsing"
     );
     await persistTasksByStatus(pendingTasks, "skipped", "已停止");
-    setTaskQueue((prev) => prev.map((task) => 
-      task.status === "pending" || task.status === "parsing"
-        ? { ...task, status: "skipped" as const, message: "已停止", endTime: new Date().toISOString() }
-        : task
-    ));
-    
+    setTaskQueue((prev) =>
+      prev.map((task) =>
+        task.status === "pending" || task.status === "parsing"
+          ? {
+              ...task,
+              status: "skipped" as const,
+              message: "已停止",
+              endTime: new Date().toISOString(),
+            }
+          : task
+      )
+    );
+
     // 更新状态
     setCrawling(false);
-    setCrawlProgress((prev) => prev ? { ...prev, status: "stopped", message: "爬取已停止" } : null);
-    
+    setCrawlProgress((prev) =>
+      prev ? { ...prev, status: "stopped", message: "爬取已停止" } : null
+    );
+
     // 最终刷新一次数据
     await refreshCrawlData();
   };
@@ -1138,13 +1191,25 @@ export default function FenbiCrawlerPage() {
   const getCrawlStatusBadge = (status: number) => {
     switch (status) {
       case 0:
-        return <Badge variant="outline" className="text-xs whitespace-nowrap">待爬取</Badge>;
+        return (
+          <Badge variant="outline" className="text-xs whitespace-nowrap">
+            待爬取
+          </Badge>
+        );
       case 1:
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs whitespace-nowrap">已爬列表</Badge>;
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs whitespace-nowrap">
+            已爬列表
+          </Badge>
+        );
       case 2:
         return <Badge className="text-xs whitespace-nowrap">已爬详情</Badge>;
       default:
-        return <Badge variant="secondary" className="text-xs whitespace-nowrap">未知</Badge>;
+        return (
+          <Badge variant="secondary" className="text-xs whitespace-nowrap">
+            未知
+          </Badge>
+        );
     }
   };
 
@@ -1166,39 +1231,39 @@ export default function FenbiCrawlerPage() {
 
   // 根据筛选条件过滤任务列表
   const getFilteredTasks = () => {
-    return taskQueue.filter(task => {
+    return taskQueue.filter((task) => {
       // 状态筛选
       if (filterStatus === "completed" && task.status !== "completed") return false;
       if (filterStatus === "pending" && task.status !== "pending") return false;
-      if (filterStatus === "failed" && task.status !== "failed" && task.status !== "skipped") return false;
-      
+      if (filterStatus === "failed" && task.status !== "failed" && task.status !== "skipped")
+        return false;
+
       // 关键词搜索
       if (filterKeyword && !task.title.toLowerCase().includes(filterKeyword.toLowerCase())) {
         return false;
       }
-      
+
       return true;
     });
   };
 
   const displayTasks = getFilteredTasks();
-  
+
   // 计算任务统计
   const taskStats = {
     total: taskQueue.length,
-    completed: taskQueue.filter(t => t.status === "completed").length,
-    pending: taskQueue.filter(t => t.status === "pending").length,
-    parsing: taskQueue.filter(t => t.status === "parsing" || t.status === "running").length,
-    failed: taskQueue.filter(t => t.status === "failed" || t.status === "skipped").length,
+    completed: taskQueue.filter((t) => t.status === "completed").length,
+    pending: taskQueue.filter((t) => t.status === "pending").length,
+    parsing: taskQueue.filter((t) => t.status === "parsing" || t.status === "running").length,
+    failed: taskQueue.filter((t) => t.status === "failed" || t.status === "skipped").length,
   };
 
   return (
     <div className="h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] flex flex-col gap-2">
       {/* Top Toolbar */}
       <div className="flex-shrink-0 flex flex-wrap items-center gap-2">
-
         {/* Account Status - Compact */}
-        <div 
+        <div
           className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded-md border cursor-pointer hover:bg-muted/80 transition-colors"
           onClick={() => {
             if (credential) {
@@ -1214,9 +1279,7 @@ export default function FenbiCrawlerPage() {
           title="点击管理账号"
         >
           {getStatusIcon(loginStatus?.status || 0)}
-          <span className="text-xs font-medium">
-            {credential?.phone_masked || "未配置账号"}
-          </span>
+          <span className="text-xs font-medium">{credential?.phone_masked || "未配置账号"}</span>
         </div>
 
         {/* Inline Stats */}
@@ -1227,7 +1290,9 @@ export default function FenbiCrawlerPage() {
           <span className="text-emerald-600 font-medium">{stats?.by_crawl_status?.[2] || 0}</span>
           <span>已完成</span>
           <span className="text-muted-foreground/50">|</span>
-          <span className="text-blue-600 font-medium">{(stats?.total || 0) - (stats?.by_crawl_status?.[2] || 0)}</span>
+          <span className="text-blue-600 font-medium">
+            {(stats?.total || 0) - (stats?.by_crawl_status?.[2] || 0)}
+          </span>
           <span>待处理</span>
         </div>
 
@@ -1245,7 +1310,13 @@ export default function FenbiCrawlerPage() {
         {/* Primary Actions */}
         <div className="flex items-center gap-1.5">
           {!loginStatus?.is_logged_in && credential && (
-            <Button size="sm" variant="outline" onClick={handleLogin} disabled={loggingIn} className="h-8">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleLogin}
+              disabled={loggingIn}
+              className="h-8"
+            >
               {loggingIn ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : (
@@ -1254,7 +1325,7 @@ export default function FenbiCrawlerPage() {
               登录
             </Button>
           )}
-          
+
           {crawling ? (
             <Button size="sm" variant="destructive" onClick={handleStopCrawl} className="h-8">
               <Square className="mr-1.5 h-3.5 w-3.5" />
@@ -1374,17 +1445,26 @@ export default function FenbiCrawlerPage() {
                 </Badge>
               )}
             </div>
-            
+
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
               {crawlStartTime && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Timer className="h-3 w-3" />
-                  {crawlStartTime.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  {crawlStartTime.toLocaleTimeString("zh-CN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
                 </div>
               )}
               {!crawling && hasMorePages && (
-                <Button size="sm" variant="default" onClick={handleNextPage} className="h-7 text-xs">
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={handleNextPage}
+                  className="h-7 text-xs"
+                >
                   <ChevronRight className="h-3 w-3 mr-1" />
                   下一页
                 </Button>
@@ -1412,7 +1492,7 @@ export default function FenbiCrawlerPage() {
               )}
             </div>
           </div>
-          
+
           {/* Filter Row - 简化版 */}
           {taskQueue.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">
@@ -1426,9 +1506,12 @@ export default function FenbiCrawlerPage() {
                   className="h-7 text-xs pl-7"
                 />
               </div>
-              
+
               {/* Status Filter */}
-              <Select value={filterStatus} onValueChange={(v: typeof filterStatus) => setFilterStatus(v)}>
+              <Select
+                value={filterStatus}
+                onValueChange={(v: typeof filterStatus) => setFilterStatus(v)}
+              >
                 <SelectTrigger className="w-24 h-7 text-xs">
                   <SelectValue placeholder="状态" />
                 </SelectTrigger>
@@ -1439,7 +1522,7 @@ export default function FenbiCrawlerPage() {
                   <SelectItem value="failed">失败</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               {/* Clear Filters */}
               {(filterKeyword || filterStatus !== "all") && (
                 <Button
@@ -1456,7 +1539,7 @@ export default function FenbiCrawlerPage() {
               )}
             </div>
           )}
-          
+
           {/* Progress Bar */}
           {crawling && crawlProgress && crawlProgress.total_tasks > 0 && (
             <div className="mt-3">
@@ -1478,7 +1561,7 @@ export default function FenbiCrawlerPage() {
             </div>
           )}
         </CardHeader>
-        
+
         <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
           <ScrollArea className="flex-1">
             <Table>
@@ -1518,16 +1601,19 @@ export default function FenbiCrawlerPage() {
                     </TableCell>
                   </TableRow>
                 )}
-                
+
                 {/* Task Rows */}
                 {displayTasks.map((task) => (
-                  <TableRow 
-                    key={`task-${task.id}`} 
+                  <TableRow
+                    key={`task-${task.id}`}
                     className={`group cursor-pointer hover:bg-muted/50 ${
-                      task.status === "completed" ? "bg-emerald-50/30 dark:bg-emerald-950/10" :
-                      task.status === "parsing" || task.status === "running" ? "bg-violet-50/30 dark:bg-violet-950/10" :
-                      task.status === "failed" || task.status === "skipped" ? "bg-red-50/30 dark:bg-red-950/10" :
-                      ""
+                      task.status === "completed"
+                        ? "bg-emerald-50/30 dark:bg-emerald-950/10"
+                        : task.status === "parsing" || task.status === "running"
+                          ? "bg-violet-50/30 dark:bg-violet-950/10"
+                          : task.status === "failed" || task.status === "skipped"
+                            ? "bg-red-50/30 dark:bg-red-950/10"
+                            : ""
                     }`}
                     onClick={() => {
                       setSelectedTask(task);
@@ -1545,12 +1631,8 @@ export default function FenbiCrawlerPage() {
                         {task.status === "running" && (
                           <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
                         )}
-                        {task.status === "pending" && (
-                          <Clock className="h-4 w-4 text-gray-400" />
-                        )}
-                        {task.status === "failed" && (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
+                        {task.status === "pending" && <Clock className="h-4 w-4 text-gray-400" />}
+                        {task.status === "failed" && <XCircle className="h-4 w-4 text-red-500" />}
                         {task.status === "skipped" && (
                           <AlertCircle className="h-4 w-4 text-orange-500" />
                         )}
@@ -1558,29 +1640,46 @@ export default function FenbiCrawlerPage() {
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="flex flex-col">
-                        <span className={`text-sm line-clamp-1 ${
-                          task.status === "completed" ? "text-foreground" :
-                          task.status === "parsing" ? "text-violet-700 dark:text-violet-300 font-medium" :
-                          task.status === "failed" || task.status === "skipped" ? "text-red-700 dark:text-red-300" :
-                          "text-muted-foreground"
-                        }`}>
+                        <span
+                          className={`text-sm line-clamp-1 ${
+                            task.status === "completed"
+                              ? "text-foreground"
+                              : task.status === "parsing"
+                                ? "text-violet-700 dark:text-violet-300 font-medium"
+                                : task.status === "failed" || task.status === "skipped"
+                                  ? "text-red-700 dark:text-red-300"
+                                  : "text-muted-foreground"
+                          }`}
+                        >
                           {task.title}
                         </span>
                         {task.message && (
-                          <span className={`text-xs line-clamp-1 ${
-                            task.status === "failed" || task.status === "skipped" ? "text-red-500" : "text-muted-foreground"
-                          }`}>
+                          <span
+                            className={`text-xs line-clamp-1 ${
+                              task.status === "failed" || task.status === "skipped"
+                                ? "text-red-500"
+                                : "text-muted-foreground"
+                            }`}
+                          >
                             {task.message}
                           </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="py-2 text-xs text-muted-foreground">
-                      {task.endTime ? new Date(task.endTime).toLocaleTimeString("zh-CN", { 
-                        hour: "2-digit", minute: "2-digit", second: "2-digit" 
-                      }) : task.startTime ? new Date(task.startTime).toLocaleTimeString("zh-CN", { 
-                        hour: "2-digit", minute: "2-digit", second: "2-digit" 
-                      }) : "-"}
+                      {task.endTime
+                        ? new Date(task.endTime).toLocaleTimeString("zh-CN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })
+                        : task.startTime
+                          ? new Date(task.startTime).toLocaleTimeString("zh-CN", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })
+                          : "-"}
                     </TableCell>
                     <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
@@ -1616,7 +1715,7 @@ export default function FenbiCrawlerPage() {
               </TableBody>
             </Table>
           </ScrollArea>
-          
+
           {/* Footer Stats */}
           {taskQueue.length > 0 && (
             <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t bg-muted/20">
@@ -1624,10 +1723,18 @@ export default function FenbiCrawlerPage() {
                 显示 {displayTasks.length} / {taskQueue.length} 任务
               </div>
               <div className="text-xs text-muted-foreground">
-                {taskStats.completed > 0 && <span className="text-emerald-600 mr-3">{taskStats.completed} 完成</span>}
-                {taskStats.parsing > 0 && <span className="text-violet-600 mr-3">{taskStats.parsing} 进行中</span>}
-                {taskStats.pending > 0 && <span className="text-gray-500 mr-3">{taskStats.pending} 待处理</span>}
-                {taskStats.failed > 0 && <span className="text-red-500">{taskStats.failed} 失败</span>}
+                {taskStats.completed > 0 && (
+                  <span className="text-emerald-600 mr-3">{taskStats.completed} 完成</span>
+                )}
+                {taskStats.parsing > 0 && (
+                  <span className="text-violet-600 mr-3">{taskStats.parsing} 进行中</span>
+                )}
+                {taskStats.pending > 0 && (
+                  <span className="text-gray-500 mr-3">{taskStats.pending} 待处理</span>
+                )}
+                {taskStats.failed > 0 && (
+                  <span className="text-red-500">{taskStats.failed} 失败</span>
+                )}
               </div>
             </div>
           )}
@@ -1642,9 +1749,7 @@ export default function FenbiCrawlerPage() {
               <Zap className="h-5 w-5" />
               爬虫配置
             </DialogTitle>
-            <DialogDescription>
-              选择筛选条件开始数据采集
-            </DialogDescription>
+            <DialogDescription>选择筛选条件开始数据采集</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1702,9 +1807,7 @@ export default function FenbiCrawlerPage() {
               </Label>
               <Select
                 value={crawlYears[0]?.toString() || "all"}
-                onValueChange={(value) =>
-                  setCrawlYears(value === "all" ? [] : [parseInt(value)])
-                }
+                onValueChange={(value) => setCrawlYears(value === "all" ? [] : [parseInt(value)])}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="选择年份" />
@@ -1748,8 +1851,20 @@ export default function FenbiCrawlerPage() {
             {/* Current Config Summary */}
             <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
               <p className="font-medium">当前配置：</p>
-              <p>地区: {crawlRegions.length === 0 ? "全部" : categories.regions.find((r) => r.code === crawlRegions[0])?.name || crawlRegions[0]}</p>
-              <p>类型: {crawlExamTypes.length === 0 ? "全部（排除省考/国考）" : categories.exam_types.find((t) => t.code === crawlExamTypes[0])?.name || crawlExamTypes[0]}</p>
+              <p>
+                地区:{" "}
+                {crawlRegions.length === 0
+                  ? "全部"
+                  : categories.regions.find((r) => r.code === crawlRegions[0])?.name ||
+                    crawlRegions[0]}
+              </p>
+              <p>
+                类型:{" "}
+                {crawlExamTypes.length === 0
+                  ? "全部（排除省考/国考）"
+                  : categories.exam_types.find((t) => t.code === crawlExamTypes[0])?.name ||
+                    crawlExamTypes[0]}
+              </p>
               <p>年份: {crawlYears.length === 0 ? "全部" : crawlYears.join(", ")}</p>
               <p>LLM并行: {parseParallelCount} 个</p>
             </div>
@@ -1780,9 +1895,7 @@ export default function FenbiCrawlerPage() {
               <Key className="h-5 w-5" />
               粉笔账号设置
             </DialogTitle>
-            <DialogDescription>
-              设置粉笔网登录凭证，用于爬取公告数据
-            </DialogDescription>
+            <DialogDescription>设置粉笔网登录凭证，用于爬取公告数据</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1791,9 +1904,7 @@ export default function FenbiCrawlerPage() {
                 id="phone"
                 placeholder="请输入粉笔账号手机号"
                 value={credentialForm.phone}
-                onChange={(e) =>
-                  setCredentialForm((prev) => ({ ...prev, phone: e.target.value }))
-                }
+                onChange={(e) => setCredentialForm((prev) => ({ ...prev, phone: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
@@ -1814,9 +1925,7 @@ export default function FenbiCrawlerPage() {
               取消
             </Button>
             <Button onClick={handleSaveCredential} disabled={savingCredential}>
-              {savingCredential ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {savingCredential ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               保存并登录
             </Button>
           </DialogFooter>
@@ -1879,9 +1988,7 @@ export default function FenbiCrawlerPage() {
               <FlaskConical className="h-5 w-5" />
               Cookie 爬取测试结果
             </DialogTitle>
-            <DialogDescription>
-              测试使用当前 Cookie 爬取公告数据是否正常
-            </DialogDescription>
+            <DialogDescription>测试使用当前 Cookie 爬取公告数据是否正常</DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-4 py-4">
@@ -1893,30 +2000,36 @@ export default function FenbiCrawlerPage() {
               ) : testResult ? (
                 <>
                   {/* 测试状态 */}
-                  <div className={`p-4 rounded-lg ${
-                    testResult.success 
-                      ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800" 
-                      : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
-                  }`}>
+                  <div
+                    className={`p-4 rounded-lg ${
+                      testResult.success
+                        ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800"
+                        : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
+                    }`}
+                  >
                     <div className="flex items-center gap-2">
                       {testResult.success ? (
                         <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                       ) : (
                         <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                       )}
-                      <span className={`font-medium ${
-                        testResult.success 
-                          ? "text-emerald-700 dark:text-emerald-300" 
-                          : "text-red-700 dark:text-red-300"
-                      }`}>
+                      <span
+                        className={`font-medium ${
+                          testResult.success
+                            ? "text-emerald-700 dark:text-emerald-300"
+                            : "text-red-700 dark:text-red-300"
+                        }`}
+                      >
                         {testResult.success ? "测试成功" : "测试失败"}
                       </span>
                     </div>
-                    <p className={`mt-2 text-sm ${
-                      testResult.success 
-                        ? "text-emerald-600 dark:text-emerald-400" 
-                        : "text-red-600 dark:text-red-400"
-                    }`}>
+                    <p
+                      className={`mt-2 text-sm ${
+                        testResult.success
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
                       {testResult.message}
                     </p>
                   </div>
@@ -1928,7 +2041,9 @@ export default function FenbiCrawlerPage() {
                       <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground">测试公告</Label>
                         <div className="p-3 bg-muted rounded-lg">
-                          <p className="text-sm font-medium">{testResult.test_result.title || "-"}</p>
+                          <p className="text-sm font-medium">
+                            {testResult.test_result.title || "-"}
+                          </p>
                           {testResult.test_result.announcement_id && (
                             <p className="text-xs text-muted-foreground mt-1">
                               ID: {testResult.test_result.announcement_id}
@@ -2008,56 +2123,61 @@ export default function FenbiCrawlerPage() {
                             原文页面内容
                           </Label>
                           <div className="p-3 bg-muted rounded-lg space-y-2">
-                            <p className="text-sm font-medium">{testResult.test_result.page_content.title || "无标题"}</p>
+                            <p className="text-sm font-medium">
+                              {testResult.test_result.page_content.title || "无标题"}
+                            </p>
                             <div className="text-xs text-muted-foreground max-h-[200px] overflow-y-auto whitespace-pre-wrap">
-                              {testResult.test_result.page_content.content?.substring(0, 2000) || "无内容"}
-                              {(testResult.test_result.page_content.content?.length || 0) > 2000 && "..."}
+                              {testResult.test_result.page_content.content?.substring(0, 2000) ||
+                                "无内容"}
+                              {(testResult.test_result.page_content.content?.length || 0) > 2000 &&
+                                "..."}
                             </div>
                           </div>
                         </div>
                       )}
 
                       {/* 附件列表 */}
-                      {testResult.test_result.attachments && testResult.test_result.attachments.length > 0 && (
-                        <div className="space-y-2 pt-3 border-t">
-                          <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                            <FileText className="h-3 w-3" />
-                            附件 ({testResult.test_result.attachments.length})
-                          </Label>
-                          <div className="space-y-3">
-                            {testResult.test_result.attachments.map((att, idx) => (
-                              <div key={idx} className="p-3 bg-muted rounded-lg space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-xs">{att.type.toUpperCase()}</Badge>
-                                    <span className="text-sm font-medium">{att.name}</span>
+                      {testResult.test_result.attachments &&
+                        testResult.test_result.attachments.length > 0 && (
+                          <div className="space-y-2 pt-3 border-t">
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              附件 ({testResult.test_result.attachments.length})
+                            </Label>
+                            <div className="space-y-3">
+                              {testResult.test_result.attachments.map((att, idx) => (
+                                <div key={idx} className="p-3 bg-muted rounded-lg space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {att.type.toUpperCase()}
+                                      </Badge>
+                                      <span className="text-sm font-medium">{att.name}</span>
+                                    </div>
+                                    {att.url && (
+                                      <a
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                                      >
+                                        下载
+                                        <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    )}
                                   </div>
-                                  {att.url && (
-                                    <a
-                                      href={att.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-xs text-primary hover:underline flex items-center gap-1"
-                                    >
-                                      下载
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
+                                  {att.error && <p className="text-xs text-red-500">{att.error}</p>}
+                                  {att.content && !att.error && (
+                                    <div className="text-xs text-muted-foreground max-h-[150px] overflow-y-auto whitespace-pre-wrap bg-background p-2 rounded">
+                                      {att.content.substring(0, 1500)}
+                                      {att.content.length > 1500 && "..."}
+                                    </div>
                                   )}
                                 </div>
-                                {att.error && (
-                                  <p className="text-xs text-red-500">{att.error}</p>
-                                )}
-                                {att.content && !att.error && (
-                                  <div className="text-xs text-muted-foreground max-h-[150px] overflow-y-auto whitespace-pre-wrap bg-background p-2 rounded">
-                                    {att.content.substring(0, 1500)}
-                                    {att.content.length > 1500 && "..."}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
                       {/* LLM 分析结果 */}
                       {testResult.test_result.llm_analysis && (
@@ -2075,7 +2195,9 @@ export default function FenbiCrawlerPage() {
                               {/* 摘要 */}
                               {testResult.test_result.llm_analysis.summary && (
                                 <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                                  <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">摘要</p>
+                                  <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                                    摘要
+                                  </p>
                                   <p className="text-sm text-blue-800 dark:text-blue-200">
                                     {testResult.test_result.llm_analysis.summary}
                                   </p>
@@ -2093,16 +2215,24 @@ export default function FenbiCrawlerPage() {
                                         {testResult.test_result.llm_analysis.exam_info.exam_type}
                                       </div>
                                     )}
-                                    {testResult.test_result.llm_analysis.exam_info.registration_start && (
+                                    {testResult.test_result.llm_analysis.exam_info
+                                      .registration_start && (
                                       <div>
                                         <span className="text-muted-foreground">报名开始：</span>
-                                        {testResult.test_result.llm_analysis.exam_info.registration_start}
+                                        {
+                                          testResult.test_result.llm_analysis.exam_info
+                                            .registration_start
+                                        }
                                       </div>
                                     )}
-                                    {testResult.test_result.llm_analysis.exam_info.registration_end && (
+                                    {testResult.test_result.llm_analysis.exam_info
+                                      .registration_end && (
                                       <div>
                                         <span className="text-muted-foreground">报名截止：</span>
-                                        {testResult.test_result.llm_analysis.exam_info.registration_end}
+                                        {
+                                          testResult.test_result.llm_analysis.exam_info
+                                            .registration_end
+                                        }
                                       </div>
                                     )}
                                     {testResult.test_result.llm_analysis.exam_info.exam_date && (
@@ -2116,40 +2246,65 @@ export default function FenbiCrawlerPage() {
                               )}
 
                               {/* 职位信息 */}
-                              {testResult.test_result.llm_analysis.positions && testResult.test_result.llm_analysis.positions.length > 0 && (
-                                <div className="p-3 bg-muted rounded-lg">
-                                  <p className="text-xs font-medium mb-2">提取的职位 ({testResult.test_result.llm_analysis.positions.length}个)</p>
-                                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                    {testResult.test_result.llm_analysis.positions.slice(0, 5).map((pos, idx) => (
-                                      <div key={idx} className="text-xs p-2 bg-background rounded">
-                                        <div className="font-medium">{pos.position_name || "未知职位"}</div>
-                                        <div className="text-muted-foreground mt-1 grid grid-cols-2 gap-1">
-                                          {pos.department_name && <span>单位：{pos.department_name}</span>}
-                                          {pos.recruit_count && <span>招录：{pos.recruit_count}人</span>}
-                                          {pos.education && <span>学历：{pos.education}</span>}
-                                          {pos.work_location && <span>地点：{pos.work_location}</span>}
-                                        </div>
-                                        {pos.major && pos.major.length > 0 && (
-                                          <div className="text-muted-foreground mt-1">
-                                            专业：{pos.major.join("、")}
+                              {testResult.test_result.llm_analysis.positions &&
+                                testResult.test_result.llm_analysis.positions.length > 0 && (
+                                  <div className="p-3 bg-muted rounded-lg">
+                                    <p className="text-xs font-medium mb-2">
+                                      提取的职位 (
+                                      {testResult.test_result.llm_analysis.positions.length}个)
+                                    </p>
+                                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                                      {testResult.test_result.llm_analysis.positions
+                                        .slice(0, 5)
+                                        .map((pos, idx) => (
+                                          <div
+                                            key={idx}
+                                            className="text-xs p-2 bg-background rounded"
+                                          >
+                                            <div className="font-medium">
+                                              {pos.position_name || "未知职位"}
+                                            </div>
+                                            <div className="text-muted-foreground mt-1 grid grid-cols-2 gap-1">
+                                              {pos.department_name && (
+                                                <span>单位：{pos.department_name}</span>
+                                              )}
+                                              {pos.recruit_count && (
+                                                <span>招录：{pos.recruit_count}人</span>
+                                              )}
+                                              {pos.education && <span>学历：{pos.education}</span>}
+                                              {pos.work_location && (
+                                                <span>地点：{pos.work_location}</span>
+                                              )}
+                                            </div>
+                                            {pos.major && pos.major.length > 0 && (
+                                              <div className="text-muted-foreground mt-1">
+                                                专业：{pos.major.join("、")}
+                                              </div>
+                                            )}
                                           </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                    {testResult.test_result.llm_analysis.positions.length > 5 && (
-                                      <p className="text-xs text-muted-foreground text-center">
-                                        还有 {testResult.test_result.llm_analysis.positions.length - 5} 个职位...
-                                      </p>
-                                    )}
+                                        ))}
+                                      {testResult.test_result.llm_analysis.positions.length > 5 && (
+                                        <p className="text-xs text-muted-foreground text-center">
+                                          还有{" "}
+                                          {testResult.test_result.llm_analysis.positions.length - 5}{" "}
+                                          个职位...
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
 
                               {/* 置信度 */}
                               {testResult.test_result.llm_analysis.confidence !== undefined && (
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <span>分析置信度：</span>
-                                  <Badge variant={testResult.test_result.llm_analysis.confidence >= 80 ? "default" : "secondary"}>
+                                  <Badge
+                                    variant={
+                                      testResult.test_result.llm_analysis.confidence >= 80
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                  >
                                     {testResult.test_result.llm_analysis.confidence}%
                                   </Badge>
                                 </div>
@@ -2206,9 +2361,7 @@ export default function FenbiCrawlerPage() {
               <FileText className="h-5 w-5" />
               公告详情
             </DialogTitle>
-            <DialogDescription>
-              查看公告的完整信息
-            </DialogDescription>
+            <DialogDescription>查看公告的完整信息</DialogDescription>
           </DialogHeader>
           {selectedAnnouncement && (
             <ScrollArea className="flex-1 pr-4">
@@ -2216,7 +2369,9 @@ export default function FenbiCrawlerPage() {
                 {/* Title */}
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">标题</Label>
-                  <p className="text-sm font-medium leading-relaxed">{selectedAnnouncement.title}</p>
+                  <p className="text-sm font-medium leading-relaxed">
+                    {selectedAnnouncement.title}
+                  </p>
                 </div>
 
                 {/* Basic Info Grid */}
@@ -2376,11 +2531,7 @@ export default function FenbiCrawlerPage() {
             </Button>
             {selectedAnnouncement && selectedAnnouncement.fenbi_url && (
               <Button asChild>
-                <a
-                  href={selectedAnnouncement.fenbi_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={selectedAnnouncement.fenbi_url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   打开粉笔页面
                 </a>
@@ -2396,7 +2547,6 @@ export default function FenbiCrawlerPage() {
         onOpenChange={setTaskDetailDialogOpen}
         task={selectedTask}
       />
-
 
       {/* Parse Result Dialog (for viewing task parse results) */}
       <ParseResultDialog

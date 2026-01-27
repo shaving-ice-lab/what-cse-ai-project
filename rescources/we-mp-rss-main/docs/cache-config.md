@@ -7,6 +7,7 @@
 ## 环境变量配置
 
 ### Redis缓存
+
 ```bash
 # 启用Redis缓存
 CACHE_TYPE=redis
@@ -19,6 +20,7 @@ REDIS_PASSWORD=              # Redis密码（可选）
 ```
 
 ### Memcached缓存
+
 ```bash
 # 启用Memcached缓存
 CACHE_TYPE=memcached
@@ -29,6 +31,7 @@ MEMCACHED_PORT=11211         # Memcached端口
 ```
 
 ### 内存缓存（默认）
+
 ```bash
 # 使用内存缓存（默认）
 CACHE_TYPE=memory
@@ -40,7 +43,7 @@ CACHE_TYPE=memory
 
 ```yaml
 cache:
-  type: redis  # 可选: redis, memcached, memory
+  type: redis # 可选: redis, memcached, memory
   dir: ./data/cache
   redis:
     host: localhost
@@ -74,7 +77,7 @@ cache:
 # Redis缓存依赖
 pip install redis==5.2.1
 
-# Memcached缓存依赖  
+# Memcached缓存依赖
 pip install pymemcache==4.0.0
 ```
 

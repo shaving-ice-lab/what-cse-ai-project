@@ -7,21 +7,25 @@
 ## 已添加缓存的页面
 
 ### 1. 首页 (`/views/home`)
+
 - **缓存键**: `home_page`
 - **缓存时间**: 30分钟
 - **缓存内容**: 标签列表、分页信息等
 
 ### 2. 文章列表页 (`/views/articles`)
+
 - **缓存键**: `articles_list`
 - **缓存时间**: 30分钟
 - **缓存内容**: 文章列表、筛选信息、分页信息等
 
 ### 3. 文章详情页 (`/views/article/{article_id}`)
+
 - **缓存键**: `article_detail`
 - **缓存时间**: 1小时
 - **缓存内容**: 文章内容、相关文章等
 
 ### 4. 标签详情页 (`/views/tag/{tag_id}`)
+
 - **缓存键**: `tag_detail`
 - **缓存时间**: 40分钟
 - **缓存内容**: 标签信息、关联文章列表等
@@ -47,11 +51,13 @@ cache:
 缓存会在以下情况自动清除：
 
 ### 1. 文章相关操作
+
 - 更新文章阅读状态 (`PUT /articles/{article_id}/read`)
 - 清理无效文章 (`DELETE /articles/clean`)
 - 清理重复文章 (`DELETE /articles/clean_duplicate_articles`)
 
 ### 2. 标签相关操作
+
 - 创建新标签 (`POST /tags`)
 - 更新标签 (`PUT /tags/{tag_id}`)
 - 删除标签 (`DELETE /tags/{tag_id}`)
@@ -61,16 +67,19 @@ cache:
 ### API 接口
 
 #### 清除所有视图缓存
+
 ```bash
 DELETE /cache/clear
 ```
 
 #### 清除指定模式的缓存
+
 ```bash
 DELETE /cache/clear/{pattern}
 ```
 
 示例：
+
 ```bash
 # 清除所有文章列表缓存
 DELETE /cache/clear/articles_list
@@ -86,10 +95,12 @@ DELETE /cache/clear/home_page
 ## 缓存键生成规则
 
 缓存键由以下部分组成：
+
 - 前缀（如 `home_page`, `articles_list` 等）
 - 参数的哈希值（确保不同参数组合有不同的缓存）
 
 例如：
+
 - `home_page_1a2b3c4d5e6f...` （首页第1页，每页12条）
 - `articles_list_7g8h9i0j1k2l...` （文章列表，特定筛选条件）
 

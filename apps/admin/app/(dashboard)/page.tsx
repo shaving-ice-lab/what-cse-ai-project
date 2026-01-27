@@ -34,15 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@what-cse/ui";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import Link from "next/link";
 
 // 统计卡片数据
@@ -223,9 +215,7 @@ export default function AdminDashboard() {
       {/* 页面标题 */}
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight">仪表盘</h1>
-        <p className="text-muted-foreground">
-          欢迎回来，这里是您的管理后台概览
-        </p>
+        <p className="text-muted-foreground">欢迎回来，这里是您的管理后台概览</p>
       </div>
 
       {/* 统计卡片 */}
@@ -244,11 +234,7 @@ export default function AdminDashboard() {
                 ) : (
                   <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
                 )}
-                <span
-                  className={
-                    stat.changeType === "up" ? "text-emerald-500" : "text-red-500"
-                  }
-                >
+                <span className={stat.changeType === "up" ? "text-emerald-500" : "text-red-500"}>
                   {stat.change}
                 </span>
                 <span className="ml-1">{stat.description}</span>
@@ -273,12 +259,7 @@ export default function AdminDashboard() {
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Area
@@ -312,18 +293,9 @@ export default function AdminDashboard() {
             <ChartContainer config={userTrendConfig} className="h-[300px] w-full">
               <BarChart data={userTrendData}>
                 <CartesianGrid vertical={false} className="stroke-muted" />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                />
+                <XAxis dataKey="date" tickLine={false} tickMargin={10} axisLine={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar
-                  dataKey="users"
-                  fill="var(--color-users)"
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="users" fill="var(--color-users)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -363,9 +335,7 @@ export default function AdminDashboard() {
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={user.status === "active" ? "default" : "secondary"}
-                      >
+                      <Badge variant={user.status === "active" ? "default" : "secondary"}>
                         {user.status === "active" ? "正常" : "禁用"}
                       </Badge>
                     </TableCell>
@@ -381,9 +351,7 @@ export default function AdminDashboard() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>查看详情</DropdownMenuItem>
                           <DropdownMenuItem>编辑</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            删除
-                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">删除</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -434,17 +402,12 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               {recentActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-center justify-between"
-                >
+                <div key={activity.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="h-2 w-2 rounded-full bg-primary" />
                     <div>
                       <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.user}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{activity.user}</p>
                     </div>
                   </div>
                   <div className="flex items-center text-xs text-muted-foreground">

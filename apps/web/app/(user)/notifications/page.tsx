@@ -100,16 +100,13 @@ const typeConfig = {
 };
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [filter, setFilter] = useState<string>("all");
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const handleMarkAsRead = (id: number) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
   };
 
   const handleMarkAllAsRead = () => {
@@ -124,8 +121,8 @@ export default function NotificationsPage() {
     filter === "all"
       ? notifications
       : filter === "unread"
-      ? notifications.filter((n) => !n.is_read)
-      : notifications.filter((n) => n.type === filter);
+        ? notifications.filter((n) => !n.is_read)
+        : notifications.filter((n) => n.type === filter);
 
   return (
     <div className="container mx-auto px-4 lg:px-6 py-6 lg:py-8 pb-24 lg:pb-8">
@@ -197,9 +194,7 @@ export default function NotificationsPage() {
               <div
                 key={notification.id}
                 className={`group bg-white rounded-2xl border shadow-card transition-all duration-300 animate-fade-in ${
-                  notification.is_read
-                    ? "border-stone-200/50"
-                    : "border-amber-200 bg-amber-50/30"
+                  notification.is_read ? "border-stone-200/50" : "border-amber-200 bg-amber-50/30"
                 }`}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
@@ -227,12 +222,8 @@ export default function NotificationsPage() {
                           {notification.created_at}
                         </span>
                       </div>
-                      <h3 className="font-semibold text-stone-800 mb-1">
-                        {notification.title}
-                      </h3>
-                      <p className="text-sm text-stone-600 line-clamp-2">
-                        {notification.content}
-                      </p>
+                      <h3 className="font-semibold text-stone-800 mb-1">{notification.title}</h3>
+                      <p className="text-sm text-stone-600 line-clamp-2">{notification.content}</p>
                     </div>
 
                     {/* Actions */}
@@ -271,9 +262,7 @@ export default function NotificationsPage() {
       ) : (
         <div className="text-center py-16 bg-white rounded-2xl border border-stone-200/50 shadow-card">
           <Bell className="w-16 h-16 mx-auto text-stone-200 mb-4" />
-          <p className="text-stone-500">
-            {filter === "unread" ? "没有未读消息" : "暂无消息通知"}
-          </p>
+          <p className="text-stone-500">{filter === "unread" ? "没有未读消息" : "暂无消息通知"}</p>
         </div>
       )}
     </div>

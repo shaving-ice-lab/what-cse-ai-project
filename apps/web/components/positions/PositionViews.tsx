@@ -113,9 +113,7 @@ export function ListView({
         >
           {/* Match Score Bar */}
           {position.matchScore !== undefined && (
-            <div
-              className={`h-1 bg-gradient-to-r ${getScoreColor(position.matchScore)}`}
-            />
+            <div className={`h-1 bg-gradient-to-r ${getScoreColor(position.matchScore)}`} />
           )}
 
           <div className="p-5 lg:p-6">
@@ -163,8 +161,7 @@ export function ListView({
                     </span>
                   )}
                   <span className="flex items-center gap-1 px-2.5 py-1 bg-stone-100 rounded-lg text-stone-600">
-                    <Users className="w-3.5 h-3.5" />
-                    招{position.recruit_count}人
+                    <Users className="w-3.5 h-3.5" />招{position.recruit_count}人
                   </span>
                   {position.major_requirement && position.major_requirement !== "不限" && (
                     <span className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 rounded-lg text-amber-700 border border-amber-200">
@@ -202,9 +199,7 @@ export function ListView({
                     }`}
                   >
                     <Heart
-                      className={`w-5 h-5 ${
-                        favorites.includes(position.id) ? "fill-current" : ""
-                      }`}
+                      className={`w-5 h-5 ${favorites.includes(position.id) ? "fill-current" : ""}`}
                     />
                   </button>
                 </div>
@@ -219,9 +214,7 @@ export function ListView({
                     >
                       {position.matchScore}%
                     </div>
-                    <p className="text-xs text-stone-500">
-                      {getScoreLabel(position.matchScore)}
-                    </p>
+                    <p className="text-xs text-stone-500">{getScoreLabel(position.matchScore)}</p>
                   </div>
                 )}
               </div>
@@ -376,9 +369,7 @@ export function GridView({
                   }`}
                 >
                   <Heart
-                    className={`w-4 h-4 ${
-                      favorites.includes(position.id) ? "fill-current" : ""
-                    }`}
+                    className={`w-4 h-4 ${favorites.includes(position.id) ? "fill-current" : ""}`}
                   />
                 </button>
               </div>
@@ -457,15 +448,11 @@ export function TableView({
                         {position.exam_type}
                       </span>
                     </div>
-                    <p className="text-sm text-stone-500 truncate">
-                      {position.department_name}
-                    </p>
+                    <p className="text-sm text-stone-500 truncate">{position.department_name}</p>
                   </div>
                 </td>
                 <td className="px-4 py-4">
-                  <span className="text-sm text-stone-600">
-                    {getLocation(position)}
-                  </span>
+                  <span className="text-sm text-stone-600">{getLocation(position)}</span>
                 </td>
                 <td className="px-4 py-4">
                   <span className="text-sm text-stone-600">

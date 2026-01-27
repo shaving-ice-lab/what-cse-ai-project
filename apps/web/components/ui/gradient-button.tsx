@@ -37,21 +37,13 @@ const GradientButton = forwardRef<HTMLButtonElement, GradientButtonProps>(
         "shadow-amber-md hover:shadow-amber-lg",
         "btn-shine"
       ),
-      secondary: cn(
-        "bg-stone-100 text-stone-700",
-        "hover:bg-stone-200",
-        "border border-stone-200"
-      ),
+      secondary: cn("bg-stone-100 text-stone-700", "hover:bg-stone-200", "border border-stone-200"),
       outline: cn(
         "border-2 border-amber-500 text-amber-600",
         "hover:bg-amber-50",
         "bg-transparent"
       ),
-      ghost: cn(
-        "text-stone-600",
-        "hover:bg-stone-100",
-        "bg-transparent"
-      ),
+      ghost: cn("text-stone-600", "hover:bg-stone-100", "bg-transparent"),
     };
 
     const sizes = {

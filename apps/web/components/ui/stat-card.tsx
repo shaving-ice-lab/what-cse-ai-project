@@ -55,10 +55,7 @@ export function StatCard({
 
   return (
     <div
-      className={cn(
-        "bg-white rounded-2xl border border-stone-200/50 shadow-card p-5",
-        className
-      )}
+      className={cn("bg-white rounded-2xl border border-stone-200/50 shadow-card p-5", className)}
     >
       <div className="flex items-center gap-4">
         <div

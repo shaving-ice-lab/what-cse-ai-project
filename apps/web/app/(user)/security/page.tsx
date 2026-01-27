@@ -67,9 +67,7 @@ export default function SecurityPage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-stone-800">密码设置</h3>
-                <p className="text-sm text-stone-500 mt-1">
-                  建议定期更换密码以保证账户安全
-                </p>
+                <p className="text-sm text-stone-500 mt-1">建议定期更换密码以保证账户安全</p>
               </div>
               <button
                 onClick={() => setShowChangePassword(!showChangePassword)}
@@ -84,9 +82,7 @@ export default function SecurityPage() {
             <div className="border-t border-stone-100 p-6 bg-stone-50/50 animate-fade-in">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-stone-700">
-                    当前密码
-                  </label>
+                  <label className="block text-sm font-medium text-stone-700">当前密码</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -101,16 +97,12 @@ export default function SecurityPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-stone-700">
-                    新密码
-                  </label>
+                  <label className="block text-sm font-medium text-stone-700">新密码</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       value={passwords.new}
-                      onChange={(e) =>
-                        setPasswords((prev) => ({ ...prev, new: e.target.value }))
-                      }
+                      onChange={(e) => setPasswords((prev) => ({ ...prev, new: e.target.value }))}
                       className="w-full px-4 py-3 pr-12 bg-white border border-stone-200 rounded-xl text-stone-800 outline-none transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                       placeholder="请输入新密码（至少8位）"
                     />
@@ -119,19 +111,13 @@ export default function SecurityPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-stone-700">
-                    确认新密码
-                  </label>
+                  <label className="block text-sm font-medium text-stone-700">确认新密码</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -226,9 +212,7 @@ export default function SecurityPage() {
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-stone-800">账户注销</h3>
-              <p className="text-sm text-stone-500 mt-1">
-                注销后账户数据将被永久删除，无法恢复
-              </p>
+              <p className="text-sm text-stone-500 mt-1">注销后账户数据将被永久删除，无法恢复</p>
             </div>
             <button className="px-4 py-2 text-red-600 border border-red-300 rounded-xl hover:bg-red-50 transition-colors">
               注销账户
@@ -249,10 +233,7 @@ export default function SecurityPage() {
               "注意保护个人手机号和邮箱的安全",
               "遇到可疑信息请及时联系客服",
             ].map((tip, index) => (
-              <li
-                key={index}
-                className="flex items-start gap-2 text-sm text-amber-700"
-              >
+              <li key={index} className="flex items-start gap-2 text-sm text-amber-700">
                 <Check className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 {tip}
               </li>

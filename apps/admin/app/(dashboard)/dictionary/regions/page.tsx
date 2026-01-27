@@ -90,15 +90,10 @@ export default function RegionsDictionaryPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const toggleRegion = (id: number) => {
-    setRegions(
-      regions.map((reg) => (reg.id === id ? { ...reg, expanded: !reg.expanded } : reg))
-    );
+    setRegions(regions.map((reg) => (reg.id === id ? { ...reg, expanded: !reg.expanded } : reg)));
   };
 
-  const totalChildren = regions.reduce(
-    (sum, reg) => sum + (reg.children?.length || 0),
-    0
-  );
+  const totalChildren = regions.reduce((sum, reg) => sum + (reg.children?.length || 0), 0);
 
   const filteredRegions = regions.filter((reg) => {
     if (!searchTerm) return true;
@@ -107,8 +102,7 @@ export default function RegionsDictionaryPage() {
       reg.name.toLowerCase().includes(searchLower) ||
       reg.code.includes(searchTerm) ||
       reg.children?.some(
-        (c) =>
-          c.name.toLowerCase().includes(searchLower) || c.code.includes(searchTerm)
+        (c) => c.name.toLowerCase().includes(searchLower) || c.code.includes(searchTerm)
       )
     );
   });
@@ -153,9 +147,7 @@ export default function RegionsDictionaryPage() {
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(totalChildren / regions.length).toFixed(1)}
-            </div>
+            <div className="text-2xl font-bold">{(totalChildren / regions.length).toFixed(1)}</div>
           </CardContent>
         </Card>
       </div>

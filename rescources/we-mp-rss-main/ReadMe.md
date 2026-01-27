@@ -8,12 +8,14 @@
 [中文](README.zh-CN.md)|[English](ReadMe.md)
 
 Quick Start
+
 ```
 docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  ghcr.io/rachelos/we-mp-rss:latest
 ```
+
 Visit http://<your-ip>:8001/ to get started
 
-# Quick Upgrade 
+# Quick Upgrade
 
 ```
 docker stop we-mp-rss
@@ -24,17 +26,20 @@ docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  ghcr.io/rache
 ```
 
 # Official Image
+
 ```
 docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  rachelos/we-mp-rss:latest
 ```
+
 # Proxy Mirror for Faster Access (Faster access in China)
+
 ```
-docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  docker.1ms.run/rachelos/we-mp-rss:latest  
+docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  docker.1ms.run/rachelos/we-mp-rss:latest
 ```
 
 # Special Thanks (In no particular order)
-cyChaos, 子健MeLift, 晨阳, 童总, 胜宇, 军亮, 余光, 一路向北, 水煮土豆丝, 人可, 须臾, 澄明, 五梭,Jarvis,三三,哈基米,苹果 
 
+cyChaos, 子健MeLift, 晨阳, 童总, 胜宇, 军亮, 余光, 一路向北, 水煮土豆丝, 人可, 须臾, 澄明, 五梭,Jarvis,三三,哈基米,苹果
 
  <br/>
  <img src="https://github.com/user-attachments/assets/cbe924f2-d8b0-48b0-814e-7c06ccb1911c" height="60" />
@@ -72,79 +77,92 @@ A tool for subscribing to and managing WeChat Official Account content, providin
 - Export to md/docx/pdf/json formats
 - API interface and WebHook support
 
-
 # ❤️ Sponsorship
+
 If you find We-MP-RSS helpful, feel free to buy me a beer!<br/>
 <img src="docs/赞赏码.jpg" width=180/>
 [Paypal](https://www.paypal.com/ncp/payment/PUA72WYLAV5KW)
 
 ## Screenshots
+
 - Login Interface  
-<img src="docs/登录.png" alt="Login" width="80%"/><br/>
+  <img src="docs/登录.png" alt="Login" width="80%"/><br/>
 - Main Interface  
-<img src="docs/主界面.png" alt="Main Interface" width="80%"/><br/>
+  <img src="docs/主界面.png" alt="Main Interface" width="80%"/><br/>
 - QR Code Authorization  
-<img src="docs/扫码授权.png" alt="QR Code Authorization" width="80%"/><br/>
+  <img src="docs/扫码授权.png" alt="QR Code Authorization" width="80%"/><br/>
 - Add Subscription  
-<img src="docs/添加订阅.png" alt="Add Subscription" width="80%"/><br/>
+  <img src="docs/添加订阅.png" alt="Add Subscription" width="80%"/><br/>
 
 - Client Application<br/>
-<img src="docs/folo.webp" alt="FOLO Client Application" width="80%"/><br/>
-
-
+  <img src="docs/folo.webp" alt="FOLO Client Application" width="80%"/><br/>
 
 ## System Architecture
 
 The project adopts a front-end and back-end separation architecture:
+
 - Backend: Python + FastAPI
 - Frontend: Vue 3 + Vite
 - Database: SQLite (default)/MySQL
-<img src="docs/架构原理.png" alt="Architecture Diagram" width="80%"/>
+  <img src="docs/架构原理.png" alt="Architecture Diagram" width="80%"/>
 
 For more project principles, please refer to the [Project Documentation](https://deepwiki.com/rachelos/we-mp-rss/3.5-notification-system).
 
 ## Installation Guide
 
 # Development
+
 ## Environment Requirements
+
 - Python>=3.13.1
 - Node>=20.18.3
+
 ### Backend Service
 
 1. Clone the project
+
 ```bash
 git clone https://github.com/rachelos/we-mp-rss.git
 cd we-mp-rss
 ```
 
 2. Install Python dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Configure database
-Copy and modify the configuration file:
+   Copy and modify the configuration file:
+
 ```bash
 cp config.example.yaml config.yaml
 copy config.example.yaml config.yaml
 ```
+
 3. Start the service
+
 ```bash
 python main.py -job True -init True
 ```
 
 ## Frontend Development
+
 1. Install frontend dependencies
+
 ```bash
 cd we-mp-rss/web_ui
 yarn install
 ```
 
 2. Start frontend service
+
 ```bash
 yarn dev
 ```
+
 3. Access frontend page
+
 ```
 http://localhost:3000
 ```
@@ -153,50 +171,47 @@ http://localhost:3000
 
 The following are the environment variable configurations supported in `config.yaml`:
 
-| Environment Variable | Default Value | Description |
-|----------|--------|------|
-| `APP_NAME` | `we-mp-rss` | Application name |
-| `SERVER_NAME` | `we-mp-rss` | Server name |
-| `WEB_NAME` | `WeRSS微信公众号订阅助手` | Frontend display name |
-| `SEND_CODE` | `True` | Whether to send authorization QR code notifications |
-| `CODE_TITLE` | `WeRSS授权二维码` | QR code notification title |
-| `ENABLE_JOB` | `True` | Whether to enable scheduled tasks |
-| `AUTO_RELOAD` | `False` | Auto-restart service on code changes |
-| `THREADS` | `2` | Maximum number of threads |
-| `DB` | `sqlite:///data/db.db` | Database connection string |
-| `DINGDING_WEBHOOK` | Empty | DingTalk notification webhook URL |
-| `WECHAT_WEBHOOK` | Empty | WeChat notification webhook URL |
-| `FEISHU_WEBHOOK` | Empty | Feishu notification webhook URL |
-| `CUSTOM_WEBHOOK` | Empty | Custom notification webhook URL |
-| `SECRET_KEY` | `we-mp-rss` | Secret key |
-| `USER_AGENT` | `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36/WeRss` | User agent |
-| `SPAN_INTERVAL` | `10` | Scheduled task execution interval (seconds) |
-| `WEBHOOK.CONTENT_FORMAT` | `html` | Article content sending format |
-| `PORT` | `8001` | API service port |
-| `DEBUG` | `False` | Debug mode |
-| `MAX_PAGE` | `5` | Maximum scraping pages |
-| `RSS_BASE_URL` | Empty | RSS domain address |
-| `RSS_LOCAL` | `False` | Whether to use local RSS links |
-| `RSS_TITLE` | Empty | RSS title |
-| `RSS_DESCRIPTION` | Empty | RSS description |
-| `RSS_COVER` | Empty | RSS cover |
-| `RSS_FULL_CONTEXT` | `True` | Whether to display full text |
-| `RSS_ADD_COVER` | `True` | Whether to add cover images |
-| `RSS_CDATA` | `False` | Whether to enable CDATA |
-| `RSS_PAGE_SIZE` | `30` | RSS pagination size |
-| `TOKEN_EXPIRE_MINUTES` | `4320` | Login session validity duration (minutes) |
-| `CACHE.DIR` | `./data/cache` | Cache directory |
-| `ARTICLE.TRUE_DELETE` | `False` | Whether to truly delete articles |
-| `GATHER.CONTENT` | `True` | Whether to collect content |
-| `GATHER.MODEL` | `app` | Collection mode |
-| `GATHER.CONTENT_AUTO_CHECK` | `False` | Whether to automatically check uncollected article content |
-| `GATHER.CONTENT_AUTO_INTERVAL` | `59` | Time interval for automatically checking uncollected article content (minutes) |
-| `GATHER.CONTENT_MODE` | `web` | Content correction mode |
-| `SAFE_HIDE_CONFIG` | `db,secret,token,notice.wechat,notice.feishu,notice.dingding` | Configuration information to hide |
-| `SAFE_LIC_KEY` | `RACHELOS` | Authorization encryption key |
-| `LOG_FILE` | Empty | Log file path |
-| `LOG_LEVEL` | `INFO` | Log level |
-| `EXPORT_PDF` | `False` | Whether to enable PDF export functionality |
-
-
-
+| Environment Variable           | Default Value                                                        | Description                                                                    |
+| ------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `APP_NAME`                     | `we-mp-rss`                                                          | Application name                                                               |
+| `SERVER_NAME`                  | `we-mp-rss`                                                          | Server name                                                                    |
+| `WEB_NAME`                     | `WeRSS微信公众号订阅助手`                                            | Frontend display name                                                          |
+| `SEND_CODE`                    | `True`                                                               | Whether to send authorization QR code notifications                            |
+| `CODE_TITLE`                   | `WeRSS授权二维码`                                                    | QR code notification title                                                     |
+| `ENABLE_JOB`                   | `True`                                                               | Whether to enable scheduled tasks                                              |
+| `AUTO_RELOAD`                  | `False`                                                              | Auto-restart service on code changes                                           |
+| `THREADS`                      | `2`                                                                  | Maximum number of threads                                                      |
+| `DB`                           | `sqlite:///data/db.db`                                               | Database connection string                                                     |
+| `DINGDING_WEBHOOK`             | Empty                                                                | DingTalk notification webhook URL                                              |
+| `WECHAT_WEBHOOK`               | Empty                                                                | WeChat notification webhook URL                                                |
+| `FEISHU_WEBHOOK`               | Empty                                                                | Feishu notification webhook URL                                                |
+| `CUSTOM_WEBHOOK`               | Empty                                                                | Custom notification webhook URL                                                |
+| `SECRET_KEY`                   | `we-mp-rss`                                                          | Secret key                                                                     |
+| `USER_AGENT`                   | `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36/WeRss` | User agent                                                                     |
+| `SPAN_INTERVAL`                | `10`                                                                 | Scheduled task execution interval (seconds)                                    |
+| `WEBHOOK.CONTENT_FORMAT`       | `html`                                                               | Article content sending format                                                 |
+| `PORT`                         | `8001`                                                               | API service port                                                               |
+| `DEBUG`                        | `False`                                                              | Debug mode                                                                     |
+| `MAX_PAGE`                     | `5`                                                                  | Maximum scraping pages                                                         |
+| `RSS_BASE_URL`                 | Empty                                                                | RSS domain address                                                             |
+| `RSS_LOCAL`                    | `False`                                                              | Whether to use local RSS links                                                 |
+| `RSS_TITLE`                    | Empty                                                                | RSS title                                                                      |
+| `RSS_DESCRIPTION`              | Empty                                                                | RSS description                                                                |
+| `RSS_COVER`                    | Empty                                                                | RSS cover                                                                      |
+| `RSS_FULL_CONTEXT`             | `True`                                                               | Whether to display full text                                                   |
+| `RSS_ADD_COVER`                | `True`                                                               | Whether to add cover images                                                    |
+| `RSS_CDATA`                    | `False`                                                              | Whether to enable CDATA                                                        |
+| `RSS_PAGE_SIZE`                | `30`                                                                 | RSS pagination size                                                            |
+| `TOKEN_EXPIRE_MINUTES`         | `4320`                                                               | Login session validity duration (minutes)                                      |
+| `CACHE.DIR`                    | `./data/cache`                                                       | Cache directory                                                                |
+| `ARTICLE.TRUE_DELETE`          | `False`                                                              | Whether to truly delete articles                                               |
+| `GATHER.CONTENT`               | `True`                                                               | Whether to collect content                                                     |
+| `GATHER.MODEL`                 | `app`                                                                | Collection mode                                                                |
+| `GATHER.CONTENT_AUTO_CHECK`    | `False`                                                              | Whether to automatically check uncollected article content                     |
+| `GATHER.CONTENT_AUTO_INTERVAL` | `59`                                                                 | Time interval for automatically checking uncollected article content (minutes) |
+| `GATHER.CONTENT_MODE`          | `web`                                                                | Content correction mode                                                        |
+| `SAFE_HIDE_CONFIG`             | `db,secret,token,notice.wechat,notice.feishu,notice.dingding`        | Configuration information to hide                                              |
+| `SAFE_LIC_KEY`                 | `RACHELOS`                                                           | Authorization encryption key                                                   |
+| `LOG_FILE`                     | Empty                                                                | Log file path                                                                  |
+| `LOG_LEVEL`                    | `INFO`                                                               | Log level                                                                      |
+| `EXPORT_PDF`                   | `False`                                                              | Whether to enable PDF export functionality                                     |

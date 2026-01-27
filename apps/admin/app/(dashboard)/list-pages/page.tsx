@@ -621,7 +621,8 @@ export default function ListPagesPage() {
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              确定要删除列表页 "{selectedPage?.source_name || selectedPage?.url}" 吗？此操作不可撤销。
+              确定要删除列表页 "{selectedPage?.source_name || selectedPage?.url}"
+              吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -641,9 +642,7 @@ export default function ListPagesPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>测试爬取结果</DialogTitle>
-            <DialogDescription>
-              {selectedPage?.source_name || selectedPage?.url}
-            </DialogDescription>
+            <DialogDescription>{selectedPage?.source_name || selectedPage?.url}</DialogDescription>
           </DialogHeader>
           {testing ? (
             <div className="flex items-center justify-center py-8">

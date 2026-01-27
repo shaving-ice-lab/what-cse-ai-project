@@ -53,23 +53,23 @@ export WS_PORT=8083
 ### MQTT客户端连接
 
 ```javascript
-const mqtt = require('mqtt');
+const mqtt = require("mqtt");
 
 // 连接到MQTT服务器
-const client = mqtt.connect('mqtt://localhost:1883');
+const client = mqtt.connect("mqtt://localhost:1883");
 
-client.on('connect', () => {
-    console.log('连接成功');
-    
-    // 订阅主题
-    client.subscribe('test/topic');
-    
-    // 发布消息
-    client.publish('test/topic', 'Hello MQTT!');
+client.on("connect", () => {
+  console.log("连接成功");
+
+  // 订阅主题
+  client.subscribe("test/topic");
+
+  // 发布消息
+  client.publish("test/topic", "Hello MQTT!");
 });
 
-client.on('message', (topic, message) => {
-    console.log(`收到消息: ${topic} - ${message.toString()}`);
+client.on("message", (topic, message) => {
+  console.log(`收到消息: ${topic} - ${message.toString()}`);
 });
 ```
 
@@ -77,30 +77,34 @@ client.on('message', (topic, message) => {
 
 ```javascript
 // 浏览器端JavaScript
-const ws = new WebSocket('ws://localhost:8083');
+const ws = new WebSocket("ws://localhost:8083");
 
 ws.onopen = () => {
-    console.log('WebSocket连接成功');
-    
-    // 订阅主题
-    ws.send(JSON.stringify({
-        type: 'subscribe',
-        topic: 'test/topic'
-    }));
-    
-    // 发布消息
-    ws.send(JSON.stringify({
-        type: 'publish',
-        topic: 'test/topic',
-        payload: 'Hello from WebSocket!'
-    }));
+  console.log("WebSocket连接成功");
+
+  // 订阅主题
+  ws.send(
+    JSON.stringify({
+      type: "subscribe",
+      topic: "test/topic",
+    })
+  );
+
+  // 发布消息
+  ws.send(
+    JSON.stringify({
+      type: "publish",
+      topic: "test/topic",
+      payload: "Hello from WebSocket!",
+    })
+  );
 };
 
 ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === 'message') {
-        console.log(`收到消息: ${data.topic} - ${data.payload}`);
-    }
+  const data = JSON.parse(event.data);
+  if (data.type === "message") {
+    console.log(`收到消息: ${data.topic} - ${data.payload}`);
+  }
 };
 ```
 
@@ -109,34 +113,38 @@ ws.onmessage = (event) => {
 ### WebSocket消息格式
 
 #### 订阅主题
+
 ```json
 {
-    "type": "subscribe",
-    "topic": "your/topic"
+  "type": "subscribe",
+  "topic": "your/topic"
 }
 ```
 
 #### 取消订阅
+
 ```json
 {
-    "type": "unsubscribe", 
-    "topic": "your/topic"
+  "type": "unsubscribe",
+  "topic": "your/topic"
 }
 ```
 
 #### 发布消息
+
 ```json
 {
-    "type": "publish",
-    "topic": "your/topic",
-    "payload": "your message"
+  "type": "publish",
+  "topic": "your/topic",
+  "payload": "your message"
 }
 ```
 
 #### 心跳
+
 ```json
 {
-    "type": "ping"
+  "type": "ping"
 }
 ```
 
@@ -150,10 +158,13 @@ ws.onmessage = (event) => {
 ## 故障排除
 
 ### 端口被占用
+
 如果端口被占用，可以修改环境变量或直接修改代码中的端口号。
 
 ### 依赖安装失败
+
 确保Node.js版本 >= 12.0.0，并尝试清除缓存：
+
 ```bash
 npm cache clean --force
 ```

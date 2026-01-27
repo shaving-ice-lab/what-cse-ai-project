@@ -49,7 +49,7 @@ axiosInstance.interceptors.response.use(
   },
   async (error: AxiosError<{ code: number; message: string }>) => {
     // 忽略用户主动取消的请求
-    if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+    if (axios.isCancel(error) || error.code === "ERR_CANCELED") {
       return Promise.reject(error);
     }
 
@@ -185,11 +185,7 @@ export const adminApi = {
   },
 
   // List Pages APIs
-  getListPages: (params?: {
-    page?: number;
-    page_size?: number;
-    status?: string;
-  }) => {
+  getListPages: (params?: { page?: number; page_size?: number; status?: string }) => {
     return request.get("/admin/list-pages", { params });
   },
 
@@ -348,8 +344,8 @@ export interface FenbiCrawlProgress {
   items_saved: number;
   status: string;
   message?: string;
-  has_more_data?: boolean;  // 是否还有更多数据
-  pages_crawled?: number;   // 已爬取的页数
+  has_more_data?: boolean; // 是否还有更多数据
+  pages_crawled?: number; // 已爬取的页数
 }
 
 export interface FenbiCrawlStatus {
@@ -413,14 +409,17 @@ export const fenbiApi = {
   },
 
   // Crawler operations
-  triggerCrawl: (data: {
-    regions?: string[];
-    exam_types?: string[];
-    years?: number[];
-    max_pages?: number; // 最大爬取页数，0表示不限制
-    reset?: boolean;    // 是否重置爬取位置，从头开始
-    skip_save?: boolean; // 是否跳过保存到数据库，由前端解析后再保存
-  }, signal?: AbortSignal) => {
+  triggerCrawl: (
+    data: {
+      regions?: string[];
+      exam_types?: string[];
+      years?: number[];
+      max_pages?: number; // 最大爬取页数，0表示不限制
+      reset?: boolean; // 是否重置爬取位置，从头开始
+      skip_save?: boolean; // 是否跳过保存到数据库，由前端解析后再保存
+    },
+    signal?: AbortSignal
+  ) => {
     return request.post<FenbiCrawlProgress>("/admin/fenbi/crawl", data, { signal });
   },
 
@@ -486,7 +485,9 @@ export const fenbiApi = {
   // Uses dedicated Next.js API route to avoid proxy timeout issues
   // llmConfigId: optional LLM config ID to use (0 or undefined = use default)
   parseUrl: async (url: string, llmConfigId?: number) => {
-    const { adminToken } = await import("@/stores/authStore").then(m => m.useAuthStore.getState());
+    const { adminToken } = await import("@/stores/authStore").then((m) =>
+      m.useAuthStore.getState()
+    );
     const response = await fetch("/api/fenbi/parse-url", {
       method: "POST",
       headers: {
@@ -529,12 +530,15 @@ export const fenbiApi = {
     return request.get<FenbiParseTask>(`/admin/fenbi/parse-tasks/${id}`);
   },
 
-  updateParseTask: (id: number, data: {
-    status?: string;
-    message?: string;
-    steps?: ParseStep[];
-    parse_result_summary?: Record<string, unknown>;
-  }) => {
+  updateParseTask: (
+    id: number,
+    data: {
+      status?: string;
+      message?: string;
+      steps?: ParseStep[];
+      parse_result_summary?: Record<string, unknown>;
+    }
+  ) => {
     return request.put<{
       message: string;
       task: FenbiParseTask;
@@ -811,8 +815,8 @@ export const llmConfigApi = {
 // WeChat Subscription Types
 // ============================================
 
-export type WechatRSSSourceStatus = 'active' | 'paused' | 'error';
-export type WechatRSSReadStatus = 'unread' | 'read' | 'starred';
+export type WechatRSSSourceStatus = "active" | "paused" | "error";
+export type WechatRSSReadStatus = "unread" | "read" | "starred";
 
 export interface WechatRSSSource {
   id: number;

@@ -32,11 +32,7 @@ export {
   CardDescription,
   CardContent,
 } from "./components/ui/card";
-export {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "./components/ui/collapsible";
+export { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./components/ui/collapsible";
 export {
   Dialog,
   DialogPortal,
@@ -132,12 +128,7 @@ export {
   SkeletonDetail,
 } from "./components/ui/skeleton";
 export { Switch } from "./components/ui/switch";
-export {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "./components/ui/tabs";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs";
 export {
   Table,
   TableHeader,
@@ -150,12 +141,7 @@ export {
 } from "./components/ui/table";
 export { Textarea, type TextareaProps } from "./components/ui/textarea";
 export { Toaster, toast } from "./components/ui/toaster";
-export {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "./components/ui/tooltip";
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./components/ui/tooltip";
 export { LazyImage, LazyAvatar } from "./components/ui/lazy-image";
 export { ResponsiveTable, DataList, MobileDataCard } from "./components/ui/responsive-table";
 

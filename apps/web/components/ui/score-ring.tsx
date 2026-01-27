@@ -127,9 +127,7 @@ export function ScoreRing({
         </div>
       </div>
       {showLabel && (
-        <span
-          className={cn("text-sm font-medium mt-2", colors.text, labelClassName)}
-        >
+        <span className={cn("text-sm font-medium mt-2", colors.text, labelClassName)}>
           {getScoreLabel(score)}
         </span>
       )}
@@ -150,17 +148,12 @@ export function ScoreBadge({ score, className }: ScoreBadgeProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <span
-        className={cn(
-          "px-2 py-0.5 text-xs font-medium rounded-md",
-          colors.text
-        )}
+        className={cn("px-2 py-0.5 text-xs font-medium rounded-md", colors.text)}
         style={{ backgroundColor: colors.bg }}
       >
         {label}
       </span>
-      <span className={cn("text-lg font-display font-bold", colors.text)}>
-        {score}%
-      </span>
+      <span className={cn("text-lg font-display font-bold", colors.text)}>{score}%</span>
     </div>
   );
 }

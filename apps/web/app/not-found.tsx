@@ -20,9 +20,7 @@ export default function NotFound() {
         </div>
 
         {/* Message */}
-        <h2 className="text-2xl font-serif font-bold text-stone-800 mb-3">
-          页面未找到
-        </h2>
+        <h2 className="text-2xl font-serif font-bold text-stone-800 mb-3">页面未找到</h2>
         <p className="text-stone-500 mb-8 leading-relaxed">
           抱歉，您访问的页面不存在或已被移除。
           <br />

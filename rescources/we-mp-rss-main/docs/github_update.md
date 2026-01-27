@@ -21,9 +21,11 @@ GET /api/github/status
 ```
 
 **参数:**
+
 - `path` (可选): 仓库路径
 
 **响应示例:**
+
 ```json
 {
   "is_git_repo": true,
@@ -44,15 +46,17 @@ POST /api/github/update
 ```
 
 **请求体:**
+
 ```json
 {
-  "branch": "main",        // 可选，目标分支
-  "backup": true,           // 可选，是否创建备份
-  "path": "/path/to/repo"   // 可选，仓库路径
+  "branch": "main", // 可选，目标分支
+  "backup": true, // 可选，是否创建备份
+  "path": "/path/to/repo" // 可选，仓库路径
 }
 ```
 
 **响应示例:**
+
 ```json
 {
   "success": true,
@@ -71,6 +75,7 @@ GET /api/github/commits?limit=10
 ```
 
 **参数:**
+
 - `limit`: 返回的提交数量 (默认 10，最大 100)
 - `path`: 可选的仓库路径
 
@@ -87,6 +92,7 @@ POST /api/github/rollback
 ```
 
 **请求体:**
+
 ```json
 {
   "commit_hash": "abc1234",
@@ -139,16 +145,19 @@ python github_update.py --update --branch develop --backup
 ## 安全特性
 
 ### 1. 自动备份
+
 - 默认在更新前创建完整备份
 - 备份文件命名格式: `backup_YYYYMMDD_HHMMSS`
 - 备份包含完整的 Git 仓库历史
 
 ### 2. 状态检查
+
 - 更新前检查是否有未提交的更改
 - 验证 Git 仓库状态
 - 检查与远程仓库的差异
 
 ### 3. 错误处理
+
 - 完善的错误提示
 - 操作失败时的回滚机制
 - 详细的日志记录
@@ -221,6 +230,7 @@ python github_update.py --update --branch develop --backup
 ### 自定义配置
 
 可以通过修改 `GitHubUpdater` 类来支持:
+
 - 不同的 Git 托管平台 (Gitee, GitLab 等)
 - 自定义备份策略
 - 特定的分支保护规则
@@ -236,6 +246,7 @@ python github_update.py --update --branch develop --backup
 ## 支持和反馈
 
 如有问题或建议，请通过以下方式联系:
+
 - 提交 Issue 到项目仓库
 - 查看项目文档
 - 联系开发团队

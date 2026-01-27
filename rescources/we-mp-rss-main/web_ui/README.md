@@ -3,6 +3,7 @@
 基于Vue3 + Vite + ArcoDesign构建的前端界面
 
 ## 功能列表
+
 - 用户登录/登出
 - 文章列表展示
 - 添加公众号订阅
@@ -15,18 +16,25 @@
 
 1. 打开PowerShell作为管理员
 2. 运行以下命令更改执行策略：
+
 ```powershell
 Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
+
 3. 安装项目依赖：
+
 ```powershell
 npm install
 ```
+
 4. 安装ArcoDesign Vue：
+
 ```powershell
 npm install --save @arco-design/web-vue @arco-design/web-vue-icon @arco-design/color
 ```
+
 5. 安装开发依赖：
+
 ```powershell
 npm install --save-dev less less-loader
 ```
@@ -34,6 +42,7 @@ npm install --save-dev less less-loader
 ## 环境变量配置
 
 创建`.env`文件：
+
 ```ini
 VITE_API_BASE_URL=http://your-api-server.com
 ```
@@ -41,11 +50,13 @@ VITE_API_BASE_URL=http://your-api-server.com
 ## 运行项目
 
 开发模式：
+
 ```bash
 npm run dev
 ```
 
 生产构建：
+
 ```bash
 npm run build
 ```
@@ -64,6 +75,7 @@ src/
 ```
 
 ## 技术栈
+
 - Vue 3
 - Vite
 - ArcoDesign Vue

@@ -15,10 +15,7 @@ interface ConditionCompareTableProps {
   className?: string;
 }
 
-export function ConditionCompareTable({
-  conditions,
-  className,
-}: ConditionCompareTableProps) {
+export function ConditionCompareTable({ conditions, className }: ConditionCompareTableProps) {
   const matchedCount = conditions.filter((c) => c.isMatch).length;
   const totalCount = conditions.length;
 

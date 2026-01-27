@@ -69,10 +69,7 @@ export function AnimatedCounter({
   const formattedValue = decimals > 0 ? count.toFixed(decimals) : Math.floor(count);
 
   return (
-    <span
-      ref={ref}
-      className={cn("font-display font-bold tabular-nums", className)}
-    >
+    <span ref={ref} className={cn("font-display font-bold tabular-nums", className)}>
       {prefix}
       {Number(formattedValue).toLocaleString()}
       {suffix}

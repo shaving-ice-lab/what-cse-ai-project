@@ -139,7 +139,7 @@ export default function PendingPositionsPage() {
       // TODO: Replace with actual API call when backend is ready
       // const res = await adminApi.getPendingPositions();
       // setPositions(res.positions);
-      
+
       // Using mock data for now
       await new Promise((resolve) => setTimeout(resolve, 500));
       setPositions(mockPendingPositions);
@@ -238,11 +238,7 @@ export default function PendingPositionsPage() {
         </Badge>
       );
     } else {
-      return (
-        <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-          {confidence}% 低
-        </Badge>
-      );
+      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{confidence}% 低</Badge>;
     }
   };
 
@@ -536,7 +532,9 @@ export default function PendingPositionsPage() {
                               </div>
                               <div>
                                 <div className="text-muted-foreground">政治面貌</div>
-                                <div className="font-medium">{position.political_status || "-"}</div>
+                                <div className="font-medium">
+                                  {position.political_status || "-"}
+                                </div>
                               </div>
                               <div className="md:col-span-2">
                                 <div className="text-muted-foreground">专业要求</div>

@@ -353,9 +353,7 @@ export default function CrawlersPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>任务详情</DialogTitle>
-            <DialogDescription>
-              任务ID: {selectedTask?.task_id}
-            </DialogDescription>
+            <DialogDescription>任务ID: {selectedTask?.task_id}</DialogDescription>
           </DialogHeader>
           {selectedTask && (
             <div className="space-y-4">

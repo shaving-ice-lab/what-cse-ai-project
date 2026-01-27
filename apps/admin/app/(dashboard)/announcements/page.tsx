@@ -97,11 +97,8 @@ export default function AnnouncementsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
 
   const filteredAnnouncements = announcements.filter((item) => {
-    const matchesSearch = item.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || item.status === statusFilter;
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
     const matchesType = typeFilter === "all" || item.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   });

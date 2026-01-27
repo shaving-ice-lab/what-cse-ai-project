@@ -208,7 +208,9 @@ export default function RegisterPage() {
                     <div
                       key={index}
                       className={`h-1 flex-1 rounded-full transition-colors ${
-                        index < passwordStrength ? strengthColors[passwordStrength - 1] : "bg-stone-200"
+                        index < passwordStrength
+                          ? strengthColors[passwordStrength - 1]
+                          : "bg-stone-200"
                       }`}
                     />
                   ))}
@@ -250,7 +252,9 @@ export default function RegisterPage() {
                 </div>
               )}
             </div>
-            {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+            )}
           </div>
 
           {/* Terms Checkbox */}

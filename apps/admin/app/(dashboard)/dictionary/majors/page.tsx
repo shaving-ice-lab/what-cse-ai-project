@@ -90,9 +90,7 @@ export default function MajorsDictionaryPage() {
 
   const toggleCategory = (id: number) => {
     setCategories(
-      categories.map((cat) =>
-        cat.id === id ? { ...cat, expanded: !cat.expanded } : cat
-      )
+      categories.map((cat) => (cat.id === id ? { ...cat, expanded: !cat.expanded } : cat))
     );
   };
 
@@ -105,8 +103,7 @@ export default function MajorsDictionaryPage() {
       cat.name.toLowerCase().includes(searchLower) ||
       cat.code.includes(searchTerm) ||
       cat.majors.some(
-        (m) =>
-          m.name.toLowerCase().includes(searchLower) || m.code.includes(searchTerm)
+        (m) => m.name.toLowerCase().includes(searchLower) || m.code.includes(searchTerm)
       )
     );
   });
@@ -151,9 +148,7 @@ export default function MajorsDictionaryPage() {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(totalMajors / categories.length).toFixed(1)}
-            </div>
+            <div className="text-2xl font-bold">{(totalMajors / categories.length).toFixed(1)}</div>
           </CardContent>
         </Card>
       </div>

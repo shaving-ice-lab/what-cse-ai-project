@@ -70,9 +70,7 @@ function CollapsedNavItem({
               key={subItem.title}
               asChild
               className={
-                isActive(subItem.url)
-                  ? "bg-accent text-accent-foreground"
-                  : "cursor-pointer"
+                isActive(subItem.url) ? "bg-accent text-accent-foreground" : "cursor-pointer"
               }
             >
               <Link href={subItem.url}>{subItem.title}</Link>
@@ -143,25 +141,13 @@ export function NavMain({ items }: { items: NavItem[] }) {
         {items.map((item) =>
           item.items && item.items.length > 0 ? (
             isCollapsed ? (
-              <CollapsedNavItem
-                key={item.title}
-                item={item}
-                isActive={isActiveExact}
-              />
+              <CollapsedNavItem key={item.title} item={item} isActive={isActiveExact} />
             ) : (
-              <ExpandedNavItem
-                key={item.title}
-                item={item}
-                isActive={isActiveExact}
-              />
+              <ExpandedNavItem key={item.title} item={item} isActive={isActiveExact} />
             )
           ) : (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-                isActive={isActiveExact(item.url)}
-              >
+              <SidebarMenuButton asChild tooltip={item.title} isActive={isActiveExact(item.url)}>
                 <Link href={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>

@@ -52,7 +52,12 @@ import {
   Bot,
   UserCheck,
 } from "lucide-react";
-import { fenbiApi, llmConfigApi, type ParseURLResult, type LLMConfigSelectOption } from "@/services/api";
+import {
+  fenbiApi,
+  llmConfigApi,
+  type ParseURLResult,
+  type LLMConfigSelectOption,
+} from "@/services/api";
 
 interface ParseUrlDialogProps {
   open: boolean;
@@ -104,7 +109,7 @@ const getFileTypeStyles = (type: string) => {
 // Copy button component
 const CopyButton = ({ text, label }: { text: string; label?: string }) => {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -112,12 +117,7 @@ const CopyButton = ({ text, label }: { text: string; label?: string }) => {
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleCopy}
-      className="h-6 px-2 text-xs gap-1"
-    >
+    <Button variant="ghost" size="sm" onClick={handleCopy} className="h-6 px-2 text-xs gap-1">
       {copied ? (
         <>
           <Check className="h-3 w-3 text-emerald-600" />
@@ -137,7 +137,7 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
   const [url, setUrl] = useState("");
   const [parsing, setParsing] = useState(false);
   const [result, setResult] = useState<ParseURLResult | null>(null);
-  
+
   // LLM config selection
   const [llmConfigs, setLlmConfigs] = useState<LLMConfigSelectOption[]>([]);
   const [selectedLlmConfigId, setSelectedLlmConfigId] = useState<number>(0);
@@ -147,7 +147,8 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
   useEffect(() => {
     if (open) {
       setLoadingLlmConfigs(true);
-      llmConfigApi.getSelectOptions()
+      llmConfigApi
+        .getSelectOptions()
         .then((res) => {
           setLlmConfigs(res.options || []);
         })
@@ -200,12 +201,15 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
   }, []);
 
   // Close and reset
-  const handleClose = useCallback((open: boolean) => {
-    if (!open) {
-      handleReset();
-    }
-    onOpenChange(open);
-  }, [onOpenChange, handleReset]);
+  const handleClose = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        handleReset();
+      }
+      onOpenChange(open);
+    },
+    [onOpenChange, handleReset]
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -219,11 +223,11 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <span>公告智能解析</span>
-                {result?.success && (
-                  <Badge className="bg-emerald-500/90 text-xs">解析成功</Badge>
-                )}
+                {result?.success && <Badge className="bg-emerald-500/90 text-xs">解析成功</Badge>}
                 {result?.error && !result.success && (
-                  <Badge variant="destructive" className="text-xs">解析失败</Badge>
+                  <Badge variant="destructive" className="text-xs">
+                    解析失败
+                  </Badge>
                 )}
               </DialogTitle>
               {stats && (
@@ -234,7 +238,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                   </div>
                   <div className="flex items-center gap-1">
                     <CheckCircle className="h-3 w-3 text-emerald-500" />
-                    <span>{stats.successCount}/{stats.totalSteps}</span>
+                    <span>
+                      {stats.successCount}/{stats.totalSteps}
+                    </span>
                   </div>
                 </div>
               )}
@@ -366,9 +372,7 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                 </div>
               </div>
               <p className="mt-5 text-base font-medium">正在智能解析</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                下载附件、提取内容、AI 分析中...
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">下载附件、提取内容、AI 分析中...</p>
               <div className="flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 预计需要 30-60 秒
@@ -387,9 +391,7 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-red-800 dark:text-red-200">解析失败</h3>
-                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                        {result.error}
-                      </p>
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">{result.error}</p>
                       <Button
                         variant="outline"
                         size="sm"
@@ -458,11 +460,15 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                   <div className="flex-shrink-0 px-3 py-2 border-t bg-muted/20 text-xs space-y-1">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">总耗时</span>
-                      <span className="font-mono font-medium">{(stats.totalTime / 1000).toFixed(2)}s</span>
+                      <span className="font-mono font-medium">
+                        {(stats.totalTime / 1000).toFixed(2)}s
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">成功</span>
-                      <span className="font-medium text-emerald-600">{stats.successCount}/{stats.totalSteps}</span>
+                      <span className="font-medium text-emerald-600">
+                        {stats.successCount}/{stats.totalSteps}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -495,11 +501,12 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                         >
                           <Users className="h-3 w-3 mr-1" />
                           岗位分析
-                          {result.data.llm_analysis?.positions && result.data.llm_analysis.positions.length > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
-                              {result.data.llm_analysis.positions.length}
-                            </Badge>
-                          )}
+                          {result.data.llm_analysis?.positions &&
+                            result.data.llm_analysis.positions.length > 0 && (
+                              <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+                                {result.data.llm_analysis.positions.length}
+                              </Badge>
+                            )}
                         </TabsTrigger>
                         <TabsTrigger
                           value="attachments"
@@ -532,7 +539,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                               <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
                                 <div className="flex items-center gap-2 mb-1">
                                   <XCircle className="h-3.5 w-3.5 text-red-600" />
-                                  <span className="text-xs font-medium text-red-700 dark:text-red-300">分析失败</span>
+                                  <span className="text-xs font-medium text-red-700 dark:text-red-300">
+                                    分析失败
+                                  </span>
                                 </div>
                                 <p className="text-xs text-red-600 dark:text-red-400">
                                   {result.data.llm_analysis.error}
@@ -546,9 +555,14 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                     <div className="flex items-center justify-between mb-2">
                                       <div className="flex items-center gap-1.5">
                                         <Sparkles className="h-3.5 w-3.5 text-violet-600" />
-                                        <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">公告摘要</span>
+                                        <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+                                          公告摘要
+                                        </span>
                                       </div>
-                                      <CopyButton text={result.data.llm_analysis.summary} label="复制" />
+                                      <CopyButton
+                                        text={result.data.llm_analysis.summary}
+                                        label="复制"
+                                      />
                                     </div>
                                     <p className="text-xs leading-relaxed text-violet-900 dark:text-violet-100">
                                       {result.data.llm_analysis.summary}
@@ -561,7 +575,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                   <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                                     <div className="flex items-center gap-1.5 mb-2">
                                       <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                                      <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">考试信息</span>
+                                      <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                                        考试信息
+                                      </span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                       {result.data.llm_analysis.exam_info.exam_type && (
@@ -573,20 +589,32 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                       )}
                                       {result.data.llm_analysis.exam_info.registration_start && (
                                         <div className="p-2 bg-white/50 dark:bg-black/20 rounded">
-                                          <p className="text-[10px] text-muted-foreground mb-0.5">报名开始</p>
-                                          <p className="text-xs font-medium">{result.data.llm_analysis.exam_info.registration_start}</p>
+                                          <p className="text-[10px] text-muted-foreground mb-0.5">
+                                            报名开始
+                                          </p>
+                                          <p className="text-xs font-medium">
+                                            {result.data.llm_analysis.exam_info.registration_start}
+                                          </p>
                                         </div>
                                       )}
                                       {result.data.llm_analysis.exam_info.registration_end && (
                                         <div className="p-2 bg-white/50 dark:bg-black/20 rounded border-l-2 border-red-400">
-                                          <p className="text-[10px] text-muted-foreground mb-0.5">报名截止</p>
-                                          <p className="text-xs font-semibold text-red-600">{result.data.llm_analysis.exam_info.registration_end}</p>
+                                          <p className="text-[10px] text-muted-foreground mb-0.5">
+                                            报名截止
+                                          </p>
+                                          <p className="text-xs font-semibold text-red-600">
+                                            {result.data.llm_analysis.exam_info.registration_end}
+                                          </p>
                                         </div>
                                       )}
                                       {result.data.llm_analysis.exam_info.exam_date && (
                                         <div className="p-2 bg-white/50 dark:bg-black/20 rounded">
-                                          <p className="text-[10px] text-muted-foreground mb-0.5">考试时间</p>
-                                          <p className="text-xs font-medium">{result.data.llm_analysis.exam_info.exam_date}</p>
+                                          <p className="text-[10px] text-muted-foreground mb-0.5">
+                                            考试时间
+                                          </p>
+                                          <p className="text-xs font-medium">
+                                            {result.data.llm_analysis.exam_info.exam_date}
+                                          </p>
                                         </div>
                                       )}
                                     </div>
@@ -594,64 +622,81 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                 )}
 
                                 {/* Positions Card */}
-                                {result.data.llm_analysis.positions && result.data.llm_analysis.positions.length > 0 && (
-                                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <div className="flex items-center gap-1.5">
-                                        <Briefcase className="h-3.5 w-3.5 text-emerald-600" />
-                                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">招录职位</span>
-                                      </div>
-                                      <Badge className="bg-emerald-600 text-xs h-5">
-                                        {result.data.llm_analysis.positions.length} 个
-                                      </Badge>
-                                    </div>
-                                    <div className="space-y-1.5 max-h-48 overflow-auto">
-                                      {result.data.llm_analysis.positions.map((pos, idx) => (
-                                        <div key={idx} className="p-2 bg-white dark:bg-gray-900/50 rounded border text-xs">
-                                          <div className="flex items-start justify-between">
-                                            <span className="font-medium">{pos.position_name || "未知职位"}</span>
-                                            {pos.recruit_count && (
-                                              <Badge variant="outline" className="text-[10px] h-4 bg-emerald-50 dark:bg-emerald-900/30">
-                                                招 {pos.recruit_count} 人
-                                              </Badge>
-                                            )}
-                                          </div>
-                                          <div className="flex flex-wrap gap-1 mt-1.5">
-                                            {pos.department_name && (
-                                              <Badge variant="outline" className="text-[10px] h-4 gap-0.5">
-                                                <MapPin className="h-2.5 w-2.5" />
-                                                {pos.department_name}
-                                              </Badge>
-                                            )}
-                                            {pos.education && (
-                                              <Badge variant="outline" className="text-[10px] h-4">
-                                                {pos.education}
-                                              </Badge>
-                                            )}
-                                            {pos.political_status && (
-                                              <Badge 
-                                                variant="outline" 
-                                                className={`text-[10px] h-4 gap-0.5 ${
-                                                  pos.political_status.includes("党员") 
-                                                    ? "border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300" 
-                                                    : ""
-                                                }`}
-                                              >
-                                                <UserCheck className="h-2.5 w-2.5" />
-                                                {pos.political_status}
-                                              </Badge>
-                                            )}
-                                          </div>
-                                          {pos.major && pos.major.length > 0 && (
-                                            <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-1">
-                                              专业：{pos.major.join("、")}
-                                            </p>
-                                          )}
+                                {result.data.llm_analysis.positions &&
+                                  result.data.llm_analysis.positions.length > 0 && (
+                                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-1.5">
+                                          <Briefcase className="h-3.5 w-3.5 text-emerald-600" />
+                                          <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                                            招录职位
+                                          </span>
                                         </div>
-                                      ))}
+                                        <Badge className="bg-emerald-600 text-xs h-5">
+                                          {result.data.llm_analysis.positions.length} 个
+                                        </Badge>
+                                      </div>
+                                      <div className="space-y-1.5 max-h-48 overflow-auto">
+                                        {result.data.llm_analysis.positions.map((pos, idx) => (
+                                          <div
+                                            key={idx}
+                                            className="p-2 bg-white dark:bg-gray-900/50 rounded border text-xs"
+                                          >
+                                            <div className="flex items-start justify-between">
+                                              <span className="font-medium">
+                                                {pos.position_name || "未知职位"}
+                                              </span>
+                                              {pos.recruit_count && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[10px] h-4 bg-emerald-50 dark:bg-emerald-900/30"
+                                                >
+                                                  招 {pos.recruit_count} 人
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                              {pos.department_name && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[10px] h-4 gap-0.5"
+                                                >
+                                                  <MapPin className="h-2.5 w-2.5" />
+                                                  {pos.department_name}
+                                                </Badge>
+                                              )}
+                                              {pos.education && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[10px] h-4"
+                                                >
+                                                  {pos.education}
+                                                </Badge>
+                                              )}
+                                              {pos.political_status && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className={`text-[10px] h-4 gap-0.5 ${
+                                                    pos.political_status.includes("党员")
+                                                      ? "border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300"
+                                                      : ""
+                                                  }`}
+                                                >
+                                                  <UserCheck className="h-2.5 w-2.5" />
+                                                  {pos.political_status}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            {pos.major && pos.major.length > 0 && (
+                                              <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-1">
+                                                专业：{pos.major.join("、")}
+                                              </p>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
+                                  )}
 
                                 {/* Confidence */}
                                 <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg">
@@ -663,10 +708,12 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                           (result.data.llm_analysis.confidence || 0) >= 80
                                             ? "bg-emerald-500"
                                             : (result.data.llm_analysis.confidence || 0) >= 60
-                                            ? "bg-amber-500"
-                                            : "bg-red-500"
+                                              ? "bg-amber-500"
+                                              : "bg-red-500"
                                         }`}
-                                        style={{ width: `${result.data.llm_analysis.confidence || 0}%` }}
+                                        style={{
+                                          width: `${result.data.llm_analysis.confidence || 0}%`,
+                                        }}
                                       />
                                     </div>
                                     <span className="text-xs font-semibold w-8 text-right">
@@ -719,7 +766,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                           {result.data.page_content && (
                             <div>
                               <div className="flex items-center justify-between mb-1.5">
-                                <Label className="text-[10px] text-muted-foreground uppercase">页面正文</Label>
+                                <Label className="text-[10px] text-muted-foreground uppercase">
+                                  页面正文
+                                </Label>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="text-[10px] h-4">
                                     <Hash className="h-2.5 w-2.5 mr-0.5" />
@@ -749,30 +798,49 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                     <TabsContent value="positions" className="flex-1 min-h-0 m-0 overflow-hidden">
                       <ScrollArea className="h-full">
                         <div className="p-4 space-y-4">
-                          {result.data.llm_analysis?.positions && result.data.llm_analysis.positions.length > 0 ? (
+                          {result.data.llm_analysis?.positions &&
+                          result.data.llm_analysis.positions.length > 0 ? (
                             <>
                               {/* Stats Summary */}
                               <div className="grid grid-cols-4 gap-2">
                                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800 text-center">
-                                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium uppercase mb-1">岗位数</p>
+                                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium uppercase mb-1">
+                                    岗位数
+                                  </p>
                                   <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
                                     {result.data.llm_analysis.positions.length}
                                   </p>
                                 </div>
                                 <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800 text-center">
-                                  <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium uppercase mb-1">总招录</p>
+                                  <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium uppercase mb-1">
+                                    总招录
+                                  </p>
                                   <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                                    {result.data.llm_analysis.positions.reduce((sum, p) => sum + (p.recruit_count || 0), 0)} 人
+                                    {result.data.llm_analysis.positions.reduce(
+                                      (sum, p) => sum + (p.recruit_count || 0),
+                                      0
+                                    )}{" "}
+                                    人
                                   </p>
                                 </div>
                                 <div className="p-3 bg-violet-50 dark:bg-violet-950/30 rounded-lg border border-violet-200 dark:border-violet-800 text-center">
-                                  <p className="text-[10px] text-violet-600 dark:text-violet-400 font-medium uppercase mb-1">招录单位</p>
+                                  <p className="text-[10px] text-violet-600 dark:text-violet-400 font-medium uppercase mb-1">
+                                    招录单位
+                                  </p>
                                   <p className="text-xl font-bold text-violet-700 dark:text-violet-300">
-                                    {new Set(result.data.llm_analysis.positions.map(p => p.department_name).filter(Boolean)).size}
+                                    {
+                                      new Set(
+                                        result.data.llm_analysis.positions
+                                          .map((p) => p.department_name)
+                                          .filter(Boolean)
+                                      ).size
+                                    }
                                   </p>
                                 </div>
                                 <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 text-center">
-                                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium uppercase mb-1">分析置信度</p>
+                                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium uppercase mb-1">
+                                    分析置信度
+                                  </p>
                                   <p className="text-xl font-bold text-amber-700 dark:text-amber-300">
                                     {result.data.llm_analysis.confidence || 0}%
                                   </p>
@@ -791,13 +859,18 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                 </div>
                                 <div className="divide-y max-h-[350px] overflow-auto">
                                   {result.data.llm_analysis.positions.map((pos, idx) => (
-                                    <div key={idx} className="p-3 hover:bg-muted/30 transition-colors">
+                                    <div
+                                      key={idx}
+                                      className="p-3 hover:bg-muted/30 transition-colors"
+                                    >
                                       <div className="flex items-start justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                           <span className="flex items-center justify-center w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
                                             {idx + 1}
                                           </span>
-                                          <span className="text-sm font-medium">{pos.position_name || "未知职位"}</span>
+                                          <span className="text-sm font-medium">
+                                            {pos.position_name || "未知职位"}
+                                          </span>
                                         </div>
                                         {pos.recruit_count && (
                                           <Badge className="bg-emerald-600 text-white text-xs h-5">
@@ -810,7 +883,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                           <div className="flex items-center gap-1.5 text-muted-foreground">
                                             <Building2 className="h-3 w-3" />
                                             <span>单位：</span>
-                                            <span className="text-foreground">{pos.department_name}</span>
+                                            <span className="text-foreground">
+                                              {pos.department_name}
+                                            </span>
                                           </div>
                                         )}
                                         {pos.education && (
@@ -824,25 +899,33 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                           <div className="flex items-center gap-1.5 text-muted-foreground">
                                             <MapPin className="h-3 w-3" />
                                             <span>地点：</span>
-                                            <span className="text-foreground">{pos.work_location}</span>
+                                            <span className="text-foreground">
+                                              {pos.work_location}
+                                            </span>
                                           </div>
                                         )}
                                         {pos.political_status && (
                                           <div className="flex items-center gap-1.5 text-muted-foreground">
                                             <UserCheck className="h-3 w-3" />
                                             <span>政治面貌：</span>
-                                            <span className={`font-medium ${
-                                              pos.political_status.includes("党员") 
-                                                ? "text-red-600 dark:text-red-400" 
-                                                : "text-foreground"
-                                            }`}>{pos.political_status}</span>
+                                            <span
+                                              className={`font-medium ${
+                                                pos.political_status.includes("党员")
+                                                  ? "text-red-600 dark:text-red-400"
+                                                  : "text-foreground"
+                                              }`}
+                                            >
+                                              {pos.political_status}
+                                            </span>
                                           </div>
                                         )}
                                         {pos.major && pos.major.length > 0 && (
                                           <div className="flex items-start gap-1.5 text-muted-foreground col-span-2">
                                             <Target className="h-3 w-3 mt-0.5 flex-shrink-0" />
                                             <span className="flex-shrink-0">专业：</span>
-                                            <span className="text-foreground line-clamp-2">{pos.major.join("、")}</span>
+                                            <span className="text-foreground line-clamp-2">
+                                              {pos.major.join("、")}
+                                            </span>
                                           </div>
                                         )}
                                       </div>
@@ -859,9 +942,10 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                 </div>
                                 <p>
                                   以上岗位信息由 AI 从原网页内容
-                                  {result.data.attachments && result.data.attachments.length > 0 && (
-                                    <>及 {result.data.attachments.length} 个附件</>
-                                  )}
+                                  {result.data.attachments &&
+                                    result.data.attachments.length > 0 && (
+                                      <>及 {result.data.attachments.length} 个附件</>
+                                    )}
                                   中智能提取，仅供参考。完整职位表请以原文附件为准。
                                 </p>
                               </div>
@@ -875,18 +959,24 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                               <p className="text-xs text-center max-w-[280px] mb-4">
                                 AI 未能从公告内容中提取到具体岗位信息，请查看原文附件获取完整职位表
                               </p>
-                              
+
                               {/* Debug info */}
                               {result.data.llm_analysis?.error && (
                                 <div className="w-full p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800 mb-3">
-                                  <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">分析错误</p>
-                                  <p className="text-xs text-red-600 dark:text-red-400">{result.data.llm_analysis.error}</p>
+                                  <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
+                                    分析错误
+                                  </p>
+                                  <p className="text-xs text-red-600 dark:text-red-400">
+                                    {result.data.llm_analysis.error}
+                                  </p>
                                 </div>
                               )}
-                              
+
                               {result.data.llm_analysis?.raw_response && (
                                 <div className="w-full">
-                                  <p className="text-xs font-medium text-muted-foreground mb-1">LLM 原始响应（调试）</p>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">
+                                    LLM 原始响应（调试）
+                                  </p>
                                   <div className="p-2 bg-muted/50 rounded border max-h-[200px] overflow-auto">
                                     <pre className="text-[10px] whitespace-pre-wrap break-all">
                                       {result.data.llm_analysis.raw_response.slice(0, 2000)}
@@ -909,18 +999,27 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                             result.data.attachments.map((att, idx) => {
                               const styles = getFileTypeStyles(att.type);
                               return (
-                                <div key={idx} className="p-3 border rounded-lg bg-card hover:shadow-sm transition-shadow">
+                                <div
+                                  key={idx}
+                                  className="p-3 border rounded-lg bg-card hover:shadow-sm transition-shadow"
+                                >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2.5 min-w-0">
                                       <div className={`p-1.5 rounded ${styles.bg}`}>
                                         <FileText className={`h-4 w-4 ${styles.text}`} />
                                       </div>
                                       <div className="min-w-0">
-                                        <p className="text-xs font-medium truncate max-w-[250px]" title={att.name}>
+                                        <p
+                                          className="text-xs font-medium truncate max-w-[250px]"
+                                          title={att.name}
+                                        >
                                           {att.name}
                                         </p>
                                         <div className="flex items-center gap-1.5 mt-0.5">
-                                          <Badge variant="outline" className="text-[10px] h-4 uppercase">
+                                          <Badge
+                                            variant="outline"
+                                            className="text-[10px] h-4 uppercase"
+                                          >
                                             {att.type}
                                           </Badge>
                                           {att.content && (
@@ -946,7 +1045,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                   {att.error && (
                                     <div className="mt-2 p-2 bg-red-50 dark:bg-red-950/30 rounded flex items-start gap-1.5">
                                       <XCircle className="h-3 w-3 text-red-600 flex-shrink-0 mt-0.5" />
-                                      <p className="text-[10px] text-red-600 dark:text-red-400">{att.error}</p>
+                                      <p className="text-[10px] text-red-600 dark:text-red-400">
+                                        {att.error}
+                                      </p>
                                     </div>
                                   )}
                                   {att.content && !att.error && (
@@ -956,7 +1057,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                         查看提取内容
                                       </summary>
                                       <div className="mt-1 p-2 bg-muted/50 rounded max-h-48 overflow-auto">
-                                        <pre className="text-[10px] whitespace-pre-wrap font-mono">{att.content}</pre>
+                                        <pre className="text-[10px] whitespace-pre-wrap font-mono">
+                                          {att.content}
+                                        </pre>
                                       </div>
                                     </details>
                                   )}
@@ -1000,16 +1103,17 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                           </div>
 
                           {/* Arrow for redirect */}
-                          {result.data.final_url && result.data.final_url !== result.data.input_url && (
-                            <div className="flex items-center justify-center gap-2 text-muted-foreground py-1">
-                              <div className="h-px flex-1 bg-muted-foreground/20" />
-                              <div className="flex items-center gap-1 text-[10px]">
-                                <ArrowRight className="h-3 w-3" />
-                                短链接跳转
+                          {result.data.final_url &&
+                            result.data.final_url !== result.data.input_url && (
+                              <div className="flex items-center justify-center gap-2 text-muted-foreground py-1">
+                                <div className="h-px flex-1 bg-muted-foreground/20" />
+                                <div className="flex items-center gap-1 text-[10px]">
+                                  <ArrowRight className="h-3 w-3" />
+                                  短链接跳转
+                                </div>
+                                <div className="h-px flex-1 bg-muted-foreground/20" />
                               </div>
-                              <div className="h-px flex-1 bg-muted-foreground/20" />
-                            </div>
-                          )}
+                            )}
 
                           {/* Final Article URL */}
                           {result.data.final_url && (
@@ -1021,7 +1125,10 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                     最终文章链接
                                   </Label>
                                   {result.data.final_url === result.data.input_url && (
-                                    <Badge variant="outline" className="text-[10px] h-4 text-muted-foreground">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] h-4 text-muted-foreground"
+                                    >
                                       无跳转
                                     </Badge>
                                   )}
@@ -1044,7 +1151,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                           {result.data.page_title && (
                             <div className="p-3 bg-muted/50 rounded-lg">
                               <div className="flex items-center justify-between mb-1">
-                                <Label className="text-[10px] text-muted-foreground uppercase">页面标题</Label>
+                                <Label className="text-[10px] text-muted-foreground uppercase">
+                                  页面标题
+                                </Label>
                                 <CopyButton text={result.data.page_title} />
                               </div>
                               <p className="text-xs font-medium">{result.data.page_title}</p>

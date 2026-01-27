@@ -100,9 +100,7 @@ export default function PositionDetailPage() {
           {/* Position Header */}
           <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card overflow-hidden">
             {/* Match Score Bar */}
-            <div
-              className={`h-1.5 bg-gradient-to-r ${getScoreColor(position.matchScore)}`}
-            />
+            <div className={`h-1.5 bg-gradient-to-r ${getScoreColor(position.matchScore)}`} />
 
             <div className="p-6 lg:p-8">
               {/* Title Row */}
@@ -132,9 +130,7 @@ export default function PositionDetailPage() {
                         : "border-stone-200 text-stone-500 hover:bg-stone-50"
                     }`}
                   >
-                    <Heart
-                      className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`}
-                    />
+                    <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
                   </button>
                   <button className="p-3 rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 transition-colors">
                     <Share2 className="w-5 h-5" />
@@ -148,8 +144,8 @@ export default function PositionDetailPage() {
                   position.matchScore >= 70
                     ? "from-emerald-50 to-emerald-100/50 border border-emerald-200"
                     : position.matchScore >= 50
-                    ? "from-amber-50 to-amber-100/50 border border-amber-200"
-                    : "from-stone-50 to-stone-100/50 border border-stone-200"
+                      ? "from-amber-50 to-amber-100/50 border border-amber-200"
+                      : "from-stone-50 to-stone-100/50 border border-stone-200"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -177,24 +173,14 @@ export default function PositionDetailPage() {
                           strokeDasharray={`${(position.matchScore / 100) * 226} 226`}
                         />
                         <defs>
-                          <linearGradient
-                            id="scoreGradient"
-                            x1="0%"
-                            y1="0%"
-                            x2="100%"
-                            y2="0%"
-                          >
+                          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                             <stop
                               offset="0%"
-                              stopColor={
-                                position.matchScore >= 70 ? "#10b981" : "#f59e0b"
-                              }
+                              stopColor={position.matchScore >= 70 ? "#10b981" : "#f59e0b"}
                             />
                             <stop
                               offset="100%"
-                              stopColor={
-                                position.matchScore >= 70 ? "#059669" : "#d97706"
-                              }
+                              stopColor={position.matchScore >= 70 ? "#059669" : "#d97706"}
                             />
                           </linearGradient>
                         </defs>
@@ -202,9 +188,7 @@ export default function PositionDetailPage() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span
                           className={`text-2xl font-display font-bold ${
-                            position.matchScore >= 70
-                              ? "text-emerald-600"
-                              : "text-amber-600"
+                            position.matchScore >= 70 ? "text-emerald-600" : "text-amber-600"
                           }`}
                         >
                           {position.matchScore}%
@@ -214,18 +198,14 @@ export default function PositionDetailPage() {
                     <div>
                       <p
                         className={`font-semibold text-lg ${
-                          position.matchScore >= 70
-                            ? "text-emerald-700"
-                            : "text-amber-700"
+                          position.matchScore >= 70 ? "text-emerald-700" : "text-amber-700"
                         }`}
                       >
                         {getScoreLabel(position.matchScore)}
                       </p>
                       <p
                         className={`text-sm ${
-                          position.matchScore >= 70
-                            ? "text-emerald-600"
-                            : "text-amber-600"
+                          position.matchScore >= 70 ? "text-emerald-600" : "text-amber-600"
                         }`}
                       >
                         符合 {matchedCount}/{totalCount} 项报考条件
@@ -259,36 +239,28 @@ export default function PositionDetailPage() {
                   <Users className="w-4 h-4" />
                   招录人数
                 </p>
-                <p className="text-xl font-semibold text-stone-800">
-                  {position.recruitCount}人
-                </p>
+                <p className="text-xl font-semibold text-stone-800">{position.recruitCount}人</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-stone-500 flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4" />
                   报名人数
                 </p>
-                <p className="text-xl font-semibold text-stone-800">
-                  {position.registeredCount}人
-                </p>
+                <p className="text-xl font-semibold text-stone-800">{position.registeredCount}人</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-stone-500 flex items-center gap-1.5">
                   <Award className="w-4 h-4" />
                   竞争比
                 </p>
-                <p className="text-xl font-semibold text-amber-600">
-                  {position.competitionRatio}
-                </p>
+                <p className="text-xl font-semibold text-amber-600">{position.competitionRatio}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-stone-500 flex items-center gap-1.5">
                   <MapPin className="w-4 h-4" />
                   工作地点
                 </p>
-                <p className="text-xl font-semibold text-stone-800">
-                  {position.location}
-                </p>
+                <p className="text-xl font-semibold text-stone-800">{position.location}</p>
               </div>
             </div>
           </div>
@@ -355,10 +327,7 @@ export default function PositionDetailPage() {
             </h3>
             <div className="space-y-0">
               {position.timeline.map((item, index) => (
-                <div
-                  key={index}
-                  className={`timeline-item ${item.status}`}
-                >
+                <div key={index} className={`timeline-item ${item.status}`}>
                   <div>
                     <p className="font-medium text-stone-800">{item.title}</p>
                     <p className="text-sm text-stone-500 mt-0.5 flex items-center gap-1">

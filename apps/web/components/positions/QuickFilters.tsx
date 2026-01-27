@@ -53,19 +53,14 @@ const quickFilters: QuickFilter[] = [
   },
 ];
 
-export default function QuickFilters({
-  activeFilter,
-  onFilterChange,
-}: QuickFiltersProps) {
+export default function QuickFilters({ activeFilter, onFilterChange }: QuickFiltersProps) {
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
       <span className="text-sm text-stone-500 flex-shrink-0 mr-1">快速筛选:</span>
       {quickFilters.map((filter) => (
         <button
           key={filter.id}
-          onClick={() =>
-            onFilterChange(activeFilter === filter.id ? null : filter.id)
-          }
+          onClick={() => onFilterChange(activeFilter === filter.id ? null : filter.id)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
             activeFilter === filter.id
               ? "bg-amber-500 text-white shadow-amber-md"

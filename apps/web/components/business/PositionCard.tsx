@@ -73,8 +73,8 @@ export function PositionCard({
                     examType === "国考"
                       ? "bg-blue-100 text-blue-700"
                       : examType === "省考"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-violet-100 text-violet-700"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-violet-100 text-violet-700"
                   }`}
                 >
                   {examType}
@@ -99,8 +99,7 @@ export function PositionCard({
                 {educationRequirement}
               </span>
               <span className="flex items-center gap-1 px-2.5 py-1 bg-stone-100 rounded-lg text-stone-600">
-                <Users className="w-3.5 h-3.5" />
-                招{recruitCount}人
+                <Users className="w-3.5 h-3.5" />招{recruitCount}人
               </span>
             </div>
           </div>
@@ -116,14 +115,10 @@ export function PositionCard({
                   onFavoriteClick(id);
                 }}
                 className={`p-2 rounded-lg transition-colors ${
-                  isFavorited
-                    ? "bg-red-50 text-red-500"
-                    : "hover:bg-stone-100 text-stone-400"
+                  isFavorited ? "bg-red-50 text-red-500" : "hover:bg-stone-100 text-stone-400"
                 }`}
               >
-                <Heart
-                  className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`}
-                />
+                <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
               </button>
             )}
 
@@ -148,8 +143,7 @@ export function PositionCard({
           <div className="flex items-center gap-4 text-sm text-stone-500">
             {competitionRatio && (
               <span>
-                竞争比:{" "}
-                <span className="font-medium text-amber-600">{competitionRatio}</span>
+                竞争比: <span className="font-medium text-amber-600">{competitionRatio}</span>
               </span>
             )}
           </div>

@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  LogOut,
-  Settings,
-  Sparkles,
-} from "lucide-react";
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut, Settings, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -66,9 +59,7 @@ export function NavUser() {
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {admin?.username || "管理员"}
-                </span>
+                <span className="truncate font-semibold">{admin?.username || "管理员"}</span>
                 <span className="truncate text-xs text-muted-foreground">
                   {admin?.role === "super_admin" ? "超级管理员" : "管理员"}
                 </span>
@@ -94,9 +85,7 @@ export function NavUser() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {admin?.username || "管理员"}
-                  </span>
+                  <span className="truncate font-semibold">{admin?.username || "管理员"}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {admin?.role === "super_admin" ? "超级管理员" : "管理员"}
                   </span>

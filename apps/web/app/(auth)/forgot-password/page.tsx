@@ -5,7 +5,17 @@ import Link from "next/link";
 import { useForgotPassword, useResetPassword } from "@/hooks/useAuth";
 import { validators } from "@/utils/validation";
 import { toast } from "@/components/ui/toaster";
-import { Mail, Lock, Phone, ArrowRight, ArrowLeft, Loader2, Check, Eye, EyeOff } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Phone,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Check,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 type Step = "account" | "verify" | "reset" | "success";
 
@@ -191,7 +201,9 @@ export default function ForgotPasswordPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-serif font-bold text-stone-800 mb-2">{stepConfig[step].title}</h1>
+          <h1 className="text-2xl font-serif font-bold text-stone-800 mb-2">
+            {stepConfig[step].title}
+          </h1>
           <p className="text-stone-500">{stepConfig[step].subtitle}</p>
         </div>
 
@@ -226,7 +238,8 @@ export default function ForgotPasswordPage() {
 
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
               <p className="text-sm text-amber-800">
-                <strong>开发模式提示：</strong>验证码固定为 <code className="bg-amber-100 px-1.5 py-0.5 rounded">123456</code>
+                <strong>开发模式提示：</strong>验证码固定为{" "}
+                <code className="bg-amber-100 px-1.5 py-0.5 rounded">123456</code>
               </p>
             </div>
 
@@ -277,7 +290,8 @@ export default function ForgotPasswordPage() {
                     onKeyDown={(e) => {
                       // Handle backspace
                       if (e.key === "Backspace" && !verifyCode[index] && index > 0) {
-                        const prevInput = (e.target as HTMLElement).previousElementSibling as HTMLInputElement;
+                        const prevInput = (e.target as HTMLElement)
+                          .previousElementSibling as HTMLInputElement;
                         prevInput?.focus();
                       }
                     }}
@@ -376,7 +390,9 @@ export default function ForgotPasswordPage() {
                   </div>
                 )}
               </div>
-              {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+              )}
             </div>
 
             <button

@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Target,
-  Award,
-  BarChart3,
-  PieChart,
-} from "lucide-react";
+import { TrendingUp, TrendingDown, Users, Target, Award, BarChart3, PieChart } from "lucide-react";
 
 interface StatItem {
   label: string;
@@ -66,10 +58,7 @@ export default function PositionStats({
   ];
 
   const getColorClasses = (color: string) => {
-    const colors: Record<
-      string,
-      { bg: string; icon: string; text: string; ring: string }
-    > = {
+    const colors: Record<string, { bg: string; icon: string; text: string; ring: string }> = {
       amber: {
         bg: "bg-amber-50",
         icon: "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-amber-md",
@@ -165,9 +154,7 @@ export default function PositionStats({
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-stone-500">{item.type}</span>
-                    <span className="text-xs font-medium text-stone-700">
-                      {item.count}
-                    </span>
+                    <span className="text-xs font-medium text-stone-700">{item.count}</span>
                   </div>
                   <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
                     <div

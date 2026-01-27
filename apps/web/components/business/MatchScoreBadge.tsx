@@ -75,12 +75,7 @@ export function MatchScoreBadge({
       </div>
       {showLabel && (
         <span
-          className={cn(
-            "font-medium rounded-md",
-            config.bg,
-            config.text,
-            labelSizeClasses[size]
-          )}
+          className={cn("font-medium rounded-md", config.bg, config.text, labelSizeClasses[size])}
         >
           {config.label}
         </span>

@@ -32,13 +32,13 @@ export default function AdminLoginPage() {
         username: formData.username,
         password: formData.password,
       });
-      
+
       // Set auth state in zustand store (会自动同步到 localStorage 和 cookie)
       setAdmin(
         { id: response.admin.id, username: response.admin.username, role: response.admin.role },
         response.access_token
       );
-      
+
       // 使用 window.location.href 进行硬刷新，确保 cookie 生效
       window.location.href = "/";
     } catch (err: any) {
@@ -52,7 +52,10 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-muted/50 p-4">
       {/* 背景装饰 */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-[50%] top-0 -z-10 -translate-x-1/2 blur-3xl" aria-hidden="true">
+        <div
+          className="absolute left-[50%] top-0 -z-10 -translate-x-1/2 blur-3xl"
+          aria-hidden="true"
+        >
           <div
             className="aspect-[1155/678] w-[72.1875rem] bg-gradient-to-tr from-primary/20 to-accent/20 opacity-30"
             style={{
@@ -77,9 +80,7 @@ export default function AdminLoginPage() {
         <Card className="border-0 shadow-xl">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-xl">登录账户</CardTitle>
-            <CardDescription>
-              请输入您的管理员凭据
-            </CardDescription>
+            <CardDescription>请输入您的管理员凭据</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
@@ -96,9 +97,7 @@ export default function AdminLoginPage() {
                   type="text"
                   placeholder="请输入用户名"
                   value={formData.username}
-                  onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   required
                   autoComplete="username"
                 />
@@ -112,9 +111,7 @@ export default function AdminLoginPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="请输入密码"
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                     autoComplete="current-password"
                     className="pr-10"
@@ -124,37 +121,22 @@ export default function AdminLoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <label className="flex items-center space-x-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-input"
-                  />
+                  <input type="checkbox" className="h-4 w-4 rounded border-input" />
                   <span className="text-muted-foreground">记住登录状态</span>
                 </label>
-                <a
-                  href="#"
-                  className="text-sm text-primary hover:underline"
-                >
+                <a href="#" className="text-sm text-primary hover:underline">
                   忘记密码?
                 </a>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -171,8 +153,8 @@ export default function AdminLoginPage() {
         {/* 底部提示 */}
         <div className="text-center text-sm text-muted-foreground">
           <p>
-            默认账号: <code className="rounded bg-muted px-1 py-0.5">admin</code>{" "}
-            / <code className="rounded bg-muted px-1 py-0.5">admin123</code>
+            默认账号: <code className="rounded bg-muted px-1 py-0.5">admin</code> /{" "}
+            <code className="rounded bg-muted px-1 py-0.5">admin123</code>
           </p>
         </div>
 

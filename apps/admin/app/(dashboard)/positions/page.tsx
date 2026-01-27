@@ -107,10 +107,8 @@ export default function AdminPositionsPage() {
     const matchesSearch =
       position.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       position.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || position.status === statusFilter;
-    const matchesExamType =
-      examTypeFilter === "all" || position.exam_type === examTypeFilter;
+    const matchesStatus = statusFilter === "all" || position.status === statusFilter;
+    const matchesExamType = examTypeFilter === "all" || position.exam_type === examTypeFilter;
     return matchesSearch && matchesStatus && matchesExamType;
   });
 
@@ -119,7 +117,11 @@ export default function AdminPositionsPage() {
       case "published":
         return <Badge>已发布</Badge>;
       case "pending":
-        return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100">待审核</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+            待审核
+          </Badge>
+        );
       case "draft":
         return <Badge variant="outline">草稿</Badge>;
       default:
