@@ -122,6 +122,31 @@ var PromptTemplates = map[string]string{
     }
   ]
 }`,
+
+	"content_cleaning": `你是网页内容提取专家。请从以下HTML内容中提取公告的核心信息，去除导航、广告、侧边栏等干扰内容。
+
+## 要求：
+1. 只提取正文内容，去除页头、页脚、导航、广告、分享按钮等
+2. 保留正文的段落结构
+3. 提取文中提到的附件信息（文件名、下载链接）
+4. 识别发布日期、来源等元信息
+
+## 输出JSON格式：
+{
+  "title": "文章标题",
+  "content": "正文内容（保留段落换行）",
+  "publish_date": "发布日期（YYYY-MM-DD格式，如无法确定填null）",
+  "source": "来源/发布机构",
+  "attachments": [
+    {"name": "附件名称", "url": "附件链接"}
+  ],
+  "confidence": 提取置信度(0-100)
+}
+
+## HTML内容：
+{{content}}
+
+请提取并输出JSON：`,
 }
 
 // AnnouncementTypes defines the possible announcement types

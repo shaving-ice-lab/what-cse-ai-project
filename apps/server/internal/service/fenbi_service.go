@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	cryptorand "crypto/rand"
@@ -18,6 +19,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/what-cse/server/internal/ai"
 	"github.com/what-cse/server/internal/crawler"
 	"github.com/what-cse/server/internal/model"
 	"github.com/what-cse/server/internal/parser"
@@ -1558,10 +1560,10 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 	})
 	result.Data.PageTitle = pageContent.Title
 
-	// Truncate content for response
+	// Truncate content for response (100,000 chars ≈ 25,000 Chinese characters)
 	contentPreview := pageContent.Text
-	if len(contentPreview) > 10000 {
-		contentPreview = contentPreview[:10000] + "\n\n...(内容已截断，共" + fmt.Sprintf("%d", len(pageContent.Text)) + "字符)"
+	if len(contentPreview) > 100000 {
+		contentPreview = contentPreview[:100000] + "\n\n...(内容已截断，共" + fmt.Sprintf("%d", len(pageContent.Text)) + "字符)"
 	}
 	result.Data.PageContent = contentPreview
 
@@ -2081,6 +2083,76 @@ func (s *FenbiService) extractSummaryManually(response string) string {
 		return response[:500] + "..."
 	}
 	return response
+}
+
+// === AI Content Cleaner Adapter ===
+
+// AICleanerAdapter adapts ai.AIExtractor to crawler.AIContentCleaner interface
+type AICleanerAdapter struct {
+	extractor *ai.AIExtractor
+	logger    *zap.Logger
+}
+
+// NewAICleanerAdapter creates a new adapter for AIExtractor
+func NewAICleanerAdapter(extractor *ai.AIExtractor, logger *zap.Logger) *AICleanerAdapter {
+	return &AICleanerAdapter{
+		extractor: extractor,
+		logger:    logger,
+	}
+}
+
+// CleanPageContent implements crawler.AIContentCleaner interface
+func (a *AICleanerAdapter) CleanPageContent(ctx context.Context, htmlContent string) (*crawler.AICleaningResult, error) {
+	if a.extractor == nil {
+		return nil, errors.New("AI extractor not initialized")
+	}
+
+	// Call the AI extractor
+	result, err := a.extractor.CleanPageContent(ctx, htmlContent)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert ai.ContentCleaningResult to crawler.AICleaningResult
+	crawlerResult := &crawler.AICleaningResult{
+		Title:      result.Title,
+		Content:    result.Content,
+		Source:     result.Source,
+		Confidence: result.Confidence,
+	}
+
+	if result.PublishDate != nil {
+		crawlerResult.PublishDate = result.PublishDate
+	}
+
+	// Convert attachments
+	for _, att := range result.Attachments {
+		crawlerResult.Attachments = append(crawlerResult.Attachments, crawler.AICleaningAttachment{
+			Name: att.Name,
+			URL:  att.URL,
+		})
+	}
+
+	return crawlerResult, nil
+}
+
+// createSpiderWithLLMCleaner creates a FenbiSpider with LLM content cleaner enabled
+func (s *FenbiService) createSpiderWithLLMCleaner() (*crawler.FenbiSpider, error) {
+	spider := crawler.NewFenbiSpider(s.spiderConfig, s.logger)
+
+	// Try to get active LLM config and create AI extractor
+	if s.llmConfigService != nil {
+		activeConfig, err := s.llmConfigService.GetActiveConfigForExtractor()
+		if err == nil && activeConfig != nil {
+			adapter := NewAICleanerAdapter(activeConfig, s.logger)
+			spider.SetAIContentCleaner(adapter)
+			s.logger.Info("LLM content cleaner enabled for spider")
+		} else {
+			s.logger.Debug("LLM content cleaner not available", zap.Error(err))
+		}
+	}
+
+	return spider, nil
 }
 
 // === Helper Functions ===

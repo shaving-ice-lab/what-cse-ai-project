@@ -316,7 +316,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
         {/* ===== 主内容区 - 左右分栏 ===== */}
         <div className="flex-1 min-h-0 flex overflow-hidden border-b">
           {/* 左侧：执行流程 */}
-          <div className="w-[280px] flex-shrink-0 border-r flex flex-col bg-muted/20">
+          <div className="w-[280px] flex-shrink-0 border-r flex flex-col bg-muted/20 overflow-hidden">
             <div className="flex-shrink-0 h-[49px] px-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-violet-600" />
@@ -328,8 +328,8 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                 </Badge>
               )}
             </div>
-            <ScrollArea className="flex-1">
-              <div className="p-3 space-y-2">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+              <div className="p-3 space-y-2 w-full max-w-full min-w-0 overflow-hidden">
                 {task.steps && task.steps.length > 0 ? (
                   task.steps.map((step, idx) => {
                     const isCompleted = step.status === "completed";
@@ -339,7 +339,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                       <div
                         key={idx}
                         className={`
-                          p-3 rounded-lg border transition-all
+                          p-3 rounded-lg border transition-all overflow-hidden w-full
                           ${
                             isCompleted
                               ? "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800"
@@ -351,7 +351,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                           }
                         `}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <div
                             className={`
                             w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
@@ -378,27 +378,30 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                           </div>
                           <span className="font-medium text-sm flex-1 truncate">{step.name}</span>
                           {step.data?.duration_ms !== undefined && (
-                            <span className="text-[11px] text-muted-foreground font-mono">
+                            <span className="text-[11px] text-muted-foreground font-mono flex-shrink-0">
                               {step.data.duration_ms}ms
                             </span>
                           )}
                         </div>
                         {step.message && (
                           <p
-                            className={`text-xs mt-1.5 pl-8 ${isFailed ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}
+                            className={`text-xs mt-1.5 pl-8 truncate ${isFailed ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}
+                            title={step.message}
                           >
                             {step.message}
                           </p>
                         )}
                         {step.data?.details && (
-                          <details className="mt-1.5 pl-8">
-                            <summary className="text-[11px] text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
-                              <ChevronRight className="h-3 w-3" />
+                          <details className="mt-1.5 overflow-hidden w-full max-w-full">
+                            <summary className="text-[11px] text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1 w-full truncate">
+                              <ChevronRight className="h-3 w-3 flex-shrink-0" />
                               详情
                             </summary>
-                            <pre className="mt-1 text-[11px] bg-background p-2 rounded overflow-auto max-h-20 whitespace-pre-wrap border">
-                              {step.data.details}
-                            </pre>
+                            <div className="pl-8">
+                              <pre className="mt-1 text-[11px] bg-background p-2 rounded overflow-x-auto max-h-20 whitespace-pre-wrap border break-all w-full max-w-full">
+                                {step.data.details}
+                              </pre>
+                            </div>
                           </details>
                         )}
                       </div>
@@ -411,7 +414,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
             {/* 底部统计 */}
             {stats && stats.totalSteps > 0 && (
               <div className="flex-shrink-0 px-4 py-3 border-t bg-muted/30 space-y-1 text-sm">
@@ -434,7 +437,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
           {/* 右侧：解析结果 */}
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
             {hasParseResult ? (
-              <Tabs defaultValue="ai" className="flex-1 flex flex-col min-h-0">
+              <Tabs defaultValue="ai" className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 {/* Tab 导航 */}
                 <div className="flex-shrink-0 h-[49px] px-4 border-b bg-muted/20 flex items-center">
                   <TabsList className="h-9 p-1 bg-muted/60 rounded-lg gap-1">
@@ -479,8 +482,10 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                   </TabsList>
                 </div>
 
+                {/* Tab 内容区域 - 使用相对/绝对定位防止 Tab 之间相互影响 */}
+                <div className="flex-1 min-h-0 relative">
                 {/* AI 分析 Tab */}
-                <TabsContent value="ai" className="flex-1 min-h-0 m-0 overflow-hidden">
+                <TabsContent value="ai" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:hidden">
                   <ScrollArea className="h-full">
                     <div className="p-5 space-y-4">
                       {llm ? (
@@ -666,7 +671,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                 </TabsContent>
 
                 {/* 内容 Tab */}
-                <TabsContent value="content" className="flex-1 min-h-0 m-0 overflow-hidden">
+                <TabsContent value="content" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:hidden">
                   <ScrollArea className="h-full">
                     <div className="p-5 space-y-4">
                       {task.parseResult?.data?.page_title && (
@@ -706,7 +711,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                 </TabsContent>
 
                 {/* 岗位 Tab */}
-                <TabsContent value="positions" className="flex-1 min-h-0 m-0 overflow-hidden">
+                <TabsContent value="positions" className="absolute inset-0 m-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
                   <ScrollArea className="h-full">
                     <div className="p-5 space-y-4">
                       {positions.length > 0 ? (
@@ -742,29 +747,29 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                             </div>
                           </div>
                           {/* 岗位列表 - 表格形式 */}
-                          <div className="rounded-xl border overflow-hidden bg-card overflow-x-auto">
-                            <Table className="table-auto">
+                          <div className="rounded-xl border bg-card overflow-hidden">
+                            <Table className="w-full table-fixed">
                               <TableHeader>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                  <TableHead className="whitespace-nowrap text-center font-semibold px-3">
+                                  <TableHead className="w-[40px] text-center font-semibold px-2">
                                     #
                                   </TableHead>
-                                  <TableHead className="whitespace-nowrap font-semibold px-3">
+                                  <TableHead className="w-[22%] font-semibold px-2">
                                     岗位名称
                                   </TableHead>
-                                  <TableHead className="whitespace-nowrap font-semibold px-3">
+                                  <TableHead className="w-[20%] font-semibold px-2">
                                     招录单位
                                   </TableHead>
-                                  <TableHead className="whitespace-nowrap font-semibold px-3">
+                                  <TableHead className="w-[18%] font-semibold px-2">
                                     学历要求
                                   </TableHead>
-                                  <TableHead className="whitespace-nowrap font-semibold px-3">
+                                  <TableHead className="w-[15%] font-semibold px-2">
                                     工作地点
                                   </TableHead>
-                                  <TableHead className="whitespace-nowrap font-semibold px-3">
+                                  <TableHead className="w-[60px] font-semibold px-2">
                                     政治面貌
                                   </TableHead>
-                                  <TableHead className="whitespace-nowrap text-center font-semibold px-3">
+                                  <TableHead className="w-[60px] text-center font-semibold px-2">
                                     招录人数
                                   </TableHead>
                                 </TableRow>
@@ -772,63 +777,58 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                               <TableBody>
                                 {positions.map((pos, idx) => (
                                   <TableRow key={idx} className="hover:bg-muted/30">
-                                    <TableCell className="text-center whitespace-nowrap py-2 px-3">
+                                    <TableCell className="text-center py-2 px-2">
                                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
                                         {idx + 1}
                                       </span>
                                     </TableCell>
-                                    <TableCell className="font-medium whitespace-nowrap py-2 px-3">
-                                      {pos.position_name || (
-                                        <span className="text-muted-foreground">未知职位</span>
-                                      )}
+                                    <TableCell className="font-medium py-2 px-2">
+                                      <span className="block truncate" title={pos.position_name}>
+                                        {pos.position_name || (
+                                          <span className="text-muted-foreground">未知职位</span>
+                                        )}
+                                      </span>
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap py-2 px-3">
+                                    <TableCell className="py-2 px-2">
                                       {pos.department_name ? (
-                                        <span className="text-sm" title={pos.department_name}>
+                                        <span className="block text-sm truncate" title={pos.department_name}>
                                           {pos.department_name}
                                         </span>
                                       ) : (
                                         <span className="text-muted-foreground text-sm">-</span>
                                       )}
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap py-2 px-3">
+                                    <TableCell className="py-2 px-2">
                                       {pos.education ? (
-                                        <Badge variant="outline" className="text-xs font-normal">
+                                        <span className="block text-xs truncate" title={pos.education}>
                                           {pos.education}
-                                        </Badge>
+                                        </span>
                                       ) : (
                                         <span className="text-muted-foreground text-sm">-</span>
                                       )}
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap py-2 px-3">
+                                    <TableCell className="py-2 px-2">
                                       {pos.work_location ? (
-                                        <span className="text-sm" title={pos.work_location}>
+                                        <span className="block text-sm truncate" title={pos.work_location}>
                                           {pos.work_location}
                                         </span>
                                       ) : (
                                         <span className="text-muted-foreground text-sm">-</span>
                                       )}
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap py-2 px-3">
+                                    <TableCell className="py-2 px-2">
                                       {pos.political_status ? (
-                                        <Badge
-                                          variant="outline"
-                                          className={`text-xs font-normal whitespace-nowrap ${
-                                            pos.political_status.includes("党员")
-                                              ? "border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300"
-                                              : ""
-                                          }`}
-                                        >
+                                        <span className="block text-xs truncate" title={pos.political_status}>
                                           {pos.political_status}
-                                        </Badge>
+                                        </span>
                                       ) : (
                                         <span className="text-muted-foreground text-sm">-</span>
                                       )}
                                     </TableCell>
-                                    <TableCell className="text-center whitespace-nowrap py-2 px-3">
+                                    <TableCell className="text-center py-2 px-2">
                                       {pos.recruit_count ? (
-                                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white whitespace-nowrap">
-                                          {pos.recruit_count} 人
+                                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-xs">
+                                          {pos.recruit_count}人
                                         </Badge>
                                       ) : (
                                         <span className="text-muted-foreground text-sm">-</span>
@@ -852,7 +852,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                 </TabsContent>
 
                 {/* 附件 Tab */}
-                <TabsContent value="attachments" className="flex-1 min-h-0 m-0 overflow-hidden">
+                <TabsContent value="attachments" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:hidden">
                   <ScrollArea className="h-full">
                     <div className="p-5 space-y-3">
                       {attachments.length > 0 ? (
@@ -947,6 +947,7 @@ export function TaskDetailDialog({ open, onOpenChange, task }: TaskDetailDialogP
                     </div>
                   </ScrollArea>
                 </TabsContent>
+                </div>
               </Tabs>
             ) : (
               /* 无解析结果 */

@@ -17,6 +17,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/what-cse/server/internal/ai"
 	"github.com/what-cse/server/internal/model"
 	"github.com/what-cse/server/internal/repository"
 )
@@ -621,6 +622,41 @@ func (s *LLMConfigService) parseResponse(provider string, body []byte) (string, 
 	}
 
 	return "", fmt.Errorf("unable to parse response, raw: %s", string(body[:min(len(body), 500)]))
+}
+
+// GetActiveConfigForExtractor returns an ai.AIExtractor configured with the default LLM config
+// Returns nil if no default config is available or disabled
+func (s *LLMConfigService) GetActiveConfigForExtractor() (*ai.AIExtractor, error) {
+	config, err := s.repo.GetDefault()
+	if err != nil {
+		return nil, ErrNoDefaultLLMConfig
+	}
+
+	if !config.IsEnabled {
+		return nil, ErrLLMConfigDisabled
+	}
+
+	// Decrypt API key
+	apiKey, err := decryptAPIKey(config.APIKeyEncrypted)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt API key: %w", err)
+	}
+
+	// Create AI config from LLM config
+	aiConfig := &ai.AIConfig{
+		Provider:            config.Provider,
+		OpenAIAPIKey:        apiKey,
+		OpenAIBaseURL:       config.APIURL,
+		OpenAIModel:         config.Model,
+		MaxInputTokens:      32000, // Allow larger content for cleaning
+		MaxOutputTokens:     config.MaxTokens,
+		Temperature:         float32(config.Temperature),
+		ConfidenceThreshold: 70,
+		Timeout:             time.Duration(config.Timeout) * time.Second,
+	}
+
+	// Create and return the extractor
+	return ai.NewAIExtractor(aiConfig, s.logger), nil
 }
 
 // Encryption helpers

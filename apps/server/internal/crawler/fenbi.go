@@ -3,7 +3,7 @@ package crawler
 
 import (
 	"bufio"
-	"compress/gzip"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
@@ -92,12 +92,35 @@ type FenbiExamArticle struct {
 	ExamType int `json:"examType"`
 }
 
+// AIContentCleaner interface for LLM-based content cleaning
+type AIContentCleaner interface {
+	CleanPageContent(ctx context.Context, htmlContent string) (*AICleaningResult, error)
+}
+
+// AICleaningResult represents the result from AI content cleaning
+type AICleaningResult struct {
+	Title       string                `json:"title"`
+	Content     string                `json:"content"`
+	PublishDate *string               `json:"publish_date,omitempty"`
+	Source      string                `json:"source,omitempty"`
+	Attachments []AICleaningAttachment `json:"attachments,omitempty"`
+	Confidence  int                   `json:"confidence"`
+}
+
+// AICleaningAttachment represents an attachment from AI cleaning
+type AICleaningAttachment struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
 // FenbiSpider handles Fenbi website crawling
 type FenbiSpider struct {
 	*Spider
-	httpClient *http.Client
-	cookies    []*http.Cookie
-	logger     *zap.Logger
+	httpClient    *http.Client
+	cookies       []*http.Cookie
+	logger        *zap.Logger
+	aiCleaner     AIContentCleaner
+	useLLMCleaner bool
 }
 
 // FenbiListItem represents an announcement item from the list page
@@ -160,6 +183,17 @@ func NewFenbiSpider(config *SpiderConfig, logger *zap.Logger) *FenbiSpider {
 	return spider
 }
 
+// SetAIContentCleaner sets the AI content cleaner for LLM-based content extraction
+func (s *FenbiSpider) SetAIContentCleaner(cleaner AIContentCleaner) {
+	s.aiCleaner = cleaner
+	s.useLLMCleaner = cleaner != nil
+}
+
+// EnableLLMCleaner enables or disables LLM-based content cleaning
+func (s *FenbiSpider) EnableLLMCleaner(enabled bool) {
+	s.useLLMCleaner = enabled && s.aiCleaner != nil
+}
+
 // SetCookies sets the cookies for authenticated requests
 func (s *FenbiSpider) SetCookies(cookieStr string) error {
 	if cookieStr == "" {
@@ -193,10 +227,10 @@ func (s *FenbiSpider) GetRSAPublicKey() (string, error) {
 	}
 
 	// Set comprehensive headers to mimic browser request
+	// Note: Do NOT set Accept-Encoding - Go's http.Client handles gzip transparently
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "application/json, text/plain, */*")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
-	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
 	req.Header.Set("Origin", "https://www.fenbi.com")
 	req.Header.Set("Referer", "https://www.fenbi.com/")
 	req.Header.Set("Sec-Fetch-Dest", "empty")
@@ -1268,11 +1302,15 @@ func ExtractFenbiIDFromURL(urlStr string) string {
 
 // PageContent represents the content fetched from a page
 type PageContent struct {
-	URL         string            `json:"url"`
-	Title       string            `json:"title"`
-	HTML        string            `json:"html"`
-	Text        string            `json:"text"`
-	Attachments []PageAttachment  `json:"attachments"`
+	URL          string           `json:"url"`
+	Title        string           `json:"title"`
+	HTML         string           `json:"html"`
+	Text         string           `json:"text"`
+	PublishDate  string           `json:"publish_date,omitempty"`
+	Source       string           `json:"source,omitempty"`
+	Attachments  []PageAttachment `json:"attachments"`
+	CleanedByLLM bool             `json:"cleaned_by_llm"`
+	Confidence   int              `json:"confidence,omitempty"`
 }
 
 // PageAttachment represents an attachment found on a page
@@ -1305,8 +1343,8 @@ func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Add gzip encoding support
-	req.Header.Set("accept-encoding", "gzip, deflate, br")
+	// Note: tls-client library automatically handles Accept-Encoding and content decompression
+	// so we don't need to set it manually
 
 	resp, err := tlsClient.Do(req)
 	if err != nil {
@@ -1323,19 +1361,11 @@ func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	// Handle gzip encoding
-	var reader io.Reader = resp.Body
-	if resp.Header.Get("Content-Encoding") == "gzip" {
-		gzReader, err := gzip.NewReader(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
-		}
-		defer gzReader.Close()
-		reader = gzReader
-	}
+	// Note: tls-client library automatically handles gzip/deflate/brotli decompression
+	// so we don't need to manually decompress here
 
 	// Read body
-	bodyBytes, err := io.ReadAll(reader)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -1359,6 +1389,60 @@ func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 		HTML: htmlContent,
 	}
 
+	// Try LLM-based content cleaning first if enabled
+	if s.useLLMCleaner && s.aiCleaner != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		cleanResult, err := s.aiCleaner.CleanPageContent(ctx, htmlContent)
+		if err != nil {
+			s.logger.Warn("LLM content cleaning failed, falling back to rule-based cleaning",
+				zap.String("url", targetURL),
+				zap.Error(err),
+			)
+		} else {
+			// LLM cleaning succeeded, use the results
+			content.Title = cleanResult.Title
+			content.Text = cleanResult.Content
+			content.Source = cleanResult.Source
+			content.CleanedByLLM = true
+			content.Confidence = cleanResult.Confidence
+
+			if cleanResult.PublishDate != nil {
+				content.PublishDate = *cleanResult.PublishDate
+			}
+
+			// Convert LLM attachments to PageAttachments
+			for _, att := range cleanResult.Attachments {
+				// Resolve relative URLs
+				attURL := att.URL
+				if !strings.HasPrefix(attURL, "http://") && !strings.HasPrefix(attURL, "https://") {
+					baseURLParsed, _ := url.Parse(targetURL)
+					if refURL, err := url.Parse(attURL); err == nil {
+						attURL = baseURLParsed.ResolveReference(refURL).String()
+					}
+				}
+				content.Attachments = append(content.Attachments, PageAttachment{
+					URL:  attURL,
+					Name: att.Name,
+					Type: detectAttachmentType(att.Name),
+				})
+			}
+
+			s.logger.Info("Fetched page content with LLM cleaning",
+				zap.String("url", targetURL),
+				zap.String("title", content.Title),
+				zap.Int("text_length", len(content.Text)),
+				zap.Int("attachments_count", len(content.Attachments)),
+				zap.Int("confidence", content.Confidence),
+				zap.String("charset", detectedCharset),
+			)
+
+			return content, nil
+		}
+	}
+
+	// Fallback to rule-based cleaning
 	// Extract title
 	content.Title = strings.TrimSpace(doc.Find("title").First().Text())
 	if content.Title == "" {
@@ -1366,11 +1450,40 @@ func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 	}
 
 	// Extract main text content
-	// Remove script and style elements
+	// Remove script, style and basic structural elements
 	doc.Find("script, style, nav, header, footer, aside").Remove()
 	
+	// Remove additional unwanted elements commonly found on government websites
+	// Breadcrumb navigation
+	doc.Find(".breadcrumb, .crumb, .nav-path, .location, .position, .path").Remove()
+	// Top navigation and links
+	doc.Find(".top-nav, .top-bar, .top-link, .gov-link, .gov-nav, .header-nav").Remove()
+	// Social sharing and media
+	doc.Find(".social, .share, .weixin, .weibo, .social-share, .share-box").Remove()
+	// Navigation menus
+	doc.Find(".menu, .nav-menu, .main-nav, .site-nav, .sub-nav, .side-menu").Remove()
+	// Login and user areas
+	doc.Find(".login, .user-login, .user-info, .user-box").Remove()
+	// Font size and accessibility controls
+	doc.Find(".font-size, .font-set, .zoom, .text-size").Remove()
+	doc.Find(".accessibility, .a11y, .wcag").Remove()
+	// Language switch
+	doc.Find(".lang-switch, .language, .lang-sel").Remove()
+	// Sidebar
+	doc.Find(".sidebar, .side-bar, .left-nav, .right-nav").Remove()
+	// Related content and recommendations
+	doc.Find(".related, .recommend, .related-links, .related-news").Remove()
+	// Comments
+	doc.Find(".comment, .comments, .comment-box").Remove()
+	// Copyright and footer info
+	doc.Find(".copyright, .footer-info, .site-info, .foot-nav").Remove()
+	// Banners and advertisements (using attribute selectors)
+	doc.Find("[class*='banner'], [class*='adv'], [class*='advertisement']").Remove()
+	// Print and download buttons
+	doc.Find(".print, .download-btn, .tool-bar, .tools").Remove()
+	
 	// Try to find main content area - common selectors for Chinese gov sites
-	mainContent := doc.Find("article, .article, .content, .main-content, #content, #main, .detail-content, .article-content, .TRS_Editor, .zwgk_cont, .news_cont, .art_content").First()
+	mainContent := doc.Find("article, .article, .content, .main-content, #content, #main, .detail-content, .article-content, .TRS_Editor, .zwgk_cont, .news_cont, .art_content, .article-body, .article-text, .content-body, .content-text, .detail-body, .detail-text, .news-detail, .news-body, .zwgk-content, .zwgk-body, .announcement-content, #article, #articleContent, .post-content, .entry-content").First()
 	if mainContent.Length() == 0 {
 		mainContent = doc.Find("body")
 	}
@@ -1383,7 +1496,7 @@ func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 	// Extract attachments
 	content.Attachments = s.extractPageAttachments(doc, targetURL)
 
-	s.logger.Info("Fetched page content",
+	s.logger.Info("Fetched page content with rule-based cleaning",
 		zap.String("url", targetURL),
 		zap.String("title", content.Title),
 		zap.Int("text_length", len(content.Text)),
@@ -1392,6 +1505,21 @@ func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 	)
 
 	return content, nil
+}
+
+// detectAttachmentType detects the attachment type from filename
+func detectAttachmentType(filename string) string {
+	lowerName := strings.ToLower(filename)
+	switch {
+	case strings.HasSuffix(lowerName, ".pdf"):
+		return "pdf"
+	case strings.HasSuffix(lowerName, ".xls") || strings.HasSuffix(lowerName, ".xlsx"):
+		return "excel"
+	case strings.HasSuffix(lowerName, ".doc") || strings.HasSuffix(lowerName, ".docx"):
+		return "word"
+	default:
+		return "other"
+	}
 }
 
 // fetchPageContentFallback is the fallback method using standard http.Client
@@ -1405,10 +1533,11 @@ func (s *FenbiSpider) fetchPageContentFallback(targetURL string) (*PageContent, 
 	}
 
 	// Set headers to mimic browser
+	// Note: Do NOT set Accept-Encoding header - Go's http.Client automatically
+	// handles gzip decompression transparently when Accept-Encoding is not set
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
-	req.Header.Set("Accept-Encoding", "gzip, deflate")
 
 	// Use a client that follows redirects
 	client := &http.Client{
@@ -1425,19 +1554,11 @@ func (s *FenbiSpider) fetchPageContentFallback(targetURL string) (*PageContent, 
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	// Handle gzip encoding
-	var reader io.Reader = resp.Body
-	if resp.Header.Get("Content-Encoding") == "gzip" {
-		gzReader, err := gzip.NewReader(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
-		}
-		defer gzReader.Close()
-		reader = gzReader
-	}
+	// Note: Go's http.Client automatically decompresses gzip when Accept-Encoding
+	// is not explicitly set, so we can read the body directly
 
 	// Read body
-	bodyBytes, err := io.ReadAll(reader)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -1461,6 +1582,60 @@ func (s *FenbiSpider) fetchPageContentFallback(targetURL string) (*PageContent, 
 		HTML: htmlContent,
 	}
 
+	// Try LLM-based content cleaning first if enabled
+	if s.useLLMCleaner && s.aiCleaner != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		cleanResult, err := s.aiCleaner.CleanPageContent(ctx, htmlContent)
+		if err != nil {
+			s.logger.Warn("LLM content cleaning failed in fallback, using rule-based cleaning",
+				zap.String("url", targetURL),
+				zap.Error(err),
+			)
+		} else {
+			// LLM cleaning succeeded, use the results
+			content.Title = cleanResult.Title
+			content.Text = cleanResult.Content
+			content.Source = cleanResult.Source
+			content.CleanedByLLM = true
+			content.Confidence = cleanResult.Confidence
+
+			if cleanResult.PublishDate != nil {
+				content.PublishDate = *cleanResult.PublishDate
+			}
+
+			// Convert LLM attachments to PageAttachments
+			for _, att := range cleanResult.Attachments {
+				// Resolve relative URLs
+				attURL := att.URL
+				if !strings.HasPrefix(attURL, "http://") && !strings.HasPrefix(attURL, "https://") {
+					baseURLParsed, _ := url.Parse(targetURL)
+					if refURL, err := url.Parse(attURL); err == nil {
+						attURL = baseURLParsed.ResolveReference(refURL).String()
+					}
+				}
+				content.Attachments = append(content.Attachments, PageAttachment{
+					URL:  attURL,
+					Name: att.Name,
+					Type: detectAttachmentType(att.Name),
+				})
+			}
+
+			s.logger.Info("Fetched page content (fallback) with LLM cleaning",
+				zap.String("url", targetURL),
+				zap.String("title", content.Title),
+				zap.Int("text_length", len(content.Text)),
+				zap.Int("attachments_count", len(content.Attachments)),
+				zap.Int("confidence", content.Confidence),
+				zap.String("charset", detectedCharset),
+			)
+
+			return content, nil
+		}
+	}
+
+	// Fallback to rule-based cleaning
 	// Extract title
 	content.Title = strings.TrimSpace(doc.Find("title").First().Text())
 	if content.Title == "" {
@@ -1468,8 +1643,39 @@ func (s *FenbiSpider) fetchPageContentFallback(targetURL string) (*PageContent, 
 	}
 
 	// Extract main text content
+	// Remove script, style and basic structural elements
 	doc.Find("script, style, nav, header, footer, aside").Remove()
-	mainContent := doc.Find("article, .article, .content, .main-content, #content, #main, .detail-content, .article-content, .TRS_Editor, .zwgk_cont, .news_cont, .art_content").First()
+	
+	// Remove additional unwanted elements commonly found on government websites
+	// Breadcrumb navigation
+	doc.Find(".breadcrumb, .crumb, .nav-path, .location, .position, .path").Remove()
+	// Top navigation and links
+	doc.Find(".top-nav, .top-bar, .top-link, .gov-link, .gov-nav, .header-nav").Remove()
+	// Social sharing and media
+	doc.Find(".social, .share, .weixin, .weibo, .social-share, .share-box").Remove()
+	// Navigation menus
+	doc.Find(".menu, .nav-menu, .main-nav, .site-nav, .sub-nav, .side-menu").Remove()
+	// Login and user areas
+	doc.Find(".login, .user-login, .user-info, .user-box").Remove()
+	// Font size and accessibility controls
+	doc.Find(".font-size, .font-set, .zoom, .text-size").Remove()
+	doc.Find(".accessibility, .a11y, .wcag").Remove()
+	// Language switch
+	doc.Find(".lang-switch, .language, .lang-sel").Remove()
+	// Sidebar
+	doc.Find(".sidebar, .side-bar, .left-nav, .right-nav").Remove()
+	// Related content and recommendations
+	doc.Find(".related, .recommend, .related-links, .related-news").Remove()
+	// Comments
+	doc.Find(".comment, .comments, .comment-box").Remove()
+	// Copyright and footer info
+	doc.Find(".copyright, .footer-info, .site-info, .foot-nav").Remove()
+	// Banners and advertisements (using attribute selectors)
+	doc.Find("[class*='banner'], [class*='adv'], [class*='advertisement']").Remove()
+	// Print and download buttons
+	doc.Find(".print, .download-btn, .tool-bar, .tools").Remove()
+	
+	mainContent := doc.Find("article, .article, .content, .main-content, #content, #main, .detail-content, .article-content, .TRS_Editor, .zwgk_cont, .news_cont, .art_content, .article-body, .article-text, .content-body, .content-text, .detail-body, .detail-text, .news-detail, .news-body, .zwgk-content, .zwgk-body, .announcement-content, #article, #articleContent, .post-content, .entry-content").First()
 	if mainContent.Length() == 0 {
 		mainContent = doc.Find("body")
 	}
@@ -1481,7 +1687,7 @@ func (s *FenbiSpider) fetchPageContentFallback(targetURL string) (*PageContent, 
 	// Extract attachments
 	content.Attachments = s.extractPageAttachments(doc, targetURL)
 
-	s.logger.Info("Fetched page content (fallback)",
+	s.logger.Info("Fetched page content (fallback) with rule-based cleaning",
 		zap.String("url", targetURL),
 		zap.String("title", content.Title),
 		zap.Int("text_length", len(content.Text)),

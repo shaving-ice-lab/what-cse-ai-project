@@ -1,15 +1,72 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/extrame/xls"
 	"github.com/xuri/excelize/v2"
 	"go.uber.org/zap"
 )
+
+// isHTMLFile checks if a file is actually HTML content (common on gov sites)
+func isHTMLFile(filePath string) bool {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return false
+	}
+	
+	// Check for common HTML signatures
+	content := strings.ToLower(string(data[:min(1000, len(data))]))
+	return strings.Contains(content, "<html") ||
+		strings.Contains(content, "<!doctype html") ||
+		strings.Contains(content, "<table") ||
+		strings.Contains(content, "<head")
+}
+
+// extractTextFromHTML extracts text from HTML files disguised as Excel
+func (p *ExcelPositionParser) extractTextFromHTML(filePath string) (string, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
+	if err != nil {
+		return "", err
+	}
+	
+	var builder strings.Builder
+	
+	// Extract text from tables
+	doc.Find("table").Each(func(idx int, table *goquery.Selection) {
+		builder.WriteString(fmt.Sprintf("=== Table %d ===\n", idx+1))
+		table.Find("tr").Each(func(_ int, row *goquery.Selection) {
+			var cells []string
+			row.Find("th, td").Each(func(_ int, cell *goquery.Selection) {
+				text := strings.TrimSpace(cell.Text())
+				cells = append(cells, text)
+			})
+			if len(cells) > 0 {
+				builder.WriteString(strings.Join(cells, "\t"))
+				builder.WriteString("\n")
+			}
+		})
+		builder.WriteString("\n")
+	})
+	
+	// If no tables found, extract all text
+	if builder.Len() == 0 {
+		builder.WriteString(doc.Find("body").Text())
+	}
+	
+	return builder.String(), nil
+}
 
 // ExcelPositionParser parses Excel files to extract position data
 type ExcelPositionParser struct {
@@ -22,10 +79,154 @@ func NewExcelParser(logger *zap.Logger) *ExcelPositionParser {
 }
 
 // Parse parses an Excel file and extracts positions
+// Supports both .xlsx and .xls formats, also handles HTML files disguised as Excel
 func (p *ExcelPositionParser) Parse(filePath string) ([]ParsedPosition, error) {
+	// First, check if the file is actually HTML disguised as Excel
+	if isHTMLFile(filePath) {
+		if p.Logger != nil {
+			p.Logger.Debug("Detected HTML content in Excel file, using HTML parser",
+				zap.String("file", filePath),
+			)
+		}
+		return p.parseHTML(filePath)
+	}
+	
+	ext := strings.ToLower(filepath.Ext(filePath))
+	
+	// Try appropriate parser based on extension
+	if ext == ".xls" {
+		positions, err := p.parseXLS(filePath)
+		if err == nil && len(positions) > 0 {
+			return positions, nil
+		}
+		// Fallback to HTML parser
+		htmlPositions, htmlErr := p.parseHTML(filePath)
+		if htmlErr == nil && len(htmlPositions) > 0 {
+			return htmlPositions, nil
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse xls file: %w", err)
+		}
+		return positions, nil
+	}
+	
+	// For .xlsx files, try excelize first
+	positions, err := p.parseXLSX(filePath)
+	if err != nil {
+		// If xlsx parsing fails, the file might actually be an xls file
+		// (common on Chinese government websites that save HTML as .xls/.xlsx)
+		if p.Logger != nil {
+			p.Logger.Debug("XLSX parsing failed, trying fallback parsers",
+				zap.String("file", filePath),
+				zap.Error(err),
+			)
+		}
+		
+		// Try xls parser as fallback
+		xlsPositions, xlsErr := p.parseXLS(filePath)
+		if xlsErr == nil && len(xlsPositions) > 0 {
+			return xlsPositions, nil
+		}
+		
+		// Try HTML parser as last resort
+		htmlPositions, htmlErr := p.parseHTML(filePath)
+		if htmlErr == nil && len(htmlPositions) > 0 {
+			if p.Logger != nil {
+				p.Logger.Debug("File is actually HTML, parsed using HTML parser",
+					zap.String("file", filePath),
+				)
+			}
+			return htmlPositions, nil
+		}
+		
+		// All parsers failed, return original error
+		return nil, fmt.Errorf("failed to open excel file: %w", err)
+	}
+	
+	return positions, nil
+}
+
+// parseHTML parses HTML files disguised as Excel and extracts positions
+func (p *ExcelPositionParser) parseHTML(filePath string) ([]ParsedPosition, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	
+	var allPositions []ParsedPosition
+	
+	// Process all tables
+	doc.Find("table").Each(func(_ int, table *goquery.Selection) {
+		positions := p.parseHTMLTable(table)
+		allPositions = append(allPositions, positions...)
+	})
+	
+	return allPositions, nil
+}
+
+// parseHTMLTable parses a single HTML table
+func (p *ExcelPositionParser) parseHTMLTable(table *goquery.Selection) []ParsedPosition {
+	var rows [][]string
+	
+	// Extract all rows
+	table.Find("tr").Each(func(_ int, row *goquery.Selection) {
+		var cells []string
+		row.Find("th, td").Each(func(_ int, cell *goquery.Selection) {
+			cells = append(cells, strings.TrimSpace(cell.Text()))
+		})
+		if len(cells) > 0 {
+			rows = append(rows, cells)
+		}
+	})
+	
+	if len(rows) < 2 {
+		return nil
+	}
+	
+	// Find header row
+	headerRowIdx := -1
+	for i, row := range rows {
+		if p.isHeaderRow(row) {
+			headerRowIdx = i
+			break
+		}
+	}
+	
+	if headerRowIdx < 0 {
+		return nil
+	}
+	
+	// Map headers
+	headers := rows[headerRowIdx]
+	mappedHeaders := p.mapHeaders(headers)
+	
+	// Parse data rows
+	var positions []ParsedPosition
+	for i := headerRowIdx + 1; i < len(rows); i++ {
+		row := rows[i]
+		if len(row) == 0 {
+			continue
+		}
+		
+		position := p.parseRow(row, mappedHeaders)
+		if position != nil && position.PositionName != "" {
+			positions = append(positions, *position)
+		}
+	}
+	
+	return positions
+}
+
+// parseXLSX parses .xlsx files using excelize
+func (p *ExcelPositionParser) parseXLSX(filePath string) ([]ParsedPosition, error) {
 	f, err := excelize.OpenFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open excel file: %w", err)
+		return nil, err
 	}
 	defer f.Close()
 
@@ -55,6 +256,103 @@ func (p *ExcelPositionParser) Parse(filePath string) ([]ParsedPosition, error) {
 	}
 
 	return allPositions, nil
+}
+
+// parseXLS parses .xls files using extrame/xls library
+func (p *ExcelPositionParser) parseXLS(filePath string) ([]ParsedPosition, error) {
+	xlsFile, err := xls.Open(filePath, "utf-8")
+	if err != nil {
+		return nil, err
+	}
+
+	var allPositions []ParsedPosition
+
+	// Process all sheets
+	for sheetIdx := 0; sheetIdx < xlsFile.NumSheets(); sheetIdx++ {
+		sheet := xlsFile.GetSheet(sheetIdx)
+		if sheet == nil {
+			continue
+		}
+
+		positions, err := p.parseXLSSheet(sheet)
+		if err != nil {
+			if p.Logger != nil {
+				p.Logger.Warn("Failed to parse XLS sheet",
+					zap.String("sheet", sheet.Name),
+					zap.Error(err),
+				)
+			}
+			continue
+		}
+		allPositions = append(allPositions, positions...)
+	}
+
+	if p.Logger != nil {
+		p.Logger.Debug("XLS parsing completed",
+			zap.String("file", filePath),
+			zap.Int("positions", len(allPositions)),
+		)
+	}
+
+	return allPositions, nil
+}
+
+// parseXLSSheet parses a single sheet from an XLS file
+func (p *ExcelPositionParser) parseXLSSheet(sheet *xls.WorkSheet) ([]ParsedPosition, error) {
+	maxRow := int(sheet.MaxRow)
+	if maxRow < 2 {
+		return nil, nil // Not enough rows
+	}
+
+	// Convert sheet to rows format
+	var rows [][]string
+	for rowIdx := 0; rowIdx <= maxRow; rowIdx++ {
+		row := sheet.Row(rowIdx)
+		if row == nil {
+			rows = append(rows, []string{})
+			continue
+		}
+
+		var cells []string
+		lastCol := row.LastCol()
+		for colIdx := 0; colIdx < lastCol; colIdx++ {
+			cells = append(cells, row.Col(colIdx))
+		}
+		rows = append(rows, cells)
+	}
+
+	// Find header row
+	headerRowIdx := -1
+	for i, row := range rows {
+		if p.isHeaderRow(row) {
+			headerRowIdx = i
+			break
+		}
+	}
+
+	if headerRowIdx < 0 {
+		return nil, nil // No valid header found
+	}
+
+	// Map headers
+	headers := rows[headerRowIdx]
+	mappedHeaders := p.mapHeaders(headers)
+
+	// Parse data rows
+	var positions []ParsedPosition
+	for i := headerRowIdx + 1; i < len(rows); i++ {
+		row := rows[i]
+		if len(row) == 0 {
+			continue
+		}
+
+		position := p.parseRow(row, mappedHeaders)
+		if position != nil && position.PositionName != "" {
+			positions = append(positions, *position)
+		}
+	}
+
+	return positions, nil
 }
 
 // parseSheet parses a single sheet
@@ -241,15 +539,76 @@ func (p *ExcelPositionParser) GetSheetData(filePath, sheetName string) ([][]stri
 }
 
 // ExtractText extracts all text content from an Excel file
-// Supports both .xlsx and .xls formats
+// Supports both .xlsx and .xls formats, with fallback for misnamed files
+// Also handles HTML files disguised as Excel (common on Chinese gov websites)
 func (p *ExcelPositionParser) ExtractText(filePath string) (string, error) {
+	// First, check if the file is actually HTML disguised as Excel
+	if isHTMLFile(filePath) {
+		if p.Logger != nil {
+			p.Logger.Debug("Detected HTML content in Excel file, using HTML parser",
+				zap.String("file", filePath),
+			)
+		}
+		return p.extractTextFromHTML(filePath)
+	}
+	
 	ext := strings.ToLower(filepath.Ext(filePath))
 	
 	if ext == ".xls" {
-		return p.extractTextFromXLS(filePath)
+		// Try xls parser first
+		text, err := p.extractTextFromXLS(filePath)
+		if err == nil && text != "" {
+			return text, nil
+		}
+		// Fallback to xlsx parser (some .xls files are actually xlsx)
+		xlsxText, xlsxErr := p.extractTextFromXLSX(filePath)
+		if xlsxErr == nil && xlsxText != "" {
+			return xlsxText, nil
+		}
+		// Try HTML as last resort
+		htmlText, htmlErr := p.extractTextFromHTML(filePath)
+		if htmlErr == nil && htmlText != "" {
+			return htmlText, nil
+		}
+		// Return original error
+		if err != nil {
+			return "", err
+		}
+		return "", xlsxErr
 	}
 	
-	return p.extractTextFromXLSX(filePath)
+	// For .xlsx files, try excelize first
+	text, err := p.extractTextFromXLSX(filePath)
+	if err != nil {
+		// If xlsx parsing fails, try xls parser as fallback
+		if p.Logger != nil {
+			p.Logger.Debug("XLSX text extraction failed, trying fallback parsers",
+				zap.String("file", filePath),
+				zap.Error(err),
+			)
+		}
+		
+		xlsText, xlsErr := p.extractTextFromXLS(filePath)
+		if xlsErr == nil && xlsText != "" {
+			return xlsText, nil
+		}
+		
+		// Try HTML as last resort (some sites save HTML as .xlsx)
+		htmlText, htmlErr := p.extractTextFromHTML(filePath)
+		if htmlErr == nil && htmlText != "" {
+			if p.Logger != nil {
+				p.Logger.Debug("File is actually HTML, extracted using HTML parser",
+					zap.String("file", filePath),
+				)
+			}
+			return htmlText, nil
+		}
+		
+		// All parsers failed, return original error
+		return "", fmt.Errorf("failed to open excel file: %w", err)
+	}
+	
+	return text, nil
 }
 
 // extractTextFromXLSX extracts text from .xlsx files
