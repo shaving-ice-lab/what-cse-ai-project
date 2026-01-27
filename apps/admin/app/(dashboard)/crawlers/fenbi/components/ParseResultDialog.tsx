@@ -143,7 +143,7 @@ export function ParseResultDialog({ open, onOpenChange, result, title }: ParseRe
         {/* Header */}
         <div className="flex-shrink-0 bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 dark:from-violet-500/20 dark:via-purple-500/20 dark:to-fuchsia-500/20 px-5 py-3 border-b">
           <DialogHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pr-8">
               <DialogTitle className="flex items-center gap-2.5 text-base">
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 text-white">
                   <Sparkles className="h-4 w-4" />

@@ -1117,18 +1117,76 @@ func (s *FenbiSpider) GetCookiesString() string {
 }
 
 // ResolveShortURL resolves a short URL (t.fenbi.com/s/xxxxx) to its final destination URL
-// by following redirects with cookies
+// by following redirects with cookies. Uses TLS client with Chrome fingerprint.
 func (s *FenbiSpider) ResolveShortURL(shortURL string) (string, error) {
 	if shortURL == "" {
 		return "", nil
 	}
 
-	// Create a client that follows redirects and records the final URL
-	// We need a separate client that follows redirects (unlike s.httpClient which doesn't)
+	s.logger.Debug("Resolving short URL with TLS client",
+		zap.String("short_url", shortURL),
+	)
+
+	// Create TLS client that follows redirects
+	tlsClient, err := NewTLSClientWithRedirects()
+	if err != nil {
+		s.logger.Warn("Failed to create TLS client for short URL, falling back", zap.Error(err))
+		return s.resolveShortURLFallback(shortURL)
+	}
+
+	// Create request with Chrome-like headers
+	req, err := CreateChromeRequest("GET", shortURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set cookies if available
+	if len(s.cookies) > 0 {
+		var cookieStrs []string
+		for _, c := range s.cookies {
+			cookieStrs = append(cookieStrs, fmt.Sprintf("%s=%s", c.Name, c.Value))
+		}
+		req.Header.Set("cookie", strings.Join(cookieStrs, "; "))
+	}
+
+	resp, err := tlsClient.Do(req)
+	if err != nil {
+		s.logger.Warn("TLS client failed to resolve short URL, trying fallback", zap.Error(err))
+		return s.resolveShortURLFallback(shortURL)
+	}
+	defer resp.Body.Close()
+
+	// The final URL after all redirects
+	finalURL := resp.Request.URL.String()
+
+	// Normalize URL to remove default ports (e.g., :443 for HTTPS)
+	// Some WAFs may block requests with explicit default ports
+	finalURL = NormalizeURL(finalURL)
+
+	s.logger.Info("Resolved short URL with TLS client",
+		zap.String("short_url", shortURL),
+		zap.String("final_url", finalURL),
+		zap.Int("status_code", resp.StatusCode),
+	)
+
+	// If we ended up at the same URL (no redirect), or at an error page, return empty
+	if finalURL == shortURL {
+		s.logger.Warn("Short URL did not redirect", zap.String("url", shortURL))
+		return "", nil
+	}
+
+	return finalURL, nil
+}
+
+// resolveShortURLFallback is the fallback method using standard http.Client
+func (s *FenbiSpider) resolveShortURLFallback(shortURL string) (string, error) {
+	s.logger.Debug("Resolving short URL with fallback client",
+		zap.String("short_url", shortURL),
+	)
+
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			// Allow up to 10 redirects
 			if len(via) >= 10 {
 				return errors.New("too many redirects")
 			}
@@ -1141,12 +1199,10 @@ func (s *FenbiSpider) ResolveShortURL(shortURL string) (string, error) {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set headers
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
 
-	// Set cookies
 	if len(s.cookies) > 0 {
 		var cookieStrs []string
 		for _, c := range s.cookies {
@@ -1155,28 +1211,25 @@ func (s *FenbiSpider) ResolveShortURL(shortURL string) (string, error) {
 		req.Header.Set("Cookie", strings.Join(cookieStrs, "; "))
 	}
 
-	s.logger.Debug("Resolving short URL",
-		zap.String("short_url", shortURL),
-	)
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to resolve short URL: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// The final URL after all redirects
 	finalURL := resp.Request.URL.String()
 
-	s.logger.Info("Resolved short URL",
+	// Normalize URL to remove default ports
+	finalURL = NormalizeURL(finalURL)
+
+	s.logger.Info("Resolved short URL (fallback)",
 		zap.String("short_url", shortURL),
 		zap.String("final_url", finalURL),
 		zap.Int("status_code", resp.StatusCode),
 	)
 
-	// If we ended up at the same URL (no redirect), or at an error page, return empty
 	if finalURL == shortURL {
-		s.logger.Warn("Short URL did not redirect", zap.String("url", shortURL))
+		s.logger.Warn("Short URL did not redirect (fallback)", zap.String("url", shortURL))
 		return "", nil
 	}
 
@@ -1231,36 +1284,42 @@ type PageAttachment struct {
 }
 
 // FetchPageContent fetches and parses content from a URL
+// Uses TLS client with Chrome fingerprint to bypass TLS fingerprint detection
 func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 	if targetURL == "" {
 		return nil, errors.New("target URL is empty")
 	}
 
-	s.logger.Info("Fetching page content", zap.String("url", targetURL))
+	s.logger.Info("Fetching page content with TLS client", zap.String("url", targetURL))
 
-	req, err := http.NewRequest("GET", targetURL, nil)
+	// Create TLS client with Chrome fingerprint (follows redirects by default)
+	tlsClient, err := NewTLSClientWithRedirects()
+	if err != nil {
+		s.logger.Warn("Failed to create TLS client, falling back to standard client", zap.Error(err))
+		return s.fetchPageContentFallback(targetURL)
+	}
+
+	// Create request with Chrome-like headers
+	req, err := CreateChromeRequest("GET", targetURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set headers to mimic browser
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
-	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
-	req.Header.Set("Accept-Encoding", "gzip, deflate")
+	// Add gzip encoding support
+	req.Header.Set("accept-encoding", "gzip, deflate, br")
 
-	// Use a client that follows redirects
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	resp, err := client.Do(req)
+	resp, err := tlsClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch page: %w", err)
+		s.logger.Warn("TLS client request failed, trying fallback", zap.Error(err))
+		return s.fetchPageContentFallback(targetURL)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		s.logger.Warn("TLS client got non-200 status",
+			zap.Int("status_code", resp.StatusCode),
+			zap.String("url", targetURL),
+		)
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
@@ -1325,6 +1384,104 @@ func (s *FenbiSpider) FetchPageContent(targetURL string) (*PageContent, error) {
 	content.Attachments = s.extractPageAttachments(doc, targetURL)
 
 	s.logger.Info("Fetched page content",
+		zap.String("url", targetURL),
+		zap.String("title", content.Title),
+		zap.Int("text_length", len(content.Text)),
+		zap.Int("attachments_count", len(content.Attachments)),
+		zap.String("charset", detectedCharset),
+	)
+
+	return content, nil
+}
+
+// fetchPageContentFallback is the fallback method using standard http.Client
+// Used when TLS client is not available or fails
+func (s *FenbiSpider) fetchPageContentFallback(targetURL string) (*PageContent, error) {
+	s.logger.Info("Fetching page content with fallback client", zap.String("url", targetURL))
+
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set headers to mimic browser
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+
+	// Use a client that follows redirects
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch page: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// Handle gzip encoding
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzReader.Close()
+		reader = gzReader
+	}
+
+	// Read body
+	bodyBytes, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Detect and convert encoding
+	htmlContent, detectedCharset := s.decodeHTML(bodyBytes, resp.Header.Get("Content-Type"))
+
+	s.logger.Debug("Detected charset (fallback)",
+		zap.String("url", targetURL),
+		zap.String("charset", detectedCharset),
+	)
+
+	// Parse HTML using goquery
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse HTML: %w", err)
+	}
+
+	content := &PageContent{
+		URL:  targetURL,
+		HTML: htmlContent,
+	}
+
+	// Extract title
+	content.Title = strings.TrimSpace(doc.Find("title").First().Text())
+	if content.Title == "" {
+		content.Title = strings.TrimSpace(doc.Find("h1").First().Text())
+	}
+
+	// Extract main text content
+	doc.Find("script, style, nav, header, footer, aside").Remove()
+	mainContent := doc.Find("article, .article, .content, .main-content, #content, #main, .detail-content, .article-content, .TRS_Editor, .zwgk_cont, .news_cont, .art_content").First()
+	if mainContent.Length() == 0 {
+		mainContent = doc.Find("body")
+	}
+
+	content.Text = strings.TrimSpace(mainContent.Text())
+	content.Text = regexp.MustCompile(`[ \t]+`).ReplaceAllString(content.Text, " ")
+	content.Text = regexp.MustCompile(`\n\s*\n`).ReplaceAllString(content.Text, "\n")
+
+	// Extract attachments
+	content.Attachments = s.extractPageAttachments(doc, targetURL)
+
+	s.logger.Info("Fetched page content (fallback)",
 		zap.String("url", targetURL),
 		zap.String("title", content.Title),
 		zap.Int("text_length", len(content.Text)),
