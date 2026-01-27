@@ -606,6 +606,30 @@ CREATE TABLE IF NOT EXISTS `what_wechat_rss_articles` (
     CONSTRAINT `fk_wechat_rss_articles_source` FOREIGN KEY (`source_id`) REFERENCES `what_wechat_rss_sources` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信公众号RSS文章表';
 
+-- 粉笔解析任务表
+CREATE TABLE IF NOT EXISTS `what_fenbi_parse_tasks` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `fenbi_announcement_id` BIGINT UNSIGNED DEFAULT NULL COMMENT '关联的粉笔公告ID',
+    `fenbi_id` VARCHAR(50) DEFAULT NULL COMMENT '粉笔公告ID',
+    `title` VARCHAR(500) NOT NULL COMMENT '任务标题',
+    `fenbi_url` VARCHAR(500) DEFAULT NULL COMMENT '粉笔页面URL',
+    `status` VARCHAR(20) DEFAULT 'pending' COMMENT '状态: pending/running/parsing/completed/failed/skipped',
+    `message` TEXT DEFAULT NULL COMMENT '状态消息或错误信息',
+    `steps` JSON DEFAULT NULL COMMENT '执行步骤详情（JSON数组）',
+    `parse_result_summary` JSON DEFAULT NULL COMMENT '解析结果摘要',
+    `started_at` DATETIME(3) DEFAULT NULL COMMENT '开始时间',
+    `completed_at` DATETIME(3) DEFAULT NULL COMMENT '完成时间',
+    `created_at` DATETIME(3) DEFAULT NULL,
+    `updated_at` DATETIME(3) DEFAULT NULL,
+    `deleted_at` DATETIME(3) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_fenbi_parse_tasks_announcement_id` (`fenbi_announcement_id`),
+    KEY `idx_fenbi_parse_tasks_fenbi_id` (`fenbi_id`),
+    KEY `idx_fenbi_parse_tasks_status` (`status`),
+    KEY `idx_fenbi_parse_tasks_created_at` (`created_at`),
+    KEY `idx_fenbi_parse_tasks_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='粉笔解析任务表';
+
 -- 插入粉笔筛选类别初始数据 - 地区（包含粉笔网站URL参数ID）
 INSERT INTO `what_fenbi_categories` (`category_type`, `code`, `name`, `fenbi_param_id`, `sort_order`, `is_enabled`, `created_at`, `updated_at`) VALUES
 ('region', 'all', '全部', NULL, 0, 1, NOW(), NOW()),
