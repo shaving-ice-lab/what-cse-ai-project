@@ -393,3 +393,148 @@ func (r *FenbiAnnouncementRepository) GetStatsByYear() (map[int]int64, error) {
 	}
 	return stats, nil
 }
+
+// FenbiParseTaskRepository handles database operations for Fenbi parse tasks
+type FenbiParseTaskRepository struct {
+	db *gorm.DB
+}
+
+func NewFenbiParseTaskRepository(db *gorm.DB) *FenbiParseTaskRepository {
+	return &FenbiParseTaskRepository{db: db}
+}
+
+func (r *FenbiParseTaskRepository) Create(task *model.FenbiParseTask) error {
+	return r.db.Create(task).Error
+}
+
+func (r *FenbiParseTaskRepository) BatchCreate(tasks []model.FenbiParseTask) (int, error) {
+	if len(tasks) == 0 {
+		return 0, nil
+	}
+	result := r.db.CreateInBatches(tasks, 100)
+	return int(result.RowsAffected), result.Error
+}
+
+func (r *FenbiParseTaskRepository) FindByID(id uint) (*model.FenbiParseTask, error) {
+	var task model.FenbiParseTask
+	err := r.db.First(&task, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
+func (r *FenbiParseTaskRepository) FindByFenbiID(fenbiID string) (*model.FenbiParseTask, error) {
+	var task model.FenbiParseTask
+	err := r.db.Where("fenbi_id = ?", fenbiID).First(&task).Error
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
+func (r *FenbiParseTaskRepository) ExistsByFenbiID(fenbiID string) (bool, error) {
+	var count int64
+	err := r.db.Model(&model.FenbiParseTask{}).Where("fenbi_id = ?", fenbiID).Count(&count).Error
+	return count > 0, err
+}
+
+type FenbiParseTaskListParams struct {
+	Status   string
+	Keyword  string
+	Page     int
+	PageSize int
+}
+
+func (r *FenbiParseTaskRepository) List(params *FenbiParseTaskListParams) ([]model.FenbiParseTask, int64, error) {
+	var tasks []model.FenbiParseTask
+	var total int64
+
+	query := r.db.Model(&model.FenbiParseTask{})
+
+	if params.Status != "" && params.Status != "all" {
+		query = query.Where("status = ?", params.Status)
+	}
+	if params.Keyword != "" {
+		query = query.Where("title LIKE ?", "%"+params.Keyword+"%")
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := 0
+	limit := 200 // default max
+	if params.Page > 0 && params.PageSize > 0 {
+		offset = (params.Page - 1) * params.PageSize
+		limit = params.PageSize
+	}
+
+	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&tasks).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return tasks, total, nil
+}
+
+func (r *FenbiParseTaskRepository) Update(task *model.FenbiParseTask) error {
+	return r.db.Save(task).Error
+}
+
+func (r *FenbiParseTaskRepository) UpdateStatus(id uint, status string, message string) error {
+	updates := map[string]interface{}{
+		"status":  status,
+		"message": message,
+	}
+	if status == string(model.FenbiParseTaskStatusRunning) || status == string(model.FenbiParseTaskStatusParsing) {
+		updates["started_at"] = gorm.Expr("NOW(3)")
+	}
+	if status == string(model.FenbiParseTaskStatusCompleted) || status == string(model.FenbiParseTaskStatusFailed) || status == string(model.FenbiParseTaskStatusSkipped) {
+		updates["completed_at"] = gorm.Expr("NOW(3)")
+	}
+	return r.db.Model(&model.FenbiParseTask{}).Where("id = ?", id).Updates(updates).Error
+}
+
+func (r *FenbiParseTaskRepository) UpdateParseResult(id uint, status string, message string, steps model.JSON, summary model.JSON) error {
+	updates := map[string]interface{}{
+		"status":               status,
+		"message":              message,
+		"steps":                steps,
+		"parse_result_summary": summary,
+		"completed_at":         gorm.Expr("NOW(3)"),
+	}
+	return r.db.Model(&model.FenbiParseTask{}).Where("id = ?", id).Updates(updates).Error
+}
+
+func (r *FenbiParseTaskRepository) Delete(id uint) error {
+	return r.db.Delete(&model.FenbiParseTask{}, id).Error
+}
+
+func (r *FenbiParseTaskRepository) DeleteAll() error {
+	return r.db.Where("1 = 1").Delete(&model.FenbiParseTask{}).Error
+}
+
+func (r *FenbiParseTaskRepository) GetStats() (map[string]int64, error) {
+	var results []struct {
+		Status string
+		Count  int64
+	}
+
+	err := r.db.Model(&model.FenbiParseTask{}).
+		Select("status, COUNT(*) as count").
+		Group("status").
+		Find(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]int64)
+	var total int64
+	for _, r := range results {
+		stats[r.Status] = r.Count
+		total += r.Count
+	}
+	stats["total"] = total
+	return stats, nil
+}

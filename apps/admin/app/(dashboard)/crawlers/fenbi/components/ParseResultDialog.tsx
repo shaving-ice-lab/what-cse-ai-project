@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogDescription,
   Button,
-  Input,
   Label,
   Badge,
   ScrollArea,
@@ -16,17 +15,10 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@what-cse/ui";
 import {
   Zap,
   Link,
-  Loader2,
-  Play,
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -43,20 +35,20 @@ import {
   Check,
   Sparkles,
   ArrowRight,
-  RotateCcw,
   Hash,
   Users,
   GraduationCap,
   Building2,
   Target,
-  Bot,
   UserCheck,
 } from "lucide-react";
-import { fenbiApi, llmConfigApi, type ParseURLResult, type LLMConfigSelectOption } from "@/services/api";
+import { type ParseURLResult } from "@/services/api";
 
-interface ParseUrlDialogProps {
+interface ParseResultDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  result: ParseURLResult | null;
+  title?: string;
 }
 
 // Step status icon component
@@ -133,33 +125,7 @@ const CopyButton = ({ text, label }: { text: string; label?: string }) => {
   );
 };
 
-export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
-  const [url, setUrl] = useState("");
-  const [parsing, setParsing] = useState(false);
-  const [result, setResult] = useState<ParseURLResult | null>(null);
-  
-  // LLM config selection
-  const [llmConfigs, setLlmConfigs] = useState<LLMConfigSelectOption[]>([]);
-  const [selectedLlmConfigId, setSelectedLlmConfigId] = useState<number>(0);
-  const [loadingLlmConfigs, setLoadingLlmConfigs] = useState(false);
-
-  // Load LLM configs when dialog opens
-  useEffect(() => {
-    if (open) {
-      setLoadingLlmConfigs(true);
-      llmConfigApi.getSelectOptions()
-        .then((res) => {
-          setLlmConfigs(res.options || []);
-        })
-        .catch((err) => {
-          console.error("Failed to load LLM configs:", err);
-        })
-        .finally(() => {
-          setLoadingLlmConfigs(false);
-        });
-    }
-  }, [open]);
-
+export function ParseResultDialog({ open, onOpenChange, result, title }: ParseResultDialogProps) {
   // Calculate stats
   const stats = useMemo(() => {
     if (!result?.steps) return null;
@@ -169,48 +135,12 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
     return { totalTime, successCount, errorCount, totalSteps: result.steps.length };
   }, [result?.steps]);
 
-  // Handle parse
-  const handleParse = useCallback(async () => {
-    if (!url.trim() || parsing) return;
-
-    setParsing(true);
-    setResult(null);
-
-    try {
-      // API response interceptor already extracts data.data, so response IS ParseURLResult
-      // Pass selected LLM config ID (0 means use default)
-      const response = await fenbiApi.parseUrl(url.trim(), selectedLlmConfigId || undefined);
-      setResult(response);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "解析请求失败";
-      setResult({
-        success: false,
-        error: errorMessage,
-        steps: [],
-      });
-    } finally {
-      setParsing(false);
-    }
-  }, [url, parsing, selectedLlmConfigId]);
-
-  // Reset dialog
-  const handleReset = useCallback(() => {
-    setUrl("");
-    setResult(null);
-  }, []);
-
-  // Close and reset
-  const handleClose = useCallback((open: boolean) => {
-    if (!open) {
-      handleReset();
-    }
-    onOpenChange(open);
-  }, [onOpenChange, handleReset]);
+  if (!result) return null;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl h-[85vh] p-0 flex flex-col overflow-hidden">
-        {/* Header - Compact */}
+        {/* Header */}
         <div className="flex-shrink-0 bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 dark:from-violet-500/20 dark:via-purple-500/20 dark:to-fuchsia-500/20 px-5 py-3 border-b">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -218,7 +148,7 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 text-white">
                   <Sparkles className="h-4 w-4" />
                 </div>
-                <span>公告智能解析</span>
+                <span>{title || "解析结果"}</span>
                 {result?.success && (
                   <Badge className="bg-emerald-500/90 text-xs">解析成功</Badge>
                 )}
@@ -240,144 +170,15 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
               )}
             </div>
             <DialogDescription className="text-xs mt-0.5">
-              支持粉笔短链接、政府公告URL，自动提取内容、下载附件并使用 AI 智能分析
+              查看公告的智能解析结果，包含AI分析、内容、岗位信息、附件等
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        {/* URL Input - Compact */}
-        <div className="flex-shrink-0 px-5 py-3 bg-muted/30 border-b">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="粘贴链接：https://t.fenbi.com/s/xxx 或政府网站公告链接"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !parsing && handleParse()}
-                className="pl-9 h-9 text-sm bg-background"
-                disabled={parsing}
-              />
-            </div>
-            {/* LLM Config Selector */}
-            <Select
-              value={selectedLlmConfigId.toString()}
-              onValueChange={(v) => setSelectedLlmConfigId(parseInt(v) || 0)}
-              disabled={parsing || loadingLlmConfigs}
-            >
-              <SelectTrigger className="w-[180px] h-9 text-sm bg-background">
-                <div className="flex items-center gap-1.5">
-                  <Bot className="h-3.5 w-3.5 text-violet-500" />
-                  <SelectValue placeholder={loadingLlmConfigs ? "加载中..." : "选择LLM"} />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">
-                  <div className="flex items-center gap-1.5">
-                    <span>默认配置</span>
-                  </div>
-                </SelectItem>
-                {llmConfigs.map((config) => (
-                  <SelectItem key={config.id} value={config.id.toString()}>
-                    <div className="flex items-center gap-1.5">
-                      <span>{config.name}</span>
-                      <span className="text-[10px] text-muted-foreground">({config.model})</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleParse}
-              disabled={!url.trim() || parsing}
-              className="h-9 px-5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm"
-            >
-              {parsing ? (
-                <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  解析中
-                </>
-              ) : (
-                <>
-                  <Play className="mr-1.5 h-3.5 w-3.5" />
-                  开始解析
-                </>
-              )}
-            </Button>
-            {result && (
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                className="h-9 w-9 p-0"
-                title="重新开始"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-
         {/* Main Content */}
         <div className="flex-1 min-h-0 overflow-hidden">
-          {/* Empty State */}
-          {!parsing && !result && (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground px-6">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 blur-xl" />
-                <div className="relative p-6 rounded-full bg-gradient-to-br from-violet-500/5 to-purple-500/5 border-2 border-dashed border-violet-200 dark:border-violet-800">
-                  <Link className="h-12 w-12 text-violet-400" />
-                </div>
-              </div>
-              <p className="text-base font-medium mt-5 mb-1">准备开始解析</p>
-              <p className="text-sm text-center max-w-md">
-                粘贴粉笔短链接或政府公告URL，系统将自动完成以下流程：
-              </p>
-              <div className="flex items-center gap-2 mt-4 text-xs">
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300">
-                  <Link className="h-3 w-3" />
-                  解析链接
-                </div>
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                  <FileText className="h-3 w-3" />
-                  提取内容
-                </div>
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
-                  <Database className="h-3 w-3" />
-                  下载附件
-                </div>
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                  <Zap className="h-3 w-3" />
-                  AI 分析
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {parsing && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 blur-xl opacity-30 animate-pulse" />
-                <div className="relative p-6 rounded-full bg-gradient-to-br from-violet-500/10 to-purple-500/10">
-                  <Loader2 className="h-12 w-12 animate-spin text-violet-600" />
-                </div>
-              </div>
-              <p className="mt-5 text-base font-medium">正在智能解析</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                下载附件、提取内容、AI 分析中...
-              </p>
-              <div className="flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                预计需要 30-60 秒
-              </div>
-            </div>
-          )}
-
           {/* Error State */}
-          {result?.error && !result.success && !parsing && (
+          {result?.error && !result.success && (
             <div className="p-5 h-full overflow-auto">
               <div className="max-w-lg mx-auto">
                 <div className="p-5 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-800">
@@ -390,15 +191,6 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                       <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                         {result.error}
                       </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3 h-7 text-xs border-red-300 text-red-700 hover:bg-red-100"
-                        onClick={handleReset}
-                      >
-                        <RotateCcw className="h-3 w-3 mr-1" />
-                        重新尝试
-                      </Button>
                     </div>
                   </div>
                 </div>
@@ -407,11 +199,10 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
           )}
 
           {/* Success Results */}
-          {result?.success && !parsing && (
+          {result?.success && (
             <div className="flex h-full">
               {/* Left Panel - Steps */}
               <div className="w-64 flex-shrink-0 border-r flex flex-col bg-muted/10">
-                {/* Left Panel Header - Aligned with Tabs */}
                 <div className="flex-shrink-0 h-10 px-3 flex items-center border-b bg-muted/20">
                   <Activity className="h-3.5 w-3.5 text-violet-600 mr-1.5" />
                   <span className="text-xs font-semibold">解析流程</span>
@@ -453,7 +244,6 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                     ))}
                   </div>
                 </ScrollArea>
-                {/* Stats Footer */}
                 {stats && (
                   <div className="flex-shrink-0 px-3 py-2 border-t bg-muted/20 text-xs space-y-1">
                     <div className="flex justify-between">
@@ -472,7 +262,6 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
               <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
                 {result.data && (
                   <Tabs defaultValue="llm" className="flex-1 flex flex-col min-h-0">
-                    {/* Tabs Header - Same height as Left Panel Header */}
                     <div className="flex-shrink-0 h-10 px-3 flex items-center border-b bg-muted/20">
                       <TabsList className="h-7 bg-transparent p-0 gap-1">
                         <TabsTrigger
@@ -872,29 +661,9 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                 <Users className="h-10 w-10 text-emerald-400 opacity-50" />
                               </div>
                               <p className="text-sm font-medium mb-1">暂无岗位数据</p>
-                              <p className="text-xs text-center max-w-[280px] mb-4">
+                              <p className="text-xs text-center max-w-[280px]">
                                 AI 未能从公告内容中提取到具体岗位信息，请查看原文附件获取完整职位表
                               </p>
-                              
-                              {/* Debug info */}
-                              {result.data.llm_analysis?.error && (
-                                <div className="w-full p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800 mb-3">
-                                  <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">分析错误</p>
-                                  <p className="text-xs text-red-600 dark:text-red-400">{result.data.llm_analysis.error}</p>
-                                </div>
-                              )}
-                              
-                              {result.data.llm_analysis?.raw_response && (
-                                <div className="w-full">
-                                  <p className="text-xs font-medium text-muted-foreground mb-1">LLM 原始响应（调试）</p>
-                                  <div className="p-2 bg-muted/50 rounded border max-h-[200px] overflow-auto">
-                                    <pre className="text-[10px] whitespace-pre-wrap break-all">
-                                      {result.data.llm_analysis.raw_response.slice(0, 2000)}
-                                      {result.data.llm_analysis.raw_response.length > 2000 && "..."}
-                                    </pre>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           )}
                         </div>
@@ -986,7 +755,7 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                                   原始输入链接
                                 </Label>
                               </div>
-                              <CopyButton text={result.data.input_url || ""} />
+                              {result.data.input_url && <CopyButton text={result.data.input_url} />}
                             </div>
                             <a
                               href={result.data.input_url}
@@ -994,7 +763,7 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
                               rel="noopener noreferrer"
                               className="text-xs text-violet-700 dark:text-violet-300 hover:underline flex items-center gap-1.5 break-all"
                             >
-                              <span className="flex-1">{result.data.input_url}</span>
+                              <span className="flex-1">{result.data.input_url || "-"}</span>
                               <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-50" />
                             </a>
                           </div>
@@ -1060,14 +829,14 @@ export function ParseUrlDialog({ open, onOpenChange }: ParseUrlDialogProps) {
           )}
         </div>
 
-        {/* Footer - Compact */}
+        {/* Footer */}
         <div className="flex-shrink-0 px-5 py-2 border-t bg-muted/20 flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
             {result?.data?.llm_analysis?.summary && (
               <CopyButton text={result.data.llm_analysis.summary} label="复制摘要" />
             )}
           </div>
-          <Button variant="outline" size="sm" className="h-7" onClick={() => handleClose(false)}>
+          <Button variant="outline" size="sm" className="h-7" onClick={() => onOpenChange(false)}>
             关闭
           </Button>
         </div>

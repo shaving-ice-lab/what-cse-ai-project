@@ -36,24 +36,40 @@ var (
 // AES requires exactly 16, 24, or 32 bytes key (32 bytes = AES-256)
 var encryptionKey = []byte("whatcse-fenbi-secret-key-aes256!")
 
+// CrawlPosition 保存当前爬取位置
+type CrawlPosition struct {
+	RegionIndex   int
+	ExamTypeIndex int
+	YearIndex     int
+	PageIndex     int
+	Regions       []string
+	ExamTypes     []string
+	Years         []int
+}
+
 type FenbiService struct {
 	credRepo         *repository.FenbiCredentialRepository
 	categoryRepo     *repository.FenbiCategoryRepository
 	announcementRepo *repository.FenbiAnnouncementRepository
+	parseTaskRepo    *repository.FenbiParseTaskRepository
 	spiderConfig     *crawler.SpiderConfig
 	llmConfigService *LLMConfigService
 	logger           *zap.Logger
 
 	// Crawl control
-	crawlMutex   sync.Mutex
-	crawlRunning bool
-	crawlStopped bool
+	crawlMutex    sync.Mutex
+	crawlRunning  bool
+	crawlStopped  bool
+	crawlPosition *CrawlPosition // 保存当前爬取位置
+	crawlProgress *CrawlProgress // 保存最新进度快照
+	crawlUpdated  time.Time      // 进度更新时间
 }
 
 func NewFenbiService(
 	credRepo *repository.FenbiCredentialRepository,
 	categoryRepo *repository.FenbiCategoryRepository,
 	announcementRepo *repository.FenbiAnnouncementRepository,
+	parseTaskRepo *repository.FenbiParseTaskRepository,
 	spiderConfig *crawler.SpiderConfig,
 	llmConfigService *LLMConfigService,
 	logger *zap.Logger,
@@ -62,6 +78,7 @@ func NewFenbiService(
 		credRepo:         credRepo,
 		categoryRepo:     categoryRepo,
 		announcementRepo: announcementRepo,
+		parseTaskRepo:    parseTaskRepo,
 		spiderConfig:     spiderConfig,
 		llmConfigService: llmConfigService,
 		logger:           logger,
@@ -374,6 +391,9 @@ type TriggerCrawlRequest struct {
 	Regions   []string `json:"regions"`
 	ExamTypes []string `json:"exam_types"`
 	Years     []int    `json:"years"`
+	MaxPages  int      `json:"max_pages"` // 最大爬取页数，0表示不限制
+	Reset     bool     `json:"reset"`     // 是否重置爬取位置，从头开始
+	SkipSave  bool     `json:"skip_save"` // 是否跳过保存到数据库，由前端解析后再保存
 }
 
 type CrawlProgress struct {
@@ -382,8 +402,10 @@ type CrawlProgress struct {
 	CurrentTask    string `json:"current_task"`
 	ItemsCrawled   int    `json:"items_crawled"`
 	ItemsSaved     int    `json:"items_saved"`
-	Status         string `json:"status"` // running, completed, failed
+	Status         string `json:"status"` // running, completed, failed, paused
 	Message        string `json:"message,omitempty"`
+	HasMoreData    bool   `json:"has_more_data"` // 是否还有更多数据
+	PagesCrawled   int    `json:"pages_crawled"` // 已爬取的页数
 }
 
 func (s *FenbiService) TriggerCrawl(req *TriggerCrawlRequest) (*CrawlProgress, error) {
@@ -474,10 +496,44 @@ func (s *FenbiService) TriggerCrawl(req *TriggerCrawlRequest) (*CrawlProgress, e
 
 	// Calculate total tasks
 	progress.TotalTasks = len(req.Regions) * len(req.ExamTypes) * len(req.Years)
+	s.setCrawlProgressSnapshot(progress)
+
+	// 检查是否需要从上次位置继续
+	startRegionIdx := 0
+	startExamTypeIdx := 0
+	startYearIdx := 0
+	startPage := 1
+
+	s.crawlMutex.Lock()
+	// 如果设置了 reset，清除保存的位置
+	if req.Reset {
+		s.crawlPosition = nil
+		s.logger.Info("Reset crawl position, starting from beginning")
+	} else if s.crawlPosition != nil && s.isSameRequest(req, s.crawlPosition) {
+		startRegionIdx = s.crawlPosition.RegionIndex
+		startExamTypeIdx = s.crawlPosition.ExamTypeIndex
+		startYearIdx = s.crawlPosition.YearIndex
+		startPage = s.crawlPosition.PageIndex
+		s.logger.Info("Continuing from saved position",
+			zap.Int("region_idx", startRegionIdx),
+			zap.Int("exam_type_idx", startExamTypeIdx),
+			zap.Int("year_idx", startYearIdx),
+			zap.Int("page", startPage),
+		)
+	} else {
+		// 新的爬取请求，清除旧位置
+		s.crawlPosition = nil
+	}
+	s.crawlMutex.Unlock()
 
 	// Crawl each combination
 crawlLoop:
-	for _, region := range req.Regions {
+	for regionIdx, region := range req.Regions {
+		// 跳过已处理的 region
+		if regionIdx < startRegionIdx {
+			continue
+		}
+
 		// Check if crawl was stopped
 		s.crawlMutex.Lock()
 		stopped := s.crawlStopped
@@ -486,13 +542,19 @@ crawlLoop:
 			s.logger.Info("Crawl stopped by user")
 			progress.Status = "stopped"
 			progress.Message = "爬取已停止"
+			s.setCrawlProgressSnapshot(progress)
 			return progress, nil
 		}
 
 		// Get the fenbi_param_id for this region from database
 		regionParamID := s.GetRegionParamID(region)
 
-		for _, examType := range req.ExamTypes {
+		for examTypeIdx, examType := range req.ExamTypes {
+			// 跳过已处理的 examType
+			if regionIdx == startRegionIdx && examTypeIdx < startExamTypeIdx {
+				continue
+			}
+
 			// Check if crawl was stopped
 			s.crawlMutex.Lock()
 			stopped := s.crawlStopped
@@ -501,13 +563,19 @@ crawlLoop:
 				s.logger.Info("Crawl stopped by user")
 				progress.Status = "stopped"
 				progress.Message = "爬取已停止"
+				s.setCrawlProgressSnapshot(progress)
 				return progress, nil
 			}
 
 			// Get the fenbi_param_id for this exam type from database
 			examTypeParamID := s.GetExamTypeParamID(examType)
 
-			for _, year := range req.Years {
+			for yearIdx, year := range req.Years {
+				// 跳过已处理的 year
+				if regionIdx == startRegionIdx && examTypeIdx == startExamTypeIdx && yearIdx < startYearIdx {
+					continue
+				}
+
 				// Check if crawl was stopped
 				s.crawlMutex.Lock()
 				stopped := s.crawlStopped
@@ -516,14 +584,20 @@ crawlLoop:
 					s.logger.Info("Crawl stopped by user")
 					progress.Status = "stopped"
 					progress.Message = "爬取已停止"
+					s.setCrawlProgressSnapshot(progress)
 					return progress, nil
 				}
 
 				progress.CurrentTask = s.formatTaskName(region, examType, year)
+				s.setCrawlProgressSnapshot(progress)
 
 				// Crawl all pages for this combination
-				// Pass regionParamID and examTypeParamID directly (numeric IDs) instead of codes
+				// 如果是从上次位置继续，使用保存的页数
 				page := 1
+				if regionIdx == startRegionIdx && examTypeIdx == startExamTypeIdx && yearIdx == startYearIdx {
+					page = startPage
+				}
+
 				for {
 					// Check if crawl was stopped before each page request
 					s.crawlMutex.Lock()
@@ -533,7 +607,38 @@ crawlLoop:
 						s.logger.Info("Crawl stopped by user during page crawl")
 						progress.Status = "stopped"
 						progress.Message = "爬取已停止"
+						s.setCrawlProgressSnapshot(progress)
 						break crawlLoop
+					}
+
+					// Check if we've reached the max pages limit
+					if req.MaxPages > 0 && progress.PagesCrawled >= req.MaxPages {
+						s.logger.Info("Reached max pages limit, saving position",
+							zap.Int("max_pages", req.MaxPages),
+							zap.Int("pages_crawled", progress.PagesCrawled),
+							zap.Int("region_idx", regionIdx),
+							zap.Int("exam_type_idx", examTypeIdx),
+							zap.Int("year_idx", yearIdx),
+							zap.Int("next_page", page+1),
+						)
+						// 保存当前位置，下次从下一页继续
+						s.crawlMutex.Lock()
+						s.crawlPosition = &CrawlPosition{
+							RegionIndex:   regionIdx,
+							ExamTypeIndex: examTypeIdx,
+							YearIndex:     yearIdx,
+							PageIndex:     page + 1, // 下次从下一页开始
+							Regions:       req.Regions,
+							ExamTypes:     req.ExamTypes,
+							Years:         req.Years,
+						}
+						s.crawlMutex.Unlock()
+
+						progress.Status = "paused"
+						progress.Message = "已达到页数限制，等待处理"
+						progress.HasMoreData = true
+						s.setCrawlProgressSnapshot(progress)
+						return progress, nil
 					}
 
 					result, err := spider.CrawlAnnouncementList(regionParamID, examTypeParamID, year, page)
@@ -549,11 +654,18 @@ crawlLoop:
 					}
 
 					progress.ItemsCrawled += result.TotalFound
+					progress.PagesCrawled++
 
-					// Convert and save items
+					// Convert and save items (only if not skipping save)
 					announcements := s.convertToAnnouncements(result.Items, region, examType, year)
-					saved, _ := s.announcementRepo.BatchUpsert(announcements)
-					progress.ItemsSaved += saved
+					if !req.SkipSave {
+						saved, _ := s.announcementRepo.BatchUpsert(announcements)
+						progress.ItemsSaved += saved
+					} else {
+						// 跳过保存时，ItemsSaved 表示可保存的条目数
+						progress.ItemsSaved += len(announcements)
+					}
+					s.setCrawlProgressSnapshot(progress)
 
 					if !result.HasNextPage || result.TotalFound == 0 {
 						break
@@ -565,9 +677,15 @@ crawlLoop:
 				}
 
 				progress.CompletedTasks++
+				s.setCrawlProgressSnapshot(progress)
 			}
 		}
 	}
+
+	// 爬取完成，清除保存的位置
+	s.crawlMutex.Lock()
+	s.crawlPosition = nil
+	s.crawlMutex.Unlock()
 
 	// Check if stopped during crawl
 	s.crawlMutex.Lock()
@@ -580,8 +698,78 @@ crawlLoop:
 		progress.Status = "completed"
 		progress.Message = "爬取完成"
 	}
+	s.setCrawlProgressSnapshot(progress)
 
 	return progress, nil
+}
+
+// setCrawlProgressSnapshot stores a safe progress snapshot
+func (s *FenbiService) setCrawlProgressSnapshot(progress *CrawlProgress) {
+	if progress == nil {
+		s.crawlMutex.Lock()
+		s.crawlProgress = nil
+		s.crawlUpdated = time.Now()
+		s.crawlMutex.Unlock()
+		return
+	}
+
+	snapshot := *progress
+	s.crawlMutex.Lock()
+	s.crawlProgress = &snapshot
+	s.crawlUpdated = time.Now()
+	s.crawlMutex.Unlock()
+}
+
+// GetCrawlStatus returns current crawl running state and progress snapshot
+func (s *FenbiService) GetCrawlStatus() (bool, *CrawlProgress, *time.Time) {
+	s.crawlMutex.Lock()
+	defer s.crawlMutex.Unlock()
+
+	var snapshot *CrawlProgress
+	if s.crawlProgress != nil {
+		copy := *s.crawlProgress
+		snapshot = &copy
+	}
+
+	if s.crawlUpdated.IsZero() {
+		return s.crawlRunning, snapshot, nil
+	}
+
+	updated := s.crawlUpdated
+	return s.crawlRunning, snapshot, &updated
+}
+
+// isSameRequest 检查请求参数是否与保存的位置一致
+func (s *FenbiService) isSameRequest(req *TriggerCrawlRequest, pos *CrawlPosition) bool {
+	if pos == nil {
+		return false
+	}
+	if len(req.Regions) != len(pos.Regions) || len(req.ExamTypes) != len(pos.ExamTypes) || len(req.Years) != len(pos.Years) {
+		return false
+	}
+	for i, r := range req.Regions {
+		if r != pos.Regions[i] {
+			return false
+		}
+	}
+	for i, e := range req.ExamTypes {
+		if e != pos.ExamTypes[i] {
+			return false
+		}
+	}
+	for i, y := range req.Years {
+		if y != pos.Years[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// ResetCrawlPosition 重置爬取位置（用于重新开始爬取）
+func (s *FenbiService) ResetCrawlPosition() {
+	s.crawlMutex.Lock()
+	defer s.crawlMutex.Unlock()
+	s.crawlPosition = nil
 }
 
 // StopCrawl stops the running crawl task
@@ -906,12 +1094,13 @@ type LLMAnalysisResult struct {
 
 // ExtractedPositionInfo is a simplified position info for TestCrawl result
 type ExtractedPositionInfo struct {
-	PositionName   string   `json:"position_name"`
-	DepartmentName string   `json:"department_name"`
-	RecruitCount   int      `json:"recruit_count"`
-	Education      string   `json:"education,omitempty"`
-	Major          []string `json:"major,omitempty"`
-	WorkLocation   string   `json:"work_location,omitempty"`
+	PositionName    string   `json:"position_name"`
+	DepartmentName  string   `json:"department_name"`
+	RecruitCount    int      `json:"recruit_count"`
+	Education       string   `json:"education,omitempty"`
+	Major           []string `json:"major,omitempty"`
+	WorkLocation    string   `json:"work_location,omitempty"`
+	PoliticalStatus string   `json:"political_status,omitempty"` // 政治面貌要求：中共党员、共青团员、不限等
 }
 
 // ExtractedExamInfo holds exam information extracted by LLM
@@ -1229,6 +1418,10 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 		},
 	}
 
+	// Track Fenbi info for saving to database after successful parsing
+	var fenbiID string
+	var fenbiDetail *crawler.FenbiDetailInfo
+
 	// Check login status
 	credential, err := s.credRepo.FindDefault()
 	if err != nil {
@@ -1255,7 +1448,7 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 			zap.String("url", inputURL),
 		)
 
-		fenbiID := crawler.ExtractFenbiIDFromURL(inputURL)
+		fenbiID = crawler.ExtractFenbiIDFromURL(inputURL)
 		if fenbiID == "" {
 			result.Steps = append(result.Steps, ParseStep{
 				Name:     "提取粉笔原文链接",
@@ -1285,6 +1478,7 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 				})
 			} else {
 				currentURL = detail.OriginalURL
+				fenbiDetail = detail // Save detail for later database update
 				result.Steps = append(result.Steps, ParseStep{
 					Name:     "提取粉笔原文链接",
 					Status:   "success",
@@ -1463,7 +1657,76 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 	}
 
 	result.Success = true
+
+	// Step 5: Save to database if this is a Fenbi URL and parsing was successful
+	if fenbiID != "" && result.Success {
+		stepStart = time.Now()
+		saveErr := s.saveOrUpdateFenbiAnnouncement(fenbiID, fenbiDetail, result.Data)
+		if saveErr != nil {
+			s.logger.Warn("Failed to save Fenbi announcement to database",
+				zap.String("fenbi_id", fenbiID),
+				zap.Error(saveErr),
+			)
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "保存到数据库",
+				Status:   "error",
+				Message:  fmt.Sprintf("保存失败: %v", saveErr),
+				Duration: time.Since(stepStart).Milliseconds(),
+			})
+		} else {
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "保存到数据库",
+				Status:   "success",
+				Message:  "已保存解析结果到数据库",
+				Duration: time.Since(stepStart).Milliseconds(),
+			})
+			s.logger.Info("Saved Fenbi announcement to database",
+				zap.String("fenbi_id", fenbiID),
+			)
+		}
+	}
+
 	return result, nil
+}
+
+// saveOrUpdateFenbiAnnouncement saves or updates a Fenbi announcement in the database
+func (s *FenbiService) saveOrUpdateFenbiAnnouncement(fenbiID string, detail *crawler.FenbiDetailInfo, parseData *ParseURLData) error {
+	// Try to find existing record
+	existing, err := s.announcementRepo.FindByFenbiID(fenbiID)
+	if err != nil && err.Error() != "record not found" {
+		return fmt.Errorf("查询公告失败: %w", err)
+	}
+
+	if existing != nil {
+		// Update existing record
+		existing.CrawlStatus = 2 // 解析完成
+		if parseData.FinalURL != "" {
+			existing.FinalURL = parseData.FinalURL
+		}
+		if detail != nil && detail.OriginalURL != "" {
+			existing.OriginalURL = detail.OriginalURL
+		}
+		return s.announcementRepo.Update(existing)
+	}
+
+	// Create new record
+	announcement := &model.FenbiAnnouncement{
+		FenbiID:     fenbiID,
+		Title:       parseData.PageTitle,
+		FenbiURL:    fmt.Sprintf("https://www.fenbi.com/page/exam-information-detail/%s", fenbiID),
+		OriginalURL: "",
+		FinalURL:    parseData.FinalURL,
+		CrawlStatus: 2, // 解析完成
+	}
+
+	if detail != nil {
+		if detail.Title != "" {
+			announcement.Title = detail.Title
+		}
+		announcement.OriginalURL = detail.OriginalURL
+	}
+
+	return s.announcementRepo.Create(announcement)
 }
 
 // processAttachments downloads and parses attachments
@@ -1633,7 +1896,8 @@ func (s *FenbiService) performLLMAnalysis(pageContent *crawler.PageContent, atta
       "recruit_count": 招录人数(数字，必填),
       "education": "学历要求（如：本科及以上、研究生等）",
       "major": ["专业要求列表，多个专业用数组"],
-      "work_location": "工作地点"
+      "work_location": "工作地点",
+      "political_status": "政治面貌要求（如：中共党员、共青团员、不限等，仅在明确要求时填写）"
     }
   ],
   "exam_info": {
@@ -1649,7 +1913,8 @@ func (s *FenbiService) performLLMAnalysis(pageContent *crawler.PageContent, atta
 1. positions数组必须包含从附件职位表中提取的所有职位，不要遗漏
 2. 如果职位表内容很多，至少提取前30个职位
 3. recruit_count必须是数字类型
-4. 如果某个字段信息不明确，可以省略该字段，但position_name和recruit_count是必填项`)
+4. 如果某个字段信息不明确，可以省略该字段，但position_name和recruit_count是必填项
+5. political_status字段：如果公告明确要求党员或有政治面貌限制，请提取；如无明确要求可省略或填"不限"`)
 
 	s.logger.Info("Calling LLM for analysis",
 		zap.Int("prompt_length", promptBuilder.Len()),
@@ -1683,12 +1948,13 @@ func (s *FenbiService) performLLMAnalysis(pageContent *crawler.PageContent, atta
 type LLMAnalysisJSON struct {
 	Summary   string `json:"summary"`
 	Positions []struct {
-		PositionName   string   `json:"position_name"`
-		DepartmentName string   `json:"department_name"`
-		RecruitCount   int      `json:"recruit_count"`
-		Education      string   `json:"education"`
-		Major          []string `json:"major"`
-		WorkLocation   string   `json:"work_location"`
+		PositionName    string   `json:"position_name"`
+		DepartmentName  string   `json:"department_name"`
+		RecruitCount    int      `json:"recruit_count"`
+		Education       string   `json:"education"`
+		Major           []string `json:"major"`
+		WorkLocation    string   `json:"work_location"`
+		PoliticalStatus string   `json:"political_status"`
 	} `json:"positions"`
 	ExamInfo struct {
 		ExamType          string `json:"exam_type"`
@@ -1726,12 +1992,13 @@ func (s *FenbiService) parseLLMAnalysisResponse(response string, result *LLMAnal
 	// Map positions
 	for _, pos := range parsed.Positions {
 		result.Positions = append(result.Positions, ExtractedPositionInfo{
-			PositionName:   pos.PositionName,
-			DepartmentName: pos.DepartmentName,
-			RecruitCount:   pos.RecruitCount,
-			Education:      pos.Education,
-			Major:          pos.Major,
-			WorkLocation:   pos.WorkLocation,
+			PositionName:    pos.PositionName,
+			DepartmentName:  pos.DepartmentName,
+			RecruitCount:    pos.RecruitCount,
+			Education:       pos.Education,
+			Major:           pos.Major,
+			WorkLocation:    pos.WorkLocation,
+			PoliticalStatus: pos.PoliticalStatus,
 		})
 	}
 
@@ -2011,4 +2278,168 @@ func decryptPassword(encrypted string) (string, error) {
 	stream.XORKeyStream(ciphertext, ciphertext)
 
 	return string(ciphertext), nil
+}
+
+// === Parse Task Management ===
+
+// CreateParseTaskRequest is the request for creating parse tasks
+type CreateParseTaskRequest struct {
+	Tasks []CreateParseTaskItem `json:"tasks"`
+}
+
+// CreateParseTaskItem is a single task item to create
+type CreateParseTaskItem struct {
+	FenbiAnnouncementID *uint  `json:"fenbi_announcement_id,omitempty"`
+	FenbiID             string `json:"fenbi_id,omitempty"`
+	Title               string `json:"title"`
+	FenbiURL            string `json:"fenbi_url,omitempty"`
+}
+
+// CreateParseTasks creates multiple parse tasks
+func (s *FenbiService) CreateParseTasks(req *CreateParseTaskRequest) ([]*model.FenbiParseTaskResponse, error) {
+	if len(req.Tasks) == 0 {
+		return nil, errors.New("no tasks to create")
+	}
+
+	var tasksToCreate []model.FenbiParseTask
+	for _, item := range req.Tasks {
+		// Check if task already exists
+		if item.FenbiID != "" {
+			exists, _ := s.parseTaskRepo.ExistsByFenbiID(item.FenbiID)
+			if exists {
+				continue // Skip existing task
+			}
+		}
+
+		task := model.FenbiParseTask{
+			FenbiAnnouncementID: item.FenbiAnnouncementID,
+			FenbiID:             item.FenbiID,
+			Title:               item.Title,
+			FenbiURL:            item.FenbiURL,
+			Status:              string(model.FenbiParseTaskStatusPending),
+		}
+		tasksToCreate = append(tasksToCreate, task)
+	}
+
+	if len(tasksToCreate) == 0 {
+		return nil, nil // All tasks already exist
+	}
+
+	_, err := s.parseTaskRepo.BatchCreate(tasksToCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch and return created tasks
+	params := &repository.FenbiParseTaskListParams{
+		Page:     1,
+		PageSize: len(tasksToCreate),
+	}
+	tasks, _, err := s.parseTaskRepo.List(params)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []*model.FenbiParseTaskResponse
+	for i := range tasks {
+		responses = append(responses, tasks[i].ToResponse())
+	}
+	return responses, nil
+}
+
+// ListParseTasksRequest is the request for listing parse tasks
+type ListParseTasksRequest struct {
+	Status   string `query:"status"`
+	Keyword  string `query:"keyword"`
+	Page     int    `query:"page"`
+	PageSize int    `query:"page_size"`
+}
+
+// ListParseTasks returns a list of parse tasks
+func (s *FenbiService) ListParseTasks(req *ListParseTasksRequest) ([]*model.FenbiParseTaskResponse, int64, error) {
+	params := &repository.FenbiParseTaskListParams{
+		Status:   req.Status,
+		Keyword:  req.Keyword,
+		Page:     req.Page,
+		PageSize: req.PageSize,
+	}
+
+	tasks, total, err := s.parseTaskRepo.List(params)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var responses []*model.FenbiParseTaskResponse
+	for i := range tasks {
+		responses = append(responses, tasks[i].ToResponse())
+	}
+	return responses, total, nil
+}
+
+// GetParseTask returns a single parse task by ID
+func (s *FenbiService) GetParseTask(id uint) (*model.FenbiParseTaskResponse, error) {
+	task, err := s.parseTaskRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	return task.ToResponse(), nil
+}
+
+// UpdateParseTaskRequest is the request for updating a parse task
+type UpdateParseTaskRequest struct {
+	Status             string           `json:"status"`
+	Message            string           `json:"message,omitempty"`
+	Steps              []map[string]any `json:"steps,omitempty"`
+	ParseResultSummary map[string]any   `json:"parse_result_summary,omitempty"`
+}
+
+// UpdateParseTask updates a parse task
+func (s *FenbiService) UpdateParseTask(id uint, req *UpdateParseTaskRequest) (*model.FenbiParseTaskResponse, error) {
+	task, err := s.parseTaskRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Status != "" {
+		task.Status = req.Status
+	}
+	task.Message = req.Message
+
+	if req.Steps != nil {
+		task.Steps = model.JSON{"steps": req.Steps}
+	}
+	if req.ParseResultSummary != nil {
+		task.ParseResultSummary = req.ParseResultSummary
+	}
+
+	// Update timestamps based on status
+	now := time.Now()
+	if req.Status == string(model.FenbiParseTaskStatusRunning) || req.Status == string(model.FenbiParseTaskStatusParsing) {
+		task.StartedAt = &now
+	}
+	if req.Status == string(model.FenbiParseTaskStatusCompleted) || req.Status == string(model.FenbiParseTaskStatusFailed) || req.Status == string(model.FenbiParseTaskStatusSkipped) {
+		task.CompletedAt = &now
+	}
+
+	err = s.parseTaskRepo.Update(task)
+	if err != nil {
+		return nil, err
+	}
+
+	return task.ToResponse(), nil
+}
+
+// DeleteParseTask deletes a parse task by ID
+func (s *FenbiService) DeleteParseTask(id uint) error {
+	return s.parseTaskRepo.Delete(id)
+}
+
+// DeleteAllParseTasks deletes all parse tasks
+func (s *FenbiService) DeleteAllParseTasks() error {
+	return s.parseTaskRepo.DeleteAll()
+}
+
+// GetParseTaskStats returns parse task statistics
+func (s *FenbiService) GetParseTaskStats() (map[string]int64, error) {
+	return s.parseTaskRepo.GetStats()
 }

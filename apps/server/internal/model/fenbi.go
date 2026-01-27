@@ -144,3 +144,89 @@ func (c *FenbiCredential) ToResponseWithPassword(password string) *FenbiCredenti
 	resp.Password = password
 	return resp
 }
+
+// FenbiParseTask represents a Fenbi announcement parse task
+type FenbiParseTask struct {
+	ID                   uint           `gorm:"primaryKey" json:"id"`
+	FenbiAnnouncementID  *uint          `gorm:"type:bigint unsigned;index:idx_fenbi_parse_tasks_announcement_id" json:"fenbi_announcement_id,omitempty"`
+	FenbiID              string         `gorm:"type:varchar(50);index:idx_fenbi_parse_tasks_fenbi_id" json:"fenbi_id,omitempty"`
+	Title                string         `gorm:"type:varchar(500);not null" json:"title"`
+	FenbiURL             string         `gorm:"type:varchar(500)" json:"fenbi_url,omitempty"`
+	Status               string         `gorm:"type:varchar(20);default:'pending';index:idx_fenbi_parse_tasks_status" json:"status"`
+	Message              string         `gorm:"type:text" json:"message,omitempty"`
+	Steps                JSON           `gorm:"type:json" json:"steps,omitempty"`
+	ParseResultSummary   JSON           `gorm:"type:json" json:"parse_result_summary,omitempty"`
+	StartedAt            *time.Time     `gorm:"type:datetime(3)" json:"started_at,omitempty"`
+	CompletedAt          *time.Time     `gorm:"type:datetime(3)" json:"completed_at,omitempty"`
+	CreatedAt            time.Time      `gorm:"index:idx_fenbi_parse_tasks_created_at" json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	DeletedAt            gorm.DeletedAt `gorm:"index:idx_fenbi_parse_tasks_deleted_at" json:"-"`
+}
+
+func (FenbiParseTask) TableName() string {
+	return "what_fenbi_parse_tasks"
+}
+
+// FenbiParseTaskStatus represents the parse task status constants
+type FenbiParseTaskStatus string
+
+const (
+	FenbiParseTaskStatusPending   FenbiParseTaskStatus = "pending"
+	FenbiParseTaskStatusRunning   FenbiParseTaskStatus = "running"
+	FenbiParseTaskStatusParsing   FenbiParseTaskStatus = "parsing"
+	FenbiParseTaskStatusCompleted FenbiParseTaskStatus = "completed"
+	FenbiParseTaskStatusFailed    FenbiParseTaskStatus = "failed"
+	FenbiParseTaskStatusSkipped   FenbiParseTaskStatus = "skipped"
+)
+
+// FenbiParseTaskResponse is the response for parse task API
+type FenbiParseTaskResponse struct {
+	ID                  uint                   `json:"id"`
+	FenbiAnnouncementID *uint                  `json:"fenbi_announcement_id,omitempty"`
+	FenbiID             string                 `json:"fenbi_id,omitempty"`
+	Title               string                 `json:"title"`
+	FenbiURL            string                 `json:"fenbi_url,omitempty"`
+	Status              string                 `json:"status"`
+	Message             string                 `json:"message,omitempty"`
+	Steps               []map[string]any       `json:"steps,omitempty"`
+	ParseResultSummary  map[string]any         `json:"parse_result_summary,omitempty"`
+	StartedAt           *time.Time             `json:"started_at,omitempty"`
+	CompletedAt         *time.Time             `json:"completed_at,omitempty"`
+	CreatedAt           time.Time              `json:"created_at"`
+	UpdatedAt           time.Time              `json:"updated_at"`
+}
+
+// ToResponse converts FenbiParseTask to FenbiParseTaskResponse
+func (t *FenbiParseTask) ToResponse() *FenbiParseTaskResponse {
+	var steps []map[string]any
+	if t.Steps != nil {
+		if stepsData, ok := t.Steps["steps"].([]interface{}); ok {
+			for _, step := range stepsData {
+				if stepMap, ok := step.(map[string]interface{}); ok {
+					steps = append(steps, stepMap)
+				}
+			}
+		}
+	}
+
+	var parseResultSummary map[string]any
+	if t.ParseResultSummary != nil {
+		parseResultSummary = t.ParseResultSummary
+	}
+
+	return &FenbiParseTaskResponse{
+		ID:                  t.ID,
+		FenbiAnnouncementID: t.FenbiAnnouncementID,
+		FenbiID:             t.FenbiID,
+		Title:               t.Title,
+		FenbiURL:            t.FenbiURL,
+		Status:              t.Status,
+		Message:             t.Message,
+		Steps:               steps,
+		ParseResultSummary:  parseResultSummary,
+		StartedAt:           t.StartedAt,
+		CompletedAt:         t.CompletedAt,
+		CreatedAt:           t.CreatedAt,
+		UpdatedAt:           t.UpdatedAt,
+	}
+}

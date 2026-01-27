@@ -232,6 +232,27 @@ func (h *FenbiHandler) StopCrawl(c echo.Context) error {
 	})
 }
 
+// GetCrawlStatus returns current crawl running state and progress
+// @Summary Get Fenbi Crawl Status (Admin)
+// @Description Get current crawl running state and latest progress snapshot
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/crawl/status [get]
+func (h *FenbiHandler) GetCrawlStatus(c echo.Context) error {
+	running, progress, updatedAt := h.fenbiService.GetCrawlStatus()
+	resp := map[string]interface{}{
+		"running":  running,
+		"progress": progress,
+	}
+	if updatedAt != nil {
+		resp["updated_at"] = updatedAt
+	}
+	return success(c, resp)
+}
+
 // ListAnnouncements returns Fenbi announcements
 // @Summary List Fenbi Announcements (Admin)
 // @Description Get paginated list of Fenbi announcements
@@ -432,6 +453,207 @@ func (h *FenbiHandler) ParseURL(c echo.Context) error {
 	return success(c, result)
 }
 
+// === Parse Task APIs ===
+
+// CreateParseTasks creates multiple parse tasks
+// @Summary Create Parse Tasks (Admin)
+// @Description Create multiple parse tasks for batch processing
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Param request body service.CreateParseTaskRequest true "Tasks to create"
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-tasks [post]
+func (h *FenbiHandler) CreateParseTasks(c echo.Context) error {
+	var req service.CreateParseTaskRequest
+	if err := c.Bind(&req); err != nil {
+		return fail(c, 400, "Invalid request parameters")
+	}
+
+	if len(req.Tasks) == 0 {
+		return fail(c, 400, "没有要创建的任务")
+	}
+
+	tasks, err := h.fenbiService.CreateParseTasks(&req)
+	if err != nil {
+		return fail(c, 500, "创建任务失败: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "任务创建成功",
+		"tasks":   tasks,
+		"count":   len(tasks),
+	})
+}
+
+// ListParseTasks returns a list of parse tasks
+// @Summary List Parse Tasks (Admin)
+// @Description Get a list of parse tasks with optional filters
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Param status query string false "Filter by status"
+// @Param keyword query string false "Filter by keyword"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-tasks [get]
+func (h *FenbiHandler) ListParseTasks(c echo.Context) error {
+	status := c.QueryParam("status")
+	keyword := c.QueryParam("keyword")
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 200
+	}
+
+	req := &service.ListParseTasksRequest{
+		Status:   status,
+		Keyword:  keyword,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	tasks, total, err := h.fenbiService.ListParseTasks(req)
+	if err != nil {
+		return fail(c, 500, "获取任务列表失败: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"tasks":     tasks,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	})
+}
+
+// GetParseTask returns a single parse task
+// @Summary Get Parse Task (Admin)
+// @Description Get a single parse task by ID
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Param id path int true "Task ID"
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-tasks/{id} [get]
+func (h *FenbiHandler) GetParseTask(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		return fail(c, 400, "无效的任务ID")
+	}
+
+	task, err := h.fenbiService.GetParseTask(uint(id))
+	if err != nil {
+		return fail(c, 404, "任务不存在")
+	}
+
+	return success(c, task)
+}
+
+// UpdateParseTask updates a parse task
+// @Summary Update Parse Task (Admin)
+// @Description Update a parse task's status and data
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Param id path int true "Task ID"
+// @Param request body service.UpdateParseTaskRequest true "Update data"
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-tasks/{id} [put]
+func (h *FenbiHandler) UpdateParseTask(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		return fail(c, 400, "无效的任务ID")
+	}
+
+	var req service.UpdateParseTaskRequest
+	if err := c.Bind(&req); err != nil {
+		return fail(c, 400, "Invalid request parameters")
+	}
+
+	task, err := h.fenbiService.UpdateParseTask(uint(id), &req)
+	if err != nil {
+		return fail(c, 500, "更新任务失败: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "任务更新成功",
+		"task":    task,
+	})
+}
+
+// DeleteParseTask deletes a parse task
+// @Summary Delete Parse Task (Admin)
+// @Description Delete a single parse task by ID
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Param id path int true "Task ID"
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-tasks/{id} [delete]
+func (h *FenbiHandler) DeleteParseTask(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		return fail(c, 400, "无效的任务ID")
+	}
+
+	err = h.fenbiService.DeleteParseTask(uint(id))
+	if err != nil {
+		return fail(c, 500, "删除任务失败: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "任务已删除",
+	})
+}
+
+// DeleteAllParseTasks deletes all parse tasks
+// @Summary Delete All Parse Tasks (Admin)
+// @Description Delete all parse tasks
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-tasks [delete]
+func (h *FenbiHandler) DeleteAllParseTasks(c echo.Context) error {
+	err := h.fenbiService.DeleteAllParseTasks()
+	if err != nil {
+		return fail(c, 500, "清空任务失败: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "所有任务已清空",
+	})
+}
+
+// GetParseTaskStats returns parse task statistics
+// @Summary Get Parse Task Stats (Admin)
+// @Description Get parse task statistics
+// @Tags Admin - Fenbi
+// @Accept json
+// @Produce json
+// @Security AdminAuth
+// @Success 200 {object} Response
+// @Router /api/v1/admin/fenbi/parse-tasks/stats [get]
+func (h *FenbiHandler) GetParseTaskStats(c echo.Context) error {
+	stats, err := h.fenbiService.GetParseTaskStats()
+	if err != nil {
+		return fail(c, 500, "获取统计失败: "+err.Error())
+	}
+
+	return success(c, stats)
+}
+
 // RegisterRoutes registers all Fenbi API routes
 func (h *FenbiHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.MiddlewareFunc) {
 	fenbi := g.Group("/fenbi", adminAuthMiddleware)
@@ -450,6 +672,7 @@ func (h *FenbiHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.Mi
 
 	// Crawler operations
 	fenbi.POST("/crawl", h.TriggerCrawl)
+	fenbi.GET("/crawl/status", h.GetCrawlStatus)
 	fenbi.POST("/crawl/stop", h.StopCrawl)
 	fenbi.POST("/crawl-details", h.BatchCrawlDetails)
 	fenbi.POST("/test-crawl", h.TestCrawl)
@@ -461,4 +684,13 @@ func (h *FenbiHandler) RegisterRoutes(g *echo.Group, adminAuthMiddleware echo.Mi
 
 	// Stats
 	fenbi.GET("/stats", h.GetAnnouncementStats)
+
+	// Parse Tasks
+	fenbi.POST("/parse-tasks", h.CreateParseTasks)
+	fenbi.GET("/parse-tasks", h.ListParseTasks)
+	fenbi.GET("/parse-tasks/stats", h.GetParseTaskStats)
+	fenbi.GET("/parse-tasks/:id", h.GetParseTask)
+	fenbi.PUT("/parse-tasks/:id", h.UpdateParseTask)
+	fenbi.DELETE("/parse-tasks/:id", h.DeleteParseTask)
+	fenbi.DELETE("/parse-tasks", h.DeleteAllParseTasks)
 }

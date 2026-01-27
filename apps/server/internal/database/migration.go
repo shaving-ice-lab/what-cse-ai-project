@@ -45,6 +45,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.FenbiCredential{},
 		&model.FenbiCategory{},
 		&model.FenbiAnnouncement{},
+		&model.FenbiParseTask{},
 
 		// LLM config table
 		&model.LLMConfig{},

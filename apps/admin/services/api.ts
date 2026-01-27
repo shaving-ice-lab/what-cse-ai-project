@@ -348,6 +348,14 @@ export interface FenbiCrawlProgress {
   items_saved: number;
   status: string;
   message?: string;
+  has_more_data?: boolean;  // 是否还有更多数据
+  pages_crawled?: number;   // 已爬取的页数
+}
+
+export interface FenbiCrawlStatus {
+  running: boolean;
+  progress?: FenbiCrawlProgress;
+  updated_at?: string;
 }
 
 export interface FenbiAnnouncementListParams {
@@ -409,12 +417,19 @@ export const fenbiApi = {
     regions?: string[];
     exam_types?: string[];
     years?: number[];
+    max_pages?: number; // 最大爬取页数，0表示不限制
+    reset?: boolean;    // 是否重置爬取位置，从头开始
+    skip_save?: boolean; // 是否跳过保存到数据库，由前端解析后再保存
   }, signal?: AbortSignal) => {
     return request.post<FenbiCrawlProgress>("/admin/fenbi/crawl", data, { signal });
   },
 
   stopCrawl: () => {
     return request.post<{ message: string }>("/admin/fenbi/crawl/stop");
+  },
+
+  getCrawlStatus: () => {
+    return request.get<FenbiCrawlStatus>("/admin/fenbi/crawl/status");
   },
 
   batchCrawlDetails: (limit?: number) => {
@@ -486,12 +501,121 @@ export const fenbiApi = {
     }
     return data.data as ParseURLResult;
   },
+
+  // Parse Task APIs
+  createParseTasks: (tasks: CreateParseTaskItem[]) => {
+    return request.post<{
+      message: string;
+      tasks: FenbiParseTask[];
+      count: number;
+    }>("/admin/fenbi/parse-tasks", { tasks });
+  },
+
+  getParseTasks: (params?: {
+    status?: string;
+    keyword?: string;
+    page?: number;
+    page_size?: number;
+  }) => {
+    return request.get<{
+      tasks: FenbiParseTask[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>("/admin/fenbi/parse-tasks", { params });
+  },
+
+  getParseTask: (id: number) => {
+    return request.get<FenbiParseTask>(`/admin/fenbi/parse-tasks/${id}`);
+  },
+
+  updateParseTask: (id: number, data: {
+    status?: string;
+    message?: string;
+    steps?: ParseStep[];
+    parse_result_summary?: Record<string, unknown>;
+  }) => {
+    return request.put<{
+      message: string;
+      task: FenbiParseTask;
+    }>(`/admin/fenbi/parse-tasks/${id}`, data);
+  },
+
+  deleteParseTask: (id: number) => {
+    return request.delete<{ message: string }>(`/admin/fenbi/parse-tasks/${id}`);
+  },
+
+  deleteAllParseTasks: () => {
+    return request.delete<{ message: string }>("/admin/fenbi/parse-tasks");
+  },
+
+  getParseTaskStats: () => {
+    return request.get<Record<string, number>>("/admin/fenbi/parse-tasks/stats");
+  },
 };
+
+// Parse Task Types
+export interface FenbiParseTask {
+  id: number;
+  fenbi_announcement_id?: number;
+  fenbi_id?: string;
+  title: string;
+  fenbi_url?: string;
+  status: "pending" | "running" | "parsing" | "completed" | "failed" | "skipped";
+  message?: string;
+  steps?: ParseStep[];
+  parse_result_summary?: {
+    success?: boolean;
+    error?: string;
+    positions_count?: number;
+    summary?: string;
+    confidence?: number;
+    // 完整解析结果数据（用于刷新后恢复）
+    page_title?: string;
+    page_content?: string;
+    final_url?: string;
+    attachments?: Array<{
+      name: string;
+      url: string;
+      type: string;
+      content?: string;
+      error?: string;
+    }>;
+    positions?: Array<{
+      position_name?: string;
+      department_name?: string;
+      recruit_count?: number;
+      education?: string;
+      major?: string[];
+      work_location?: string;
+      political_status?: string;
+    }>;
+    exam_info?: {
+      exam_type?: string;
+      registration_start?: string;
+      registration_end?: string;
+      exam_date?: string;
+    };
+    raw_response?: string;
+    llm_error?: string;
+  };
+  started_at?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateParseTaskItem {
+  fenbi_announcement_id?: number;
+  fenbi_id?: string;
+  title: string;
+  fenbi_url?: string;
+}
 
 // ParseURL Types
 export interface ParseStep {
   name: string;
-  status: "success" | "error" | "skipped" | "partial";
+  status: "success" | "error" | "skipped" | "partial" | "pending" | "running";
   message: string;
   duration_ms: number;
   details?: string;
@@ -515,6 +639,7 @@ export interface LLMAnalysisResultAPI {
     education?: string;
     major?: string[];
     work_location?: string;
+    political_status?: string; // 政治面貌要求：中共党员、共青团员、不限等
   }>;
   exam_info?: {
     exam_type?: string;

@@ -898,10 +898,11 @@ func (s *FenbiSpider) CrawlAnnouncementList(regionCode, examTypeCode string, yea
 	}
 
 	// Convert API response to FenbiCrawlResult
+	// 注意：TotalFound 应该是当前页的项目数，而不是所有页面的总数
 	result := &FenbiCrawlResult{
 		Items:       []FenbiListItem{},
 		CurrentPage: page,
-		TotalFound:  apiResp.Data.Total,
+		TotalFound:  0, // 将在处理完 items 后设置为 len(result.Items)
 	}
 
 	// Process articles
@@ -943,6 +944,9 @@ func (s *FenbiSpider) CrawlAnnouncementList(regionCode, examTypeCode string, yea
 
 		result.Items = append(result.Items, item)
 	}
+
+	// 设置 TotalFound 为当前页的项目数
+	result.TotalFound = len(result.Items)
 
 	// Calculate if there are more pages
 	totalPages := (apiResp.Data.Total + pageSize - 1) / pageSize

@@ -90,6 +90,7 @@ func main() {
 	fenbiCredRepo := repository.NewFenbiCredentialRepository(db)
 	fenbiCategoryRepo := repository.NewFenbiCategoryRepository(db)
 	fenbiAnnouncementRepo := repository.NewFenbiAnnouncementRepository(db)
+	fenbiParseTaskRepo := repository.NewFenbiParseTaskRepository(db)
 
 	// LLM config repository
 	llmConfigRepo := repository.NewLLMConfigRepository(db)
@@ -117,7 +118,7 @@ func main() {
 	llmConfigService := service.NewLLMConfigService(llmConfigRepo, log.Logger)
 
 	// Fenbi service
-	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, nil, llmConfigService, log.Logger)
+	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, fenbiParseTaskRepo, nil, llmConfigService, log.Logger)
 
 	// WeChat MP Auth service
 	wechatMPAuthService := service.NewWechatMPAuthService(wechatMPAuthRepo, log.Logger)
