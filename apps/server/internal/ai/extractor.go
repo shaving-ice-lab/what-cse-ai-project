@@ -348,3 +348,298 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// ============================================
+// 历史数据提取 - History Data Extraction
+// ============================================
+
+// HistoryDataExtractionResult 历史数据提取结果
+type HistoryDataExtractionResult struct {
+	HistoryRecords []*ExtractedHistoryRecord `json:"history_records"`
+	DataType       string                    `json:"data_type"`
+	TotalRecords   int                       `json:"total_records"`
+	Confidence     int                       `json:"confidence"`
+	Warnings       []string                  `json:"warnings,omitempty"`
+}
+
+// ExtractedHistoryRecord 提取的历史记录
+type ExtractedHistoryRecord struct {
+	Year             int      `json:"year"`
+	ExamType         string   `json:"exam_type"`
+	ExamCategory     string   `json:"exam_category,omitempty"`
+	Province         string   `json:"province,omitempty"`
+	City             string   `json:"city,omitempty"`
+	DepartmentName   string   `json:"department_name,omitempty"`
+	DepartmentCode   string   `json:"department_code,omitempty"`
+	PositionName     string   `json:"position_name,omitempty"`
+	PositionCode     string   `json:"position_code,omitempty"`
+	DepartmentLevel  string   `json:"department_level,omitempty"`
+	RecruitCount     *int     `json:"recruit_count,omitempty"`
+	ApplyCount       *int     `json:"apply_count,omitempty"`
+	PassCount        *int     `json:"pass_count,omitempty"`
+	CompetitionRatio *float64 `json:"competition_ratio,omitempty"`
+	InterviewScore   *float64 `json:"interview_score,omitempty"`
+	WrittenScore     *float64 `json:"written_score,omitempty"`
+	FinalScore       *float64 `json:"final_score,omitempty"`
+	Education        string   `json:"education,omitempty"`
+	Source           string   `json:"source,omitempty"`
+	Remark           string   `json:"remark,omitempty"`
+	Confidence       int      `json:"confidence"`
+}
+
+// ScoreLineExtractionResult 分数线提取结果
+type ScoreLineExtractionResult struct {
+	ScoreLines []*ExtractedScoreLine `json:"score_lines"`
+	ExamInfo   *ScoreLineExamInfo    `json:"exam_info,omitempty"`
+	Confidence int                   `json:"confidence"`
+}
+
+// ExtractedScoreLine 提取的分数线
+type ExtractedScoreLine struct {
+	Year              int      `json:"year"`
+	ExamType          string   `json:"exam_type"`
+	Category          string   `json:"category,omitempty"`
+	LineType          string   `json:"line_type"`
+	TotalScore        *float64 `json:"total_score,omitempty"`
+	XingceScore       *float64 `json:"xingce_score,omitempty"`
+	ShenlunScore      *float64 `json:"shenlun_score,omitempty"`
+	PublicBasicScore  *float64 `json:"public_basic_score,omitempty"`
+	ProfessionalScore *float64 `json:"professional_score,omitempty"`
+	ApplicableScope   string   `json:"applicable_scope,omitempty"`
+	Confidence        int      `json:"confidence"`
+}
+
+// ScoreLineExamInfo 分数线考试信息
+type ScoreLineExamInfo struct {
+	ExamName         string `json:"exam_name,omitempty"`
+	Year             int    `json:"year,omitempty"`
+	AnnouncementType string `json:"announcement_type,omitempty"`
+}
+
+// CompetitionRatioExtractionResult 竞争比提取结果
+type CompetitionRatioExtractionResult struct {
+	RegistrationStats []*ExtractedRegistrationStat `json:"registration_stats"`
+	Summary           *RegistrationSummary         `json:"summary,omitempty"`
+	Confidence        int                          `json:"confidence"`
+}
+
+// ExtractedRegistrationStat 提取的报名统计
+type ExtractedRegistrationStat struct {
+	Year             int      `json:"year"`
+	ExamType         string   `json:"exam_type"`
+	StatDate         string   `json:"stat_date,omitempty"`
+	StatType         string   `json:"stat_type,omitempty"`
+	DepartmentName   string   `json:"department_name,omitempty"`
+	PositionName     string   `json:"position_name,omitempty"`
+	PositionCode     string   `json:"position_code,omitempty"`
+	RecruitCount     *int     `json:"recruit_count,omitempty"`
+	ApplyCount       *int     `json:"apply_count,omitempty"`
+	PassCount        *int     `json:"pass_count,omitempty"`
+	PaidCount        *int     `json:"paid_count,omitempty"`
+	CompetitionRatio *float64 `json:"competition_ratio,omitempty"`
+	IsHot            bool     `json:"is_hot"`
+	IsCold           bool     `json:"is_cold"`
+	Confidence       int      `json:"confidence"`
+}
+
+// RegistrationSummary 报名统计汇总
+type RegistrationSummary struct {
+	TotalPositions   *int     `json:"total_positions,omitempty"`
+	TotalRecruit     *int     `json:"total_recruit,omitempty"`
+	TotalApply       *int     `json:"total_apply,omitempty"`
+	TotalPass        *int     `json:"total_pass,omitempty"`
+	AvgCompetition   *float64 `json:"avg_competition,omitempty"`
+	MaxCompetition   *float64 `json:"max_competition,omitempty"`
+	ZeroApplyCount   *int     `json:"zero_apply_count,omitempty"`
+}
+
+// ExtractHistoryData 提取历年数据（综合提取）
+func (e *AIExtractor) ExtractHistoryData(ctx context.Context, content string) (*HistoryDataExtractionResult, error) {
+	if e.OpenAI == nil {
+		return nil, fmt.Errorf("OpenAI client not initialized")
+	}
+
+	// Truncate content if too long
+	if len(content) > e.Config.MaxInputTokens*2 {
+		content = content[:e.Config.MaxInputTokens*2]
+		if e.Logger != nil {
+			e.Logger.Warn("Content truncated for history data extraction",
+				zap.Int("original_length", len(content)),
+			)
+		}
+	}
+
+	prompt := buildHistoryDataExtractionPrompt(content)
+	response, err := e.OpenAI.ChatCompletion(ctx, prompt, e.Config.Temperature, e.Config.MaxOutputTokens)
+	if err != nil {
+		return nil, fmt.Errorf("AI history data extraction failed: %w", err)
+	}
+
+	result, err := parseHistoryDataExtractionResponse(response)
+	if err != nil {
+		if e.Logger != nil {
+			e.Logger.Error("Failed to parse history data AI response",
+				zap.String("response", response[:min(500, len(response))]),
+				zap.Error(err),
+			)
+		}
+		return nil, fmt.Errorf("failed to parse AI response: %w", err)
+	}
+
+	if e.Logger != nil {
+		e.Logger.Info("History data extraction completed",
+			zap.Int("records_count", len(result.HistoryRecords)),
+			zap.String("data_type", result.DataType),
+			zap.Int("confidence", result.Confidence),
+		)
+	}
+
+	return result, nil
+}
+
+// ExtractScoreLines 提取分数线数据
+func (e *AIExtractor) ExtractScoreLines(ctx context.Context, content string) (*ScoreLineExtractionResult, error) {
+	if e.OpenAI == nil {
+		return nil, fmt.Errorf("OpenAI client not initialized")
+	}
+
+	if len(content) > e.Config.MaxInputTokens*2 {
+		content = content[:e.Config.MaxInputTokens*2]
+	}
+
+	prompt := buildScoreLineExtractionPrompt(content)
+	response, err := e.OpenAI.ChatCompletion(ctx, prompt, e.Config.Temperature, e.Config.MaxOutputTokens)
+	if err != nil {
+		return nil, fmt.Errorf("AI score line extraction failed: %w", err)
+	}
+
+	result, err := parseScoreLineExtractionResponse(response)
+	if err != nil {
+		if e.Logger != nil {
+			e.Logger.Error("Failed to parse score line AI response",
+				zap.String("response", response[:min(500, len(response))]),
+				zap.Error(err),
+			)
+		}
+		return nil, fmt.Errorf("failed to parse AI response: %w", err)
+	}
+
+	if e.Logger != nil {
+		e.Logger.Info("Score line extraction completed",
+			zap.Int("lines_count", len(result.ScoreLines)),
+			zap.Int("confidence", result.Confidence),
+		)
+	}
+
+	return result, nil
+}
+
+// ExtractCompetitionRatio 提取竞争比数据
+func (e *AIExtractor) ExtractCompetitionRatio(ctx context.Context, content string) (*CompetitionRatioExtractionResult, error) {
+	if e.OpenAI == nil {
+		return nil, fmt.Errorf("OpenAI client not initialized")
+	}
+
+	if len(content) > e.Config.MaxInputTokens*2 {
+		content = content[:e.Config.MaxInputTokens*2]
+	}
+
+	prompt := buildCompetitionRatioExtractionPrompt(content)
+	response, err := e.OpenAI.ChatCompletion(ctx, prompt, e.Config.Temperature, e.Config.MaxOutputTokens)
+	if err != nil {
+		return nil, fmt.Errorf("AI competition ratio extraction failed: %w", err)
+	}
+
+	result, err := parseCompetitionRatioExtractionResponse(response)
+	if err != nil {
+		if e.Logger != nil {
+			e.Logger.Error("Failed to parse competition ratio AI response",
+				zap.String("response", response[:min(500, len(response))]),
+				zap.Error(err),
+			)
+		}
+		return nil, fmt.Errorf("failed to parse AI response: %w", err)
+	}
+
+	if e.Logger != nil {
+		e.Logger.Info("Competition ratio extraction completed",
+			zap.Int("stats_count", len(result.RegistrationStats)),
+			zap.Int("confidence", result.Confidence),
+		)
+	}
+
+	return result, nil
+}
+
+// buildHistoryDataExtractionPrompt 构建历史数据提取Prompt
+func buildHistoryDataExtractionPrompt(content string) string {
+	template := GetPromptTemplate("history_data_extraction")
+	return strings.Replace(template, "{{content}}", content, 1)
+}
+
+// buildScoreLineExtractionPrompt 构建分数线提取Prompt
+func buildScoreLineExtractionPrompt(content string) string {
+	template := GetPromptTemplate("score_line_extraction")
+	return strings.Replace(template, "{{content}}", content, 1)
+}
+
+// buildCompetitionRatioExtractionPrompt 构建竞争比提取Prompt
+func buildCompetitionRatioExtractionPrompt(content string) string {
+	template := GetPromptTemplate("competition_ratio_extraction")
+	return strings.Replace(template, "{{content}}", content, 1)
+}
+
+// parseHistoryDataExtractionResponse 解析历史数据提取响应
+func parseHistoryDataExtractionResponse(response string) (*HistoryDataExtractionResult, error) {
+	jsonStr := extractJSON(response)
+	if jsonStr == "" {
+		return nil, fmt.Errorf("no JSON found in response")
+	}
+
+	var result HistoryDataExtractionResult
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		jsonStr = fixCommonJSONIssues(jsonStr)
+		if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+			return nil, err
+		}
+	}
+
+	result.TotalRecords = len(result.HistoryRecords)
+	return &result, nil
+}
+
+// parseScoreLineExtractionResponse 解析分数线提取响应
+func parseScoreLineExtractionResponse(response string) (*ScoreLineExtractionResult, error) {
+	jsonStr := extractJSON(response)
+	if jsonStr == "" {
+		return nil, fmt.Errorf("no JSON found in response")
+	}
+
+	var result ScoreLineExtractionResult
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		jsonStr = fixCommonJSONIssues(jsonStr)
+		if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return &result, nil
+}
+
+// parseCompetitionRatioExtractionResponse 解析竞争比提取响应
+func parseCompetitionRatioExtractionResponse(response string) (*CompetitionRatioExtractionResult, error) {
+	jsonStr := extractJSON(response)
+	if jsonStr == "" {
+		return nil, fmt.Errorf("no JSON found in response")
+	}
+
+	var result CompetitionRatioExtractionResult
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		jsonStr = fixCommonJSONIssues(jsonStr)
+		if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return &result, nil
+}

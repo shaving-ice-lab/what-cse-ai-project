@@ -41,6 +41,26 @@ func (r *UserProfileRepository) Upsert(profile *model.UserProfile) error {
 	return r.Update(profile)
 }
 
+// Delete 删除用户画像
+func (r *UserProfileRepository) Delete(id uint) error {
+	return r.db.Delete(&model.UserProfile{}, id).Error
+}
+
+// DeleteByUserID 根据用户ID删除画像
+func (r *UserProfileRepository) DeleteByUserID(userID uint) error {
+	return r.db.Where("user_id = ?", userID).Delete(&model.UserProfile{}).Error
+}
+
+// UpdateField 更新单个字段
+func (r *UserProfileRepository) UpdateField(userID uint, field string, value interface{}) error {
+	return r.db.Model(&model.UserProfile{}).Where("user_id = ?", userID).Update(field, value).Error
+}
+
+// UpdateFields 更新多个字段
+func (r *UserProfileRepository) UpdateFields(userID uint, updates map[string]interface{}) error {
+	return r.db.Model(&model.UserProfile{}).Where("user_id = ?", userID).Updates(updates).Error
+}
+
 type UserPreferenceRepository struct {
 	db *gorm.DB
 }

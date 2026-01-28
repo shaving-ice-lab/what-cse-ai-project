@@ -129,9 +129,94 @@ func (h *NotificationHandler) DeleteNotification(c echo.Context) error {
 	return success(c, map[string]string{"message": "Notification deleted"})
 }
 
+// GetNotificationStats returns user's notification statistics
+// @Summary Get Notification Stats
+// @Description Get current user's notification statistics
+// @Tags Notification
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} Response
+// @Router /api/v1/notifications/stats [get]
+func (h *NotificationHandler) GetNotificationStats(c echo.Context) error {
+	userID := getUserIDFromContext(c)
+	if userID == 0 {
+		return fail(c, 401, "Unauthorized")
+	}
+
+	stats, err := h.notificationService.GetNotificationStats(userID)
+	if err != nil {
+		return fail(c, 500, "Failed to fetch notification stats: "+err.Error())
+	}
+
+	return success(c, stats)
+}
+
+// BatchDeleteNotifications deletes multiple notifications
+// @Summary Batch Delete Notifications
+// @Description Delete multiple notifications at once
+// @Tags Notification
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body BatchDeleteRequest true "Notification IDs"
+// @Success 200 {object} Response
+// @Router /api/v1/notifications/batch-delete [post]
+func (h *NotificationHandler) BatchDeleteNotifications(c echo.Context) error {
+	userID := getUserIDFromContext(c)
+	if userID == 0 {
+		return fail(c, 401, "Unauthorized")
+	}
+
+	var req struct {
+		NotificationIDs []uint `json:"notification_ids"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return fail(c, 400, "Invalid request body")
+	}
+
+	if len(req.NotificationIDs) == 0 {
+		return fail(c, 400, "No notification IDs provided")
+	}
+
+	if err := h.notificationService.BatchDeleteNotifications(userID, req.NotificationIDs); err != nil {
+		if err == service.ErrNotificationNotFound {
+			return fail(c, 404, "Some notifications not found or not owned by user")
+		}
+		return fail(c, 500, "Failed to delete notifications: "+err.Error())
+	}
+
+	return success(c, map[string]string{"message": "Notifications deleted"})
+}
+
+// DeleteAllNotifications deletes all user notifications
+// @Summary Delete All Notifications
+// @Description Delete all notifications for the current user
+// @Tags Notification
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} Response
+// @Router /api/v1/notifications/delete-all [delete]
+func (h *NotificationHandler) DeleteAllNotifications(c echo.Context) error {
+	userID := getUserIDFromContext(c)
+	if userID == 0 {
+		return fail(c, 401, "Unauthorized")
+	}
+
+	if err := h.notificationService.DeleteAllNotifications(userID); err != nil {
+		return fail(c, 500, "Failed to delete all notifications: "+err.Error())
+	}
+
+	return success(c, map[string]string{"message": "All notifications deleted"})
+}
+
 func (h *NotificationHandler) RegisterRoutes(g *echo.Group, authMiddleware echo.MiddlewareFunc) {
 	g.GET("", h.GetNotifications, authMiddleware)
+	g.GET("/stats", h.GetNotificationStats, authMiddleware)
 	g.PUT("/:id/read", h.MarkAsRead, authMiddleware)
 	g.PUT("/read-all", h.MarkAllAsRead, authMiddleware)
 	g.DELETE("/:id", h.DeleteNotification, authMiddleware)
+	g.POST("/batch-delete", h.BatchDeleteNotifications, authMiddleware)
+	g.DELETE("/delete-all", h.DeleteAllNotifications, authMiddleware)
 }

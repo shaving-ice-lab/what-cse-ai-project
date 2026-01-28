@@ -95,12 +95,98 @@ func main() {
 	// LLM config repository
 	llmConfigRepo := repository.NewLLMConfigRepository(db)
 
+	// Subscription repository
+	subscriptionRepo := repository.NewSubscriptionRepository(db)
+
+	// Membership repository
+	membershipRepo := repository.NewMembershipRepository(db)
+
+	// Calendar repository
+	calendarRepo := repository.NewCalendarRepository(db)
+
+	// Position history repository
+	positionHistoryRepo := repository.NewPositionHistoryRepository(db)
+
+	// Exam tools repositories
+	examLocationRepo := repository.NewExamLocationRepository(db)
+	scoreEstimateRepo := repository.NewScoreEstimateRepository(db)
+	scoreShareRepo := repository.NewScoreShareRepository(db)
+
 	// WeChat RSS repositories
 	wechatRSSSourceRepo := repository.NewWechatRSSSourceRepository(db)
 	wechatRSSArticleRepo := repository.NewWechatRSSArticleRepository(db)
 
 	// WeChat MP Auth repository
 	wechatMPAuthRepo := repository.NewWechatMPAuthRepository(db)
+
+	// Major repository
+	majorRepo := repository.NewMajorRepository(db)
+
+	// Community repositories
+	postRepo := repository.NewPostRepository(db)
+	commentRepo := repository.NewCommentRepository(db)
+	likeRepo := repository.NewLikeRepository(db)
+	postCategoryRepo := repository.NewPostCategoryRepository(db)
+	hotTopicRepo := repository.NewHotTopicRepository(db)
+
+	// Course learning system repositories
+	courseCategoryRepo := repository.NewCourseCategoryRepository(db)
+	courseRepo := repository.NewCourseRepository(db)
+	courseChapterRepo := repository.NewCourseChapterRepository(db)
+	knowledgePointRepo := repository.NewKnowledgePointRepository(db)
+	userCourseProgressRepo := repository.NewUserCourseProgressRepository(db)
+	userCourseCollectRepo := repository.NewUserCourseCollectRepository(db)
+
+	// Learning stats repositories
+	dailyLearningStatsRepo := repository.NewUserDailyLearningStatsRepository(db)
+	learningGoalRepo := repository.NewUserLearningGoalRepository(db)
+	learningAchievementRepo := repository.NewUserLearningAchievementRepository(db)
+	learningLeaderboardRepo := repository.NewLearningLeaderboardRepository(db)
+	questionRecordRepo := repository.NewUserQuestionRecordRepository(db)
+
+	// Study tools repositories
+	studyPlanRepo := repository.NewStudyPlanRepository(db)
+	studyTimeRepo := repository.NewStudyTimeRepository(db)
+	learningFavoriteRepo := repository.NewLearningFavoriteRepository(db)
+	knowledgeMasteryRepo := repository.NewKnowledgeMasteryRepository(db)
+
+	// Question bank repositories
+	questionRepo := repository.NewQuestionRepository(db)
+
+	// Daily practice repositories
+	dailyPracticeRepo := repository.NewDailyPracticeRepository(db)
+	userDailyStreakRepo := repository.NewUserDailyStreakRepository(db)
+	userWeakCategoryRepo := repository.NewUserWeakCategoryRepository(db)
+
+	// Practice session repository
+	practiceSessionRepo := repository.NewPracticeSessionRepository(db)
+
+	// Question bank (题库) repositories
+	questionMaterialRepo := repository.NewQuestionMaterialRepository(db)
+	examPaperRepo := repository.NewExamPaperRepository(db)
+	userQuestionRecordRepo := repository.NewUserQuestionRecordRepository(db)
+	userPaperRecordRepo := repository.NewUserPaperRecordRepository(db)
+	userQuestionCollectRepo := repository.NewUserQuestionCollectRepository(db)
+
+	// Study note and wrong question repositories (错题本与笔记)
+	wrongQuestionRepo := repository.NewWrongQuestionRepository(db)
+	studyNoteRepo := repository.NewStudyNoteRepository(db)
+	noteLikeRepo := repository.NewNoteLikeRepository(db)
+
+	// Learning material repositories (素材库 §25.4)
+	materialRepo := repository.NewMaterialRepository(db)
+	materialCategoryRepo := repository.NewMaterialCategoryRepository(db)
+
+	// Knowledge content repositories (知识点内容生成 §25.3)
+	knowledgeDetailRepo := repository.NewKnowledgeDetailRepository(db)
+	flashCardRepo := repository.NewFlashCardRepository(db)
+	mindMapRepo := repository.NewMindMapRepository(db)
+	userFlashCardRecordRepo := repository.NewUserFlashCardRecordRepository(db)
+	knowledgeContentStatsRepo := repository.NewKnowledgeContentStatsRepository(db)
+
+	// AI content repositories (AI内容预生成 §26.1)
+	aiContentRepo := repository.NewAIContentRepository(db)
+	aiBatchTaskRepo := repository.NewAIBatchTaskRepository(db)
 
 	// ============================================
 	// Initialize Services
@@ -113,12 +199,96 @@ func main() {
 	notificationService := service.NewNotificationService(notificationRepo)
 	adminService := service.NewAdminService(adminRepo, userRepo, positionRepo, &cfg.JWT)
 	crawlerService := service.NewCrawlerServiceSimple(listPageRepo)
+	favoriteService := service.NewFavoriteService(favoriteRepo, positionRepo)
+	subscriptionService := service.NewSubscriptionService(subscriptionRepo)
+
+	// Membership service
+	membershipService := service.NewMembershipService(membershipRepo)
 
 	// LLM config service (initialized first as it's needed by FenbiService)
 	llmConfigService := service.NewLLMConfigService(llmConfigRepo, log.Logger)
 
+	// Calendar service
+	calendarService := service.NewCalendarService(calendarRepo, positionRepo, announcementRepo)
+
+	// Position history service
+	positionHistoryService := service.NewPositionHistoryService(positionHistoryRepo, positionRepo)
+
+	// Major service
+	majorService := service.NewMajorService(majorRepo)
+
+	// Community services
+	postService := service.NewPostService(postRepo, commentRepo, likeRepo, postCategoryRepo, userRepo)
+	commentService := service.NewCommentService(commentRepo, postRepo, likeRepo, userRepo)
+	categoryService := service.NewCategoryService(postCategoryRepo)
+	hotTopicService := service.NewHotTopicService(hotTopicRepo)
+
+	// Course learning system services
+	courseCategoryService := service.NewCourseCategoryService(courseCategoryRepo)
+	courseService := service.NewCourseService(courseRepo, courseCategoryRepo, courseChapterRepo, userCourseProgressRepo, userCourseCollectRepo)
+	knowledgePointService := service.NewKnowledgePointService(knowledgePointRepo, courseCategoryRepo)
+
+	// Learning stats service
+	learningStatsService := service.NewLearningStatsService(
+		dailyLearningStatsRepo,
+		learningGoalRepo,
+		learningAchievementRepo,
+		learningLeaderboardRepo,
+		questionRecordRepo,
+		userCourseProgressRepo,
+	)
+
+	// Study tools services
+	studyPlanService := service.NewStudyPlanService(studyPlanRepo)
+	studyTimeService := service.NewStudyTimeService(studyTimeRepo)
+	learningFavoriteService := service.NewLearningFavoriteService(learningFavoriteRepo)
+	knowledgeMasteryService := service.NewKnowledgeMasteryService(knowledgeMasteryRepo)
+
+	// Daily practice service
+	dailyPracticeService := service.NewDailyPracticeService(db, dailyPracticeRepo, userDailyStreakRepo, userWeakCategoryRepo, questionRepo, questionRecordRepo)
+
+	// Practice session service
+	practiceSessionService := service.NewPracticeSessionService(db, practiceSessionRepo, questionRepo, questionRecordRepo, userWeakCategoryRepo)
+
+	// Question bank (题库) service
+	questionService := service.NewQuestionService(questionRepo, questionMaterialRepo, examPaperRepo, userQuestionRecordRepo, userPaperRecordRepo, userQuestionCollectRepo)
+
+	// Study note and wrong question service (错题本与笔记)
+	studyNoteService := service.NewStudyNoteService(wrongQuestionRepo, studyNoteRepo, noteLikeRepo, questionRepo)
+
+	// Learning material service (素材库 §25.4)
+	materialService := service.NewMaterialService(materialRepo, materialCategoryRepo)
+
+	// Content generator service (内容生成)
+	contentGeneratorService := service.NewContentGeneratorService(db, courseCategoryRepo, courseRepo, courseChapterRepo, knowledgePointRepo)
+
+	// Knowledge content services (知识点内容生成 §25.3)
+	knowledgeDetailService := service.NewKnowledgeDetailService(knowledgeDetailRepo)
+	flashCardService := service.NewFlashCardService(flashCardRepo, userFlashCardRecordRepo)
+	mindMapService := service.NewMindMapService(mindMapRepo)
+	knowledgeContentService := service.NewKnowledgeContentService(knowledgeDetailService, flashCardService, mindMapService, knowledgeContentStatsRepo)
+
+	// AI content generator service (AI内容预生成 §26.1)
+	aiContentGenService := service.NewAIContentGeneratorService(aiContentRepo, questionRepo, courseRepo)
+	aiBatchGenService := service.NewAIBatchGeneratorService(aiBatchTaskRepo, aiContentRepo, aiContentGenService)
+
+	// AI learning path service (AI个性化学习 §26.5)
+	aiLearningPathService := service.NewAILearningPathService(userProfileRepo, dailyLearningStatsRepo, questionRepo, courseRepo, knowledgePointRepo)
+	aiWeaknessService := service.NewAIWeaknessAnalyzerService(practiceSessionRepo, questionRepo, dailyLearningStatsRepo)
+
 	// Fenbi service
-	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, fenbiParseTaskRepo, nil, llmConfigService, log.Logger)
+	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, fenbiParseTaskRepo, positionRepo, nil, llmConfigService, log.Logger)
+
+	// Migration service
+	migrateService := service.NewMigrateService(fenbiParseTaskRepo, positionRepo, log.Logger)
+
+	// Compare service
+	compareService := service.NewCompareService(positionRepo)
+
+	// Exam tools services
+	examLocationService := service.NewExamLocationService(examLocationRepo)
+	scoreEstimateService := service.NewScoreEstimateService(scoreEstimateRepo)
+	scoreShareService := service.NewScoreShareService(scoreShareRepo)
 
 	// WeChat MP Auth service
 	wechatMPAuthService := service.NewWechatMPAuthService(wechatMPAuthRepo, log.Logger)
@@ -143,6 +313,7 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	positionHandler := handler.NewPositionHandler(positionService)
+	positionHandler.SetMatchService(matchService) // 启用推荐职位功能
 	matchHandler := handler.NewMatchHandler(matchService)
 	announcementHandler := handler.NewAnnouncementHandler(announcementService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
@@ -150,8 +321,79 @@ func main() {
 	crawlerHandler := handler.NewCrawlerHandler(crawlerService)
 	fenbiHandler := handler.NewFenbiHandler(fenbiService)
 	llmConfigHandler := handler.NewLLMConfigHandler(llmConfigService)
+	migrateHandler := handler.NewMigrateHandler(migrateService)
 	wechatRSSHandler := handler.NewWechatRSSHandler(wechatRSSService)
 	wechatMPAuthHandler := handler.NewWechatMPAuthHandler(wechatMPAuthService, wechatRSSService)
+
+	// Compare handler
+	compareHandler := handler.NewCompareHandler(compareService)
+
+	// Exam tools handlers
+	examLocationHandler := handler.NewExamLocationHandler(examLocationService)
+	scoreEstimateHandler := handler.NewScoreEstimateHandler(scoreEstimateService)
+	scoreShareHandler := handler.NewScoreShareHandler(scoreShareService)
+
+	// Major handler
+	majorHandler := handler.NewMajorHandler(majorService)
+
+	// Favorite and Subscription handlers
+	favoriteHandler := handler.NewFavoriteHandler(favoriteService)
+	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
+
+	// Position history handler
+	positionHistoryHandler := handler.NewPositionHistoryHandler(positionHistoryService, positionService)
+
+	// Membership handler
+	membershipHandler := handler.NewMembershipHandler(membershipService)
+
+	// Calendar handler
+	calendarHandler := handler.NewCalendarHandler(calendarService)
+
+	// Community handler
+	communityHandler := handler.NewCommunityHandler(postService, commentService, categoryService, hotTopicService)
+
+	// Course learning system handler
+	courseHandler := handler.NewCourseHandler(courseService, courseCategoryService, knowledgePointService)
+
+	// Learning stats handler
+	learningStatsHandler := handler.NewLearningStatsHandler(learningStatsService)
+
+	// Study tools handler
+	studyToolsHandler := handler.NewStudyToolsHandler(studyPlanService, studyTimeService, learningFavoriteService, knowledgeMasteryService)
+
+	// Daily practice handler
+	dailyPracticeHandler := handler.NewDailyPracticeHandler(dailyPracticeService)
+
+	// Practice session handler
+	practiceSessionHandler := handler.NewPracticeSessionHandler(practiceSessionService)
+
+	// Question bank (题库) handler
+	questionHandler := handler.NewQuestionHandler(questionService, courseCategoryService)
+
+	// Study note and wrong question handler (错题本与笔记)
+	studyNoteHandler := handler.NewStudyNoteHandler(studyNoteService)
+
+	// Learning material handler (素材库 §25.4)
+	materialHandler := handler.NewMaterialHandler(materialService)
+
+	// Content generator handler (内容生成)
+	contentGeneratorHandler := handler.NewContentGeneratorHandler(contentGeneratorService)
+
+	// Knowledge content handler (知识点内容生成 §25.3)
+	knowledgeContentHandler := handler.NewKnowledgeContentHandler(knowledgeDetailService, flashCardService, mindMapService, knowledgeContentService)
+
+	// Knowledge content seeder (知识点内容种子数据生成器)
+	knowledgeContentSeeder := service.NewKnowledgeContentSeeder(knowledgeDetailRepo, flashCardRepo, mindMapRepo)
+	knowledgeContentHandler.SetSeeder(knowledgeContentSeeder)
+
+	// AI content handler (AI内容预生成 §26.1)
+	aiContentHandler := handler.NewAIContentHandler(aiContentGenService, aiBatchGenService)
+
+	// AI learning path handler (AI个性化学习 §26.5)
+	aiLearningPathHandler := handler.NewAILearningPathHandler(aiLearningPathService, aiWeaknessService)
+
+	// Content import handler (MCP内容导入)
+	contentImportHandler := handler.NewContentImportHandler(db, courseService, questionService, materialService)
 
 	// Initialize SearchHandler (only if Elasticsearch is available)
 	var searchHandler *handler.SearchHandler
@@ -204,13 +446,37 @@ func main() {
 	// Position routes (public + some protected)
 	positionGroup := v1.Group("/positions")
 	positionHandler.RegisterRoutes(positionGroup, authMiddleware.JWT())
+	// Register position history routes (public)
+	positionHistoryHandler.RegisterPositionRoutes(positionGroup)
 
-	// User favorites (protected)
+	// History routes (public)
+	historyGroup := v1.Group("/history")
+	positionHistoryHandler.RegisterRoutes(historyGroup)
+
+	// User favorites (protected) - legacy route, kept for backwards compatibility
 	v1.GET("/user/favorites", positionHandler.GetFavorites, authMiddleware.JWT())
+
+	// Favorite routes (new API)
+	favoriteHandler.RegisterRoutes(v1, authMiddleware.JWT())
+
+	// Subscription routes
+	subscriptionHandler.RegisterRoutes(v1, authMiddleware.JWT())
+
+	// Membership routes (public + protected)
+	membershipHandler.RegisterRoutes(v1, authMiddleware.JWT())
+
+	// Calendar routes (protected)
+	calendarHandler.RegisterRoutes(v1, authMiddleware.JWT())
 
 	// Match routes (protected)
 	matchGroup := v1.Group("/match")
 	matchHandler.RegisterRoutes(matchGroup, authMiddleware.JWT())
+
+	// Register position match detail endpoint
+	matchHandler.RegisterPositionMatchRoute(positionGroup, authMiddleware.JWT())
+
+	// Register recommended positions endpoint
+	matchHandler.RegisterRecommendedRoute(positionGroup, authMiddleware.JWT())
 
 	// Announcement routes (public)
 	announcementGroup := v1.Group("/announcements")
@@ -227,6 +493,12 @@ func main() {
 	// Crawler routes (admin only)
 	crawlerHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
 
+	// Position admin routes (admin only)
+	positionHandler.RegisterAdminRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// Position history admin routes (admin only)
+	positionHistoryHandler.RegisterAdminRoutes(adminGroup, adminAuthMiddleware.JWT())
+
 	// Fenbi routes (admin only)
 	fenbiHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
 
@@ -235,6 +507,12 @@ func main() {
 
 	// WeChat RSS routes (admin only)
 	wechatRSSHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// Migration routes (admin only)
+	migrateHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// Membership admin routes (admin only)
+	membershipHandler.RegisterAdminRoutes(adminGroup, adminAuthMiddleware.JWT())
 
 	// WeChat MP Auth routes (admin only)
 	wechatMPGroup := adminGroup.Group("/wechat-mp")
@@ -247,6 +525,70 @@ func main() {
 	wechatMPGroup.POST("/create-source", wechatMPAuthHandler.CreateSourceViaAPI)
 	wechatMPGroup.POST("/create-source-by-account", wechatMPAuthHandler.CreateSourceViaAccount)
 	wechatMPGroup.GET("/articles", wechatMPAuthHandler.GetArticles)
+
+	// Compare routes (public)
+	compareHandler.RegisterRoutes(v1)
+
+	// Community routes (public + some protected)
+	communityHandler.RegisterRoutes(v1, authMiddleware.JWT())
+
+	// Community admin routes (admin only)
+	communityHandler.RegisterAdminRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// Course learning system routes
+	courseHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Learning stats routes
+	learningStatsHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Study tools routes (学习工具)
+	studyToolsHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Daily practice routes (每日一练)
+	dailyPracticeHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Practice session routes (专项练习、随机练习、计时练习)
+	practiceSessionHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Question bank (题库) routes
+	questionHandler.RegisterRoutes(e, authMiddleware.JWT())
+	questionHandler.RegisterAdminRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// Study note and wrong question routes (错题本与笔记)
+	studyNoteHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Learning material routes (素材库 §25.4)
+	materialHandler.RegisterRoutes(v1, authMiddleware.JWT())
+
+	// Content generator routes (内容生成) - admin only
+	contentGeneratorHandler.RegisterRoutes(e, adminAuthMiddleware.JWT())
+
+	// Content import routes (MCP内容导入) - admin only
+	contentImportHandler.RegisterRoutes(e, adminAuthMiddleware.JWT())
+
+	// AI content routes (AI内容预生成 §26.1)
+	aiContentHandler.RegisterRoutes(e, authMiddleware.JWT(), adminAuthMiddleware.JWT())
+
+	// AI learning path routes (AI个性化学习 §26.5)
+	aiLearningPathHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Exam tools routes
+	toolsGroup := v1.Group("/tools")
+	locationGroup := toolsGroup.Group("/locations")
+	examLocationHandler.RegisterRoutes(locationGroup)
+	estimateGroup := toolsGroup.Group("/estimate")
+	scoreEstimateHandler.RegisterRoutes(estimateGroup, authMiddleware.JWT())
+	scoresGroup := toolsGroup.Group("/scores")
+	scoreShareHandler.RegisterRoutes(scoresGroup, authMiddleware.JWT())
+
+	// Exam location admin routes
+	examLocationHandler.RegisterAdminRoutes(adminGroup, adminAuthMiddleware.JWT())
+
+	// Major routes (public)
+	majorGroup := v1.Group("/majors")
+	majorHandler.RegisterRoutes(majorGroup)
+	// Major admin routes
+	majorHandler.RegisterAdminRoutes(adminGroup)
 
 	// Search routes (public, only if Elasticsearch is available)
 	if searchHandler != nil {

@@ -57,6 +57,7 @@ type FenbiService struct {
 	categoryRepo     *repository.FenbiCategoryRepository
 	announcementRepo *repository.FenbiAnnouncementRepository
 	parseTaskRepo    *repository.FenbiParseTaskRepository
+	positionRepo     *repository.PositionRepository
 	spiderConfig     *crawler.SpiderConfig
 	llmConfigService *LLMConfigService
 	logger           *zap.Logger
@@ -75,6 +76,7 @@ func NewFenbiService(
 	categoryRepo *repository.FenbiCategoryRepository,
 	announcementRepo *repository.FenbiAnnouncementRepository,
 	parseTaskRepo *repository.FenbiParseTaskRepository,
+	positionRepo *repository.PositionRepository,
 	spiderConfig *crawler.SpiderConfig,
 	llmConfigService *LLMConfigService,
 	logger *zap.Logger,
@@ -84,6 +86,7 @@ func NewFenbiService(
 		categoryRepo:     categoryRepo,
 		announcementRepo: announcementRepo,
 		parseTaskRepo:    parseTaskRepo,
+		positionRepo:     positionRepo,
 		spiderConfig:     spiderConfig,
 		llmConfigService: llmConfigService,
 		logger:           logger,
@@ -1674,6 +1677,7 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 	result.Success = true
 
 	// Step 5: Save to database if this is a Fenbi URL and parsing was successful
+	var savedAnnouncementID uint
 	if fenbiID != "" && result.Success {
 		stepStart = time.Now()
 		saveErr := s.saveOrUpdateFenbiAnnouncement(fenbiID, fenbiDetail, result.Data)
@@ -1683,14 +1687,14 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 				zap.Error(saveErr),
 			)
 			result.Steps = append(result.Steps, ParseStep{
-				Name:     "保存到数据库",
+				Name:     "保存公告到数据库",
 				Status:   "error",
 				Message:  fmt.Sprintf("保存失败: %v", saveErr),
 				Duration: time.Since(stepStart).Milliseconds(),
 			})
 		} else {
 			result.Steps = append(result.Steps, ParseStep{
-				Name:     "保存到数据库",
+				Name:     "保存公告到数据库",
 				Status:   "success",
 				Message:  "已保存解析结果到数据库",
 				Duration: time.Since(stepStart).Milliseconds(),
@@ -1698,10 +1702,60 @@ func (s *FenbiService) ParseURL(inputURL string, llmConfigID uint) (*ParseURLRes
 			s.logger.Info("Saved Fenbi announcement to database",
 				zap.String("fenbi_id", fenbiID),
 			)
+
+			// Get the saved announcement ID for position saving
+			savedAnn, _ := s.announcementRepo.FindByFenbiID(fenbiID)
+			if savedAnn != nil {
+				savedAnnouncementID = savedAnn.ID
+			}
 		}
 	}
 
-	// Step 6: Extract and validate list page URL for monitoring using DFS algorithm
+	// Step 6: Save positions to database if LLM analysis extracted positions
+	if savedAnnouncementID > 0 && result.Data.LLMAnalysis != nil && len(result.Data.LLMAnalysis.Positions) > 0 {
+		stepStart = time.Now()
+		savedCount, saveErr := s.SavePositionsFromParseResult(savedAnnouncementID, result.Data.LLMAnalysis)
+		if saveErr != nil {
+			s.logger.Warn("Failed to save positions to database",
+				zap.Uint("fenbi_announcement_id", savedAnnouncementID),
+				zap.Error(saveErr),
+			)
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "保存职位到数据库",
+				Status:   "error",
+				Message:  fmt.Sprintf("保存职位失败: %v", saveErr),
+				Duration: time.Since(stepStart).Milliseconds(),
+			})
+		} else if savedCount > 0 {
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "保存职位到数据库",
+				Status:   "success",
+				Message:  fmt.Sprintf("成功保存 %d 个职位", savedCount),
+				Duration: time.Since(stepStart).Milliseconds(),
+				Details:  fmt.Sprintf("从 LLM 分析结果中提取并保存了 %d 个职位到数据库", savedCount),
+			})
+			s.logger.Info("Saved positions to database",
+				zap.Uint("fenbi_announcement_id", savedAnnouncementID),
+				zap.Int("saved_count", savedCount),
+			)
+		} else {
+			result.Steps = append(result.Steps, ParseStep{
+				Name:     "保存职位到数据库",
+				Status:   "skipped",
+				Message:  "无新职位需要保存（可能已存在或无有效职位数据）",
+				Duration: time.Since(stepStart).Milliseconds(),
+			})
+		}
+	} else if result.Data.LLMAnalysis != nil && len(result.Data.LLMAnalysis.Positions) == 0 {
+		result.Steps = append(result.Steps, ParseStep{
+			Name:     "保存职位到数据库",
+			Status:   "skipped",
+			Message:  "LLM 分析未提取到职位信息",
+			Duration: 0,
+		})
+	}
+
+	// Step 7: Extract and validate list page URL for monitoring using DFS algorithm
 	if finalURL != "" && pageContent != nil {
 		stepStart = time.Now()
 
@@ -1792,6 +1846,158 @@ func (s *FenbiService) saveOrUpdateFenbiAnnouncement(fenbiID string, detail *cra
 	}
 
 	return s.announcementRepo.Create(announcement)
+}
+
+// SavePositionsFromParseResult 从解析结果保存职位信息到数据库
+func (s *FenbiService) SavePositionsFromParseResult(fenbiAnnouncementID uint, llmResult *LLMAnalysisResult) (int, error) {
+	if s.positionRepo == nil {
+		s.logger.Warn("Position repository not initialized, skipping position save")
+		return 0, nil
+	}
+
+	if llmResult == nil || len(llmResult.Positions) == 0 {
+		return 0, nil
+	}
+
+	savedCount := 0
+	now := time.Now()
+
+	for _, pos := range llmResult.Positions {
+		// 检查是否已存在（根据公告ID+职位名+单位去重）
+		exists, err := s.checkPositionExists(fenbiAnnouncementID, pos.PositionName, pos.DepartmentName)
+		if err != nil {
+			s.logger.Warn("Failed to check position existence",
+				zap.Error(err),
+				zap.String("position_name", pos.PositionName),
+			)
+			continue
+		}
+		if exists {
+			s.logger.Debug("Position already exists, skipping",
+				zap.Uint("fenbi_announcement_id", fenbiAnnouncementID),
+				zap.String("position_name", pos.PositionName),
+			)
+			continue
+		}
+
+		// 解析并标准化职位信息
+		parsedPos := s.convertExtractedPosition(&pos, llmResult.ExamInfo)
+		NormalizePosition(parsedPos)
+
+		// 生成唯一的 PositionID
+		positionID := fmt.Sprintf("fenbi_%d_%s", fenbiAnnouncementID, generatePositionHash(pos.PositionName, pos.DepartmentName))
+
+		// 创建职位模型
+		position := &model.Position{
+			FenbiAnnouncementID:  &fenbiAnnouncementID,
+			PositionID:           positionID,
+			PositionName:         parsedPos.PositionName,
+			PositionCode:         parsedPos.PositionCode,
+			DepartmentName:       parsedPos.DepartmentName,
+			DepartmentLevel:      parsedPos.DepartmentLevel,
+			RecruitCount:         parsedPos.RecruitCount,
+			Education:            parsedPos.Education,
+			Degree:               parsedPos.Degree,
+			MajorCategory:        parsedPos.MajorCategory,
+			MajorRequirement:     parsedPos.MajorRequirement,
+			MajorList:            model.JSONStringArray(parsedPos.MajorList),
+			IsUnlimitedMajor:     parsedPos.IsUnlimitedMajor,
+			WorkLocation:         parsedPos.WorkLocation,
+			Province:             parsedPos.Province,
+			City:                 parsedPos.City,
+			District:             parsedPos.District,
+			PoliticalStatus:      parsedPos.PoliticalStatus,
+			Age:                  parsedPos.Age,
+			AgeMin:               parsedPos.AgeMin,
+			AgeMax:               parsedPos.AgeMax,
+			WorkExperience:       parsedPos.WorkExperience,
+			WorkExperienceYears:  parsedPos.WorkExperienceYears,
+			IsForFreshGraduate:   parsedPos.IsForFreshGraduate,
+			Gender:               parsedPos.Gender,
+			HouseholdRequirement: parsedPos.HouseholdRequirement,
+			ServicePeriod:        parsedPos.ServicePeriod,
+			OtherConditions:      parsedPos.OtherConditions,
+			ExamType:             parsedPos.ExamType,
+			ExamCategory:         parsedPos.ExamCategory,
+			RegistrationStart:    parsedPos.RegistrationStart,
+			RegistrationEnd:      parsedPos.RegistrationEnd,
+			ExamDate:             parsedPos.ExamDate,
+			ParseConfidence:      llmResult.Confidence,
+			ParsedAt:             &now,
+			Status:               int(model.PositionStatusPending), // 待审核
+		}
+
+		if err := s.positionRepo.Create(position); err != nil {
+			s.logger.Warn("Failed to save position",
+				zap.Error(err),
+				zap.String("position_name", pos.PositionName),
+			)
+			continue
+		}
+
+		savedCount++
+		s.logger.Debug("Saved position from parse result",
+			zap.Uint("fenbi_announcement_id", fenbiAnnouncementID),
+			zap.String("position_name", pos.PositionName),
+			zap.String("department_name", pos.DepartmentName),
+		)
+	}
+
+	return savedCount, nil
+}
+
+// checkPositionExists 检查职位是否已存在（根据公告ID+职位名+单位）
+func (s *FenbiService) checkPositionExists(fenbiAnnouncementID uint, positionName, departmentName string) (bool, error) {
+	positions, err := s.positionRepo.GetByFenbiAnnouncementID(fenbiAnnouncementID)
+	if err != nil {
+		return false, err
+	}
+
+	for _, pos := range positions {
+		if pos.PositionName == positionName && pos.DepartmentName == departmentName {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// convertExtractedPosition 将 LLM 提取的职位信息转换为 ParsedPosition
+func (s *FenbiService) convertExtractedPosition(pos *ExtractedPositionInfo, examInfo *ExtractedExamInfo) *ParsedPosition {
+	parsed := &ParsedPosition{
+		PositionName:    pos.PositionName,
+		DepartmentName:  pos.DepartmentName,
+		RecruitCount:    pos.RecruitCount,
+		Education:       pos.Education,
+		MajorList:       pos.Major,
+		WorkLocation:    pos.WorkLocation,
+		PoliticalStatus: pos.PoliticalStatus,
+	}
+
+	// 判断是否不限专业
+	if len(pos.Major) == 0 || (len(pos.Major) == 1 && isUnlimitedMajor(pos.Major[0])) {
+		parsed.IsUnlimitedMajor = true
+	}
+
+	// 设置考试信息
+	if examInfo != nil {
+		parsed.ExamType = examInfo.ExamType
+		parsed.RegistrationStart = parseTimeString(examInfo.RegistrationStart)
+		parsed.RegistrationEnd = parseTimeString(examInfo.RegistrationEnd)
+		parsed.ExamDate = parseTimeString(examInfo.ExamDate)
+	}
+
+	return parsed
+}
+
+// generatePositionHash 生成职位哈希用于唯一标识
+func generatePositionHash(positionName, departmentName string) string {
+	combined := positionName + "_" + departmentName
+	hash := uint32(0)
+	for _, c := range combined {
+		hash = hash*31 + uint32(c)
+	}
+	return fmt.Sprintf("%08x", hash)
 }
 
 // updateAnnouncementListPage updates the list page URL for an announcement
@@ -3482,4 +3688,229 @@ func stringSliceContains(slice []string, str string) bool {
 		}
 	}
 	return false
+}
+
+// ============================================
+// 历史数据提取 - History Data Extraction
+// ============================================
+
+// HistoryDataExtractionRequest 历史数据提取请求
+type HistoryDataExtractionRequest struct {
+	Content      string `json:"content"`                  // 原始内容
+	LLMConfigID  uint   `json:"llm_config_id,omitempty"`  // LLM配置ID
+	ExtractionType string `json:"extraction_type,omitempty"` // 提取类型: all/score_line/competition_ratio
+}
+
+// HistoryDataExtractionResponse 历史数据提取响应
+type HistoryDataExtractionResponse struct {
+	Success          bool                              `json:"success"`
+	Error            string                            `json:"error,omitempty"`
+	DataType         string                            `json:"data_type,omitempty"`
+	TotalRecords     int                               `json:"total_records"`
+	HistoryRecords   []*ai.ExtractedHistoryRecord      `json:"history_records,omitempty"`
+	ScoreLines       []*ai.ExtractedScoreLine          `json:"score_lines,omitempty"`
+	RegistrationStats []*ai.ExtractedRegistrationStat  `json:"registration_stats,omitempty"`
+	Summary          *ai.RegistrationSummary           `json:"summary,omitempty"`
+	Confidence       int                               `json:"confidence"`
+}
+
+// ExtractHistoryDataFromContent 从内容中提取历史数据
+func (s *FenbiService) ExtractHistoryDataFromContent(req *HistoryDataExtractionRequest) (*HistoryDataExtractionResponse, error) {
+	if req.Content == "" {
+		return &HistoryDataExtractionResponse{
+			Success: false,
+			Error:   "内容不能为空",
+		}, nil
+	}
+
+	// 获取 LLM 配置
+	if s.llmConfigService == nil {
+		return &HistoryDataExtractionResponse{
+			Success: false,
+			Error:   "LLM配置服务未初始化",
+		}, nil
+	}
+
+	activeExtractor, err := s.llmConfigService.GetActiveConfigForExtractor()
+	if err != nil || activeExtractor == nil {
+		return &HistoryDataExtractionResponse{
+			Success: false,
+			Error:   fmt.Sprintf("获取LLM配置失败: %v", err),
+		}, nil
+	}
+
+	// 使用已有的 AI 提取器
+	extractor := activeExtractor
+
+	ctx := context.Background()
+	response := &HistoryDataExtractionResponse{
+		Success: true,
+	}
+
+	// 根据提取类型进行不同的提取
+	extractionType := req.ExtractionType
+	if extractionType == "" {
+		extractionType = "all"
+	}
+
+	switch extractionType {
+	case "score_line":
+		// 只提取分数线
+		result, err := extractor.ExtractScoreLines(ctx, req.Content)
+		if err != nil {
+			return &HistoryDataExtractionResponse{
+				Success: false,
+				Error:   fmt.Sprintf("分数线提取失败: %v", err),
+			}, nil
+		}
+		response.ScoreLines = result.ScoreLines
+		response.TotalRecords = len(result.ScoreLines)
+		response.Confidence = result.Confidence
+		response.DataType = "score_line"
+
+	case "competition_ratio":
+		// 只提取竞争比
+		result, err := extractor.ExtractCompetitionRatio(ctx, req.Content)
+		if err != nil {
+			return &HistoryDataExtractionResponse{
+				Success: false,
+				Error:   fmt.Sprintf("竞争比提取失败: %v", err),
+			}, nil
+		}
+		response.RegistrationStats = result.RegistrationStats
+		response.Summary = result.Summary
+		response.TotalRecords = len(result.RegistrationStats)
+		response.Confidence = result.Confidence
+		response.DataType = "competition_ratio"
+
+	default:
+		// 综合提取
+		result, err := extractor.ExtractHistoryData(ctx, req.Content)
+		if err != nil {
+			return &HistoryDataExtractionResponse{
+				Success: false,
+				Error:   fmt.Sprintf("历史数据提取失败: %v", err),
+			}, nil
+		}
+		response.HistoryRecords = result.HistoryRecords
+		response.TotalRecords = result.TotalRecords
+		response.Confidence = result.Confidence
+		response.DataType = result.DataType
+	}
+
+	s.logger.Info("History data extraction completed",
+		zap.String("extraction_type", extractionType),
+		zap.Int("total_records", response.TotalRecords),
+		zap.Int("confidence", response.Confidence),
+	)
+
+	return response, nil
+}
+
+// ExtractHistoryDataFromURL 从URL提取历史数据
+func (s *FenbiService) ExtractHistoryDataFromURL(inputURL string, llmConfigID uint) (*HistoryDataExtractionResponse, error) {
+	// 首先获取页面内容
+	credential, err := s.credRepo.FindDefault()
+	if err != nil {
+		return &HistoryDataExtractionResponse{
+			Success: false,
+			Error:   "未配置粉笔账号",
+		}, nil
+	}
+
+	if credential.LoginStatus != int(model.FenbiLoginStatusLoggedIn) || credential.Cookies == "" {
+		return &HistoryDataExtractionResponse{
+			Success: false,
+			Error:   "未登录或Cookie为空",
+		}, nil
+	}
+
+	// 创建爬虫并获取页面
+	spider := crawler.NewFenbiSpider(s.spiderConfig, s.logger)
+	spider.SetCookies(credential.Cookies)
+
+	// 解析短链接
+	finalURL := inputURL
+	if crawler.IsShortURL(inputURL) {
+		resolved, err := spider.ResolveShortURL(inputURL)
+		if err == nil && resolved != "" {
+			finalURL = resolved
+		}
+	}
+
+	// 获取页面内容
+	pageContent, err := spider.FetchPageContent(finalURL)
+	if err != nil {
+		return &HistoryDataExtractionResponse{
+			Success: false,
+			Error:   fmt.Sprintf("获取页面内容失败: %v", err),
+		}, nil
+	}
+
+	// 提取历史数据
+	return s.ExtractHistoryDataFromContent(&HistoryDataExtractionRequest{
+		Content:     pageContent.Text,
+		LLMConfigID: llmConfigID,
+		ExtractionType: "all",
+	})
+}
+
+// SaveExtractedHistoryData 保存提取的历史数据到数据库
+func (s *FenbiService) SaveExtractedHistoryData(records []*ai.ExtractedHistoryRecord, source string, sourceURL string) (int, error) {
+	if len(records) == 0 {
+		return 0, nil
+	}
+
+	savedCount := 0
+	for _, record := range records {
+		history := &model.PositionHistory{
+			Year:             record.Year,
+			ExamType:         record.ExamType,
+			ExamCategory:     record.ExamCategory,
+			Province:         record.Province,
+			City:             record.City,
+			DepartmentName:   record.DepartmentName,
+			DepartmentCode:   record.DepartmentCode,
+			PositionName:     record.PositionName,
+			PositionCode:     record.PositionCode,
+			DepartmentLevel:  record.DepartmentLevel,
+			Education:        record.Education,
+			Source:           source,
+			SourceURL:        sourceURL,
+			Remark:           record.Remark,
+		}
+
+		// 设置可选字段
+		if record.RecruitCount != nil {
+			history.RecruitCount = *record.RecruitCount
+		}
+		if record.ApplyCount != nil {
+			history.ApplyCount = *record.ApplyCount
+		}
+		if record.PassCount != nil {
+			history.PassCount = *record.PassCount
+		}
+		if record.CompetitionRatio != nil {
+			history.CompetitionRatio = *record.CompetitionRatio
+		}
+		if record.InterviewScore != nil {
+			history.InterviewScore = *record.InterviewScore
+		}
+		if record.WrittenScore != nil {
+			history.WrittenScore = *record.WrittenScore
+		}
+		if record.FinalScore != nil {
+			history.FinalScore = *record.FinalScore
+		}
+
+		// 这里需要 PositionHistoryRepository，暂时记录日志
+		s.logger.Info("Would save history record",
+			zap.Int("year", history.Year),
+			zap.String("position_name", history.PositionName),
+			zap.String("department_name", history.DepartmentName),
+		)
+		savedCount++
+	}
+
+	return savedCount, nil
 }

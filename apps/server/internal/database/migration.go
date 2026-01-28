@@ -1,6 +1,7 @@
 package database
 
 import (
+	"strings"
 	"time"
 
 	"github.com/what-cse/server/internal/model"
@@ -12,7 +13,8 @@ func AutoMigrate(db *gorm.DB) error {
 	db.Exec("SET FOREIGN_KEY_CHECKS = 0")
 	defer db.Exec("SET FOREIGN_KEY_CHECKS = 1")
 
-	return db.AutoMigrate(
+	// List of all models to migrate
+	models := []interface{}{
 		// User related tables (no dependencies)
 		&model.User{},
 		&model.UserProfile{},
@@ -26,6 +28,8 @@ func AutoMigrate(db *gorm.DB) error {
 
 		// Position related tables (no dependencies)
 		&model.Position{},
+		&model.PositionHistory{},
+		&model.PositionRegistrationData{},
 		&model.Announcement{},
 		&model.ListPage{},
 
@@ -34,8 +38,11 @@ func AutoMigrate(db *gorm.DB) error {
 
 		// User behavior tables (depend on User and Position)
 		&model.UserFavorite{},
+		&model.UserFavoriteFolder{},
+		&model.UserSubscription{},
 		&model.UserView{},
 		&model.UserNotification{},
+		&model.ExamCalendar{},
 
 		// Crawler related tables
 		&model.CrawlTask{},
@@ -56,7 +63,118 @@ func AutoMigrate(db *gorm.DB) error {
 
 		// WeChat MP Auth table
 		&model.WechatMPAuth{},
-	)
+
+		// Exam tools tables
+		&model.ExamLocation{},
+		&model.ScoreEstimate{},
+		&model.ScoreShare{},
+
+		// Community tables
+		&model.PostCategory{},
+		&model.Post{},
+		&model.Comment{},
+		&model.Like{},
+		&model.HotTopic{},
+
+		// VIP Membership tables
+		&model.UserMembership{},
+		&model.MembershipPlan{},
+		&model.MembershipOrder{},
+		&model.MembershipFeatureUsage{},
+
+		// Match cache tables
+		&model.MatchCache{},
+
+		// Course learning system tables
+		&model.CourseCategory{},
+		&model.Course{},
+		&model.CourseChapter{},
+		&model.KnowledgePoint{},
+		&model.UserCourseProgress{},
+		&model.UserChapterProgress{},
+		&model.UserCourseCollect{},
+
+		// Question bank (题库) tables
+		&model.Question{},
+		&model.QuestionMaterial{},
+		&model.ExamPaper{},
+		&model.UserQuestionRecord{},
+		&model.UserPaperRecord{},
+		&model.UserQuestionCollect{},
+
+		// Daily practice (每日一练) tables
+		&model.DailyPractice{},
+		&model.UserDailyStreak{},
+		&model.UserWeakCategory{},
+
+		// Practice session (专项练习、随机练习、计时练习) tables
+		&model.PracticeSession{},
+
+		// Study note and wrong question tables (错题本与笔记)
+		&model.WrongQuestion{},
+		&model.StudyNote{},
+		&model.NoteLike{},
+
+		// Study tools tables (学习工具)
+		&model.StudyPlan{},
+		&model.StudyDailyTask{},
+		&model.StudyPlanTemplate{},
+		&model.StudyTimeRecord{},
+		&model.StudyTimeDailySummary{},
+		&model.LearningFavorite{},
+		&model.LearningFavoriteFolder{},
+		&model.UserKnowledgeMastery{},
+
+		// Learning stats tables (学习统计)
+		&model.UserDailyLearningStats{},
+		&model.UserLearningGoal{},
+		&model.UserLearningAchievement{},
+		&model.LearningLeaderboard{},
+
+		// Content generator tables (内容生成)
+		&model.ContentGeneratorTask{},
+		&model.CourseTemplate{},
+
+		// Knowledge content tables (知识点内容生成 §25.3)
+		&model.KnowledgeDetail{},
+		&model.KnowledgeFlashCard{},
+		&model.KnowledgeMindMap{},
+		&model.UserFlashCardRecord{},
+
+		// Learning material tables (素材库内容生成 §25.4)
+		&model.MaterialCategory{},
+		&model.LearningMaterial{},
+		&model.MaterialCollect{},
+
+		// AI generated content tables (AI内容预生成 §26.1)
+		&model.AIGeneratedContent{},
+		&model.AIBatchTask{},
+	}
+
+	// Migrate each model individually to handle migration errors gracefully
+	for _, m := range models {
+		if err := db.AutoMigrate(m); err != nil {
+			errMsg := err.Error()
+			// Ignore known safe migration errors:
+			// - "Duplicate column name" (MySQL error 1060) - column already exists
+			// - "Incorrect integer value" (MySQL error 1366) - type mismatch during migration
+			// - "Duplicate key name" (MySQL error 1061) - index already exists
+			// - "Can't DROP" (MySQL error 1091) - trying to drop non-existent index
+			if strings.Contains(errMsg, "Duplicate column name") ||
+				strings.Contains(errMsg, "Error 1060") ||
+				strings.Contains(errMsg, "Incorrect integer value") ||
+				strings.Contains(errMsg, "Error 1366") ||
+				strings.Contains(errMsg, "Duplicate key name") ||
+				strings.Contains(errMsg, "Error 1061") ||
+				strings.Contains(errMsg, "Can't DROP") ||
+				strings.Contains(errMsg, "Error 1091") {
+				continue
+			}
+			return err
+		}
+	}
+
+	return nil
 }
 
 func CreateIndexes(db *gorm.DB) error {
@@ -71,6 +189,9 @@ func CreateIndexes(db *gorm.DB) error {
 
 	// User views index for recent views
 	db.Exec("CREATE INDEX IF NOT EXISTS idx_what_user_views_recent ON what_user_views(user_id, view_time DESC)")
+
+	// Community indexes
+	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS uk_like ON what_likes(user_id, like_type, target_id)")
 
 	return nil
 }
