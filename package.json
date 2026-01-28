@@ -25,11 +25,20 @@
 
     "start:web": "pnpm --filter @what-cse/web start",
     "start:admin": "pnpm --filter @what-cse/admin start",
-    "start:server": "cd apps/server && ./api.exe"
+    "start:server": "cd apps/server && ./api.exe",
+
+    "content:gen": "npx ts-node scripts/content-generator.ts",
+    "content:next": "npx ts-node scripts/content-generator.ts --next",
+    "content:status": "npx ts-node scripts/content-generator.ts --status",
+    "content:import": "npx ts-node scripts/import-generated.ts",
+    "content:import:dry": "npx ts-node scripts/import-generated.ts --dry-run"
   },
   "devDependencies": {
+    "@types/node": "^20.10.0",
     "prettier": "^3.1.1",
-    "turbo": "^1.11.2"
+    "ts-node": "^10.9.2",
+    "turbo": "^1.11.2",
+    "typescript": "^5.3.0"
   },
   "packageManager": "pnpm@8.15.0",
   "engines": {
