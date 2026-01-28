@@ -7,6 +7,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
+import * as fsPromises from "fs/promises";
 import * as path from "path";
 
 // 配置
@@ -24,6 +25,37 @@ const CONFIG = {
   continuousMode: false,
   maxContinuousTasks: 10, // 单次最多连续生成的任务数
 };
+
+// ==================== 缓存系统 ====================
+interface TodolistCache {
+  content: string;
+  lines: string[];
+  tasks: Task[];
+  mtime: number; // 文件修改时间
+  filePath: string;
+}
+
+let todolistCache: TodolistCache | null = null;
+
+// 检查缓存是否有效
+function isCacheValid(): boolean {
+  if (!todolistCache) return false;
+  
+  const currentPath = getTodolistPath();
+  if (todolistCache.filePath !== currentPath) return false;
+  
+  try {
+    const stat = fs.statSync(currentPath);
+    return stat.mtimeMs === todolistCache.mtime;
+  } catch {
+    return false;
+  }
+}
+
+// 清除缓存（在修改 todolist 后调用）
+function invalidateCache(): void {
+  todolistCache = null;
+}
 
 // 文件路径
 const getTodolistPath = () => {
@@ -61,13 +93,23 @@ interface ParsedTodolist {
   tasks: Task[];
 }
 
-// 解析 Markdown 任务列表
+// 解析 Markdown 任务列表（带缓存）
 function parseTodolist(): ParsedTodolist {
+  // 检查缓存是否有效
+  if (isCacheValid() && todolistCache) {
+    return {
+      content: todolistCache.content,
+      lines: todolistCache.lines,
+      tasks: todolistCache.tasks,
+    };
+  }
+
   const todolistPath = getTodolistPath();
   if (!fs.existsSync(todolistPath)) {
     throw new Error(`Todolist file not found: ${todolistPath}`);
   }
 
+  const stat = fs.statSync(todolistPath);
   const content = fs.readFileSync(todolistPath, "utf-8");
   const lines = content.split("\n");
   const tasks: Task[] = [];
@@ -116,6 +158,15 @@ function parseTodolist(): ParsedTodolist {
       });
     }
   }
+
+  // 更新缓存
+  todolistCache = {
+    content,
+    lines,
+    tasks,
+    mtime: stat.mtimeMs,
+    filePath: todolistPath,
+  };
 
   return { content, lines, tasks };
 }
@@ -216,11 +267,18 @@ function formatDetailedProgress(
   return display;
 }
 
-// 标记任务为完成
+// 标记任务为完成（同步版本，用于保持兼容性）
 function markTaskComplete(lineNumber: number): boolean {
   const todolistPath = getTodolistPath();
-  const content = fs.readFileSync(todolistPath, "utf-8");
-  const lines = content.split("\n");
+  
+  // 优先使用缓存中的内容
+  let lines: string[];
+  if (isCacheValid() && todolistCache) {
+    lines = [...todolistCache.lines]; // 复制数组避免修改缓存
+  } else {
+    const content = fs.readFileSync(todolistPath, "utf-8");
+    lines = content.split("\n");
+  }
 
   if (lineNumber < 0 || lineNumber >= lines.length) {
     return false;
@@ -231,10 +289,121 @@ function markTaskComplete(lineNumber: number): boolean {
   if (line.includes("- [ ]")) {
     lines[lineNumber] = line.replace("- [ ]", "- [x]");
     fs.writeFileSync(todolistPath, lines.join("\n"));
+    // 清除缓存，下次解析时重新读取
+    invalidateCache();
     return true;
   }
 
   return false;
+}
+
+// 标记任务为完成（异步版本，用于批量操作）
+async function markTaskCompleteAsync(lineNumber: number): Promise<boolean> {
+  const todolistPath = getTodolistPath();
+  
+  // 优先使用缓存中的内容
+  let lines: string[];
+  if (isCacheValid() && todolistCache) {
+    lines = [...todolistCache.lines];
+  } else {
+    const content = await fsPromises.readFile(todolistPath, "utf-8");
+    lines = content.split("\n");
+  }
+
+  if (lineNumber < 0 || lineNumber >= lines.length) {
+    return false;
+  }
+
+  const line = lines[lineNumber];
+  if (line.includes("- [ ]")) {
+    lines[lineNumber] = line.replace("- [ ]", "- [x]");
+    await fsPromises.writeFile(todolistPath, lines.join("\n"));
+    invalidateCache();
+    return true;
+  }
+
+  return false;
+}
+
+// ==================== 异步文件保存辅助函数 ====================
+
+// 确保目录存在（异步）
+async function ensureDir(dirPath: string): Promise<void> {
+  try {
+    await fsPromises.mkdir(dirPath, { recursive: true });
+  } catch (err: any) {
+    if (err.code !== 'EEXIST') throw err;
+  }
+}
+
+// 异步保存 JSON 文件
+async function saveJsonFile(filepath: string, data: any): Promise<void> {
+  await ensureDir(path.dirname(filepath));
+  await fsPromises.writeFile(filepath, JSON.stringify(data, null, 2));
+}
+
+// 生成简化的文件名（减少字符串操作）
+function generateFilename(
+  prefix: string,
+  parts: (string | undefined)[],
+  suffix: string
+): string {
+  const safeParts = parts
+    .filter((p): p is string => !!p && p !== '-')
+    .map(p => p
+      .replace(/[^a-zA-Z0-9\u4e00-\u9fa5.-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 20)
+    )
+    .filter(p => p.length > 0);
+  
+  const name = [prefix, ...safeParts].join('-');
+  return `${name}-${suffix}.json`;
+}
+
+// 预计算的任务类型缓存（避免重复计算）
+interface TaskTypeCache {
+  courseTasks: Set<number>;
+  questionTasks: Set<number>;
+  materialTasks: Set<number>;
+  lastUpdate: number;
+}
+
+let taskTypeCache: TaskTypeCache | null = null;
+
+function getTaskTypeCache(): TaskTypeCache {
+  if (taskTypeCache && isCacheValid()) {
+    return taskTypeCache;
+  }
+  
+  const { tasks } = parseTodolist();
+  const courseTasks = new Set<number>();
+  const questionTasks = new Set<number>();
+  const materialTasks = new Set<number>();
+  
+  let courseOrder = 0;
+  let questionOrder = 0;
+  let materialOrder = 0;
+  
+  for (const task of tasks) {
+    const isCourse = task.section?.includes("课程") || task.subsection?.includes("课时");
+    const isQuestion = task.section?.includes("题库") || task.subsection?.includes("题");
+    const isMaterial = task.section?.includes("素材") || task.subsection?.includes("素材");
+    
+    if (isCourse) courseTasks.add(task.lineNumber);
+    if (isQuestion) questionTasks.add(task.lineNumber);
+    if (isMaterial) materialTasks.add(task.lineNumber);
+  }
+  
+  taskTypeCache = {
+    courseTasks,
+    questionTasks,
+    materialTasks,
+    lastUpdate: Date.now(),
+  };
+  
+  return taskTypeCache;
 }
 
 // 获取任务统计
@@ -780,7 +949,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // 计算字数统计
         const wordStats = countWords(content);
 
-        // 获取任务元数据（用于确定课程顺序和层级）
+        // 获取任务元数据（使用缓存优化）
         let taskMetadata: {
           line_number?: number;
           lesson_order?: number;
@@ -791,14 +960,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         } = {};
 
         if (typeof taskLineNumber === "number") {
-          const { tasks } = parseTodolist();
+          const { tasks } = parseTodolist(); // 使用缓存
           const task = tasks.find(t => t.lineNumber === taskLineNumber);
           if (task) {
-            // 计算课程全局顺序（在所有课程任务中的位置）
-            const courseTasks = tasks.filter(t => 
-              t.section?.includes("课程") || t.subsection?.includes("课时")
-            );
-            const lessonOrder = courseTasks.findIndex(t => t.lineNumber === taskLineNumber) + 1;
+            // 使用预计算的任务类型缓存
+            const typeCache = getTaskTypeCache();
+            let lessonOrder = 0;
+            for (const t of tasks) {
+              if (typeCache.courseTasks.has(t.lineNumber)) {
+                lessonOrder++;
+                if (t.lineNumber === taskLineNumber) break;
+              }
+            }
             
             taskMetadata = {
               line_number: task.lineNumber,
@@ -813,65 +986,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         // 合并内容和元数据
         const contentWithMetadata = {
-          // 元数据放在最前面，便于查看
           _metadata: {
             generated_at: new Date().toISOString(),
             ...taskMetadata,
           },
-          // 原有内容
           ...content,
         };
 
-        // 生成文件名（包含章节信息和顺序编号）
+        // 使用简化的文件名生成
         const orderPrefix = taskMetadata.lesson_order 
           ? String(taskMetadata.lesson_order).padStart(3, '0') 
           : '000';
         
-        // 提取章节简称（如 "1.1 言语理解与表达课程" -> "1.1-言语理解"）
-        const sectionShort = taskMetadata.section
-          ? taskMetadata.section
-              .replace(/课程$/, '')
-              .replace(/与表达$/, '')
-              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5.]+/g, '-')
-              .substring(0, 15)
-          : '';
+        const filename = generateFilename(
+          orderPrefix,
+          [
+            taskMetadata.section?.replace(/课程|与表达/g, ''),
+            taskMetadata.subsection?.replace(/[（(].+[）)]|精讲|专题|课程/g, ''),
+            content.chapter_title,
+          ],
+          String(Date.now())
+        );
         
-        // 提取小节简称（如 "实词辨析精讲（20课时）" -> "实词辨析"）
-        const subsectionShort = taskMetadata.subsection
-          ? taskMetadata.subsection
-              .replace(/[（(].+[）)]/, '')
-              .replace(/精讲|专题|课程/, '')
-              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
-              .substring(0, 10)
-          : '';
-        
-        // 课程标题简称
-        const titleShort = (content.chapter_title || "untitled")
-          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5-]/g, "-")
-          .replace(/-+/g, '-')
-          .substring(0, 30);
-        
-        const timestamp = Date.now();
-        
-        // 组合文件名: 顺序-章节-小节-标题-时间戳
-        const filenameParts = [orderPrefix, sectionShort, subsectionShort, titleShort]
-          .filter(part => part && part !== '-')
-          .join('-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '');
-        
-        const filename = `${filenameParts}-${timestamp}.json`;
         const filepath = path.join(getGeneratedDir(), "courses", filename);
 
-        // 确保目录存在
-        fs.mkdirSync(path.dirname(filepath), { recursive: true });
+        // 异步保存文件
+        await saveJsonFile(filepath, contentWithMetadata);
 
-        // 保存文件（包含元数据）
-        fs.writeFileSync(filepath, JSON.stringify(contentWithMetadata, null, 2));
-
-        // 如果提供了任务行号，标记任务完成
+        // 异步标记任务完成
         if (typeof taskLineNumber === "number") {
-          markTaskComplete(taskLineNumber);
+          await markTaskCompleteAsync(taskLineNumber);
         }
 
         // 获取进度信息
@@ -913,7 +1057,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           "completed"
         );
 
-        // 详细进度显示
         const detailedProgress = formatDetailedProgress(stats, content.chapter_title, wordStats);
 
         return {
@@ -960,7 +1103,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // 计算字数统计
         const wordStats = countWords({ batch_info: batchInfo, questions });
 
-        // 获取任务元数据
+        // 获取任务元数据（使用缓存）
         let taskMetadata: {
           line_number?: number;
           task_order?: number;
@@ -973,10 +1116,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const { tasks } = parseTodolist();
           const task = tasks.find(t => t.lineNumber === taskLineNumber);
           if (task) {
-            const questionTasks = tasks.filter(t => 
-              t.section?.includes("题库") || t.subsection?.includes("题")
-            );
-            const taskOrder = questionTasks.findIndex(t => t.lineNumber === taskLineNumber) + 1;
+            const typeCache = getTaskTypeCache();
+            let taskOrder = 0;
+            for (const t of tasks) {
+              if (typeCache.questionTasks.has(t.lineNumber)) {
+                taskOrder++;
+                if (t.lineNumber === taskLineNumber) break;
+              }
+            }
             
             taskMetadata = {
               line_number: task.lineNumber,
@@ -998,41 +1145,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           questions,
         };
 
-        // 生成文件名（包含章节信息和顺序编号）
+        // 使用简化的文件名生成
         const orderPrefix = taskMetadata.task_order 
           ? String(taskMetadata.task_order).padStart(3, '0') 
           : '000';
         
-        // 提取章节简称
-        const sectionShort = taskMetadata.section
-          ? taskMetadata.section
-              .replace(/题库[（(].+[）)]?/, '')
-              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5.]+/g, '-')
-              .substring(0, 15)
-          : '';
+        const filename = generateFilename(
+          orderPrefix,
+          [
+            taskMetadata.section?.replace(/题库[（(].+[）)]?/, ''),
+            batchInfo.category,
+            batchInfo.topic,
+          ],
+          `batch${batchInfo.batch_number}`
+        );
         
-        const safeCategory = (batchInfo.category || '')
-          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
-          .substring(0, 15);
-        const safeTopic = (batchInfo.topic || '')
-          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
-          .substring(0, 20);
-        
-        // 组合文件名: 顺序-章节-类别-主题-批次
-        const filenameParts = [orderPrefix, sectionShort, safeCategory, safeTopic]
-          .filter(part => part && part !== '-')
-          .join('-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '');
-        
-        const filename = `${filenameParts}-batch${batchInfo.batch_number}.json`;
         const filepath = path.join(getGeneratedDir(), "questions", filename);
 
-        fs.mkdirSync(path.dirname(filepath), { recursive: true });
-        fs.writeFileSync(filepath, JSON.stringify(contentWithMetadata, null, 2));
+        // 异步保存
+        await saveJsonFile(filepath, contentWithMetadata);
 
         if (typeof taskLineNumber === "number") {
-          markTaskComplete(taskLineNumber);
+          await markTaskCompleteAsync(taskLineNumber);
         }
 
         // 获取进度信息
@@ -1075,7 +1209,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           "completed"
         );
 
-        // 详细进度显示
         const detailedProgress = formatDetailedProgress(stats, taskTitle, wordStats);
 
         return {
@@ -1122,7 +1255,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // 计算字数统计
         const wordStats = countWords({ batch_info: batchInfo, materials });
 
-        // 获取任务元数据
+        // 获取任务元数据（使用缓存）
         let taskMetadata: {
           line_number?: number;
           task_order?: number;
@@ -1135,10 +1268,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const { tasks } = parseTodolist();
           const task = tasks.find(t => t.lineNumber === taskLineNumber);
           if (task) {
-            const materialTasks = tasks.filter(t => 
-              t.section?.includes("素材") || t.subsection?.includes("素材")
-            );
-            const taskOrder = materialTasks.findIndex(t => t.lineNumber === taskLineNumber) + 1;
+            const typeCache = getTaskTypeCache();
+            let taskOrder = 0;
+            for (const t of tasks) {
+              if (typeCache.materialTasks.has(t.lineNumber)) {
+                taskOrder++;
+                if (t.lineNumber === taskLineNumber) break;
+              }
+            }
             
             taskMetadata = {
               line_number: task.lineNumber,
@@ -1160,41 +1297,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           materials,
         };
 
-        // 生成文件名（包含章节信息和顺序编号）
+        // 使用简化的文件名生成
         const orderPrefix = taskMetadata.task_order 
           ? String(taskMetadata.task_order).padStart(3, '0') 
           : '000';
         
-        // 提取章节简称
-        const sectionShort = taskMetadata.section
-          ? taskMetadata.section
-              .replace(/素材[（(].+[）)]?/, '')
-              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5.]+/g, '-')
-              .substring(0, 15)
-          : '';
+        const filename = generateFilename(
+          orderPrefix,
+          [
+            taskMetadata.section?.replace(/素材[（(].+[）)]?/, ''),
+            batchInfo.category,
+            batchInfo.topic,
+          ],
+          `batch${batchInfo.batch_number}`
+        );
         
-        const safeCategory = (batchInfo.category || '')
-          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
-          .substring(0, 15);
-        const safeTopic = (batchInfo.topic || '')
-          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
-          .substring(0, 20);
-        
-        // 组合文件名: 顺序-章节-类别-主题-批次
-        const filenameParts = [orderPrefix, sectionShort, safeCategory, safeTopic]
-          .filter(part => part && part !== '-')
-          .join('-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '');
-        
-        const filename = `${filenameParts}-batch${batchInfo.batch_number}.json`;
         const filepath = path.join(getGeneratedDir(), "materials", filename);
 
-        fs.mkdirSync(path.dirname(filepath), { recursive: true });
-        fs.writeFileSync(filepath, JSON.stringify(contentWithMetadata, null, 2));
+        // 异步保存
+        await saveJsonFile(filepath, contentWithMetadata);
 
         if (typeof taskLineNumber === "number") {
-          markTaskComplete(taskLineNumber);
+          await markTaskCompleteAsync(taskLineNumber);
         }
 
         // 获取进度信息
@@ -1237,7 +1361,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           "completed"
         );
 
-        // 详细进度显示
         const detailedProgress = formatDetailedProgress(stats, taskTitle, wordStats);
 
         return {

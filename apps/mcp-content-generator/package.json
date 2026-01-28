@@ -1,6 +1,6 @@
 {
   "name": "mcp-content-generator",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "MCP server for generating and storing exam preparation content",
   "main": "dist/index.js",
   "bin": {
