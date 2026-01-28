@@ -410,6 +410,25 @@
   .animate-slide-in-right {
     animation: slideInRight 0.3s ease-out;
   }
+
+  /* ===== 左侧滑入动画 ===== */
+  @keyframes slideInLeft {
+    0% { 
+      transform: translateX(-100%);
+    }
+    100% { 
+      transform: translateX(0);
+    }
+  }
+  
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  /* ===== Safe area for mobile ===== */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* ===== 滚动条美化 ===== */
