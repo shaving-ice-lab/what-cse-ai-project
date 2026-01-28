@@ -46,18 +46,43 @@ func (h *ContentImportHandler) RegisterRoutes(e *echo.Echo, authMiddleware echo.
 	admin.POST("/materials", h.ImportMaterials)
 }
 
+// RegisterInternalRoutes 注册内部路由（开发环境，无需认证）
+// 用于 MCP 内容生成器脚本直接导入内容
+func (h *ContentImportHandler) RegisterInternalRoutes(e *echo.Echo) {
+	internal := e.Group("/api/v1/internal/content/import")
+
+	// 内部导入接口（仅开发环境使用）
+	internal.POST("/course-lesson", h.ImportCourseLesson)
+	internal.POST("/questions", h.ImportQuestions)
+	internal.POST("/materials", h.ImportMaterials)
+}
+
 // =====================================================
 // 课程教学内容导入
 // =====================================================
 
 // CourseLessonImportRequest 课程教学内容导入请求
 type CourseLessonImportRequest struct {
-	ChapterTitle    string                 `json:"chapter_title" validate:"required"`
-	Subject         string                 `json:"subject" validate:"required"`
-	KnowledgePoint  string                 `json:"knowledge_point"`
-	LessonContent   map[string]interface{} `json:"lesson_content" validate:"required"`
-	LessonSections  []LessonSection        `json:"lesson_sections"`
-	PracticeProblems []PracticeProblem     `json:"practice_problems"`
+	// 元数据（来自 MCP 生成器）
+	Metadata *CourseLessonMetadata `json:"_metadata"`
+
+	ChapterTitle     string                 `json:"chapter_title" validate:"required"`
+	Subject          string                 `json:"subject" validate:"required"`
+	KnowledgePoint   string                 `json:"knowledge_point"`
+	LessonContent    map[string]interface{} `json:"lesson_content" validate:"required"`
+	LessonSections   []LessonSection        `json:"lesson_sections"`
+	PracticeProblems []PracticeProblem      `json:"practice_problems"`
+}
+
+// CourseLessonMetadata MCP 生成的课程元数据
+type CourseLessonMetadata struct {
+	GeneratedAt  string `json:"generated_at"`
+	LineNumber   int    `json:"line_number"`
+	LessonOrder  int    `json:"lesson_order"`    // 课程全局顺序
+	Section      string `json:"section"`         // 所属章节，如 "1.1 言语理解与表达课程"
+	Subsection   string `json:"subsection"`      // 所属小节，如 "实词辨析精讲（20课时）"
+	ParentTitle  string `json:"parent_title"`    // 父级课程标题
+	IsSubLesson  bool   `json:"is_sub_lesson"`   // 是否为子课程
 }
 
 // LessonSection 课程小节
@@ -96,8 +121,9 @@ func (h *ContentImportHandler) ImportCourseLesson(c echo.Context) error {
 		})
 	}
 
-	// 1. 查找或创建课程分类
-	category, err := h.findOrCreateCategory(req.Subject, req.ChapterTitle)
+	// 1. 根据元数据构建完整的分类层级
+	// 层级结构：Subject(行测) -> Section(1.1 言语理解) -> Subsection(实词辨析精讲)
+	category, err := h.findOrCreateCategoryHierarchy(req.Subject, req.Metadata)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"code":    500,
@@ -105,8 +131,9 @@ func (h *ContentImportHandler) ImportCourseLesson(c echo.Context) error {
 		})
 	}
 
-	// 2. 查找或创建课程
-	course, err := h.findOrCreateCourse(category.ID, req.ChapterTitle, req.Subject)
+	// 2. 查找或创建课程（使用 Subsection 或 ParentTitle 作为课程标题）
+	courseTitle := h.getCourseTitle(req)
+	course, err := h.findOrCreateCourse(category.ID, courseTitle, req.Subject)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"code":    500,
@@ -141,8 +168,103 @@ func (h *ContentImportHandler) ImportCourseLesson(c echo.Context) error {
 			"chapter_id":     chapter.ID,
 			"category_id":    category.ID,
 			"question_count": questionCount,
+			"lesson_order":   h.getLessonOrder(req),
 		},
 	})
+}
+
+// getCourseTitle 获取课程标题
+func (h *ContentImportHandler) getCourseTitle(req CourseLessonImportRequest) string {
+	if req.Metadata != nil {
+		// 如果是子课程，使用父级标题作为课程名；否则使用 Subsection
+		if req.Metadata.IsSubLesson && req.Metadata.ParentTitle != "" {
+			return req.Metadata.ParentTitle
+		}
+		if req.Metadata.Subsection != "" {
+			return req.Metadata.Subsection
+		}
+	}
+	return req.ChapterTitle
+}
+
+// getLessonOrder 获取课程顺序
+func (h *ContentImportHandler) getLessonOrder(req CourseLessonImportRequest) int {
+	if req.Metadata != nil && req.Metadata.LessonOrder > 0 {
+		return req.Metadata.LessonOrder
+	}
+	return 0
+}
+
+// findOrCreateCategoryHierarchy 创建分类层级
+func (h *ContentImportHandler) findOrCreateCategoryHierarchy(subject string, metadata *CourseLessonMetadata) (*model.CourseCategory, error) {
+	// 第一级：科目分类 (xingce -> 行测)
+	subjectName := getSubjectName(subject)
+	rootCategory, err := h.findOrCreateCategoryByCode(subject, subjectName, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if metadata == nil || metadata.Section == "" {
+		return rootCategory, nil
+	}
+
+	// 第二级：章节分类 (1.1 言语理解与表达课程)
+	sectionCode := generateCategoryCode(metadata.Section)
+	sectionCategory, err := h.findOrCreateCategoryByCode(sectionCode, metadata.Section, &rootCategory.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if metadata.Subsection == "" {
+		return sectionCategory, nil
+	}
+
+	// 第三级：小节分类 (实词辨析精讲)
+	subsectionCode := generateCategoryCode(metadata.Subsection)
+	subsectionCategory, err := h.findOrCreateCategoryByCode(subsectionCode, metadata.Subsection, &sectionCategory.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return subsectionCategory, nil
+}
+
+// findOrCreateCategoryByCode 根据代码查找或创建分类
+func (h *ContentImportHandler) findOrCreateCategoryByCode(code, name string, parentID *uint) (*model.CourseCategory, error) {
+	var category model.CourseCategory
+	result := h.db.Where("code = ?", code).First(&category)
+	if result.Error == nil {
+		return &category, nil
+	}
+
+	// 计算层级
+	level := 1
+	path := ""
+	if parentID != nil {
+		var parent model.CourseCategory
+		if err := h.db.First(&parent, *parentID).Error; err == nil {
+			level = parent.Level + 1
+			if parent.Path != "" {
+				path = parent.Path + "/" + fmt.Sprint(*parentID)
+			} else {
+				path = fmt.Sprint(*parentID)
+			}
+		}
+	}
+
+	category = model.CourseCategory{
+		ParentID: parentID,
+		Name:     name,
+		Code:     code,
+		IsActive: true,
+		Level:    level,
+		Path:     path,
+	}
+	if err := h.db.Create(&category).Error; err != nil {
+		return nil, err
+	}
+
+	return &category, nil
 }
 
 // 查找或创建分类
@@ -200,6 +322,19 @@ func (h *ContentImportHandler) findOrCreateCourse(categoryID uint, title, subjec
 
 // 创建章节并保存内容
 func (h *ContentImportHandler) createChapterWithContent(courseID uint, req CourseLessonImportRequest) (*model.CourseChapter, error) {
+	// 检查章节是否已存在（根据标题去重）
+	var existingChapter model.CourseChapter
+	if err := h.db.Where("course_id = ? AND title = ?", courseID, req.ChapterTitle).First(&existingChapter).Error; err == nil {
+		// 章节已存在，更新内容
+		contentJSON, _ := serializeToJSON(req.LessonContent)
+		fullContent := buildFullContent(contentJSON, req.LessonSections)
+		existingChapter.ContentText = fullContent
+		if err := h.db.Save(&existingChapter).Error; err != nil {
+			return nil, err
+		}
+		return &existingChapter, nil
+	}
+
 	// 序列化 lesson_content 为 JSON 字符串
 	contentJSON, err := serializeToJSON(req.LessonContent)
 	if err != nil {
@@ -209,17 +344,40 @@ func (h *ContentImportHandler) createChapterWithContent(courseID uint, req Cours
 	// 构建完整内容（包含 sections）
 	fullContent := buildFullContent(contentJSON, req.LessonSections)
 
-	// 获取当前课程章节数量
-	var count int64
-	h.db.Model(&model.CourseChapter{}).Where("course_id = ?", courseID).Count(&count)
+	// 计算排序顺序：优先使用元数据中的顺序
+	sortOrder := 0
+	level := 1
+	var parentID *uint
+
+	if req.Metadata != nil {
+		if req.Metadata.LessonOrder > 0 {
+			sortOrder = req.Metadata.LessonOrder
+		}
+		// 如果是子课程，需要设置父章节
+		if req.Metadata.IsSubLesson && req.Metadata.ParentTitle != "" {
+			var parentChapter model.CourseChapter
+			if err := h.db.Where("course_id = ? AND title = ?", courseID, req.Metadata.ParentTitle).First(&parentChapter).Error; err == nil {
+				parentID = &parentChapter.ID
+				level = 2
+			}
+		}
+	}
+
+	// 如果没有元数据顺序，使用当前章节数量+1
+	if sortOrder == 0 {
+		var count int64
+		h.db.Model(&model.CourseChapter{}).Where("course_id = ?", courseID).Count(&count)
+		sortOrder = int(count + 1)
+	}
 
 	chapter := &model.CourseChapter{
 		CourseID:    courseID,
+		ParentID:    parentID,
 		Title:       req.ChapterTitle,
 		ContentType: model.CourseContentArticle,
 		ContentText: fullContent,
-		SortOrder:   int(count + 1),
-		Level:       1,
+		SortOrder:   sortOrder,
+		Level:       level,
 	}
 
 	if err := h.db.Create(chapter).Error; err != nil {

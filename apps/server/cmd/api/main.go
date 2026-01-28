@@ -566,6 +566,12 @@ func main() {
 	// Content import routes (MCP内容导入) - admin only
 	contentImportHandler.RegisterRoutes(e, adminAuthMiddleware.JWT())
 
+	// 开发环境：注册内部导入路由（无需认证，仅用于 MCP 脚本导入）
+	if cfg.Server.Mode == "development" {
+		contentImportHandler.RegisterInternalRoutes(e)
+		log.Info("Development mode: Internal content import routes enabled at /api/v1/internal/content/import")
+	}
+
 	// AI content routes (AI内容预生成 §26.1)
 	aiContentHandler.RegisterRoutes(e, authMiddleware.JWT(), adminAuthMiddleware.JWT())
 
