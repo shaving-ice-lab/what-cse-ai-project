@@ -20,6 +20,9 @@ const CONFIG = {
     process.env.TODOLIST_FILE || "docs/content-creation-todolist.md",
   // 支持通过环境变量指定输出目录
   outputDir: process.env.OUTPUT_DIR || "scripts/generated",
+  // 持续生成模式配置
+  continuousMode: false,
+  maxContinuousTasks: 10, // 单次最多连续生成的任务数
 };
 
 // 文件路径
@@ -121,6 +124,37 @@ function parseTodolist(): ParsedTodolist {
 function getNextPendingTask(): Task | null {
   const { tasks } = parseTodolist();
   return tasks.find((task) => !task.completed) || null;
+}
+
+// 获取多个未完成任务
+function getNextPendingTasks(count: number): Task[] {
+  const { tasks } = parseTodolist();
+  return tasks.filter((task) => !task.completed).slice(0, count);
+}
+
+// 生成进度消息
+function formatProgressMessage(
+  current: number,
+  total: number,
+  taskTitle: string,
+  status: "starting" | "generating" | "saving" | "completed" | "error"
+): string {
+  const progressBar = generateProgressBar(current, total);
+  const statusEmoji = {
+    starting: "🚀",
+    generating: "⏳",
+    saving: "💾",
+    completed: "✅",
+    error: "❌",
+  };
+  return `${statusEmoji[status]} [${current}/${total}] ${progressBar} ${taskTitle}`;
+}
+
+function generateProgressBar(current: number, total: number): string {
+  const width = 20;
+  const filled = Math.round((current / total) * width);
+  const empty = width - filled;
+  return `[${"█".repeat(filled)}${"░".repeat(empty)}]`;
 }
 
 // 标记任务为完成
@@ -430,6 +464,56 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: [],
         },
       },
+      {
+        name: "get_batch_tasks",
+        description:
+          "获取多个待处理任务，用于批量/持续生成模式。返回任务列表和总进度信息",
+        inputSchema: {
+          type: "object",
+          properties: {
+            count: {
+              type: "number",
+              description: "要获取的任务数量，默认5个，最多20个",
+              default: 5,
+            },
+            section_filter: {
+              type: "string",
+              description: "可选，按章节名称过滤",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: "set_continuous_mode",
+        description:
+          "设置持续生成模式。开启后，save 操作会自动返回下一个任务，便于连续生成",
+        inputSchema: {
+          type: "object",
+          properties: {
+            enabled: {
+              type: "boolean",
+              description: "是否启用持续生成模式",
+            },
+            max_tasks: {
+              type: "number",
+              description: "单次最多连续生成的任务数，默认10",
+              default: 10,
+            },
+          },
+          required: ["enabled"],
+        },
+      },
+      {
+        name: "get_generation_status",
+        description:
+          "获取当前生成状态，包括持续模式配置、已完成任务数、剩余任务等信息",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
     ],
   };
 });
@@ -628,6 +712,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           markTaskComplete(taskLineNumber);
         }
 
+        // 获取进度信息
+        const stats = getTaskStats();
+        const progressInfo = {
+          completed: stats.completed,
+          pending: stats.pending,
+          total: stats.total,
+          percent: Math.round((stats.completed / stats.total) * 100),
+        };
+
+        // 如果开启了持续模式，自动返回下一个任务
+        let nextTask = null;
+        let continueHint = null;
+        if (CONFIG.continuousMode) {
+          const next = getNextPendingTask();
+          if (next) {
+            const subject = inferSubject(next);
+            const taskType = inferTaskType(next);
+            nextTask = {
+              line_number: next.lineNumber,
+              title: next.title,
+              section: next.section,
+              subsection: next.subsection,
+              parent: next.parent,
+              subject,
+              type: taskType,
+            };
+            continueHint = `请继续生成: ${next.title}`;
+          } else {
+            continueHint = "🎉 所有任务已完成！";
+          }
+        }
+
+        const streamProgress = formatProgressMessage(
+          stats.completed,
+          stats.total,
+          content.chapter_title,
+          "completed"
+        );
+
         return {
           content: [
             {
@@ -639,6 +762,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   filepath,
                   task_marked_complete:
                     typeof taskLineNumber === "number" ? taskLineNumber : null,
+                  stream_progress: streamProgress,
+                  progress: progressInfo,
+                  continuous_mode: CONFIG.continuousMode,
+                  next_task: nextTask,
+                  continue_hint: continueHint,
                 },
                 null,
                 2
@@ -670,6 +798,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           markTaskComplete(taskLineNumber);
         }
 
+        // 获取进度信息
+        const stats = getTaskStats();
+        const progressInfo = {
+          completed: stats.completed,
+          pending: stats.pending,
+          total: stats.total,
+          percent: Math.round((stats.completed / stats.total) * 100),
+        };
+
+        // 如果开启了持续模式，自动返回下一个任务
+        let nextTask = null;
+        let continueHint = null;
+        if (CONFIG.continuousMode) {
+          const next = getNextPendingTask();
+          if (next) {
+            const subject = inferSubject(next);
+            const taskType = inferTaskType(next);
+            nextTask = {
+              line_number: next.lineNumber,
+              title: next.title,
+              section: next.section,
+              subsection: next.subsection,
+              parent: next.parent,
+              subject,
+              type: taskType,
+            };
+            continueHint = `请继续生成: ${next.title}`;
+          } else {
+            continueHint = "🎉 所有任务已完成！";
+          }
+        }
+
+        const streamProgress = formatProgressMessage(
+          stats.completed,
+          stats.total,
+          `${batchInfo.category}-${batchInfo.topic}`,
+          "completed"
+        );
+
         return {
           content: [
             {
@@ -681,6 +848,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   filepath,
                   task_marked_complete:
                     typeof taskLineNumber === "number" ? taskLineNumber : null,
+                  stream_progress: streamProgress,
+                  progress: progressInfo,
+                  continuous_mode: CONFIG.continuousMode,
+                  next_task: nextTask,
+                  continue_hint: continueHint,
                 },
                 null,
                 2
@@ -712,6 +884,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           markTaskComplete(taskLineNumber);
         }
 
+        // 获取进度信息
+        const stats = getTaskStats();
+        const progressInfo = {
+          completed: stats.completed,
+          pending: stats.pending,
+          total: stats.total,
+          percent: Math.round((stats.completed / stats.total) * 100),
+        };
+
+        // 如果开启了持续模式，自动返回下一个任务
+        let nextTask = null;
+        let continueHint = null;
+        if (CONFIG.continuousMode) {
+          const next = getNextPendingTask();
+          if (next) {
+            const subject = inferSubject(next);
+            const taskType = inferTaskType(next);
+            nextTask = {
+              line_number: next.lineNumber,
+              title: next.title,
+              section: next.section,
+              subsection: next.subsection,
+              parent: next.parent,
+              subject,
+              type: taskType,
+            };
+            continueHint = `请继续生成: ${next.title}`;
+          } else {
+            continueHint = "🎉 所有任务已完成！";
+          }
+        }
+
+        const streamProgress = formatProgressMessage(
+          stats.completed,
+          stats.total,
+          `${batchInfo.category}-${batchInfo.topic}`,
+          "completed"
+        );
+
         return {
           content: [
             {
@@ -723,6 +934,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   filepath,
                   task_marked_complete:
                     typeof taskLineNumber === "number" ? taskLineNumber : null,
+                  stream_progress: streamProgress,
+                  progress: progressInfo,
+                  continuous_mode: CONFIG.continuousMode,
+                  next_task: nextTask,
+                  continue_hint: continueHint,
                 },
                 null,
                 2
@@ -869,6 +1085,166 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   pending_files: pendingFiles,
                   api_base: CONFIG.apiBaseUrl,
                   hint: "运行 'pnpm dev:server' 启动后端服务后再导入",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "get_batch_tasks": {
+        const count = Math.min((args?.count as number) || 5, 20);
+        const sectionFilter = args?.section_filter as string | undefined;
+
+        const { tasks } = parseTodolist();
+        let pendingTasks = tasks.filter((t) => !t.completed);
+
+        if (sectionFilter) {
+          pendingTasks = pendingTasks.filter(
+            (t) => t.section?.includes(sectionFilter) || false
+          );
+        }
+
+        const batchTasks = pendingTasks.slice(0, count).map((t) => {
+          const subject = inferSubject(t);
+          const taskType = inferTaskType(t);
+          return {
+            line_number: t.lineNumber,
+            title: t.title,
+            section: t.section,
+            subsection: t.subsection,
+            parent: t.parent,
+            subject,
+            type: taskType,
+          };
+        });
+
+        const stats = getTaskStats();
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  batch_count: batchTasks.length,
+                  total_pending: pendingTasks.length,
+                  tasks: batchTasks,
+                  progress: {
+                    total: stats.total,
+                    completed: stats.completed,
+                    pending: stats.pending,
+                    percent: Math.round((stats.completed / stats.total) * 100),
+                  },
+                  stream_hint: `📋 获取了 ${batchTasks.length} 个任务，总进度: ${stats.completed}/${stats.total} (${Math.round((stats.completed / stats.total) * 100)}%)`,
+                  continuous_mode_hint:
+                    "建议使用 set_continuous_mode 开启持续生成模式，保存时会自动返回下一个任务",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "set_continuous_mode": {
+        const enabled = args?.enabled as boolean;
+        const maxTasks = (args?.max_tasks as number) || 10;
+
+        if (typeof enabled !== "boolean") {
+          throw new Error("Missing enabled parameter");
+        }
+
+        CONFIG.continuousMode = enabled;
+        CONFIG.maxContinuousTasks = maxTasks;
+
+        const stats = getTaskStats();
+        const nextTask = enabled ? getNextPendingTask() : null;
+
+        let response: any = {
+          success: true,
+          continuous_mode: enabled,
+          max_tasks: maxTasks,
+          message: enabled
+            ? `✅ 持续生成模式已开启，最多连续生成 ${maxTasks} 个任务`
+            : "⏸️ 持续生成模式已关闭",
+          progress: {
+            total: stats.total,
+            completed: stats.completed,
+            pending: stats.pending,
+          },
+        };
+
+        if (enabled && nextTask) {
+          const subject = inferSubject(nextTask);
+          const taskType = inferTaskType(nextTask);
+          response.first_task = {
+            line_number: nextTask.lineNumber,
+            title: nextTask.title,
+            section: nextTask.section,
+            subsection: nextTask.subsection,
+            parent: nextTask.parent,
+            subject,
+            type: taskType,
+          };
+          response.start_hint = `🚀 开始生成: ${nextTask.title}`;
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_generation_status": {
+        const stats = getTaskStats();
+        const nextTask = getNextPendingTask();
+
+        let nextTaskInfo = null;
+        if (nextTask) {
+          const subject = inferSubject(nextTask);
+          const taskType = inferTaskType(nextTask);
+          nextTaskInfo = {
+            line_number: nextTask.lineNumber,
+            title: nextTask.title,
+            section: nextTask.section,
+            subsection: nextTask.subsection,
+            subject,
+            type: taskType,
+          };
+        }
+
+        const progressBar = generateProgressBar(stats.completed, stats.total);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  status: {
+                    continuous_mode: CONFIG.continuousMode,
+                    max_continuous_tasks: CONFIG.maxContinuousTasks,
+                  },
+                  progress: {
+                    total: stats.total,
+                    completed: stats.completed,
+                    pending: stats.pending,
+                    percent: Math.round((stats.completed / stats.total) * 100),
+                    progress_bar: progressBar,
+                  },
+                  next_task: nextTaskInfo,
+                  source_file: getTodolistPath(),
+                  stream_display: `📊 进度: ${progressBar} ${stats.completed}/${stats.total} (${Math.round((stats.completed / stats.total) * 100)}%) | 持续模式: ${CONFIG.continuousMode ? "开启" : "关闭"}`,
                 },
                 null,
                 2
