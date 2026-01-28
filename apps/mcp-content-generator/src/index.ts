@@ -92,12 +92,12 @@ function parseTodolist(): ParsedTodolist {
       continue;
     }
 
-    // 检测任务项 - [ ] 或 - [x]
-    const taskMatch = line.match(/^(\s*)- \[([ x])\]\s*(.+)$/);
+    // 检测任务项 - [ ] 或 - [x] 或 - [X]
+    const taskMatch = line.match(/^(\s*)- \[([ xX])\]\s*(.+)$/);
     if (taskMatch) {
       const [, indentStr, status, title] = taskMatch;
       const indent = indentStr.length;
-      const completed = status === "x";
+      const completed = status.toLowerCase() === "x";
 
       // 判断是否是父级任务（包含 **）
       const isParentTask = title.includes("**");
@@ -155,6 +155,65 @@ function generateProgressBar(current: number, total: number): string {
   const filled = Math.round((current / total) * width);
   const empty = width - filled;
   return `[${"█".repeat(filled)}${"░".repeat(empty)}]`;
+}
+
+// 计算内容字数统计
+interface WordCountStats {
+  totalChars: number; // 总字符数
+  chineseChars: number; // 中文字符数
+  englishWords: number; // 英文单词数
+  numbers: number; // 数字个数
+  formatted: string; // 格式化显示
+}
+
+function countWords(obj: any): WordCountStats {
+  const text = JSON.stringify(obj);
+  
+  // 中文字符（包括中文标点）
+  const chineseChars = (text.match(/[\u4e00-\u9fa5\u3000-\u303f\uff00-\uffef]/g) || []).length;
+  
+  // 英文单词
+  const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
+  
+  // 数字
+  const numbers = (text.match(/\d+/g) || []).length;
+  
+  // 总字符数（不含JSON格式符号）
+  const cleanText = text.replace(/[{}\[\]":,]/g, "");
+  const totalChars = cleanText.length;
+  
+  const formatted = `📝 ${chineseChars} 中文字 | ${englishWords} 英文词 | ${totalChars} 总字符`;
+  
+  return {
+    totalChars,
+    chineseChars,
+    englishWords,
+    numbers,
+    formatted,
+  };
+}
+
+// 生成详细的进度显示
+function formatDetailedProgress(
+  stats: ReturnType<typeof getTaskStats>,
+  taskTitle: string,
+  wordStats?: WordCountStats
+): string {
+  const progressBar = generateProgressBar(stats.completed, stats.total);
+  const percent = Math.round((stats.completed / stats.total) * 100);
+  
+  let display = `\n╔══════════════════════════════════════════════════════════════╗\n`;
+  display += `║  📊 生成进度: ${progressBar} ${stats.completed}/${stats.total} (${percent}%)\n`;
+  display += `║  📋 当前任务: ${taskTitle.substring(0, 40)}${taskTitle.length > 40 ? "..." : ""}\n`;
+  
+  if (wordStats) {
+    display += `║  ${wordStats.formatted}\n`;
+  }
+  
+  display += `║  ⏳ 待处理: ${stats.pending} 个任务\n`;
+  display += `╚══════════════════════════════════════════════════════════════╝`;
+  
+  return display;
 }
 
 // 标记任务为完成
@@ -514,6 +573,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: [],
         },
       },
+      {
+        name: "report_generation_progress",
+        description:
+          "报告当前内容生成的实时进度，用于在生成过程中刷新显示字数和进度。每次调用会返回格式化的进度显示",
+        inputSchema: {
+          type: "object",
+          properties: {
+            task_title: {
+              type: "string",
+              description: "当前正在生成的任务标题",
+            },
+            current_content: {
+              type: "string",
+              description: "当前已生成的内容文本（用于计算字数）",
+            },
+            status: {
+              type: "string",
+              enum: ["starting", "generating", "saving", "completed"],
+              description: "当前生成状态",
+              default: "generating",
+            },
+          },
+          required: ["task_title"],
+        },
+      },
     ],
   };
 });
@@ -693,6 +777,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error("Missing content parameter");
         }
 
+        // 计算字数统计
+        const wordStats = countWords(content);
+
         // 生成文件名
         const safeTitle = (content.chapter_title || "untitled")
           .replace(/[^a-zA-Z0-9\u4e00-\u9fa5-]/g, "-")
@@ -751,6 +838,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           "completed"
         );
 
+        // 详细进度显示
+        const detailedProgress = formatDetailedProgress(stats, content.chapter_title, wordStats);
+
         return {
           content: [
             {
@@ -762,7 +852,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   filepath,
                   task_marked_complete:
                     typeof taskLineNumber === "number" ? taskLineNumber : null,
+                  word_count: {
+                    chinese_chars: wordStats.chineseChars,
+                    english_words: wordStats.englishWords,
+                    total_chars: wordStats.totalChars,
+                    display: wordStats.formatted,
+                  },
                   stream_progress: streamProgress,
+                  detailed_progress: detailedProgress,
                   progress: progressInfo,
                   continuous_mode: CONFIG.continuousMode,
                   next_task: nextTask,
@@ -784,6 +881,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!batchInfo || !questions) {
           throw new Error("Missing batch_info or questions parameter");
         }
+
+        // 计算字数统计
+        const wordStats = countWords({ batch_info: batchInfo, questions });
 
         const filename = `${batchInfo.category}-${batchInfo.topic}-batch${batchInfo.batch_number}.json`;
         const filepath = path.join(getGeneratedDir(), "questions", filename);
@@ -830,12 +930,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }
         }
 
+        const taskTitle = `${batchInfo.category}-${batchInfo.topic}`;
         const streamProgress = formatProgressMessage(
           stats.completed,
           stats.total,
-          `${batchInfo.category}-${batchInfo.topic}`,
+          taskTitle,
           "completed"
         );
+
+        // 详细进度显示
+        const detailedProgress = formatDetailedProgress(stats, taskTitle, wordStats);
 
         return {
           content: [
@@ -848,7 +952,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   filepath,
                   task_marked_complete:
                     typeof taskLineNumber === "number" ? taskLineNumber : null,
+                  word_count: {
+                    chinese_chars: wordStats.chineseChars,
+                    english_words: wordStats.englishWords,
+                    total_chars: wordStats.totalChars,
+                    display: wordStats.formatted,
+                  },
                   stream_progress: streamProgress,
+                  detailed_progress: detailedProgress,
                   progress: progressInfo,
                   continuous_mode: CONFIG.continuousMode,
                   next_task: nextTask,
@@ -870,6 +981,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!batchInfo || !materials) {
           throw new Error("Missing batch_info or materials parameter");
         }
+
+        // 计算字数统计
+        const wordStats = countWords({ batch_info: batchInfo, materials });
 
         const filename = `${batchInfo.category}-${batchInfo.topic}-batch${batchInfo.batch_number}.json`;
         const filepath = path.join(getGeneratedDir(), "materials", filename);
@@ -916,12 +1030,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }
         }
 
+        const taskTitle = `${batchInfo.category}-${batchInfo.topic}`;
         const streamProgress = formatProgressMessage(
           stats.completed,
           stats.total,
-          `${batchInfo.category}-${batchInfo.topic}`,
+          taskTitle,
           "completed"
         );
+
+        // 详细进度显示
+        const detailedProgress = formatDetailedProgress(stats, taskTitle, wordStats);
 
         return {
           content: [
@@ -934,7 +1052,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   filepath,
                   task_marked_complete:
                     typeof taskLineNumber === "number" ? taskLineNumber : null,
+                  word_count: {
+                    chinese_chars: wordStats.chineseChars,
+                    english_words: wordStats.englishWords,
+                    total_chars: wordStats.totalChars,
+                    display: wordStats.formatted,
+                  },
                   stream_progress: streamProgress,
+                  detailed_progress: detailedProgress,
                   progress: progressInfo,
                   continuous_mode: CONFIG.continuousMode,
                   next_task: nextTask,
@@ -1245,6 +1370,87 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   next_task: nextTaskInfo,
                   source_file: getTodolistPath(),
                   stream_display: `📊 进度: ${progressBar} ${stats.completed}/${stats.total} (${Math.round((stats.completed / stats.total) * 100)}%) | 持续模式: ${CONFIG.continuousMode ? "开启" : "关闭"}`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "report_generation_progress": {
+        const taskTitle = args?.task_title as string;
+        const currentContent = args?.current_content as string | undefined;
+        const status = (args?.status as string) || "generating";
+
+        if (!taskTitle) {
+          throw new Error("Missing task_title parameter");
+        }
+
+        const stats = getTaskStats();
+        const progressBar = generateProgressBar(stats.completed, stats.total);
+        const percent = Math.round((stats.completed / stats.total) * 100);
+
+        // 计算当前内容的字数
+        let wordStats: WordCountStats | undefined;
+        if (currentContent) {
+          wordStats = countWords(currentContent);
+        }
+
+        const statusEmoji: Record<string, string> = {
+          starting: "🚀",
+          generating: "⏳",
+          saving: "💾",
+          completed: "✅",
+        };
+
+        const statusText: Record<string, string> = {
+          starting: "开始生成",
+          generating: "生成中",
+          saving: "保存中",
+          completed: "已完成",
+        };
+
+        // 构建实时进度显示
+        let liveDisplay = `\n╔══════════════════════════════════════════════════════════════╗\n`;
+        liveDisplay += `║  ${statusEmoji[status] || "⏳"} 状态: ${statusText[status] || status}\n`;
+        liveDisplay += `║  📊 总进度: ${progressBar} ${stats.completed}/${stats.total} (${percent}%)\n`;
+        liveDisplay += `║  📋 当前任务: ${taskTitle.substring(0, 40)}${taskTitle.length > 40 ? "..." : ""}\n`;
+        
+        if (wordStats) {
+          liveDisplay += `║  📝 已生成: ${wordStats.chineseChars} 中文字 | ${wordStats.englishWords} 英文词 | ${wordStats.totalChars} 总字符\n`;
+        }
+        
+        liveDisplay += `║  ⏳ 待处理: ${stats.pending} 个任务\n`;
+        liveDisplay += `╚══════════════════════════════════════════════════════════════╝`;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  status,
+                  task_title: taskTitle,
+                  word_count: wordStats
+                    ? {
+                        chinese_chars: wordStats.chineseChars,
+                        english_words: wordStats.englishWords,
+                        total_chars: wordStats.totalChars,
+                        display: wordStats.formatted,
+                      }
+                    : null,
+                  progress: {
+                    total: stats.total,
+                    completed: stats.completed,
+                    pending: stats.pending,
+                    percent,
+                    progress_bar: progressBar,
+                  },
+                  live_display: liveDisplay,
+                  stream_line: `${statusEmoji[status] || "⏳"} [${stats.completed}/${stats.total}] ${progressBar} ${taskTitle}${wordStats ? ` | ${wordStats.formatted}` : ""}`,
                 },
                 null,
                 2
