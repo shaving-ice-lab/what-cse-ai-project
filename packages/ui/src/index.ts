@@ -15,6 +15,7 @@ export {
 } from "./components/ui/breadcrumb";
 export { Button, buttonVariants, type ButtonProps } from "./components/ui/button";
 export { Calendar, type CalendarProps } from "./components/ui/calendar";
+export { Checkbox } from "./components/ui/checkbox";
 export {
   ChartContainer,
   ChartTooltip,
