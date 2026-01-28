@@ -48,6 +48,9 @@ coverage.html
 # Go 依赖 (vendor 模式)
 # vendor/
 
+# 明确指定 server 目录下的 api.exe
+apps/server/api.exe
+
 # ==========================================
 # Python (rescources 目录)
 # ==========================================
