@@ -17,6 +17,8 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Wrench,
+  Crown,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -25,10 +27,12 @@ const navItems = [
   { href: "/positions", label: "职位查询", icon: Briefcase },
   { href: "/match", label: "智能匹配", icon: Target },
   { href: "/announcements", label: "公告资讯", icon: FileText },
+  { href: "/tools", label: "工具箱", icon: Wrench },
 ];
 
 const userMenuItems = [
   { href: "/profile", label: "个人中心", icon: User },
+  { href: "/vip", label: "VIP会员", icon: Crown, highlight: true },
   { href: "/favorites", label: "我的收藏", icon: Heart },
   { href: "/preferences", label: "报考偏好", icon: Settings },
 ];
@@ -166,10 +170,19 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors"
+                                className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                                  (item as { highlight?: boolean }).highlight
+                                    ? "text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                                    : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                                }`}
                               >
-                                <item.icon className="w-4 h-4" />
+                                <item.icon className={`w-4 h-4 ${(item as { highlight?: boolean }).highlight ? "text-amber-500" : ""}`} />
                                 {item.label}
+                                {(item as { highlight?: boolean }).highlight && (
+                                  <span className="ml-auto px-1.5 py-0.5 text-xs bg-amber-100 text-amber-600 rounded-md font-medium">
+                                    VIP
+                                  </span>
+                                )}
                               </Link>
                             ))}
                           </div>
