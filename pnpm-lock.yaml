@@ -306,6 +306,9 @@ importers:
       axios:
         specifier: ^1.6.2
         version: 1.13.2
+      clsx:
+        specifier: ^2.0.0
+        version: 2.1.1
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.3)
@@ -321,6 +324,9 @@ importers:
       react-hook-form:
         specifier: ^7.49.2
         version: 7.69.0(react@19.2.3)
+      tailwind-merge:
+        specifier: ^2.2.0
+        version: 2.6.0
       zustand:
         specifier: ^4.4.7
         version: 4.5.7(@types/react@19.2.9)(react@19.2.3)
