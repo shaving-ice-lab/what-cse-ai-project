@@ -1,0 +1,241 @@
+---
+description: 公考内容自动生成规则 - 当用户说"公考:开始生成"时自动执行内容生成流程
+globs:
+  - "scripts/generated/**"
+  - "docs/content-creation-todolist.md"
+alwaysApply: true
+---
+
+# 公考内容生成器 (MCP 版 v2.0)
+
+当用户说以 **"公考:"** 开头的指令时，自动执行对应的内容生成流程。
+
+## 核心特性
+
+- **任务来源**：直接读取 `docs/content-creation-todolist.md` 文件
+- **自动标记**：完成任务后自动将 `- [ ]` 改为 `- [x]`
+- **层级解析**：支持章节、小节、父任务等层级结构
+
+## 触发词
+
+| 触发词 | 操作 |
+|--------|------|
+| **"公考:开始生成"** | 获取第一个未完成任务并开始生成 |
+| **"公考:继续"** | 继续生成下一个任务 |
+| **"公考:查看进度"** | 显示所有任务的完成进度 |
+| **"公考:列出任务"** | 列出待完成的任务列表 |
+| **"公考:查看配置"** | 显示当前读取的任务文件路径 |
+| **"公考:切换文件 xxx"** | 切换到指定的任务文件 |
+| **"公考:导入数据库"** | 导入已生成内容到数据库 |
+
+## 可用的 MCP 工具 (content-generator)
+
+| 工具名 | 说明 |
+|--------|------|
+| `get_config` | 获取当前配置（任务文件路径等） |
+| `set_todolist_file` | 动态切换任务文件路径 |
+| `get_current_task` | 从配置的任务文件获取第一个未完成任务 |
+| `mark_task_complete` | 手动标记指定行号的任务为完成 |
+| `save_course_content` | 保存课程内容（可自动标记完成） |
+| `save_question_batch` | 保存题目批次（可自动标记完成） |
+| `save_material_batch` | 保存素材批次（可自动标记完成） |
+| `get_progress_status` | 获取总体进度统计（按章节统计） |
+| `list_pending_tasks` | 列出未完成任务（支持数量限制和章节过滤） |
+| `import_to_database` | 导入已生成内容到数据库 |
+
+## 执行流程
+
+当用户说 "公考:开始生成" 或 "公考:继续" 时：
+
+1. 调用 `get_current_task` 获取当前任务（从 todolist.md 读取）
+2. 根据任务标题和类型生成对应的高质量内容
+3. 调用 save 工具保存内容，**传入 `task_line_number` 参数自动标记完成**
+4. 显示保存结果，询问用户是否继续
+
+## 内容格式规范
+
+### 课程内容 (save_course_content)
+
+```json
+{
+  "task_line_number": 85,
+  "content": {
+    "chapter_title": "实词辨析基础方法",
+    "subject": "xingce",
+    "knowledge_point": "言语理解-逻辑填空-实词辨析",
+    "lesson_content": {
+      "introduction": "课程导入（100-200字）",
+      "learning_goals": ["学习目标1", "学习目标2", "学习目标3"],
+      "prerequisites": ["前置知识1", "前置知识2"],
+      "core_concepts": ["核心概念1", "核心概念2"],
+      "main_content": "主要教学内容（500-1000字详细讲解）",
+      "formulas": ["公式或口诀1", "公式或口诀2"],
+      "memory_tips": ["记忆技巧1", "记忆技巧2"],
+      "common_mistakes": ["易错点1", "易错点2"],
+      "summary_points": ["总结要点1", "总结要点2", "总结要点3"]
+    },
+    "lesson_sections": [
+      {
+        "order": 1,
+        "title": "概念导入",
+        "content": "本节详细内容...",
+        "section_type": "intro",
+        "key_points": ["要点1", "要点2"]
+      },
+      {
+        "order": 2,
+        "title": "方法讲解",
+        "content": "解题方法说明...",
+        "section_type": "method",
+        "examples": [
+          {
+            "title": "例题1",
+            "problem": "完整例题题目",
+            "analysis": "解题分析过程",
+            "solution": "详细解题步骤",
+            "answer": "正确答案"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "总结归纳",
+        "content": "本节课总结...",
+        "section_type": "summary"
+      }
+    ],
+    "practice_problems": [
+      {
+        "order": 1,
+        "problem": "练习题完整题目",
+        "options": ["A. 选项A", "B. 选项B", "C. 选项C", "D. 选项D"],
+        "answer": "A",
+        "analysis": "详细解析",
+        "difficulty": 2
+      }
+    ]
+  }
+}
+```
+
+**subject 值说明：**
+- `xingce` - 行测（言语理解、数量关系、判断推理、资料分析、常识判断）
+- `shenlun` - 申论
+- `mianshi` - 面试
+- `gongji` - 公共基础知识
+
+### 题目内容 (save_question_batch)
+
+每批 10 道题：
+
+```json
+{
+  "task_line_number": 120,
+  "batch_info": {
+    "category": "言语理解",
+    "topic": "逻辑填空",
+    "batch_number": 1,
+    "count": 10
+  },
+  "questions": [
+    {
+      "content": "完整题干内容，问题描述要清晰完整",
+      "options": ["A. 选项A", "B. 选项B", "C. 选项C", "D. 选项D"],
+      "answer": "A",
+      "analysis": "【答案】A\n【解析】详细解析，说明为什么选A。\nA项：正确，因为...\nB项：错误，因为...\nC项：错误，因为...\nD项：错误，因为...",
+      "difficulty": 3,
+      "question_type": "single_choice",
+      "knowledge_points": ["实词辨析", "语境分析"]
+    }
+  ]
+}
+```
+
+**question_type 值说明：**
+- `single_choice` - 单选题
+- `multi_choice` - 多选题
+- `fill_blank` - 填空题
+- `essay` - 简答题/申论题
+- `judge` - 判断题
+
+**difficulty 值说明：** 1-5，其中 1=简单，3=中等，5=困难
+
+### 素材内容 (save_material_batch)
+
+每批 5 条素材：
+
+```json
+{
+  "task_line_number": 200,
+  "batch_info": {
+    "category": "名言警句",
+    "topic": "习近平讲话",
+    "batch_number": 1,
+    "count": 5
+  },
+  "materials": [
+    {
+      "title": "素材标题/名言出处",
+      "content": "素材完整内容（100-300字）",
+      "source": "出处来源（如：2024年政府工作报告、《论语》等）",
+      "material_type": "quote",
+      "theme": "乡村振兴",
+      "usage_scenario": "适用场景说明，如：适用于讨论乡村振兴、生态文明等话题",
+      "tags": ["标签1", "标签2", "标签3"]
+    }
+  ]
+}
+```
+
+**material_type 值说明：**
+- `quote` - 名言警句
+- `case` - 案例素材
+- `hot_topic` - 热点专题
+- `interview` - 面试素材
+- `sentence` - 优美语句
+- `template` - 答题模板
+
+## 操作指令对照表
+
+| 用户指令 | MCP 工具调用 |
+|----------|-------------|
+| "公考:开始生成" / "公考:继续" | `get_current_task` → 生成内容 → `save_*` |
+| "公考:查看进度" | `get_progress_status` |
+| "公考:列出任务" | `list_pending_tasks` |
+| "公考:列出任务 言语理解" | `list_pending_tasks(section_filter: "言语理解")` |
+| "公考:查看配置" | `get_config` |
+| "公考:切换文件 xxx.md" | `set_todolist_file(file_path: "xxx.md")` |
+| "公考:标记完成 85" | `mark_task_complete(line_number: 85)` |
+| "公考:导入数据库" | `import_to_database` |
+
+## 质量要求
+
+- 内容必须专业、准确，符合公务员考试实际要求
+- 题目需包含完整解析，解析要详细说明解题思路
+- 课程需包含例题和练习题
+- 素材要注明来源，确保可考证
+
+## 文件位置
+
+- 任务来源：可配置（默认 `docs/content-creation-todolist.md`）
+- 课程输出：`scripts/generated/courses/`
+- 题目输出：`scripts/generated/questions/`
+- 素材输出：`scripts/generated/materials/`
+
+## 配置任务文件
+
+### 方式一：环境变量（在 .cursor/mcp.json 中配置）
+
+```json
+{
+  "env": {
+    "TODOLIST_FILE": "docs/fenbi-development-todolist.md"
+  }
+}
+```
+
+### 方式二：运行时切换
+
+```
+公考:切换文件 docs/fenbi-development-todolist.md
+```
