@@ -45,3 +45,9 @@ apps/server/temp
 
 # IDE files
 .idea
+
+# Content generator - generated files (optional, uncomment to exclude)
+# scripts/generated/courses/*.json
+# scripts/generated/questions/*.json
+# scripts/generated/materials/*.json
+# !scripts/generated/progress.json
