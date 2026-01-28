@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,6 +15,7 @@ import {
   SidebarTrigger,
 } from "@what-cse/ui";
 import React from "react";
+import { NotificationBell } from "./NotificationBell";
 
 // 路由到面包屑映射
 const routeMap: Record<string, string> = {
@@ -36,6 +37,7 @@ const routeMap: Record<string, string> = {
   admins: "管理员管理",
   llm: "LLM 配置",
   logs: "系统日志",
+  notifications: "消息中心",
 };
 
 export function SiteHeader() {
@@ -103,14 +105,8 @@ export function SiteHeader() {
           <span className="sr-only">搜索</span>
         </Button>
 
-        {/* 通知按钮 */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
-            3
-          </span>
-          <span className="sr-only">通知</span>
-        </Button>
+        {/* 通知铃铛 */}
+        <NotificationBell refreshInterval={60000} previewCount={5} />
       </div>
     </header>
   );

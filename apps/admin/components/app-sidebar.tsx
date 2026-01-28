@@ -16,6 +16,11 @@ import {
   HelpCircle,
   MessageCircle,
   Command,
+  Bell,
+  Crown,
+  BookOpen,
+  FileQuestion,
+  FileStack,
 } from "lucide-react";
 
 import {
@@ -39,9 +44,19 @@ const navMainItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: "消息中心",
+    url: "/notifications",
+    icon: Bell,
+  },
+  {
     title: "用户管理",
     url: "/users",
     icon: Users,
+  },
+  {
+    title: "VIP会员",
+    url: "/vip",
+    icon: Crown,
   },
   {
     title: "职位管理",
@@ -72,6 +87,22 @@ const navMainItems: NavItem[] = [
     title: "列表页管理",
     url: "/list-pages",
     icon: ScrollText,
+  },
+  {
+    title: "学习管理",
+    url: "/learning",
+    icon: BookOpen,
+    items: [
+      { title: "课程分类", url: "/learning/categories" },
+      { title: "课程管理", url: "/learning/courses" },
+      { title: "知识点管理", url: "/learning/knowledge-points" },
+      { title: "知识点内容", url: "/learning/knowledge" },
+      { title: "素材管理", url: "/learning/materials" },
+      { title: "题目管理", url: "/learning/questions" },
+      { title: "试卷管理", url: "/learning/papers" },
+      { title: "内容管理", url: "/learning/content" },
+      { title: "数据统计", url: "/learning/statistics" },
+    ],
   },
   {
     title: "数据字典",

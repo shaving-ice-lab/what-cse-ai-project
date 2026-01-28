@@ -972,6 +972,69 @@ export const wechatRssApi = {
   },
 };
 
+// ============================================
+// Migration Types
+// ============================================
+
+export type MigrationStatus = "idle" | "running" | "completed" | "failed" | "stopped";
+
+export interface MigrationLogEntry {
+  time: string;
+  level: string;
+  message: string;
+  task_id?: number;
+}
+
+export interface MigrationState {
+  id: string;
+  status: MigrationStatus;
+  started_at?: string;
+  completed_at?: string;
+  total_tasks: number;
+  processed_tasks: number;
+  successful_tasks: number;
+  failed_tasks: number;
+  skipped_tasks: number;
+  total_positions: number;
+  created_count: number;
+  updated_count: number;
+  duplicate_count: number;
+  error_count: number;
+  logs: MigrationLogEntry[];
+  last_error?: string;
+}
+
+export interface MigrationStats {
+  total_parse_tasks: number;
+  completed_tasks: number;
+  positions_in_db: number;
+  estimated_positions: number;
+  last_migration_time?: string;
+}
+
+// Migration APIs
+export const migrateApi = {
+  // Get migration stats
+  getStats: () => {
+    return request.get<MigrationStats>("/admin/migrate/positions/stats");
+  },
+
+  // Get current migration status
+  getStatus: () => {
+    return request.get<MigrationState>("/admin/migrate/positions/status");
+  },
+
+  // Start migration
+  startMigration: () => {
+    return request.post<MigrationState>("/admin/migrate/positions");
+  },
+
+  // Stop migration
+  stopMigration: () => {
+    return request.post<{ message: string }>("/admin/migrate/positions/stop");
+  },
+};
+
 // WeChat MP Auth Types
 export type WechatMPAuthStatus = "active" | "expiring" | "expired" | "invalid";
 
