@@ -780,19 +780,94 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // 计算字数统计
         const wordStats = countWords(content);
 
-        // 生成文件名
-        const safeTitle = (content.chapter_title || "untitled")
+        // 获取任务元数据（用于确定课程顺序和层级）
+        let taskMetadata: {
+          line_number?: number;
+          lesson_order?: number;
+          section?: string;
+          subsection?: string;
+          parent_title?: string;
+          is_sub_lesson?: boolean;
+        } = {};
+
+        if (typeof taskLineNumber === "number") {
+          const { tasks } = parseTodolist();
+          const task = tasks.find(t => t.lineNumber === taskLineNumber);
+          if (task) {
+            // 计算课程全局顺序（在所有课程任务中的位置）
+            const courseTasks = tasks.filter(t => 
+              t.section?.includes("课程") || t.subsection?.includes("课时")
+            );
+            const lessonOrder = courseTasks.findIndex(t => t.lineNumber === taskLineNumber) + 1;
+            
+            taskMetadata = {
+              line_number: task.lineNumber,
+              lesson_order: lessonOrder > 0 ? lessonOrder : undefined,
+              section: task.section,
+              subsection: task.subsection,
+              parent_title: task.parent,
+              is_sub_lesson: task.indent > 0 && !!task.parent,
+            };
+          }
+        }
+
+        // 合并内容和元数据
+        const contentWithMetadata = {
+          // 元数据放在最前面，便于查看
+          _metadata: {
+            generated_at: new Date().toISOString(),
+            ...taskMetadata,
+          },
+          // 原有内容
+          ...content,
+        };
+
+        // 生成文件名（包含章节信息和顺序编号）
+        const orderPrefix = taskMetadata.lesson_order 
+          ? String(taskMetadata.lesson_order).padStart(3, '0') 
+          : '000';
+        
+        // 提取章节简称（如 "1.1 言语理解与表达课程" -> "1.1-言语理解"）
+        const sectionShort = taskMetadata.section
+          ? taskMetadata.section
+              .replace(/课程$/, '')
+              .replace(/与表达$/, '')
+              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5.]+/g, '-')
+              .substring(0, 15)
+          : '';
+        
+        // 提取小节简称（如 "实词辨析精讲（20课时）" -> "实词辨析"）
+        const subsectionShort = taskMetadata.subsection
+          ? taskMetadata.subsection
+              .replace(/[（(].+[）)]/, '')
+              .replace(/精讲|专题|课程/, '')
+              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
+              .substring(0, 10)
+          : '';
+        
+        // 课程标题简称
+        const titleShort = (content.chapter_title || "untitled")
           .replace(/[^a-zA-Z0-9\u4e00-\u9fa5-]/g, "-")
-          .substring(0, 50);
+          .replace(/-+/g, '-')
+          .substring(0, 30);
+        
         const timestamp = Date.now();
-        const filename = `${safeTitle}-${timestamp}.json`;
+        
+        // 组合文件名: 顺序-章节-小节-标题-时间戳
+        const filenameParts = [orderPrefix, sectionShort, subsectionShort, titleShort]
+          .filter(part => part && part !== '-')
+          .join('-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+        
+        const filename = `${filenameParts}-${timestamp}.json`;
         const filepath = path.join(getGeneratedDir(), "courses", filename);
 
         // 确保目录存在
         fs.mkdirSync(path.dirname(filepath), { recursive: true });
 
-        // 保存文件
-        fs.writeFileSync(filepath, JSON.stringify(content, null, 2));
+        // 保存文件（包含元数据）
+        fs.writeFileSync(filepath, JSON.stringify(contentWithMetadata, null, 2));
 
         // 如果提供了任务行号，标记任务完成
         if (typeof taskLineNumber === "number") {
@@ -885,14 +960,76 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // 计算字数统计
         const wordStats = countWords({ batch_info: batchInfo, questions });
 
-        const filename = `${batchInfo.category}-${batchInfo.topic}-batch${batchInfo.batch_number}.json`;
+        // 获取任务元数据
+        let taskMetadata: {
+          line_number?: number;
+          task_order?: number;
+          section?: string;
+          subsection?: string;
+          parent_title?: string;
+        } = {};
+
+        if (typeof taskLineNumber === "number") {
+          const { tasks } = parseTodolist();
+          const task = tasks.find(t => t.lineNumber === taskLineNumber);
+          if (task) {
+            const questionTasks = tasks.filter(t => 
+              t.section?.includes("题库") || t.subsection?.includes("题")
+            );
+            const taskOrder = questionTasks.findIndex(t => t.lineNumber === taskLineNumber) + 1;
+            
+            taskMetadata = {
+              line_number: task.lineNumber,
+              task_order: taskOrder > 0 ? taskOrder : undefined,
+              section: task.section,
+              subsection: task.subsection,
+              parent_title: task.parent,
+            };
+          }
+        }
+
+        // 合并内容和元数据
+        const contentWithMetadata = {
+          _metadata: {
+            generated_at: new Date().toISOString(),
+            ...taskMetadata,
+          },
+          batch_info: batchInfo,
+          questions,
+        };
+
+        // 生成文件名（包含章节信息和顺序编号）
+        const orderPrefix = taskMetadata.task_order 
+          ? String(taskMetadata.task_order).padStart(3, '0') 
+          : '000';
+        
+        // 提取章节简称
+        const sectionShort = taskMetadata.section
+          ? taskMetadata.section
+              .replace(/题库[（(].+[）)]?/, '')
+              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5.]+/g, '-')
+              .substring(0, 15)
+          : '';
+        
+        const safeCategory = (batchInfo.category || '')
+          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
+          .substring(0, 15);
+        const safeTopic = (batchInfo.topic || '')
+          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
+          .substring(0, 20);
+        
+        // 组合文件名: 顺序-章节-类别-主题-批次
+        const filenameParts = [orderPrefix, sectionShort, safeCategory, safeTopic]
+          .filter(part => part && part !== '-')
+          .join('-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+        
+        const filename = `${filenameParts}-batch${batchInfo.batch_number}.json`;
         const filepath = path.join(getGeneratedDir(), "questions", filename);
 
         fs.mkdirSync(path.dirname(filepath), { recursive: true });
-        fs.writeFileSync(
-          filepath,
-          JSON.stringify({ batch_info: batchInfo, questions }, null, 2)
-        );
+        fs.writeFileSync(filepath, JSON.stringify(contentWithMetadata, null, 2));
 
         if (typeof taskLineNumber === "number") {
           markTaskComplete(taskLineNumber);
@@ -985,14 +1122,76 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // 计算字数统计
         const wordStats = countWords({ batch_info: batchInfo, materials });
 
-        const filename = `${batchInfo.category}-${batchInfo.topic}-batch${batchInfo.batch_number}.json`;
+        // 获取任务元数据
+        let taskMetadata: {
+          line_number?: number;
+          task_order?: number;
+          section?: string;
+          subsection?: string;
+          parent_title?: string;
+        } = {};
+
+        if (typeof taskLineNumber === "number") {
+          const { tasks } = parseTodolist();
+          const task = tasks.find(t => t.lineNumber === taskLineNumber);
+          if (task) {
+            const materialTasks = tasks.filter(t => 
+              t.section?.includes("素材") || t.subsection?.includes("素材")
+            );
+            const taskOrder = materialTasks.findIndex(t => t.lineNumber === taskLineNumber) + 1;
+            
+            taskMetadata = {
+              line_number: task.lineNumber,
+              task_order: taskOrder > 0 ? taskOrder : undefined,
+              section: task.section,
+              subsection: task.subsection,
+              parent_title: task.parent,
+            };
+          }
+        }
+
+        // 合并内容和元数据
+        const contentWithMetadata = {
+          _metadata: {
+            generated_at: new Date().toISOString(),
+            ...taskMetadata,
+          },
+          batch_info: batchInfo,
+          materials,
+        };
+
+        // 生成文件名（包含章节信息和顺序编号）
+        const orderPrefix = taskMetadata.task_order 
+          ? String(taskMetadata.task_order).padStart(3, '0') 
+          : '000';
+        
+        // 提取章节简称
+        const sectionShort = taskMetadata.section
+          ? taskMetadata.section
+              .replace(/素材[（(].+[）)]?/, '')
+              .replace(/[^a-zA-Z0-9\u4e00-\u9fa5.]+/g, '-')
+              .substring(0, 15)
+          : '';
+        
+        const safeCategory = (batchInfo.category || '')
+          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
+          .substring(0, 15);
+        const safeTopic = (batchInfo.topic || '')
+          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '-')
+          .substring(0, 20);
+        
+        // 组合文件名: 顺序-章节-类别-主题-批次
+        const filenameParts = [orderPrefix, sectionShort, safeCategory, safeTopic]
+          .filter(part => part && part !== '-')
+          .join('-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+        
+        const filename = `${filenameParts}-batch${batchInfo.batch_number}.json`;
         const filepath = path.join(getGeneratedDir(), "materials", filename);
 
         fs.mkdirSync(path.dirname(filepath), { recursive: true });
-        fs.writeFileSync(
-          filepath,
-          JSON.stringify({ batch_info: batchInfo, materials }, null, 2)
-        );
+        fs.writeFileSync(filepath, JSON.stringify(contentWithMetadata, null, 2));
 
         if (typeof taskLineNumber === "number") {
           markTaskComplete(taskLineNumber);
