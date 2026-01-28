@@ -16,9 +16,17 @@ import * as fs from "fs";
 import * as path from "path";
 
 // 配置
+const apiToken = process.env.API_TOKEN || "";
 const CONFIG = {
-  apiBaseUrl: process.env.API_BASE_URL || "http://localhost:8080/api/v1",
-  apiToken: process.env.API_TOKEN || "",
+  // 根据是否有 token 选择 API 基础路径
+  // 有 token：使用管理员接口（需认证）
+  // 无 token：使用内部接口（开发环境无需认证）
+  apiBaseUrl:
+    process.env.API_BASE_URL ||
+    (apiToken
+      ? "http://localhost:9000/api/v1"
+      : "http://localhost:9000/api/v1/internal"),
+  apiToken,
   generatedDir: path.join(__dirname, "generated"),
   importedFile: path.join(__dirname, "generated/.imported.json"),
 };
@@ -108,7 +116,14 @@ async function importCourse(
   data: any,
   dryRun: boolean
 ): Promise<{ success: boolean; count: number; error?: string }> {
+  const metadata = data._metadata;
+  const lessonOrder = metadata?.lesson_order || 0;
+  const section = metadata?.section || '';
+  
   console.log(`   📚 导入课程：${data.chapter_title}`);
+  if (lessonOrder > 0) {
+    console.log(`      📍 顺序: ${lessonOrder}, 章节: ${section}`);
+  }
 
   if (dryRun) {
     console.log("   [DRY RUN] 跳过实际导入");
@@ -117,10 +132,16 @@ async function importCourse(
 
   try {
     // 调用课程内容导入 API
-    const result = await apiRequest(
-      "/admin/content/import/course-lesson",
-      "POST",
-      {
+    // 端点路径根据 apiBaseUrl 自动适配（内部接口或管理员接口）
+    const endpoint = CONFIG.apiToken
+      ? "/admin/content/import/course-lesson"
+      : "/content/import/course-lesson";
+    
+    // 发送完整数据，包括元数据
+    const result = await apiRequest(endpoint, "POST", {
+        // 元数据
+        _metadata: data._metadata,
+        // 课程内容
         chapter_title: data.chapter_title,
         subject: data.subject,
         knowledge_point: data.knowledge_point,
@@ -173,10 +194,10 @@ async function importQuestions(
     }));
 
     // 调用批量创建题目 API
-    const result = await apiRequest(
-      "/admin/content/import/questions",
-      "POST",
-      {
+    const endpoint = CONFIG.apiToken
+      ? "/admin/content/import/questions"
+      : "/content/import/questions";
+    const result = await apiRequest(endpoint, "POST", {
         questions: formattedQuestions,
         category_name: batchInfo.category,
         sub_category_name: batchInfo.topic,
@@ -230,15 +251,14 @@ async function importMaterials(
       subject: batchInfo.category?.includes("面试") ? "面试" : "申论",
     }));
 
-    // 调用素材批量导入 API（使用已有的 material_handler API）
-    const result = await apiRequest(
-      "/admin/materials/batch/import",
-      "POST",
-      {
-        type: detectMaterialType(batchInfo.category),
-        items: formattedMaterials,
-      }
-    );
+    // 调用素材批量导入 API
+    const endpoint = CONFIG.apiToken
+      ? "/admin/content/import/materials"
+      : "/content/import/materials";
+    const result = await apiRequest(endpoint, "POST", {
+      type: detectMaterialType(batchInfo.category),
+      items: formattedMaterials,
+    });
 
     return {
       success: true,
