@@ -1,14 +1,3 @@
 {
-  "mcpServers": {
-    "content-generator": {
-      "command": "node",
-      "args": [
-        "C:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project/apps/mcp-content-generator/dist/index.js"
-      ],
-      "env": {
-        "PROJECT_ROOT": "C:/Users/Vantiboolean/Documents/DevelopeGithub/what-cse-ai-project",
-        "API_BASE_URL": "http://localhost:8080/api/v1"
-      }
-    }
-  }
+  "mcpServers": {}
 }
