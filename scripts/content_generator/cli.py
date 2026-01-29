@@ -508,6 +508,234 @@ def test_api():
         raise typer.Exit(1)
 
 
+# =====================================================
+# 课程树初始化命令
+# =====================================================
+
+@app.command("init-tree")
+def init_tree(
+    max_level: int = typer.Option(5, "--max-level", "-l", help="最大处理层级 (1-6)"),
+    subject: Optional[str] = typer.Option(None, "--subject", "-s", help="科目过滤 (xingce/shenlun/mianshi/gongji)"),
+    use_llm: bool = typer.Option(True, "--use-llm/--no-llm", help="是否使用 LLM 生成描述"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="试运行（不导入数据库）"),
+    batch_size: int = typer.Option(5, "--batch-size", "-b", help="批量生成时每批数量"),
+):
+    """
+    初始化课程分类树
+    
+    从 todolist.md 解析完整的 6 层课程结构，
+    使用 LLM 为每个节点生成描述信息，
+    并将分类树导入数据库。
+    
+    示例：
+    - python run_generator.py init-tree              # 初始化所有科目
+    - python run_generator.py init-tree -s xingce   # 只初始化行测
+    - python run_generator.py init-tree --no-llm    # 不使用 LLM，使用默认描述
+    - python run_generator.py init-tree --dry-run   # 试运行，不导入数据库
+    """
+    print_banner()
+    
+    # 检查配置
+    if use_llm and not check_api_key():
+        raise typer.Exit(1)
+    
+    if not dry_run and not check_backend_connection():
+        raise typer.Exit(1)
+    
+    from .tree_initializer import TreeInitializer
+    
+    console.print(Panel(
+        f"[cyan]开始初始化课程分类树[/cyan]\n\n"
+        f"最大层级: {max_level}\n"
+        f"科目过滤: {subject or '全部'}\n"
+        f"使用 LLM: {'是' if use_llm else '否'}\n"
+        f"试运行: {'是' if dry_run else '否'}\n"
+        f"批量大小: {batch_size}",
+        title="初始化配置",
+        border_style="cyan",
+    ))
+    
+    try:
+        initializer = TreeInitializer(
+            use_llm=use_llm,
+            batch_size=batch_size,
+            save_to_file=True,
+        )
+        
+        result = initializer.initialize(
+            max_level=max_level,
+            subject_filter=subject,
+            dry_run=dry_run,
+        )
+        
+        if result.success:
+            console.print(Panel(
+                f"[green][OK] 课程树初始化完成！[/green]\n\n"
+                f"总分类数: {result.total_categories}\n"
+                f"生成成功: {result.generated_count}\n"
+                f"导入成功: {result.imported_count}\n"
+                f"失败数量: {result.failed_count}\n"
+                f"总耗时: {result.duration:.2f} 秒",
+                title="初始化结果",
+                border_style="green",
+            ))
+        else:
+            console.print(Panel(
+                f"[red][FAIL] 初始化失败[/red]\n\n"
+                f"错误: {result.errors}",
+                title="初始化结果",
+                border_style="red",
+            ))
+            raise typer.Exit(1)
+            
+    except Exception as e:
+        console.print(f"[red]错误: {e}[/red]")
+        import traceback
+        traceback.print_exc()
+        raise typer.Exit(1)
+
+
+@app.command("show-tree")
+def show_tree(
+    max_level: int = typer.Option(5, "--max-level", "-l", help="最大显示层级 (1-6)"),
+    subject: Optional[str] = typer.Option(None, "--subject", "-s", help="科目过滤"),
+):
+    """
+    显示课程分类树结构
+    
+    解析 todolist.md 并显示完整的层级结构。
+    
+    示例：
+    - python run_generator.py show-tree              # 显示所有层级
+    - python run_generator.py show-tree -l 3        # 只显示到第3层
+    """
+    print_banner()
+    
+    parser = TaskParser()
+    
+    try:
+        tree_str = parser.print_tree(max_level)
+        
+        console.print(Panel(
+            tree_str,
+            title=f"课程分类树 (Level 1-{max_level})",
+            border_style="cyan",
+        ))
+        
+        # 显示统计
+        all_categories = parser.get_all_categories_flat()
+        level_counts = {}
+        for cat in all_categories:
+            level_counts[cat.level] = level_counts.get(cat.level, 0) + 1
+        
+        table = Table(title="层级统计")
+        table.add_column("层级", style="cyan")
+        table.add_column("数量", style="green")
+        table.add_column("说明", style="yellow")
+        
+        level_names = {
+            1: "科目 (§1 行测课程内容)",
+            2: "模块 (1.1 言语理解与表达课程)",
+            3: "分类 (逻辑填空课程)",
+            4: "专题 (实词辨析精讲)",
+            5: "课程组 (实词辨析基础方法)",
+            6: "具体课程 (第1课：语素分析法)",
+        }
+        
+        for level in range(1, 7):
+            count = level_counts.get(level, 0)
+            if count > 0 or level <= max_level:
+                table.add_row(
+                    f"Level {level}",
+                    str(count),
+                    level_names.get(level, ""),
+                )
+        
+        console.print(table)
+        console.print(f"\n总计: {len(all_categories)} 个分类节点")
+        
+    except Exception as e:
+        console.print(f"[red]错误: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("update-category")
+def update_category(
+    code: str = typer.Argument(..., help="分类代码"),
+    use_llm: bool = typer.Option(True, "--use-llm/--no-llm", help="是否使用 LLM 重新生成描述"),
+):
+    """
+    更新单个分类的描述信息
+    
+    示例：
+    - python run_generator.py update-category xingce_yanyu
+    """
+    print_banner()
+    
+    if use_llm and not check_api_key():
+        raise typer.Exit(1)
+    
+    if not check_backend_connection():
+        raise typer.Exit(1)
+    
+    parser = TaskParser()
+    
+    # 查找分类
+    category = parser.get_category_by_code(code)
+    
+    if not category:
+        console.print(f"[red]错误: 未找到分类 {code}[/red]")
+        raise typer.Exit(1)
+    
+    console.print(f"找到分类: {category.name} (Level {category.level})")
+    
+    from .tree_initializer import TreeInitializer
+    
+    initializer = TreeInitializer(use_llm=use_llm)
+    
+    try:
+        # 生成描述
+        desc = initializer.generate_description(category, None)
+        
+        console.print(Panel(
+            f"[cyan]生成的描述:[/cyan]\n\n"
+            f"名称: {desc.name}\n"
+            f"简介: {desc.description}\n"
+            f"详情: {desc.long_description[:100]}...\n"
+            f"特点: {', '.join(desc.features[:3])}...\n"
+            f"难度: {desc.difficulty}",
+            title="生成结果",
+            border_style="cyan",
+        ))
+        
+        # 导入到数据库
+        db_client = DBClient()
+        result = db_client.import_category_tree([{
+            "code": code,
+            "name": desc.name,
+            "level": category.level,
+            "parent_code": category.parent_code,
+            "subject": category.subject,
+            "description": desc.description,
+            "long_description": desc.long_description,
+            "features": desc.features,
+            "learning_objectives": desc.learning_objectives,
+            "keywords": desc.keywords,
+            "difficulty": desc.difficulty,
+            "sort_order": category.sort_order,
+        }])
+        
+        if result.get("success"):
+            console.print(f"[green][OK] 已更新分类 {code}[/green]")
+        else:
+            console.print(f"[red][FAIL] 更新失败: {result.get('error')}[/red]")
+            raise typer.Exit(1)
+            
+    except Exception as e:
+        console.print(f"[red]错误: {e}[/red]")
+        raise typer.Exit(1)
+
+
 def main():
     """主入口"""
     app()

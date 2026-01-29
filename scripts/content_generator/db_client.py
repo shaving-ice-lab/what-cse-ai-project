@@ -265,6 +265,104 @@ class DBClient:
             logger.error(f"导入素材失败: {e}")
             return ImportResult(success=False, error=str(e))
     
+    def import_category_tree(
+        self,
+        categories: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """
+        批量导入课程分类树到数据库
+        
+        Args:
+            categories: 分类列表，每个分类包含:
+                - code: 分类代码
+                - name: 分类名称
+                - level: 层级 (1-6)
+                - parent_code: 父分类代码
+                - subject: 科目
+                - description: 简短描述
+                - long_description: 详细描述
+                - features: 功能亮点列表
+                - learning_objectives: 学习目标
+                - keywords: 关键词
+                - difficulty: 难度等级
+                - estimated_duration: 预计时长
+                - sort_order: 排序顺序
+                
+        Returns:
+            导入结果字典 {"success": bool, "imported": int, "updated": int, "errors": list}
+        """
+        try:
+            request_data = {
+                "categories": categories,
+            }
+            
+            response = self.client.post(
+                "/api/v1/internal/content/import/category-tree",
+                json=request_data,
+            )
+            
+            result = response.json()
+            
+            if response.status_code == 200 and result.get("code") == 200:
+                data = result.get("data", {})
+                return {
+                    "success": True,
+                    "total": data.get("total", 0),
+                    "imported": data.get("imported", 0),
+                    "updated": data.get("updated", 0),
+                    "errors": data.get("errors", []),
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", f"HTTP {response.status_code}"),
+                    "imported": 0,
+                    "updated": 0,
+                }
+                
+        except Exception as e:
+            logger.error(f"导入分类树失败: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "imported": 0,
+                "updated": 0,
+            }
+    
+    def get_category_tree(self, subject: Optional[str] = None) -> Dict[str, Any]:
+        """
+        获取已存在的课程分类树
+        
+        Args:
+            subject: 科目过滤（可选）
+            
+        Returns:
+            分类树数据
+        """
+        try:
+            if subject:
+                url = f"/api/v1/courses/categories/subject/{subject}"
+            else:
+                url = "/api/v1/courses/categories"
+            
+            response = self.client.get(url)
+            result = response.json()
+            
+            if response.status_code == 200:
+                return {
+                    "success": True,
+                    "data": result.get("data", []),
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", f"HTTP {response.status_code}"),
+                }
+                
+        except Exception as e:
+            logger.error(f"获取分类树失败: {e}")
+            return {"success": False, "error": str(e)}
+    
     def close(self):
         """关闭客户端"""
         if self._client:
