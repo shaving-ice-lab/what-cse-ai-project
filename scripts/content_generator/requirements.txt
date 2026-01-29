@@ -1,0 +1,27 @@
+# 公考内容生成器依赖
+# Python >= 3.10
+
+# OpenAI API 客户端
+openai>=1.12.0
+
+# HTTP 请求
+httpx>=0.27.0
+
+# 异步支持
+aiofiles>=23.2.1
+
+# 配置管理
+python-dotenv>=1.0.0
+
+# 命令行界面
+rich>=13.7.0
+typer>=0.9.0
+
+# JSON Schema 验证
+pydantic>=2.6.0
+
+# 进度条
+tqdm>=4.66.0
+
+# 日志
+loguru>=0.7.2
