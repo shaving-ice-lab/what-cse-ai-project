@@ -317,6 +317,11 @@
 }
 
 @layer utilities {
+  /* ===== 径向渐变 ===== */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
   /* ===== 动画延迟 ===== */
   .animation-delay-100 { animation-delay: 100ms; }
   .animation-delay-200 { animation-delay: 200ms; }
@@ -383,6 +388,16 @@
   
   .animate-float {
     animation: float 3s ease-in-out infinite;
+  }
+
+  /* ===== 光效扫描动画 ===== */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) skewX(-12deg); }
+    100% { transform: translateX(200%) skewX(-12deg); }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
   }
 
   /* ===== 闪烁点 ===== */

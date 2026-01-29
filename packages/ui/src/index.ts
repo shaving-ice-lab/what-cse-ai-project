@@ -66,6 +66,7 @@ export {
 export { Input, type InputProps } from "./components/ui/input";
 export { Label } from "./components/ui/label";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/ui/popover";
+export { Progress } from "./components/ui/progress";
 export { ScrollArea, ScrollBar } from "./components/ui/scroll-area";
 export {
   Select,
