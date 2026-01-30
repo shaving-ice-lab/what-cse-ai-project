@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   RefreshCw,
   CheckCircle,
@@ -33,6 +33,8 @@ import {
   FileText,
   Activity,
   Search,
+  Code,
+  Image,
 } from "lucide-react";
 import {
   Card,
@@ -61,10 +63,19 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
   Separator,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
 } from "@what-cse/ui";
 import { cn } from "@what-cse/ui";
 import {
@@ -426,122 +437,130 @@ function LeftSidebar({
 
   return (
     <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 pr-3">
+      <div className="flex flex-col gap-2.5 pr-2">
         {/* Generate control */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Settings2 className="h-4 w-4" />
+        <Card className="shadow-sm border border-stone-200 dark:border-stone-700 rounded-lg">
+          <CardHeader className="py-2.5 px-3 border-b border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/30">
+            <CardTitle className="text-[13px] font-semibold flex items-center gap-1.5">
+              <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
               生成设置
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Subject filter */}
-            <div className="space-y-1.5">
-              <Label className="text-xs">科目筛选</Label>
-              <Select value={filterSubject} onValueChange={setFilterSubject}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="全部科目" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部科目</SelectItem>
-                  <SelectItem value="xingce">行测</SelectItem>
-                  <SelectItem value="shenlun">申论</SelectItem>
-                  <SelectItem value="mianshi">面试</SelectItem>
-                  <SelectItem value="gongji">公基</SelectItem>
-                </SelectContent>
-              </Select>
+          <CardContent className="space-y-2.5 p-3">
+            {/* Filters row */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">科目</Label>
+                <Select value={filterSubject} onValueChange={setFilterSubject}>
+                  <SelectTrigger className="h-7 text-[11px]">
+                    <SelectValue placeholder="全部" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-[11px]">全部科目</SelectItem>
+                    <SelectItem value="xingce" className="text-[11px]">行测</SelectItem>
+                    <SelectItem value="shenlun" className="text-[11px]">申论</SelectItem>
+                    <SelectItem value="mianshi" className="text-[11px]">面试</SelectItem>
+                    <SelectItem value="gongji" className="text-[11px]">公基</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">模型</Label>
+                <Select
+                  value={selectedModelId?.toString() ?? "default"}
+                  onValueChange={(v) => setSelectedModelId(v === "default" ? null : parseInt(v))}
+                >
+                  <SelectTrigger className="h-7 text-[11px]">
+                    <SelectValue placeholder="默认" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default" className="text-[11px]">默认模型</SelectItem>
+                    {llmConfigs.map((config) => (
+                      <SelectItem key={config.id} value={config.id.toString()} className="text-[11px]">
+                        {config.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Model selector */}
-            <div className="space-y-1.5">
-              <Label className="text-xs flex items-center gap-1">
-                <Bot className="h-3 w-3" />
-                生成模型
-              </Label>
-              <Select
-                value={selectedModelId?.toString() ?? "default"}
-                onValueChange={(v) => setSelectedModelId(v === "default" ? null : parseInt(v))}
-              >
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="默认模型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">默认模型</SelectItem>
-                  {llmConfigs.map((config) => (
-                    <SelectItem key={config.id} value={config.id.toString()}>
-                      {config.name} ({config.model})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Skip existing toggle */}
+            <div className="flex items-center justify-between py-1">
+              <Label className="text-[11px] text-muted-foreground cursor-pointer">跳过已有内容</Label>
+              <Switch checked={skipExisting} onCheckedChange={setSkipExisting} className="scale-90" />
             </div>
 
-            <Separator />
-
-            <div className="flex items-center justify-between gap-2">
-              <Label className="text-xs cursor-pointer">跳过已有内容</Label>
-              <Switch checked={skipExisting} onCheckedChange={setSkipExisting} />
+            {/* Stats inline */}
+            <div className="flex items-center justify-between text-[11px] py-1.5 px-2 bg-muted/50 rounded-md">
+              <span className="text-muted-foreground">
+                已生成 <span className="font-medium text-emerald-600">{generatedChapters}</span>
+              </span>
+              <span className="text-muted-foreground">
+                待生成 <span className="font-medium text-amber-600">{pendingChapters}</span>
+              </span>
+              <span className="text-muted-foreground">
+                共 <span className="font-medium text-foreground">{totalChapters}</span>
+              </span>
             </div>
+
+            {/* Main action button */}
             <Button
-              className="w-full"
+              className="w-full h-8 text-[12px]"
               size="sm"
               disabled={loadingTree || generatingAll || pendingChapters === 0}
               onClick={onGenerateAll}
             >
               {generatingAll ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
               ) : (
-                <Zap className="h-4 w-4 mr-2" />
+                <Zap className="h-3.5 w-3.5 mr-1.5" />
               )}
               一键全部生成
             </Button>
-            <div className="text-xs text-muted-foreground space-y-0.5">
-              <p>已生成：{generatedChapters} 节</p>
-              <p>待生成：{pendingChapters} 节</p>
-              <p>共 {totalChapters} 节</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1" onClick={onRefreshTree} disabled={loadingTree}>
-                <RefreshCw className={cn("h-4 w-4 mr-1", loadingTree && "animate-spin")} />
+
+            {/* Secondary actions */}
+            <div className="flex gap-1.5">
+              <Button variant="outline" size="sm" className="flex-1 h-7 text-[11px]" onClick={onRefreshTree} disabled={loadingTree}>
+                <RefreshCw className={cn("h-3 w-3 mr-1", loadingTree && "animate-spin")} />
                 刷新
               </Button>
-              <Button variant="outline" size="sm" className="flex-1" onClick={onShowPromptPreview}>
-                <Eye className="h-4 w-4 mr-1" />
+              <Button variant="outline" size="sm" className="flex-1 h-7 text-[11px]" onClick={onShowPromptPreview}>
+                <Eye className="h-3 w-3 mr-1" />
                 Prompt
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-7 text-[11px]"
+                onClick={onTestGenerate}
+                disabled={testGenerating || !filteredTree || totalChapters === 0}
+              >
+                {testGenerating ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <FlaskConical className="h-3 w-3 mr-1" />
+                )}
+                测试
+              </Button>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              onClick={onTestGenerate}
-              disabled={testGenerating || !filteredTree || totalChapters === 0}
-            >
-              {testGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <FlaskConical className="h-4 w-4 mr-2" />
-              )}
-              测试生成（随机章节）
-            </Button>
           </CardContent>
         </Card>
 
         {/* Course tree */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FolderTree className="h-4 w-4" />
+        <Card className="shadow-sm border border-stone-200 dark:border-stone-700 rounded-lg">
+          <CardHeader className="py-2.5 px-3 border-b border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/30">
+            <CardTitle className="text-[13px] font-semibold flex items-center gap-1.5">
+              <FolderTree className="h-3.5 w-3.5 text-muted-foreground" />
               课程结构
               {filterSubject !== "all" && (
-                <Badge variant="secondary" className="text-xs ml-auto">
+                <Badge variant="outline" className="text-[10px] ml-auto h-5 px-1.5">
                   {getSubjectName(filterSubject)}
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2">
             {loadingTree ? (
               <div className="space-y-2">
                 {[1, 2, 3, 4].map((i) => (
@@ -1288,10 +1307,6 @@ export default function ContentGenerationPage() {
             {stats?.total_chapters ?? 0} 章节
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchTree(); }} disabled={loading}>
-          <RefreshCw className={cn("mr-1.5 h-4 w-4", loading && "animate-spin")} />
-          刷新
-        </Button>
       </div>
 
       <div className="flex gap-4 h-[calc(100vh-11rem)]">
@@ -1321,438 +1336,369 @@ export default function ContentGenerationPage() {
           />
         </aside>
 
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-          <Card className="flex-shrink-0">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FlaskConical className="h-4 w-4" />
-                测试任务
-                {testTasks.length > 0 && (
-                  <Badge variant="secondary" className="text-xs ml-auto">
-                    {testTasks.length}
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {testTasks.length === 0 ? (
-                <div className="p-4 text-xs text-muted-foreground text-center">暂无测试任务</div>
-              ) : (
-                <ScrollArea className="max-h-[220px]">
-                  <div className="divide-y">
-                    {testTasks.map((task) => {
-                      const isSelected = selectedTestTaskId === task.taskId;
-                      const isLoading = loadingTestTaskIds.has(task.taskId);
-                      return (
-                        <div key={`test-task-${task.taskId}`} className="flex items-center justify-between gap-3 px-3 py-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <TaskStatusBadge status={task.status} />
-                            <div className="min-w-0">
-                              <p className="text-xs font-medium truncate">
-                                {task.courseTitle} - {task.chapterTitle}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground">任务 #{task.taskId}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {task.status === "completed" ? (
-                              <Button
-                                size="sm"
-                                variant={isSelected ? "default" : "outline"}
-                                className="h-7 text-xs"
-                                onClick={() => handleViewTestTask(task)}
-                                disabled={isLoading}
-                              >
-                                {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "查看"}
-                              </Button>
-                            ) : task.status === "failed" ? (
-                              <Badge variant="destructive" className="text-xs">
-                                失败
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">
-                                处理中
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              )}
-
-              {selectedTestTask && (
-                <div className="border-t">
-                  <div className="flex items-center justify-between px-3 py-2">
-                    <div className="text-xs font-medium">测试内容预览</div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs"
-                      onClick={() => setSelectedTestTaskId(null)}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* 内容管理区域 - 3个 Tab 组织 */}
+          <Card className="flex-1 flex flex-col shadow-sm border border-stone-200 dark:border-stone-700 rounded-lg overflow-hidden">
+            <Tabs defaultValue="generated" className="flex-1 flex flex-col">
+              <CardHeader className="flex-shrink-0 p-0">
+                <div className="flex items-center justify-between px-3 py-2 bg-stone-50 dark:bg-stone-800/30 border-b border-stone-200 dark:border-stone-700">
+                  <TabsList className="h-8 bg-muted/60 p-0.5 gap-0.5 rounded-md">
+                    <TabsTrigger 
+                      value="generated" 
+                      className="h-7 px-2.5 text-[12px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded"
                     >
-                      关闭
-                    </Button>
-                  </div>
-                  {selectedTestTask.error && (
-                    <div className="px-3 pb-2 text-xs text-red-600">{selectedTestTask.error}</div>
-                  )}
-                  <ScrollArea className="max-h-[45vh]">
-                    {selectedTestTask.content ? (
-                      <TestContentRenderer content={selectedTestTask.content} />
-                    ) : (
-                      <div className="px-4 pb-4 text-xs text-muted-foreground">
-                        内容尚未准备好，请稍后再试。
-                      </div>
-                    )}
-                  </ScrollArea>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Chapters With Content Card */}
-          <Card className="flex-shrink-0">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  已生成内容
-                  {chaptersWithContent.length > 0 && (
-                    <Badge variant="secondary" className="text-xs ml-2">
-                      {chaptersWithContent.length}
-                    </Badge>
-                  )}
-                </CardTitle>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={fetchTree}
-                  disabled={loadingTree}
-                  className="h-7 text-xs"
-                >
-                  <RefreshCw className={cn("h-3 w-3", loadingTree && "animate-spin")} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loadingTree ? (
-                <div className="p-4 flex items-center justify-center">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : chaptersWithContent.length === 0 ? (
-                <div className="p-4 text-xs text-muted-foreground text-center">
-                  暂无已生成的内容
-                  <p className="mt-1 text-[11px]">使用左侧课程树的"生成"按钮来生成章节内容</p>
-                </div>
-              ) : (
-                <ScrollArea className="max-h-[250px]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12 py-2 text-xs">ID</TableHead>
-                        <TableHead className="py-2 text-xs">章节标题</TableHead>
-                        <TableHead className="py-2 text-xs">所属课程</TableHead>
-                        <TableHead className="w-16 py-2 text-xs">科目</TableHead>
-                        <TableHead className="w-16 py-2 text-xs">操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {chaptersWithContent.slice(0, 20).map((chapter) => (
-                        <TableRow key={chapter.id} className="hover:bg-muted/50">
-                          <TableCell className="py-2 text-xs font-mono">{chapter.id}</TableCell>
-                          <TableCell className="py-2 text-xs">
-                            <span className="line-clamp-1">{chapter.title}</span>
-                          </TableCell>
-                          <TableCell className="py-2 text-xs">
-                            <span className="line-clamp-1 text-muted-foreground">{chapter.courseTitle}</span>
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <Badge variant="outline" className="text-xs">
-                              {getSubjectName(chapter.subject)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-2 text-xs"
-                              onClick={() => handleViewChapterContent(chapter.id)}
-                            >
-                              <Eye className="h-3 w-3 mr-1" />
-                              查看
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              )}
-              {chaptersWithContent.length > 20 && (
-                <div className="px-4 py-2 border-t text-xs text-muted-foreground text-center">
-                  显示前 20 条，共 {chaptersWithContent.length} 条已生成内容
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="flex-1 flex flex-col overflow-hidden">
-            <CardHeader className="flex-shrink-0 py-3 px-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              {/* Left: Title and Status */}
-              <div className="flex items-center gap-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  任务列表
-                </CardTitle>
-                {tasks.length > 0 && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Badge variant="secondary">{taskStats.total} 任务</Badge>
-                    {taskStats.completed > 0 && (
-                      <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        {taskStats.completed}
-                      </Badge>
-                    )}
-                    {(taskStats.processing > 0 || taskStats.pending > 0) && (
-                      <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        {taskStats.processing + taskStats.pending}
-                      </Badge>
-                    )}
-                    {taskStats.failed > 0 && (
-                      <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
-                        <XCircle className="h-3 w-3 mr-1" />
-                        {taskStats.failed}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right: Refresh */}
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => fetchData()}
-                  disabled={loading}
-                  className="h-7 text-xs"
-                >
-                  <RefreshCw className={cn("h-3 w-3 mr-1", loading && "animate-spin")} />
-                  刷新
-                </Button>
-              </div>
-            </div>
-
-            {/* Filter Row */}
-            {tasks.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">
-                {/* Search */}
-                <div className="relative flex-1 min-w-[200px] max-w-[300px]">
-                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="搜索任务..."
-                    value={filterKeyword}
-                    onChange={(e) => setFilterKeyword(e.target.value)}
-                    className="h-7 text-xs pl-7"
-                  />
-                </div>
-
-                {/* Status Filter */}
-                <Select value={filterStatus} onValueChange={(v: typeof filterStatus) => setFilterStatus(v)}>
-                  <SelectTrigger className="w-24 h-7 text-xs">
-                    <SelectValue placeholder="状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部</SelectItem>
-                    <SelectItem value="completed">已完成</SelectItem>
-                    <SelectItem value="processing">处理中</SelectItem>
-                    <SelectItem value="pending">待处理</SelectItem>
-                    <SelectItem value="failed">失败</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Clear Filters */}
-                {(filterKeyword || filterStatus !== "all") && (
+                      <FileText className="h-3 w-3 mr-1.5 text-primary" />
+                      已生成
+                      {chaptersWithContent.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] ml-1 h-4 px-1 font-medium">
+                          {chaptersWithContent.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="test" 
+                      className="h-7 px-2.5 text-[12px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded"
+                    >
+                      <FlaskConical className="h-3 w-3 mr-1.5 text-violet-500" />
+                      测试
+                      {testTasks.length > 0 && (
+                        <Badge className="text-[10px] ml-1 h-4 px-1 font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+                          {testTasks.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="tasks" 
+                      className="h-7 px-2.5 text-[12px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded"
+                    >
+                      <Activity className="h-3 w-3 mr-1.5 text-amber-500" />
+                      任务
+                      {tasks.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] ml-1 h-4 px-1 font-medium">
+                          {tasks.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
-                      setFilterKeyword("");
-                      setFilterStatus("all");
-                    }}
-                    className="h-7 text-xs"
+                    onClick={() => { fetchData(); fetchTree(); }}
+                    disabled={loading || loadingTree}
+                    className="h-7 text-[11px] px-2"
                   >
-                    清除筛选
+                    <RefreshCw className={cn("h-3 w-3 mr-1", (loading || loadingTree) && "animate-spin")} />
+                    刷新
                   </Button>
-                )}
-              </div>
-            )}
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
-            <ScrollArea className="flex-1">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-16 py-2 text-xs">状态</TableHead>
-                    <TableHead className="py-2 text-xs">任务名称</TableHead>
-                    <TableHead className="w-28 py-2 text-xs">时间</TableHead>
-                    <TableHead className="w-20 py-2 text-xs">类型</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {/* Empty State */}
-                  {filteredTasks.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-16">
-                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                          {loading ? (
-                            <>
-                              <Loader2 className="h-8 w-8 animate-spin opacity-50" />
-                              <p className="text-sm">正在加载任务...</p>
-                            </>
-                          ) : tasks.length === 0 ? (
-                            <>
-                              <Activity className="h-8 w-8 opacity-30" />
-                              <p className="text-sm">暂无任务</p>
-                              <p className="text-xs">使用左侧课程树创建生成任务</p>
-                            </>
-                          ) : (
-                            <>
-                              <Search className="h-8 w-8 opacity-30" />
-                              <p className="text-sm">没有匹配的任务</p>
-                              <p className="text-xs">请调整筛选条件</p>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-
-                  {/* Task Rows */}
-                  {filteredTasks.map((task) => (
-                    <TableRow
-                      key={`task-${task.id}`}
-                      className={`group cursor-pointer hover:bg-muted/50 ${
-                        task.status === "completed"
-                          ? "bg-emerald-50/30 dark:bg-emerald-950/10"
-                          : task.status === "processing" || task.status === "generating"
-                            ? "bg-violet-50/30 dark:bg-violet-950/10"
-                            : task.status === "failed"
-                              ? "bg-red-50/30 dark:bg-red-950/10"
-                              : ""
-                      }`}
-                    >
-                      <TableCell className="py-2">
-                        <div className="flex items-center gap-1.5">
-                          {task.status === "completed" && (
-                            <CheckCircle className="h-4 w-4 text-emerald-500" />
-                          )}
-                          {(task.status === "processing" || task.status === "generating") && (
-                            <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
-                          )}
-                          {task.status === "pending" && <Clock className="h-4 w-4 text-gray-400" />}
-                          {task.status === "failed" && <XCircle className="h-4 w-4 text-red-500" />}
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <div className="flex flex-col">
-                          <span
-                            className={`text-sm line-clamp-1 ${
-                              task.status === "completed"
-                                ? "text-foreground"
-                                : task.status === "processing" || task.status === "generating"
-                                  ? "text-violet-700 dark:text-violet-300 font-medium"
-                                  : task.status === "failed"
-                                    ? "text-red-700 dark:text-red-300"
-                                    : "text-muted-foreground"
-                            }`}
-                          >
-                            {task.template_name ?? `任务 #${task.id}`}
-                          </span>
-                          {task.subject && (
-                            <span
-                              className={`text-xs line-clamp-1 ${
-                                task.status === "failed"
-                                  ? "text-red-500"
-                                  : "text-muted-foreground"
-                              }`}
-                            >
-                              {getSubjectName(task.subject)}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2 text-xs text-muted-foreground">
-                        {new Date(task.created_at).toLocaleTimeString("zh-CN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <Badge variant="outline" className="text-xs whitespace-nowrap">
-                          {getTaskTypeLabel(task.task_type)}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-            {/* Footer Stats */}
-            {tasks.length > 0 && (
-              <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t bg-muted/20">
-                <div className="text-xs text-muted-foreground">
-                  显示 {filteredTasks.length} / {tasks.length} 任务
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-xs text-muted-foreground">
-                    {taskStats.completed > 0 && (
-                      <span className="text-emerald-600 mr-3">{taskStats.completed} 完成</span>
-                    )}
-                    {taskStats.processing > 0 && (
-                      <span className="text-violet-600 mr-3">{taskStats.processing} 进行中</span>
-                    )}
-                    {taskStats.pending > 0 && (
-                      <span className="text-gray-500 mr-3">{taskStats.pending} 待处理</span>
-                    )}
-                    {taskStats.failed > 0 && (
-                      <span className="text-red-500">{taskStats.failed} 失败</span>
-                    )}
-                  </div>
+              </CardHeader>
+              
+              <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
+                {/* 已生成内容 Tab */}
+                <TabsContent value="generated" className="flex-1 flex flex-col m-0 data-[state=inactive]:hidden">
+                  {loadingTree ? (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <span className="text-[11px] text-muted-foreground">加载中...</span>
+                    </div>
+                  ) : chaptersWithContent.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-1.5 text-center">
+                      <FileText className="h-8 w-8 text-muted-foreground/30" />
+                      <p className="text-[12px] text-muted-foreground">暂无已生成的内容</p>
+                      <p className="text-[11px] text-muted-foreground/60">使用左侧"生成"按钮来生成章节内容</p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="flex-1">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-muted/60 z-10">
+                          <TableRow className="hover:bg-transparent border-b border-stone-200 dark:border-stone-700">
+                            <TableHead className="w-10 py-2 px-2 text-[10px] font-medium text-muted-foreground">ID</TableHead>
+                            <TableHead className="py-2 px-2 text-[10px] font-medium text-muted-foreground">章节标题</TableHead>
+                            <TableHead className="py-2 px-2 text-[10px] font-medium text-muted-foreground">所属课程</TableHead>
+                            <TableHead className="w-14 py-2 px-2 text-[10px] font-medium text-muted-foreground">科目</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {chaptersWithContent.map((chapter, idx) => (
+                            <TableRow 
+                              key={chapter.id} 
+                              className={cn(
+                                "group cursor-pointer transition-colors border-b border-border/50",
+                                "hover:bg-amber-50/50 dark:hover:bg-amber-950/20",
+                                idx % 2 === 0 ? "bg-transparent" : "bg-muted/30"
+                              )}
+                              onClick={() => handleViewChapterContent(chapter.id)}
+                            >
+                              <TableCell className="py-2 px-2 text-[10px] font-mono text-muted-foreground">
+                                #{chapter.id}
+                              </TableCell>
+                              <TableCell className="py-2 px-2 text-[11px]">
+                                <span className="line-clamp-1 font-medium text-foreground">{chapter.title}</span>
+                              </TableCell>
+                              <TableCell className="py-2 px-2 text-[10px]">
+                                <span className="line-clamp-1 text-muted-foreground">{chapter.courseTitle}</span>
+                              </TableCell>
+                              <TableCell className="py-2 px-2">
+                                <span className="text-[10px] text-muted-foreground">{getSubjectName(chapter.subject)}</span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  )}
+                </TabsContent>
+
+                {/* 测试任务 Tab */}
+                <TabsContent value="test" className="flex-1 flex flex-col m-0 data-[state=inactive]:hidden">
+                  {testTasks.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-1.5 text-center">
+                      <FlaskConical className="h-8 w-8 text-violet-300 dark:text-violet-700" />
+                      <p className="text-[12px] text-muted-foreground">暂无测试任务</p>
+                      <p className="text-[11px] text-muted-foreground/60">点击左侧"测试"按钮创建测试任务</p>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <ScrollArea className={cn("flex-1", selectedTestTask && "max-h-[40%]")}>
+                        <Table>
+                          <TableHeader className="sticky top-0 bg-muted/60 z-10">
+                            <TableRow className="hover:bg-transparent border-b border-stone-200 dark:border-stone-700">
+                              <TableHead className="w-16 py-2 px-2 text-[10px] font-medium text-muted-foreground">状态</TableHead>
+                              <TableHead className="py-2 px-2 text-[10px] font-medium text-muted-foreground">任务详情</TableHead>
+                              <TableHead className="w-14 py-2 px-2 text-[10px] font-medium text-muted-foreground text-center">操作</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {testTasks.map((task) => {
+                              const isSelected = selectedTestTaskId === task.taskId;
+                              const isLoading = loadingTestTaskIds.has(task.taskId);
+                              return (
+                                <TableRow 
+                                  key={`test-task-${task.taskId}`}
+                                  className={cn(
+                                    "group cursor-pointer transition-colors border-b border-border/50",
+                                    task.status === "completed"
+                                      ? "bg-emerald-50/40 hover:bg-emerald-50/60 dark:bg-emerald-950/15 dark:hover:bg-emerald-950/25"
+                                      : task.status === "processing" || task.status === "generating"
+                                        ? "bg-violet-50/40 hover:bg-violet-50/60 dark:bg-violet-950/15 dark:hover:bg-violet-950/25"
+                                        : task.status === "failed"
+                                          ? "bg-red-50/40 hover:bg-red-50/60 dark:bg-red-950/15 dark:hover:bg-red-950/25"
+                                          : "hover:bg-muted/50"
+                                  )}
+                                >
+                                  <TableCell className="py-2 px-2">
+                                    <TaskStatusBadge status={task.status} />
+                                  </TableCell>
+                                  <TableCell className="py-2 px-2">
+                                    <p className="text-[11px] font-medium truncate text-foreground">
+                                      {task.courseTitle} - {task.chapterTitle}
+                                    </p>
+                                  </TableCell>
+                                  <TableCell className="py-2 px-2 text-center">
+                                    {task.status === "completed" ? (
+                                      <Button
+                                        size="sm"
+                                        variant={isSelected ? "default" : "ghost"}
+                                        className="h-5 text-[10px] px-1.5"
+                                        onClick={() => handleViewTestTask(task)}
+                                        disabled={isLoading}
+                                      >
+                                        {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "查看"}
+                                      </Button>
+                                    ) : task.status === "failed" ? (
+                                      <span className="text-[10px] text-red-500">失败</span>
+                                    ) : (
+                                      <span className="text-[10px] text-muted-foreground">处理中</span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </ScrollArea>
+                      
+                      {/* 测试内容预览区 */}
+                      {selectedTestTask && (
+                        <div className="flex-1 flex flex-col border-t border-stone-200 dark:border-stone-700 bg-muted/20 overflow-hidden">
+                          <div className="flex-shrink-0 flex items-center justify-between px-3 py-1.5 bg-violet-50 dark:bg-violet-950/30 border-b border-violet-200 dark:border-violet-800">
+                            <div className="flex items-center gap-1.5">
+                              <Eye className="h-3 w-3 text-violet-500" />
+                              <span className="text-[11px] font-medium">内容预览</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 text-[10px] px-1.5"
+                              onClick={() => setSelectedTestTaskId(null)}
+                            >
+                              关闭
+                            </Button>
+                          </div>
+                          {selectedTestTask.error && (
+                            <div className="px-3 py-1.5 text-[11px] text-red-600 bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800">{selectedTestTask.error}</div>
+                          )}
+                          <ScrollArea className="flex-1">
+                            {selectedTestTask.content ? (
+                              <TestContentRenderer content={selectedTestTask.content} />
+                            ) : (
+                              <div className="px-4 py-6 text-[11px] text-muted-foreground text-center">
+                                内容尚未准备好，请稍后再试。
+                              </div>
+                            )}
+                          </ScrollArea>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* 任务列表 Tab */}
+                <TabsContent value="tasks" className="flex-1 flex flex-col m-0 data-[state=inactive]:hidden">
+                  {/* Filter Row */}
+                  {tasks.length > 0 && (
+                    <div className="flex-shrink-0 flex flex-wrap items-center gap-1.5 px-2 py-1.5 border-b border-stone-200 dark:border-stone-700 bg-muted/30">
+                      <div className="relative flex-1 min-w-[100px] max-w-[150px]">
+                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                        <Input
+                          placeholder="搜索..."
+                          value={filterKeyword}
+                          onChange={(e) => setFilterKeyword(e.target.value)}
+                          className="h-6 text-[11px] pl-6"
+                        />
+                      </div>
+                      <Select value={filterStatus} onValueChange={(v: typeof filterStatus) => setFilterStatus(v)}>
+                        <SelectTrigger className="w-[65px] h-6 text-[11px]">
+                          <SelectValue placeholder="状态" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="text-[11px]">全部</SelectItem>
+                          <SelectItem value="completed" className="text-[11px]">完成</SelectItem>
+                          <SelectItem value="processing" className="text-[11px]">处理中</SelectItem>
+                          <SelectItem value="pending" className="text-[11px]">待处理</SelectItem>
+                          <SelectItem value="failed" className="text-[11px]">失败</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {(filterKeyword || filterStatus !== "all") && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => { setFilterKeyword(""); setFilterStatus("all"); }}
+                          className="h-6 text-[10px] px-1.5"
+                        >
+                          清除
+                        </Button>
+                      )}
+                      <span className="ml-auto text-[10px] text-muted-foreground">
+                        {filteredTasks.length}/{tasks.length}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {filteredTasks.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-1.5 text-muted-foreground">
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                          <p className="text-[11px]">加载中...</p>
+                        </>
+                      ) : tasks.length === 0 ? (
+                        <>
+                          <Activity className="h-8 w-8 text-muted-foreground/30" />
+                          <p className="text-[12px]">暂无任务</p>
+                          <p className="text-[11px] text-muted-foreground/60">使用左侧"生成"按钮创建任务</p>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-6 w-6 text-muted-foreground/30" />
+                          <p className="text-[11px]">没有匹配的任务</p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <ScrollArea className="flex-1">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-muted/60 z-10">
+                          <TableRow className="hover:bg-transparent border-b border-stone-200 dark:border-stone-700">
+                            <TableHead className="w-10 py-2 px-2 text-[10px] font-medium text-muted-foreground">状态</TableHead>
+                            <TableHead className="py-2 px-2 text-[10px] font-medium text-muted-foreground">任务名称</TableHead>
+                            <TableHead className="w-14 py-2 px-2 text-[10px] font-medium text-muted-foreground">时间</TableHead>
+                            <TableHead className="w-12 py-2 px-2 text-[10px] font-medium text-muted-foreground">类型</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredTasks.map((task) => (
+                            <TableRow
+                              key={`task-${task.id}`}
+                              className={cn(
+                                "group cursor-pointer transition-colors border-b border-border/50",
+                                task.status === "completed"
+                                  ? "bg-emerald-50/40 hover:bg-emerald-50/60 dark:bg-emerald-950/15 dark:hover:bg-emerald-950/25"
+                                  : task.status === "processing" || task.status === "generating"
+                                    ? "bg-violet-50/40 hover:bg-violet-50/60 dark:bg-violet-950/15 dark:hover:bg-violet-950/25"
+                                    : task.status === "failed"
+                                      ? "bg-red-50/40 hover:bg-red-50/60 dark:bg-red-950/15 dark:hover:bg-red-950/25"
+                                      : "hover:bg-muted/50"
+                              )}
+                            >
+                              <TableCell className="py-2 px-2">
+                                {task.status === "completed" && <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />}
+                                {(task.status === "processing" || task.status === "generating") && <Loader2 className="h-3.5 w-3.5 text-violet-500 animate-spin" />}
+                                {task.status === "pending" && <Clock className="h-3.5 w-3.5 text-gray-400" />}
+                                {task.status === "failed" && <XCircle className="h-3.5 w-3.5 text-red-500" />}
+                              </TableCell>
+                              <TableCell className="py-2 px-2">
+                                <span className={cn(
+                                  "text-[11px] line-clamp-1",
+                                  task.status === "completed" ? "text-foreground" :
+                                  task.status === "processing" || task.status === "generating" ? "text-violet-600 dark:text-violet-400" :
+                                  task.status === "failed" ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
+                                )}>
+                                  {task.template_name ?? `任务 #${task.id}`}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-2 px-2 text-[10px] text-muted-foreground font-mono">
+                                {new Date(task.created_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+                              </TableCell>
+                              <TableCell className="py-2 px-2">
+                                <span className="text-[10px] text-muted-foreground">{getTaskTypeLabel(task.task_type)}</span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  )}
+                  
+                  {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex-shrink-0 flex items-center justify-center gap-1 px-2 py-1.5 border-t border-stone-200 dark:border-stone-700 bg-muted/30">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1}
-                        className="h-7 text-xs"
+                        className="h-5 text-[10px] px-1.5"
                       >
                         上一页
                       </Button>
-                      <span className="text-xs text-muted-foreground">
-                        {page} / {totalPages}
+                      <span className="text-[10px] text-muted-foreground">
+                        {page}/{totalPages}
                       </span>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={page === totalPages}
-                        className="h-7 text-xs"
+                        className="h-5 text-[10px] px-1.5"
                       >
                         下一页
                       </Button>
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-            </CardContent>
+                </TabsContent>
+              </CardContent>
+            </Tabs>
           </Card>
         </div>
       </div>
@@ -1895,49 +1841,884 @@ export default function ContentGenerationPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Chapter Content Preview Dialog */}
+      {/* Chapter Content Preview Dialog - 重新设计 */}
       <Dialog open={showChapterContentDialog} onOpenChange={setShowChapterContentDialog}>
-        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              章节内容预览
+        <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0 gap-0 border border-border/60 rounded-xl">
+          {/* Header */}
+          <DialogHeader className="flex-shrink-0 px-4 py-3 border-b border-border bg-muted/50 rounded-t-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <DialogTitle className="flex items-center gap-2 text-base">
+                  <div className="p-1.5 bg-primary/10 rounded-lg">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block truncate text-[14px] font-semibold">
+                      {chaptersWithContent.find(c => c.id === selectedChapterForPreview)?.title || "章节内容预览"}
+                    </span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      {chaptersWithContent.find(c => c.id === selectedChapterForPreview)?.courseTitle}
+                    </span>
+                  </div>
+                </DialogTitle>
+                <DialogDescription className="sr-only">章节内容详细预览</DialogDescription>
+              </div>
               {selectedChapterForPreview && (
-                <Badge variant="outline" className="ml-2">
-                  章节 #{selectedChapterForPreview}
-                </Badge>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <Badge variant="outline" className="text-[10px] font-mono h-5 px-1.5 border-border">
+                    #{selectedChapterForPreview}
+                  </Badge>
+                  <Badge className="text-[10px] h-5 px-1.5 bg-primary/10 text-primary hover:bg-primary/10 border-0">
+                    {getSubjectName(chaptersWithContent.find(c => c.id === selectedChapterForPreview)?.subject || "")}
+                  </Badge>
+                </div>
               )}
-            </DialogTitle>
+            </div>
           </DialogHeader>
-          <div className="flex-shrink-0 flex items-center gap-4 text-xs text-muted-foreground border-b pb-3">
-            {selectedChapterForPreview && (
-              <>
-                <span>章节 ID: {selectedChapterForPreview}</span>
-                {chaptersWithContent.find(c => c.id === selectedChapterForPreview) && (
-                  <>
-                    <span>课程: {chaptersWithContent.find(c => c.id === selectedChapterForPreview)?.courseTitle}</span>
-                    <span>科目: {getSubjectName(chaptersWithContent.find(c => c.id === selectedChapterForPreview)?.subject || "")}</span>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+          
+          {/* Content Area - 使用固定高度确保滚动 */}
+          <div className="flex-1 overflow-hidden">
             {chapterContentLoading ? (
-              <div className="p-8 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="h-full flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[13px] font-medium">加载内容中...</p>
+                  <p className="text-[11px] text-muted-foreground">请稍候</p>
+                </div>
               </div>
             ) : chapterContentData ? (
-              <TestContentRenderer content={chapterContentData} />
+              <ChapterContentViewer content={chapterContentData} />
             ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                暂无内容数据或加载失败
+              <div className="h-full flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-muted-foreground/50" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[13px] font-medium text-muted-foreground">暂无内容数据</p>
+                  <p className="text-[11px] text-muted-foreground/70">内容可能尚未生成或加载失败</p>
+                </div>
               </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
 
+    </div>
+  );
+}
+
+// ============================================
+// Mermaid Renderer Component
+// ============================================
+
+interface MermaidRendererProps {
+  code: string;
+  className?: string;
+}
+
+function MermaidRenderer({ code, className }: MermaidRendererProps) {
+  const [showSource, setShowSource] = useState(false);
+  const [svg, setSvg] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const renderMermaid = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // 动态导入 mermaid
+        const mermaid = (await import("mermaid")).default;
+        
+        // 初始化 mermaid 配置
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+          },
+          mindmap: {
+            useMaxWidth: true,
+          },
+        });
+
+        // 渲染 mermaid 图表
+        const id = `mermaid-${Date.now()}`;
+        const { svg: renderedSvg } = await mermaid.render(id, code.trim());
+        
+        if (isMounted) {
+          setSvg(renderedSvg);
+          setLoading(false);
+        }
+      } catch (err: any) {
+        console.error("Mermaid render error:", err);
+        if (isMounted) {
+          setError(err.message || "渲染失败");
+          setLoading(false);
+        }
+      }
+    };
+
+    renderMermaid();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [code]);
+
+  return (
+    <div className={cn("rounded-lg border border-border/60 overflow-hidden", className)}>
+      {/* Toggle Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-muted/40 border-b border-border/60">
+        <span className="text-[11px] font-medium text-muted-foreground">
+          {showSource ? "源代码" : "渲染视图"}
+        </span>
+        <div className="flex items-center gap-1">
+          <Button
+            variant={showSource ? "ghost" : "secondary"}
+            size="sm"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => setShowSource(false)}
+          >
+            <Image className="h-3 w-3 mr-1" />
+            渲染
+          </Button>
+          <Button
+            variant={showSource ? "secondary" : "ghost"}
+            size="sm"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => setShowSource(true)}
+          >
+            <Code className="h-3 w-3 mr-1" />
+            源码
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 bg-white dark:bg-stone-900/30">
+        {showSource ? (
+          <pre className="text-[11px] bg-stone-50 dark:bg-stone-900/50 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono border border-border/40 max-h-[300px] overflow-y-auto">
+            {code}
+          </pre>
+        ) : loading ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <span className="text-[11px] text-muted-foreground">渲染中...</span>
+          </div>
+        ) : error ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded-md border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+              <span className="text-[11px] text-amber-700 dark:text-amber-300">
+                Mermaid 渲染失败: {error}
+              </span>
+            </div>
+            <pre className="text-[11px] bg-stone-50 dark:bg-stone-900/50 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono border border-border/40 max-h-[200px] overflow-y-auto">
+              {code}
+            </pre>
+          </div>
+        ) : (
+          <div
+            ref={containerRef}
+            className="mermaid-container overflow-x-auto"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// Chapter Content Viewer (Dialog with Tabs)
+// ============================================
+
+interface ChapterContentViewerProps {
+  content: any;
+}
+
+function ChapterContentViewer({ content }: ChapterContentViewerProps) {
+  const [activeTab, setActiveTab] = useState("overview");
+
+  if (!content) {
+    return <div className="text-center py-8 text-[13px] text-muted-foreground">暂无内容</div>;
+  }
+
+  // Handle parse error case
+  if (content._parseError) {
+    return (
+      <ScrollArea className="h-full">
+        <div className="p-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <h3 className="font-semibold text-amber-800 text-[13px]">JSON 解析失败</h3>
+            </div>
+            <p className="text-[12px] text-amber-700">{content._message || "无法解析生成的内容，显示原始数据"}</p>
+          </div>
+          <div className="bg-stone-50 rounded-lg p-3 border border-border/60">
+            <h4 className="text-[12px] font-medium text-stone-600 mb-2">原始响应内容</h4>
+            <pre className="text-[11px] bg-white p-3 rounded-lg overflow-x-auto font-mono whitespace-pre-wrap border border-border/40">
+              {content._raw || JSON.stringify(content, null, 2)}
+            </pre>
+          </div>
+        </div>
+      </ScrollArea>
+    );
+  }
+
+  const { exam_analysis, lesson_content, practice_problems, homework } = content;
+
+  // 计算各部分的内容数量
+  const conceptCount = lesson_content?.core_concepts?.length || 0;
+  const stepCount = lesson_content?.method_steps?.length || 0;
+  const formulaCount = lesson_content?.formulas?.length || 0;
+  const mistakeCount = lesson_content?.common_mistakes?.length || 0;
+  const problemCount = practice_problems?.length || 0;
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Tab Navigation */}
+      <div className="flex-shrink-0 border-b border-border bg-muted/30">
+        <div className="px-3 py-1">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="h-8 w-full justify-start bg-transparent p-0 gap-1">
+              <TabsTrigger
+                value="overview"
+                className="h-7 px-2.5 text-[11px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded data-[state=active]:border data-[state=active]:border-border"
+              >
+                <BookOpen className="h-3 w-3 mr-1" />
+                概览
+              </TabsTrigger>
+              <TabsTrigger
+                value="learning"
+                className="h-7 px-2.5 text-[11px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded data-[state=active]:border data-[state=active]:border-border"
+              >
+                <Lightbulb className="h-3 w-3 mr-1" />
+                核心知识
+                {conceptCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[9px]">{conceptCount}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="methods"
+                className="h-7 px-2.5 text-[11px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded data-[state=active]:border data-[state=active]:border-border"
+              >
+                <ListOrdered className="h-3 w-3 mr-1" />
+                方法技巧
+                {(stepCount + formulaCount) > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[9px]">{stepCount + formulaCount}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="practice"
+                className="h-7 px-2.5 text-[11px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded data-[state=active]:border data-[state=active]:border-border"
+              >
+                <ClipboardList className="h-3 w-3 mr-1" />
+                练习题目
+                {problemCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[9px]">{problemCount}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="tips"
+                className="h-7 px-2.5 text-[11px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm rounded data-[state=active]:border data-[state=active]:border-border"
+              >
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                易错提醒
+                {mistakeCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[9px]">{mistakeCount}</Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Tab Content - 可滚动区域 */}
+      <ScrollArea className="flex-1 h-0">
+        <div className="p-4">
+          {activeTab === "overview" && (
+            <div className="space-y-4">
+              {/* 章节标题卡片 */}
+              {content.chapter_title && (
+                <div className="bg-gradient-to-r from-primary/8 via-primary/4 to-transparent rounded-lg p-4 border border-primary/20">
+                  <h2 className="text-[15px] font-bold text-primary">
+                    {content.chapter_title}
+                  </h2>
+                  {content.knowledge_point && (
+                    <p className="text-[12px] text-muted-foreground mt-1.5">{content.knowledge_point}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {content.estimated_duration && (
+                      <span className="flex items-center gap-1 bg-white/60 dark:bg-white/10 px-2 py-1 rounded-md text-[11px] border border-border/40">
+                        <Clock className="h-3 w-3 text-primary/70" />
+                        <span>{content.estimated_duration}</span>
+                      </span>
+                    )}
+                    {content.difficulty_level && (
+                      <Badge variant="secondary" className="px-2 h-5 text-[10px]">{content.difficulty_level}</Badge>
+                    )}
+                    {content.word_count_target && (
+                      <span className="flex items-center gap-1 bg-white/60 dark:bg-white/10 px-2 py-1 rounded-md text-[11px] border border-border/40">
+                        <FileText className="h-3 w-3 text-primary/70" />
+                        <span>{content.word_count_target}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 内容截断提示 */}
+              {content._isContentTruncated && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    <span className="text-[12px] text-amber-700">
+                      内容因 Token 限制被截断，仅显示部分内容。
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* 考情分析 */}
+              {exam_analysis && (
+                <section className="bg-gradient-to-br from-blue-50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/10 rounded-lg p-4 border border-blue-100 dark:border-blue-900/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-500 rounded text-white">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100 text-[13px]">考情分析</h3>
+                    {exam_analysis.frequency && (
+                      <Badge className="ml-auto h-5 px-1.5 text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300">{exam_analysis.frequency}</Badge>
+                    )}
+                  </div>
+                  <p className="text-[12px] text-stone-700 dark:text-stone-300 leading-relaxed">{exam_analysis.description}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
+                    {exam_analysis.score_weight && (
+                      <div className="bg-white/70 dark:bg-white/10 rounded-md p-2 border border-blue-100/50">
+                        <p className="text-[10px] text-stone-500 dark:text-stone-400">分值权重</p>
+                        <p className="text-[12px] font-medium text-blue-800 dark:text-blue-200">{exam_analysis.score_weight}</p>
+                      </div>
+                    )}
+                    {exam_analysis.difficulty_trend && (
+                      <div className="bg-white/70 dark:bg-white/10 rounded-md p-2 border border-blue-100/50">
+                        <p className="text-[10px] text-stone-500 dark:text-stone-400">难度趋势</p>
+                        <p className="text-[12px] font-medium text-blue-800 dark:text-blue-200">{exam_analysis.difficulty_trend}</p>
+                      </div>
+                    )}
+                    {exam_analysis.recent_trends && (
+                      <div className="bg-white/70 dark:bg-white/10 rounded-md p-2 border border-blue-100/50 col-span-2 md:col-span-1">
+                        <p className="text-[10px] text-stone-500 dark:text-stone-400">最新趋势</p>
+                        <p className="text-[12px] font-medium text-blue-800 dark:text-blue-200 line-clamp-2">{exam_analysis.recent_trends}</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* 学习目标 */}
+              {lesson_content?.learning_goals && lesson_content.learning_goals.length > 0 && (
+                <section className="bg-white dark:bg-white/5 rounded-lg p-4 border border-border/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded text-white">
+                      <Target className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">学习目标</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {lesson_content.learning_goals.map((goal: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-[12px]">
+                        <CheckCircle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-stone-700 dark:text-stone-300">{goal}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* 课程导入 */}
+              {lesson_content?.introduction && (
+                <section className="bg-white dark:bg-white/5 rounded-lg p-4 border border-border/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-emerald-500 to-teal-500 rounded text-white">
+                      <BookOpen className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">课程导入</h3>
+                  </div>
+                  <p className="text-[12px] text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">{lesson_content.introduction}</p>
+                </section>
+              )}
+
+              {/* 内容概览卡片 */}
+              <section className="bg-muted/40 rounded-lg p-4 border border-border/60">
+                <h3 className="font-semibold text-[12px] text-muted-foreground mb-3">内容模块概览</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="p-2.5 rounded-md bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/30">
+                    <p className="text-[10px] text-purple-600 dark:text-purple-400">核心概念</p>
+                    <p className="text-lg font-bold text-purple-700 dark:text-purple-300">{conceptCount}</p>
+                  </div>
+                  <div className="p-2.5 rounded-md bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/30">
+                    <p className="text-[10px] text-cyan-600 dark:text-cyan-400">方法步骤</p>
+                    <p className="text-lg font-bold text-cyan-700 dark:text-cyan-300">{stepCount}</p>
+                  </div>
+                  <div className="p-2.5 rounded-md bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/30">
+                    <p className="text-[10px] text-violet-600 dark:text-violet-400">练习题目</p>
+                    <p className="text-lg font-bold text-violet-700 dark:text-violet-300">{problemCount}</p>
+                  </div>
+                  <div className="p-2.5 rounded-md bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30">
+                    <p className="text-[10px] text-red-600 dark:text-red-400">易错陷阱</p>
+                    <p className="text-lg font-bold text-red-700 dark:text-red-300">{mistakeCount}</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeTab === "learning" && (
+            <div className="space-y-4">
+              {/* 核心概念 */}
+              {lesson_content?.core_concepts && lesson_content.core_concepts.length > 0 ? (
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-purple-500 to-violet-500 rounded text-white">
+                      <Lightbulb className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">核心概念</h3>
+                    <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">{lesson_content.core_concepts.length} 个</Badge>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {lesson_content.core_concepts.map((concept: any, idx: number) => (
+                      <Collapsible key={idx} className="group">
+                        <div className="p-3 bg-gradient-to-br from-purple-50 to-violet-50/50 dark:from-purple-950/30 dark:to-violet-950/20 rounded-lg border border-purple-100 dark:border-purple-900/30 hover:border-purple-200 dark:hover:border-purple-800/50 transition-colors">
+                          <CollapsibleTrigger className="w-full text-left">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium text-[12px] text-purple-900 dark:text-purple-100">{concept.name}</h4>
+                              <ChevronRight className="h-3.5 w-3.5 text-purple-400 group-data-[state=open]:rotate-90 transition-transform" />
+                            </div>
+                            {concept.definition && (
+                              <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-1 line-clamp-2">{concept.definition}</p>
+                            )}
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            {concept.detailed_explanation && (
+                              <div className="mt-2.5 pt-2.5 border-t border-purple-100 dark:border-purple-900/30">
+                                <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed">{concept.detailed_explanation}</p>
+                              </div>
+                            )}
+                            {concept.application_scenarios && concept.application_scenarios.length > 0 && (
+                              <div className="mt-2.5">
+                                <p className="text-[10px] font-medium text-purple-700 dark:text-purple-300 mb-1">应用场景</p>
+                                <ul className="space-y-0.5">
+                                  {concept.application_scenarios.map((scenario: string, sIdx: number) => (
+                                    <li key={sIdx} className="text-[11px] text-stone-600 dark:text-stone-400 flex items-start gap-1">
+                                      <span className="text-purple-400">•</span>
+                                      {scenario}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {concept.example && (
+                              <div className="mt-2.5 p-2 bg-white dark:bg-white/10 rounded-md border border-purple-50 dark:border-purple-900/30">
+                                <p className="text-[10px] font-medium text-purple-700 dark:text-purple-300 mb-1">示例</p>
+                                <p className="text-[11px] text-stone-600 dark:text-stone-400">{concept.example}</p>
+                              </div>
+                            )}
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+                    ))}
+                  </div>
+                </section>
+              ) : (
+                <div className="text-center py-10 text-muted-foreground">
+                  <Lightbulb className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  <p className="text-[13px]">暂无核心概念内容</p>
+                </div>
+              )}
+
+              {/* 前置知识 */}
+              {lesson_content?.prerequisites && lesson_content.prerequisites.length > 0 && (
+                <section className="bg-stone-50 dark:bg-stone-900/30 rounded-lg p-4 border border-border/60">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-stone-500 to-stone-600 rounded text-white">
+                      <BookMarked className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">前置知识</h3>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {lesson_content.prerequisites.map((prereq: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1.5 text-[12px]">
+                        <span className="text-stone-400 mt-0.5">•</span>
+                        <span className="text-stone-600 dark:text-stone-400">{prereq}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          )}
+
+          {activeTab === "methods" && (
+            <div className="space-y-4">
+              {/* 方法步骤 */}
+              {lesson_content?.method_steps && lesson_content.method_steps.length > 0 && (
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-cyan-500 to-blue-500 rounded text-white">
+                      <ListOrdered className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">方法步骤</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {lesson_content.method_steps.map((step: any, idx: number) => (
+                      <Collapsible key={idx} className="group">
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-500 text-white rounded-lg flex items-center justify-center font-bold text-[12px]">
+                            {step.step || idx + 1}
+                          </div>
+                          <div className="flex-1 pt-0.5">
+                            <CollapsibleTrigger className="w-full text-left">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium text-[12px] text-stone-800 dark:text-stone-200">{step.title}</h4>
+                                <ChevronRight className="h-3.5 w-3.5 text-stone-400 group-data-[state=open]:rotate-90 transition-transform" />
+                              </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-1.5 leading-relaxed">{step.content}</p>
+                              {step.tips && (
+                                <p className="text-[11px] text-cyan-700 dark:text-cyan-300 mt-2 p-2 bg-cyan-50 dark:bg-cyan-950/30 rounded-md border border-cyan-100">💡 {step.tips}</p>
+                              )}
+                              {step.time_allocation && (
+                                <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1.5">⏱️ {step.time_allocation}</p>
+                              )}
+                            </CollapsibleContent>
+                          </div>
+                        </div>
+                      </Collapsible>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 记忆口诀 */}
+              {lesson_content?.formulas && lesson_content.formulas.length > 0 && (
+                <section className="bg-gradient-to-br from-amber-50 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 rounded-lg p-4 border border-amber-100 dark:border-amber-900/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded text-white">
+                      <Brain className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-amber-900 dark:text-amber-100 text-[13px]">记忆口诀</h3>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {lesson_content.formulas.map((formula: any, idx: number) => (
+                      <Collapsible key={idx} className="group">
+                        <div className="p-3 bg-white/70 dark:bg-white/10 rounded-lg border border-amber-100 dark:border-amber-900/30 hover:border-amber-200 dark:hover:border-amber-800/50 transition-colors">
+                          <CollapsibleTrigger className="w-full text-left">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium text-[12px] text-amber-800 dark:text-amber-200">{formula.name}</h4>
+                              <ChevronRight className="h-3.5 w-3.5 text-amber-400 group-data-[state=open]:rotate-90 transition-transform" />
+                            </div>
+                            <p className="text-amber-900 dark:text-amber-100 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/30 p-2 rounded-md mt-1.5 text-[11px] font-medium">
+                              {formula.content}
+                            </p>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            {formula.detailed_explanation && (
+                              <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-2.5 leading-relaxed">{formula.detailed_explanation}</p>
+                            )}
+                            {formula.memory_aid && (
+                              <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded-md border border-amber-100/50">🧠 {formula.memory_aid}</p>
+                            )}
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 思维导图 */}
+              {lesson_content?.mind_map_mermaid && (
+                <section className="bg-white dark:bg-white/5 rounded-lg p-4 border border-border/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-teal-500 to-cyan-500 rounded text-white">
+                      <Map className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">思维导图</h3>
+                    <Badge variant="outline" className="ml-auto h-5 px-1.5 text-[10px] border-border/60">Mermaid</Badge>
+                  </div>
+                  <MermaidRenderer code={lesson_content.mind_map_mermaid} />
+                </section>
+              )}
+
+              {!lesson_content?.method_steps?.length && !lesson_content?.formulas?.length && (
+                <div className="text-center py-10 text-muted-foreground">
+                  <ListOrdered className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  <p className="text-[13px]">暂无方法技巧内容</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "practice" && (
+            <div className="space-y-4">
+              {practice_problems && practice_problems.length > 0 ? (
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-violet-500 to-purple-500 rounded text-white">
+                      <ClipboardList className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">练习题目</h3>
+                    <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">{practice_problems.length} 道</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {practice_problems.map((problem: any, idx: number) => (
+                      <div key={idx} className="p-3 bg-stone-50 dark:bg-stone-900/30 rounded-lg border border-border/60">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Badge className="h-5 px-1.5 text-[10px] bg-violet-100 text-violet-700 hover:bg-violet-100 dark:bg-violet-900/50 dark:text-violet-300">
+                            第 {problem.order || idx + 1} 题
+                          </Badge>
+                          {problem.difficulty_level && (
+                            <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-border/60">{problem.difficulty_level}</Badge>
+                          )}
+                          {problem.source && (
+                            <span className="text-[10px] text-stone-500 dark:text-stone-400 ml-auto">{problem.source}</span>
+                          )}
+                        </div>
+                        <p className="text-[12px] text-stone-800 dark:text-stone-200 leading-relaxed">{problem.problem}</p>
+                        {problem.options && (
+                          <div className="mt-2.5 space-y-1">
+                            {problem.options.map((opt: string, oIdx: number) => (
+                              <div key={oIdx} className="p-2 bg-white dark:bg-white/10 rounded-md text-[11px] border border-border/40 hover:border-violet-200 dark:hover:border-violet-800/50 transition-colors">
+                                {opt}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <details className="mt-2.5">
+                          <summary className="cursor-pointer text-violet-600 dark:text-violet-400 text-[11px] font-medium hover:text-violet-700 dark:hover:text-violet-300">
+                            查看答案与解析
+                          </summary>
+                          <div className="mt-2 p-2.5 bg-violet-50 dark:bg-violet-950/30 rounded-md border border-violet-100/50 space-y-1.5">
+                            <p className="text-[12px]">
+                              <span className="font-medium text-violet-800 dark:text-violet-200">答案：</span>
+                              <span className="text-violet-900 dark:text-violet-100">{problem.answer}</span>
+                            </p>
+                            {problem.analysis && (
+                              <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-relaxed">{problem.analysis}</p>
+                            )}
+                            {problem.key_points && (
+                              <p className="text-[11px] text-violet-700 dark:text-violet-300">💡 {problem.key_points}</p>
+                            )}
+                          </div>
+                        </details>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : (
+                <div className="text-center py-10 text-muted-foreground">
+                  <ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  <p className="text-[13px]">暂无练习题目</p>
+                </div>
+              )}
+
+              {/* 课后作业 */}
+              {homework && (homework.required?.length > 0 || homework.optional?.length > 0) && (
+                <section className="bg-white dark:bg-white/5 rounded-lg p-4 border border-border/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-500 rounded text-white">
+                      <GraduationCap className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-[13px]">课后作业</h3>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {homework.required && homework.required.length > 0 && (
+                      <div className="p-3 bg-red-50/50 dark:bg-red-950/20 rounded-lg border border-red-100 dark:border-red-900/30">
+                        <h4 className="text-[11px] font-semibold text-red-700 dark:text-red-300 mb-1.5 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                          必做作业
+                        </h4>
+                        <ul className="space-y-1">
+                          {homework.required.map((item: string, idx: number) => (
+                            <li key={idx} className="text-[11px] flex items-start gap-1 text-stone-600 dark:text-stone-400">
+                              <span className="text-red-400 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {homework.optional && homework.optional.length > 0 && (
+                      <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg border border-blue-100 dark:border-blue-900/30">
+                        <h4 className="text-[11px] font-semibold text-blue-700 dark:text-blue-300 mb-1.5 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                          选做作业
+                        </h4>
+                        <ul className="space-y-1">
+                          {homework.optional.map((item: string, idx: number) => (
+                            <li key={idx} className="text-[11px] flex items-start gap-1 text-stone-600 dark:text-stone-400">
+                              <span className="text-blue-400 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+
+          {activeTab === "tips" && (
+            <div className="space-y-4">
+              {/* 易错陷阱 */}
+              {lesson_content?.common_mistakes && lesson_content.common_mistakes.length > 0 ? (
+                <section className="bg-gradient-to-br from-red-50 to-rose-50/50 dark:from-red-950/30 dark:to-rose-950/20 rounded-lg p-4 border border-red-100 dark:border-red-900/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-red-500 to-rose-500 rounded text-white">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-red-900 dark:text-red-100 text-[13px]">易错陷阱</h3>
+                    <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">{lesson_content.common_mistakes.length} 个</Badge>
+                  </div>
+                  <div className="space-y-2.5">
+                    {lesson_content.common_mistakes.map((mistake: any, idx: number) => (
+                      <div key={idx} className="p-3 bg-white/70 dark:bg-white/10 rounded-lg border border-red-100 dark:border-red-900/30">
+                        <h4 className="font-medium text-[12px] text-red-800 dark:text-red-200 flex items-center gap-1.5">
+                          <XCircle className="w-3.5 h-3.5" />
+                          {mistake.mistake}
+                        </h4>
+                        <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-1.5">
+                          <span className="font-medium text-red-700 dark:text-red-300">原因：</span>
+                          {mistake.reason}
+                        </p>
+                        <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-1.5 p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-md border border-emerald-100/50">
+                          <span className="font-medium text-emerald-700 dark:text-emerald-300">✓ 正确做法：</span>
+                          {mistake.correction}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : (
+                <div className="text-center py-10 text-muted-foreground">
+                  <AlertTriangle className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  <p className="text-[13px]">暂无易错提醒内容</p>
+                </div>
+              )}
+
+              {/* 记忆技巧 */}
+              {lesson_content?.memory_tips && lesson_content.memory_tips.length > 0 && (
+                <section className="bg-gradient-to-br from-pink-50 to-rose-50/50 dark:from-pink-950/30 dark:to-rose-950/20 rounded-lg p-4 border border-pink-100 dark:border-pink-900/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-pink-500 to-rose-500 rounded text-white">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-pink-900 dark:text-pink-100 text-[13px]">记忆技巧</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {lesson_content.memory_tips.map((tip: any, idx: number) => (
+                      <div key={idx} className="p-3 bg-white/70 dark:bg-white/10 rounded-lg border border-pink-100 dark:border-pink-900/30">
+                        <h4 className="font-medium text-pink-800 dark:text-pink-200 text-[12px]">{tip.tip}</h4>
+                        <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-1.5 leading-relaxed">{tip.content}</p>
+                        {tip.example && (
+                          <p className="text-[11px] text-pink-700 dark:text-pink-300 mt-1.5 p-2 bg-pink-50 dark:bg-pink-950/30 rounded-md border border-pink-100/50">📝 {tip.example}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 快速笔记 */}
+              {lesson_content?.quick_notes && (
+                <section className="bg-gradient-to-br from-amber-50 to-yellow-50/50 dark:from-amber-950/30 dark:to-yellow-950/20 rounded-lg p-4 border border-amber-100 dark:border-amber-900/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-amber-500 to-yellow-500 rounded text-white">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-amber-900 dark:text-amber-100 text-[13px]">快速笔记</h3>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {lesson_content.quick_notes.key_points && lesson_content.quick_notes.key_points.length > 0 && (
+                      <div className="p-3 bg-white/70 dark:bg-white/10 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                        <h4 className="text-[11px] font-semibold text-amber-800 dark:text-amber-200 mb-1.5">📌 核心要点</h4>
+                        <ul className="space-y-1">
+                          {lesson_content.quick_notes.key_points.map((point: string, idx: number) => (
+                            <li key={idx} className="text-[11px] flex items-start gap-1 text-stone-600 dark:text-stone-400">
+                              <span className="text-amber-500 mt-0.5">•</span>
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {lesson_content.quick_notes.exam_tips && lesson_content.quick_notes.exam_tips.length > 0 && (
+                      <div className="p-3 bg-white/70 dark:bg-white/10 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                        <h4 className="text-[11px] font-semibold text-amber-800 dark:text-amber-200 mb-1.5">💡 考场技巧</h4>
+                        <ul className="space-y-1">
+                          {lesson_content.quick_notes.exam_tips.map((tip: string, idx: number) => (
+                            <li key={idx} className="text-[11px] flex items-start gap-1 text-stone-600 dark:text-stone-400">
+                              <span className="text-amber-500 mt-0.5">•</span>
+                              <span>{tip}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* 课程总结 */}
+              {lesson_content?.summary_points && lesson_content.summary_points.length > 0 && (
+                <section className="bg-gradient-to-br from-emerald-50 to-teal-50/50 dark:from-emerald-950/30 dark:to-teal-950/20 rounded-lg p-4 border border-emerald-100 dark:border-emerald-900/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-gradient-to-br from-emerald-500 to-teal-500 rounded text-white">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                    </div>
+                    <h3 className="font-semibold text-emerald-900 dark:text-emerald-100 text-[13px]">课程总结</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {lesson_content.summary_points.map((point: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-[12px]">
+                        <span className="flex-shrink-0 w-5 h-5 bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                          {idx + 1}
+                        </span>
+                        <span className="text-stone-700 dark:text-stone-300 pt-0.5">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* 调试用 JSON */}
+          <details className="mt-4 bg-muted/40 rounded-lg p-3 border border-border/60">
+            <summary className="cursor-pointer text-[11px] font-medium text-muted-foreground hover:text-foreground">
+              🔧 查看原始 JSON 数据（调试用）
+            </summary>
+            <pre className="mt-2 text-[10px] bg-background p-3 rounded-md overflow-x-auto font-mono max-h-80 border border-border/40">
+              {JSON.stringify(content, null, 2)}
+            </pre>
+          </details>
+        </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -2432,11 +3213,9 @@ function TestContentRenderer({ content }: TestContentProps) {
               <Map className="w-4 h-4" />
             </div>
             <h3 className="font-bold text-lg">思维导图</h3>
-            <Badge variant="outline" className="ml-auto text-xs">Mermaid 格式</Badge>
+            <Badge variant="outline" className="ml-auto text-xs">Mermaid</Badge>
           </div>
-          <pre className="text-xs bg-stone-50 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap font-mono border">
-            {lesson_content.mind_map_mermaid}
-          </pre>
+          <MermaidRenderer code={lesson_content.mind_map_mermaid} />
         </section>
       )}
 
