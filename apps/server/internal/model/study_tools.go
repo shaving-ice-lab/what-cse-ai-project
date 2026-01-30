@@ -325,22 +325,22 @@ type DailyStudyTrend struct {
 // 学习内容收藏 - Learning Content Favorites
 // =====================================================
 
-// LearningContentType 学习内容类型
-type LearningContentType string
+// FavoriteContentType 收藏内容类型
+type FavoriteContentType string
 
 const (
-	LearningContentCourse    LearningContentType = "course"    // 课程
-	LearningContentChapter   LearningContentType = "chapter"   // 章节
-	LearningContentQuestion  LearningContentType = "question"  // 题目
-	LearningContentKnowledge LearningContentType = "knowledge" // 知识点
-	LearningContentArticle   LearningContentType = "article"   // 文章
+	FavoriteContentCourse    FavoriteContentType = "course"    // 课程
+	FavoriteContentChapter   FavoriteContentType = "chapter"   // 章节
+	FavoriteContentQuestion  FavoriteContentType = "question"  // 题目
+	FavoriteContentKnowledge FavoriteContentType = "knowledge" // 知识点
+	FavoriteContentArticle   FavoriteContentType = "article"   // 文章
 )
 
 // LearningFavorite 学习内容收藏
 type LearningFavorite struct {
 	ID          uint                `gorm:"primaryKey" json:"id"`
 	UserID      uint                `gorm:"uniqueIndex:uk_user_content;not null" json:"user_id"`
-	ContentType LearningContentType `gorm:"type:varchar(20);uniqueIndex:uk_user_content;not null" json:"content_type"`
+	ContentType FavoriteContentType `gorm:"type:varchar(20);uniqueIndex:uk_user_content;not null" json:"content_type"`
 	ContentID   uint                `gorm:"uniqueIndex:uk_user_content;not null" json:"content_id"`
 	FolderID    *uint               `gorm:"index" json:"folder_id,omitempty"` // 收藏夹ID
 	Note        string              `gorm:"type:varchar(500)" json:"note,omitempty"`
@@ -385,7 +385,7 @@ func (LearningFavoriteFolder) TableName() string {
 // LearningFavoriteResponse 学习收藏响应
 type LearningFavoriteResponse struct {
 	ID          uint                `json:"id"`
-	ContentType LearningContentType `json:"content_type"`
+	ContentType FavoriteContentType `json:"content_type"`
 	ContentID   uint                `json:"content_id"`
 	FolderID    *uint               `json:"folder_id,omitempty"`
 	FolderName  string              `json:"folder_name,omitempty"`

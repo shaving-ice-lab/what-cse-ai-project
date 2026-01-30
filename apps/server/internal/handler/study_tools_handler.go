@@ -557,7 +557,7 @@ func (h *StudyToolsHandler) ListLearningFavorites(c echo.Context) error {
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
 
 	params := &repository.LearningFavoriteQueryParams{
-		ContentType: model.LearningContentType(c.QueryParam("content_type")),
+		ContentType: model.FavoriteContentType(c.QueryParam("content_type")),
 		Page:        page,
 		PageSize:    pageSize,
 	}
@@ -595,7 +595,7 @@ func (h *StudyToolsHandler) GetLearningFavoriteStats(c echo.Context) error {
 func (h *StudyToolsHandler) CheckLearningFavorite(c echo.Context) error {
 	userID := c.Get("user_id").(uint)
 
-	contentType := model.LearningContentType(c.QueryParam("content_type"))
+	contentType := model.FavoriteContentType(c.QueryParam("content_type"))
 	contentID, _ := strconv.ParseUint(c.QueryParam("content_id"), 10, 64)
 
 	isFavorite := h.favoriteService.IsFavorite(userID, contentType, uint(contentID))
@@ -608,7 +608,7 @@ func (h *StudyToolsHandler) BatchCheckLearningFavorites(c echo.Context) error {
 	userID := c.Get("user_id").(uint)
 
 	var req struct {
-		ContentType model.LearningContentType `json:"content_type"`
+		ContentType model.FavoriteContentType `json:"content_type"`
 		ContentIDs  []uint                    `json:"content_ids"`
 	}
 	if err := c.Bind(&req); err != nil {

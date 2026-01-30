@@ -855,7 +855,7 @@ export default function PaperEditPage({
       };
       await questionApi.updatePaper(paperId, updateData);
       toast.success("试卷已保存");
-      router.push("/learning/papers");
+      router.push("/learning/manager?tab=papers");
     } catch (error: any) {
       toast.error(error.message || "保存失败");
     } finally {
@@ -868,7 +868,7 @@ export default function PaperEditPage({
     try {
       await questionApi.deletePaper(paperId);
       toast.success("试卷已删除");
-      router.push("/learning/papers");
+      router.push("/learning/manager?tab=papers");
     } catch (error: any) {
       toast.error(error.message || "删除失败");
     }
@@ -1074,7 +1074,7 @@ export default function PaperEditPage({
         <FileStack className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
         <p className="text-lg font-medium">试卷不存在</p>
         <Button asChild className="mt-4">
-          <Link href="/learning/papers">返回列表</Link>
+          <Link href="/learning/manager?tab=papers">返回列表</Link>
         </Button>
       </div>
     );
@@ -1086,7 +1086,7 @@ export default function PaperEditPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/learning/papers">
+            <Link href="/learning/manager?tab=papers">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

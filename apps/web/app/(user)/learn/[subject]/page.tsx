@@ -23,6 +23,10 @@ import {
   Circle,
   FolderOpen,
   FileText,
+  BarChart3,
+  Mic,
+  PenLine,
+  LucideIcon,
 } from "lucide-react";
 import {
   useCourses,
@@ -34,38 +38,48 @@ import {
   getDifficultyLabel,
   getDifficultyColor,
 } from "@/hooks/useCourse";
-import { CourseBrief, CourseCategory, KnowledgePoint, CourseQueryParams } from "@/services/api/course";
+import { CourseBrief, CourseCategory, KnowledgePoint, CourseQueryParams, SubjectOverview } from "@/services/api/course";
+import { courseApi } from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
 
-// 科目配置
-const subjectConfig: Record<string, { name: string; fullName: string; icon: string; color: string; bgColor: string }> = {
+// 图标映射（图标是前端资源，无法从后端返回）
+const iconMap: Record<string, LucideIcon> = {
+  BarChart3,
+  PenLine,
+  Mic,
+  BookOpen,
+  FileText,
+};
+
+// 默认科目配置（作为加载时的骨架屏和错误回退）
+const defaultSubjectConfig: Record<string, { name: string; fullName: string; icon: string; color: string; bgColor: string }> = {
   xingce: {
     name: "行测",
     fullName: "行政职业能力测验",
-    icon: "📊",
+    icon: "BarChart3",
     color: "from-blue-500 to-indigo-600",
-    bgColor: "bg-blue-500",
+    bgColor: "bg-blue-50",
   },
   shenlun: {
     name: "申论",
     fullName: "申论写作",
-    icon: "📝",
+    icon: "PenLine",
     color: "from-emerald-500 to-teal-600",
-    bgColor: "bg-emerald-500",
+    bgColor: "bg-emerald-50",
   },
   mianshi: {
     name: "面试",
     fullName: "结构化面试",
-    icon: "🎤",
+    icon: "Mic",
     color: "from-purple-500 to-violet-600",
-    bgColor: "bg-purple-500",
+    bgColor: "bg-violet-50",
   },
   gongji: {
     name: "公基",
     fullName: "公共基础知识",
-    icon: "📚",
+    icon: "BookOpen",
     color: "from-amber-500 to-orange-600",
-    bgColor: "bg-amber-500",
+    bgColor: "bg-amber-50",
   },
 };
 
@@ -286,7 +300,7 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
 export default function SubjectLearnPage() {
   const params = useParams();
   const subject = params.subject as string;
-  const config = subjectConfig[subject];
+  const includeDraftCourses = process.env.NODE_ENV !== "production";
 
   const { isAuthenticated } = useAuthStore();
   const { loading: coursesLoading, courses, total, fetchCourses } = useCourses();
@@ -301,10 +315,48 @@ export default function SubjectLearnPage() {
   const [showOnlyFree, setShowOnlyFree] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"categories" | "knowledge">("categories");
 
+  // 科目元数据状态
+  const [subjectMeta, setSubjectMeta] = useState<SubjectOverview | null>(null);
+  const [subjectLoading, setSubjectLoading] = useState(true);
+  const [subjectNotFound, setSubjectNotFound] = useState(false);
+
+  // 从后端获取科目元数据
+  useEffect(() => {
+    const fetchSubjectMeta = async () => {
+      try {
+        setSubjectLoading(true);
+        setSubjectNotFound(false);
+        const response = await courseApi.getSubjectsOverview();
+        const found = response.subjects?.find((s) => s.id === subject);
+        if (found) {
+          setSubjectMeta(found);
+        } else {
+          // 科目不在后端返回的列表中，检查是否有默认配置
+          if (defaultSubjectConfig[subject]) {
+            // 使用默认配置
+            setSubjectMeta(null);
+          } else {
+            setSubjectNotFound(true);
+          }
+        }
+      } catch (error) {
+        console.error("获取科目信息失败:", error);
+        // 出错时检查默认配置
+        if (!defaultSubjectConfig[subject]) {
+          setSubjectNotFound(true);
+        }
+      } finally {
+        setSubjectLoading(false);
+      }
+    };
+
+    fetchSubjectMeta();
+  }, [subject]);
+
   // 加载分类
   useEffect(() => {
-    fetchCategoriesBySubject(subject);
-  }, [subject, fetchCategoriesBySubject]);
+    fetchCategoriesBySubject(subject, includeDraftCourses ? "all" : "published");
+  }, [subject, includeDraftCourses, fetchCategoriesBySubject]);
 
   // 加载课程
   useEffect(() => {
@@ -318,9 +370,10 @@ export default function SubjectLearnPage() {
     if (difficulty) params.difficulty = difficulty;
     if (keyword) params.keyword = keyword;
     if (showOnlyFree) params.is_free = true;
+    if (includeDraftCourses) params.status = "all";
 
     fetchCourses(params);
-  }, [subject, selectedCategoryId, difficulty, sortBy, keyword, page, showOnlyFree, fetchCourses]);
+  }, [subject, selectedCategoryId, difficulty, sortBy, keyword, page, showOnlyFree, includeDraftCourses, fetchCourses]);
 
   // 加载知识点（当选择分类时）
   useEffect(() => {
@@ -332,12 +385,43 @@ export default function SubjectLearnPage() {
   // 计算总页数
   const totalPages = Math.ceil(total / 12);
 
+  // 获取当前科目的配置（优先使用后端数据，回退到默认配置）
+  const defaultConfig = defaultSubjectConfig[subject];
+  const config = useMemo(() => {
+    if (subjectMeta) {
+      return {
+        name: subjectMeta.name,
+        fullName: subjectMeta.full_name,
+        icon: subjectMeta.icon,
+        color: parseGradientColor(subjectMeta.bg_color, subjectMeta.text_color),
+        bgColor: subjectMeta.bg_color,
+      };
+    }
+    return defaultConfig;
+  }, [subjectMeta, defaultConfig]);
+
+  // 解析颜色生成渐变
+  function parseGradientColor(bgColor: string, textColor: string): string {
+    // 从 bg-blue-50 和 text-blue-600 提取颜色并生成渐变
+    const colorMatch = textColor.match(/text-(\w+)-(\d+)/);
+    if (colorMatch) {
+      const colorName = colorMatch[1];
+      return `from-${colorName}-500 to-${colorName}-600`;
+    }
+    return "from-amber-500 to-orange-600";
+  }
+
+  // 获取图标组件
+  const IconComponent = iconMap[config?.icon || "BookOpen"] || BookOpen;
+
   // 如果科目不存在
-  if (!config) {
+  if (subjectNotFound || (!subjectLoading && !config)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
+          <BookOpen className="w-16 h-16 mx-auto mb-4 text-stone-300" />
           <h1 className="text-2xl font-bold text-stone-800 mb-4">科目不存在</h1>
+          <p className="text-stone-500 mb-4">未找到科目 "{subject}"</p>
           <Link href="/learn" className="text-amber-600 hover:underline">
             返回学习中心
           </Link>
@@ -346,10 +430,19 @@ export default function SubjectLearnPage() {
     );
   }
 
+  // 加载中状态
+  if (subjectLoading && !config) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
       {/* Header */}
-      <div className={`bg-gradient-to-br ${config.color} text-white`}>
+      <div className={`bg-gradient-to-br ${config?.color || "from-amber-500 to-orange-600"} text-white`}>
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <Link
             href="/learn"
@@ -360,10 +453,12 @@ export default function SubjectLearnPage() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <span className="text-5xl">{config.icon}</span>
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
+              <IconComponent className="w-8 h-8" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold">{config.name}</h1>
-              <p className="text-white/80">{config.fullName}</p>
+              <h1 className="text-3xl font-bold">{config?.name || subject}</h1>
+              <p className="text-white/80">{config?.fullName || ""}</p>
             </div>
           </div>
 

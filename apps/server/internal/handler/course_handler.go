@@ -43,7 +43,23 @@ func NewCourseHandler(
 // @Success 200 {object} Response
 // @Router /api/v1/courses/categories [get]
 func (h *CourseHandler) GetCategories(c echo.Context) error {
-	categories, err := h.categoryService.GetAll()
+	subject := c.QueryParam("subject")
+	examType := c.QueryParam("exam_type")
+	status := parseCourseStatusParam(c.QueryParam("status"))
+
+	var (
+		categories []*model.CourseCategoryResponse
+		err        error
+	)
+
+	switch {
+	case subject != "":
+		categories, err = h.categoryService.GetBySubjectWithStatus(subject, status)
+	case examType != "":
+		categories, err = h.categoryService.GetByExamTypeWithStatus(examType, status)
+	default:
+		categories, err = h.categoryService.GetAllWithStatus(status)
+	}
 	if err != nil {
 		return fail(c, 500, "Failed to get categories: "+err.Error())
 	}
@@ -66,7 +82,8 @@ func (h *CourseHandler) GetCategoriesBySubject(c echo.Context) error {
 		return fail(c, 400, "Subject is required")
 	}
 
-	categories, err := h.categoryService.GetBySubject(subject)
+	status := parseCourseStatusParam(c.QueryParam("status"))
+	categories, err := h.categoryService.GetBySubjectWithStatus(subject, status)
 	if err != nil {
 		return fail(c, 500, "Failed to get categories: "+err.Error())
 	}
@@ -120,9 +137,36 @@ func (h *CourseHandler) GetCategory(c echo.Context) error {
 // @Success 200 {object} Response
 // @Router /api/v1/courses [get]
 func (h *CourseHandler) GetCourses(c echo.Context) error {
-	var params repository.CourseQueryParams
-	if err := c.Bind(&params); err != nil {
-		return fail(c, 400, "Invalid query parameters")
+	// Manually parse query parameters to avoid binding errors
+	categoryID, _ := strconv.ParseUint(c.QueryParam("category_id"), 10, 32)
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
+
+	// Parse boolean pointers
+	var isFree *bool
+	if v := c.QueryParam("is_free"); v != "" {
+		b := v == "true" || v == "1"
+		isFree = &b
+	}
+	var vipOnly *bool
+	if v := c.QueryParam("vip_only"); v != "" {
+		b := v == "true" || v == "1"
+		vipOnly = &b
+	}
+
+	params := repository.CourseQueryParams{
+		CategoryID:  uint(categoryID),
+		Subject:     c.QueryParam("subject"),
+		ExamType:    c.QueryParam("exam_type"),
+		ContentType: c.QueryParam("content_type"),
+		Difficulty:  c.QueryParam("difficulty"),
+		IsFree:      isFree,
+		VIPOnly:     vipOnly,
+		Status:      c.QueryParam("status"),
+		Keyword:     c.QueryParam("keyword"),
+		OrderBy:     c.QueryParam("order_by"),
+		Page:        page,
+		PageSize:    pageSize,
 	}
 
 	courses, total, err := h.courseService.GetCourses(&params)
@@ -256,6 +300,95 @@ func (h *CourseHandler) GetChapterContent(c echo.Context) error {
 		return fail(c, 500, "Failed to get chapter: "+err.Error())
 	}
 	return success(c, chapter)
+}
+
+// GetChapterFullContent gets chapter full content with all modules
+// @Summary Get Chapter Full Content
+// @Description Get chapter content with all 13 modules (考情分析/课程导入/核心概念/方法步骤/etc)
+// @Tags Course
+// @Produce json
+// @Param id path int true "Chapter ID"
+// @Success 200 {object} model.CourseChapterContentResponse
+// @Router /api/v1/courses/chapters/{id}/content [get]
+func (h *CourseHandler) GetChapterFullContent(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		return fail(c, 400, "Invalid chapter ID")
+	}
+
+	userID := getUserIDFromContext(c)
+	isVIP := getIsVIPFromContext(c)
+
+	content, err := h.courseService.GetChapterFullContent(uint(id), userID, isVIP)
+	if err != nil {
+		if err == service.ErrChapterNotFound {
+			return fail(c, 404, err.Error())
+		}
+		if err == service.ErrChapterAccessDenied {
+			return fail(c, 403, err.Error())
+		}
+		return fail(c, 500, "Failed to get chapter content: "+err.Error())
+	}
+	return success(c, content)
+}
+
+// GetChapterModules gets chapter modules list
+// @Summary Get Chapter Modules
+// @Description Get all modules of a chapter
+// @Tags Course
+// @Produce json
+// @Param id path int true "Chapter ID"
+// @Success 200 {object} Response
+// @Router /api/v1/courses/chapters/{id}/modules [get]
+func (h *CourseHandler) GetChapterModules(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		return fail(c, 400, "Invalid chapter ID")
+	}
+
+	modules, err := h.courseService.GetChapterModules(uint(id))
+	if err != nil {
+		return fail(c, 500, "Failed to get chapter modules: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"modules": modules,
+	})
+}
+
+// GetSubjectModulesConfig gets module configuration for a subject
+// @Summary Get Subject Modules Config
+// @Description Get module configuration (replaces frontend hardcoded xingceModules)
+// @Tags Course
+// @Produce json
+// @Param subject query string true "Subject (xingce/shenlun/mianshi/gongji)"
+// @Success 200 {object} Response
+// @Router /api/v1/courses/modules-config [get]
+func (h *CourseHandler) GetSubjectModulesConfig(c echo.Context) error {
+	subject := c.QueryParam("subject")
+	if subject == "" {
+		subject = "xingce" // 默认行测
+	}
+
+	config := h.courseService.GetSubjectModulesConfig(subject)
+	return success(c, map[string]interface{}{
+		"subject": subject,
+		"modules": config,
+	})
+}
+
+// GetSubjectsOverview gets overview of all subjects with their modules
+// @Summary Get Subjects Overview
+// @Description Get all subjects with their modules and stats (for learn page)
+// @Tags Course
+// @Produce json
+// @Success 200 {object} Response
+// @Router /api/v1/courses/subjects [get]
+func (h *CourseHandler) GetSubjectsOverview(c echo.Context) error {
+	subjects := h.courseService.GetSubjectsOverview()
+	return success(c, map[string]interface{}{
+		"subjects": subjects,
+	})
 }
 
 // =====================================================
@@ -646,6 +779,22 @@ func getIsVIPFromContext(c echo.Context) bool {
 	return isVIP
 }
 
+func parseCourseStatusParam(status string) *model.CourseStatus {
+	switch status {
+	case "draft":
+		s := model.CourseStatusDraft
+		return &s
+	case "published":
+		s := model.CourseStatusPublished
+		return &s
+	case "archived":
+		s := model.CourseStatusArchived
+		return &s
+	default:
+		return nil
+	}
+}
+
 // =====================================================
 // Admin APIs - Category Management
 // =====================================================
@@ -740,21 +889,42 @@ func (h *CourseHandler) AdminDeleteCategory(c echo.Context) error {
 
 // AdminGetCourses gets all courses for admin
 func (h *CourseHandler) AdminGetCourses(c echo.Context) error {
-	var params repository.CourseQueryParams
-	if err := c.Bind(&params); err != nil {
-		return fail(c, 400, "Invalid query parameters")
+	// Manually parse query parameters to avoid binding errors
+	categoryID, _ := strconv.ParseUint(c.QueryParam("category_id"), 10, 32)
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
+
+	// Parse boolean pointers
+	var isFree *bool
+	if v := c.QueryParam("is_free"); v != "" {
+		b := v == "true" || v == "1"
+		isFree = &b
+	}
+	var vipOnly *bool
+	if v := c.QueryParam("vip_only"); v != "" {
+		b := v == "true" || v == "1"
+		vipOnly = &b
 	}
 
-	// Admin can see all status courses
-	status := -1 // -1 means all
-	if c.QueryParam("status") != "" {
-		s, _ := strconv.Atoi(c.QueryParam("status"))
-		status = s
+	params := repository.CourseQueryParams{
+		CategoryID:  uint(categoryID),
+		Subject:     c.QueryParam("subject"),
+		ExamType:    c.QueryParam("exam_type"),
+		ContentType: c.QueryParam("content_type"),
+		Difficulty:  c.QueryParam("difficulty"),
+		IsFree:      isFree,
+		VIPOnly:     vipOnly,
+		Status:      c.QueryParam("status"),
+		Keyword:     c.QueryParam("keyword"),
+		OrderBy:     c.QueryParam("order_by"),
+		Page:        page,
+		PageSize:    pageSize,
 	}
-	if status >= 0 {
-		params.Status = &status
-	} else {
-		params.Status = nil
+
+	// Admin can see all status courses by default
+	// If no status is specified, use "all" to get all statuses
+	if params.Status == "" {
+		params.Status = "all"
 	}
 
 	courses, total, err := h.courseService.GetCourses(&params)
@@ -1160,6 +1330,50 @@ func (h *CourseHandler) AdminGetCourseStats(c echo.Context) error {
 }
 
 // =====================================================
+// Debug APIs
+// =====================================================
+
+// DebugModulesConfig 调试端点：查看模块配置的原始数据
+// @Summary Debug Modules Config
+// @Description 调试用：查看分类数据和模块配置的原始数据
+// @Tags Debug
+// @Produce json
+// @Param subject query string true "Subject (xingce/shenlun/mianshi/gongji)"
+// @Success 200 {object} Response
+// @Router /api/v1/courses/debug/modules-config [get]
+func (h *CourseHandler) DebugModulesConfig(c echo.Context) error {
+	subject := c.QueryParam("subject")
+	if subject == "" {
+		subject = "xingce"
+	}
+
+	// 获取该科目下所有分类
+	categories, err := h.categoryService.GetBySubjectWithStatus(subject, nil)
+	if err != nil {
+		return fail(c, 500, "Failed to get categories: "+err.Error())
+	}
+
+	// 获取模块配置
+	modulesConfig := h.courseService.GetSubjectModulesConfig(subject)
+
+	// 获取课程统计
+	stats, _ := h.courseService.GetStats()
+
+	return success(c, map[string]interface{}{
+		"subject":        subject,
+		"categories":     categories,
+		"modules_config": modulesConfig,
+		"course_stats":   stats,
+		"debug_info": map[string]interface{}{
+			"category_count":      len(categories),
+			"modules_count":       len(modulesConfig),
+			"is_using_db_config":  len(modulesConfig) > 0,
+			"is_using_default":    len(modulesConfig) == 0,
+		},
+	})
+}
+
+// =====================================================
 // Route Registration
 // =====================================================
 
@@ -1175,6 +1389,11 @@ func (h *CourseHandler) RegisterRoutes(e *echo.Echo, authMiddleware echo.Middlew
 	courses.GET("/categories/subject/:subject", h.GetCategoriesBySubject)
 	courses.GET("/categories/:id", h.GetCategory)
 	courses.GET("/chapters/:id", h.GetChapterContent)
+	courses.GET("/chapters/:id/content", h.GetChapterFullContent)    // 获取章节完整内容（含13模块）
+	courses.GET("/chapters/:id/modules", h.GetChapterModules)        // 获取章节模块列表
+	courses.GET("/modules-config", h.GetSubjectModulesConfig)        // 获取科目模块配置
+	courses.GET("/subjects", h.GetSubjectsOverview)                   // 获取所有科目概览（用于学习首页）
+	courses.GET("/debug/modules-config", h.DebugModulesConfig)       // 调试端点：查看原始数据
 	courses.GET("/knowledge/:category_id", h.GetKnowledgeTree)
 	courses.GET("/knowledge/point/:id", h.GetKnowledgePoint)
 	courses.GET("/knowledge/hot", h.GetHighFrequencyKnowledge)

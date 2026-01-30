@@ -109,10 +109,45 @@ export type {
   MethodCard,
 } from "./PracticeHints";
 
-// AI 做题学习展示组件 (§26.3)
-export { QuestionAnalysis } from "./QuestionAnalysis";
-export type { AIAnalysisData } from "./QuestionAnalysis";
-export { WrongQuestionAnalysis } from "./WrongQuestionAnalysis";
-export type { AIErrorAnalysisData, ErrorType, ErrorHistoryItem } from "./WrongQuestionAnalysis";
-export { PracticeHints } from "./PracticeHints";
-export type { AIPracticeHintsData, HintLevel } from "./PracticeHints";
+// MCP 课程内容渲染组件 (支持完整 13 模块)
+export { LessonContentRenderer } from "./LessonContentRenderer";
+export type {
+  LessonContent,
+  ExamAnalysis,
+  LessonContentData,
+  CoreConcept,
+  MethodStep,
+  Formula,
+  MemoryTip,
+  CommonMistake,
+  VocabularyAccumulation,
+  LessonSection,
+  ExampleQuestion,
+  Trap,
+  RealExamQuestion,
+  PracticeProblem,
+  Homework,
+} from "./LessonContentRenderer";
+
+// MCP 素材内容渲染组件 (支持 5 场景+4 范文结构)
+export { MaterialContentRenderer } from "./MaterialContentRenderer";
+export type {
+  MaterialContent,
+  UsageScenario,
+  WritingSegment,
+} from "./MaterialContentRenderer";
+
+// 骨架屏加载组件
+export {
+  LessonContentSkeleton,
+  ModuleCardSkeleton,
+  ModuleGridSkeleton,
+  MaterialContentSkeleton,
+  KnowledgeDetailSkeleton,
+} from "./LessonContentSkeleton";
+
+// 思维导图渲染组件 (Mermaid)
+export { MermaidRenderer } from "./MermaidRenderer";
+
+// 快速笔记卡片组件
+export { QuickNotesCard } from "./QuickNotesCard";

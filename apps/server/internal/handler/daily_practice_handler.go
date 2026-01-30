@@ -50,18 +50,18 @@ func (h *DailyPracticeHandler) RegisterRoutes(e *echo.Echo, authMiddleware echo.
 func (h *DailyPracticeHandler) GetTodayPractice(c echo.Context) error {
 	userID := getUserIDFromContext(c)
 	if userID == 0 {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "未授权"})
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": 401, "message": "未授权"})
 	}
 
 	practice, err := h.service.GetTodayPractice(userID)
 	if err != nil {
 		if err == service.ErrNoQuestionsAvailable {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "暂无可用题目，请稍后再试"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"code": 404, "message": "暂无可用题目，请稍后再试"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": 500, "message": err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, practice)
+	return c.JSON(http.StatusOK, map[string]interface{}{"code": 0, "data": practice, "message": "success"})
 }
 
 // SubmitAnswer godoc
@@ -81,35 +81,35 @@ func (h *DailyPracticeHandler) GetTodayPractice(c echo.Context) error {
 func (h *DailyPracticeHandler) SubmitAnswer(c echo.Context) error {
 	userID := getUserIDFromContext(c)
 	if userID == 0 {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "未授权"})
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": 401, "message": "未授权"})
 	}
 
 	var req model.SubmitDailyAnswerRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "请求参数错误"})
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{"code": 400, "message": "请求参数错误"})
 	}
 
 	if req.QuestionID == 0 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "题目ID不能为空"})
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{"code": 400, "message": "题目ID不能为空"})
 	}
 
 	result, err := h.service.SubmitAnswer(userID, &req)
 	if err != nil {
 		switch err {
 		case service.ErrDailyPracticeNotFound:
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "今日练习不存在，请先获取今日练习"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"code": 404, "message": "今日练习不存在，请先获取今日练习"})
 		case service.ErrDailyPracticeCompleted:
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "今日练习已完成"})
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{"code": 400, "message": "今日练习已完成"})
 		case service.ErrQuestionNotInPractice:
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "题目不在今日练习中"})
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{"code": 400, "message": "题目不在今日练习中"})
 		case service.ErrQuestionAlreadyAnswered:
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "该题目已回答"})
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{"code": 400, "message": "该题目已回答"})
 		default:
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": 500, "message": err.Error()})
 		}
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, map[string]interface{}{"code": 0, "data": result, "message": "success"})
 }
 
 // GetUserStreak godoc
@@ -126,15 +126,15 @@ func (h *DailyPracticeHandler) SubmitAnswer(c echo.Context) error {
 func (h *DailyPracticeHandler) GetUserStreak(c echo.Context) error {
 	userID := getUserIDFromContext(c)
 	if userID == 0 {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "未授权"})
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": 401, "message": "未授权"})
 	}
 
 	streak, err := h.service.GetUserStreak(userID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": 500, "message": err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, streak)
+	return c.JSON(http.StatusOK, map[string]interface{}{"code": 0, "data": streak, "message": "success"})
 }
 
 // GetUserHistory godoc
@@ -153,7 +153,7 @@ func (h *DailyPracticeHandler) GetUserStreak(c echo.Context) error {
 func (h *DailyPracticeHandler) GetUserHistory(c echo.Context) error {
 	userID := getUserIDFromContext(c)
 	if userID == 0 {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "未授权"})
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": 401, "message": "未授权"})
 	}
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
@@ -168,14 +168,18 @@ func (h *DailyPracticeHandler) GetUserHistory(c echo.Context) error {
 
 	history, total, err := h.service.GetUserHistory(userID, page, pageSize)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": 500, "message": err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data":      history,
-		"total":     total,
-		"page":      page,
-		"page_size": pageSize,
+		"code":    0,
+		"message": "success",
+		"data": map[string]interface{}{
+			"data":      history,
+			"total":     total,
+			"page":      page,
+			"page_size": pageSize,
+		},
 	})
 }
 
@@ -196,7 +200,7 @@ func (h *DailyPracticeHandler) GetUserHistory(c echo.Context) error {
 func (h *DailyPracticeHandler) GetUserCalendar(c echo.Context) error {
 	userID := getUserIDFromContext(c)
 	if userID == 0 {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "未授权"})
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": 401, "message": "未授权"})
 	}
 
 	// Default to current year and month
@@ -212,18 +216,22 @@ func (h *DailyPracticeHandler) GetUserCalendar(c echo.Context) error {
 	}
 
 	if month < 1 || month > 12 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "月份无效"})
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{"code": 400, "message": "月份无效"})
 	}
 
 	calendar, err := h.service.GetUserCalendar(userID, year, month)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": 500, "message": err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"year":     year,
-		"month":    month,
-		"calendar": calendar,
+		"code":    0,
+		"message": "success",
+		"data": map[string]interface{}{
+			"year":     year,
+			"month":    month,
+			"calendar": calendar,
+		},
 	})
 }
 
@@ -242,7 +250,7 @@ func (h *DailyPracticeHandler) GetUserCalendar(c echo.Context) error {
 func (h *DailyPracticeHandler) GetWeakCategories(c echo.Context) error {
 	userID := getUserIDFromContext(c)
 	if userID == 0 {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "未授权"})
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": 401, "message": "未授权"})
 	}
 
 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
@@ -252,9 +260,9 @@ func (h *DailyPracticeHandler) GetWeakCategories(c echo.Context) error {
 
 	categories, err := h.service.GetWeakCategories(userID, limit)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": 500, "message": err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, categories)
+	return c.JSON(http.StatusOK, map[string]interface{}{"code": 0, "data": categories, "message": "success"})
 }
 

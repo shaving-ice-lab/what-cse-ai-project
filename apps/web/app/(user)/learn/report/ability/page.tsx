@@ -1013,7 +1013,7 @@ export default function AbilityReportPage() {
                       <div className="space-y-2">
                         {improvementPlan.motivational_tips.map((tip, idx) => (
                           <div key={idx} className="flex items-start gap-2 text-stone-600">
-                            <span className="text-amber-500">💡</span>
+                            <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                             {tip}
                           </div>
                         ))}

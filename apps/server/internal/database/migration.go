@@ -69,13 +69,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.ScoreEstimate{},
 		&model.ScoreShare{},
 
-		// Community tables
-		&model.PostCategory{},
-		&model.Post{},
-		&model.Comment{},
-		&model.Like{},
-		&model.HotTopic{},
-
 		// VIP Membership tables
 		&model.UserMembership{},
 		&model.MembershipPlan{},
@@ -89,6 +82,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.CourseCategory{},
 		&model.Course{},
 		&model.CourseChapter{},
+		&model.CourseLessonModule{}, // 课程模块表（MCP 生成的 13 个模块）
 		&model.KnowledgePoint{},
 		&model.UserCourseProgress{},
 		&model.UserChapterProgress{},
@@ -149,7 +143,17 @@ func AutoMigrate(db *gorm.DB) error {
 		// AI generated content tables (AI内容预生成 §26.1)
 		&model.AIGeneratedContent{},
 		&model.AIBatchTask{},
+
+		// Learning content table (学习内容通用API)
+		&model.LearningContent{},
+
+		// Generation task table (LLM 内容生成任务)
+		&model.GenerationTask{},
 	}
+
+	// Schema upgrades: Expand color column size for Tailwind gradient classes (must run before migration)
+	db.Exec("ALTER TABLE what_course_categories MODIFY COLUMN color VARCHAR(100) DEFAULT '#6366f1'")
+	db.Exec("ALTER TABLE what_materials MODIFY COLUMN color VARCHAR(100) DEFAULT '#6366f1'")
 
 	// Migrate each model individually to handle migration errors gracefully
 	for _, m := range models {
@@ -189,9 +193,6 @@ func CreateIndexes(db *gorm.DB) error {
 
 	// User views index for recent views
 	db.Exec("CREATE INDEX IF NOT EXISTS idx_what_user_views_recent ON what_user_views(user_id, view_time DESC)")
-
-	// Community indexes
-	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS uk_like ON what_likes(user_id, like_type, target_id)")
 
 	return nil
 }

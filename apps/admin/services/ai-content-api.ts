@@ -470,14 +470,14 @@ export const aiContentApi = {
 
     const res = await apiRequest<{
       data: { contents: AIGeneratedContent[]; total: number };
-    }>(`/api/v1/admin/ai/contents?${query.toString()}`);
+    }>(`/admin/ai/contents?${query.toString()}`);
     return res.data;
   },
 
   // 获取单个内容
   getContent: async (id: number): Promise<AIGeneratedContent> => {
     const res = await apiRequest<{ data: AIGeneratedContent }>(
-      `/api/v1/admin/ai/contents/${id}`
+      `/admin/ai/contents/${id}`
     );
     return res.data;
   },
@@ -488,7 +488,7 @@ export const aiContentApi = {
     data: UpdateAIContentRequest
   ): Promise<AIGeneratedContent> => {
     const res = await apiRequest<{ data: AIGeneratedContent }>(
-      `/api/v1/admin/ai/contents/${id}`,
+      `/admin/ai/contents/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(data),
@@ -499,21 +499,21 @@ export const aiContentApi = {
 
   // 删除内容
   deleteContent: async (id: number): Promise<void> => {
-    await apiRequest(`/api/v1/admin/ai/contents/${id}`, {
+    await apiRequest(`/admin/ai/contents/${id}`, {
       method: "DELETE",
     });
   },
 
   // 审核通过
   approveContent: async (id: number): Promise<void> => {
-    await apiRequest(`/api/v1/admin/ai/contents/${id}/approve`, {
+    await apiRequest(`/admin/ai/contents/${id}/approve`, {
       method: "POST",
     });
   },
 
   // 审核拒绝
   rejectContent: async (id: number, reason?: string): Promise<void> => {
-    await apiRequest(`/api/v1/admin/ai/contents/${id}/reject`, {
+    await apiRequest(`/admin/ai/contents/${id}/reject`, {
       method: "POST",
       body: JSON.stringify({ reason }),
     });
@@ -522,7 +522,7 @@ export const aiContentApi = {
   // 批量审核通过
   batchApprove: async (ids: number[]): Promise<{ success_count: number }> => {
     const res = await apiRequest<{ data: { success_count: number } }>(
-      `/api/v1/admin/ai/contents/batch-approve`,
+      `/admin/ai/contents/batch-approve`,
       {
         method: "POST",
         body: JSON.stringify({ ids }),
@@ -537,7 +537,7 @@ export const aiContentApi = {
     reason?: string
   ): Promise<{ success_count: number }> => {
     const res = await apiRequest<{ data: { success_count: number } }>(
-      `/api/v1/admin/ai/contents/batch-reject`,
+      `/admin/ai/contents/batch-reject`,
       {
         method: "POST",
         body: JSON.stringify({ ids, reason }),
@@ -549,7 +549,7 @@ export const aiContentApi = {
   // 重新生成内容
   regenerateContent: async (id: number): Promise<AIGeneratedContent> => {
     const res = await apiRequest<{ data: AIGeneratedContent }>(
-      `/api/v1/admin/ai/contents/${id}/regenerate`,
+      `/admin/ai/contents/${id}/regenerate`,
       {
         method: "POST",
       }
@@ -566,7 +566,7 @@ export const aiContentApi = {
     data: GenerateChapterLessonRequest
   ): Promise<AIGeneratedContent> => {
     const res = await apiRequest<{ data: AIGeneratedContent }>(
-      `/api/v1/admin/ai-content/generate/chapter-lesson`,
+      `/admin/ai-content/generate/chapter-lesson`,
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -581,7 +581,7 @@ export const aiContentApi = {
   ): Promise<{ message: string; task: AIBatchTask }> => {
     const res = await apiRequest<{
       data: { message: string; task: AIBatchTask };
-    }>(`/api/v1/admin/ai-content/generate/course-lessons`, {
+    }>(`/admin/ai-content/generate/course-lessons`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -594,7 +594,7 @@ export const aiContentApi = {
   ): Promise<{ message: string; task_count: number; tasks: AIBatchTask[] }> => {
     const res = await apiRequest<{
       data: { message: string; task_count: number; tasks: AIBatchTask[] };
-    }>(`/api/v1/admin/ai-content/generate/category-lessons`, {
+    }>(`/admin/ai-content/generate/category-lessons`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -617,14 +617,14 @@ export const aiContentApi = {
 
     const res = await apiRequest<{
       data: { tasks: AIBatchTask[]; total: number };
-    }>(`/api/v1/admin/ai/tasks?${query.toString()}`);
+    }>(`/admin/ai/tasks?${query.toString()}`);
     return res.data;
   },
 
   // 获取单个任务
   getTask: async (id: number): Promise<AIBatchTask> => {
     const res = await apiRequest<{ data: AIBatchTask }>(
-      `/api/v1/admin/ai/tasks/${id}`
+      `/admin/ai/tasks/${id}`
     );
     return res.data;
   },
@@ -632,7 +632,7 @@ export const aiContentApi = {
   // 创建批量任务
   createTask: async (data: CreateAIBatchTaskRequest): Promise<AIBatchTask> => {
     const res = await apiRequest<{ data: AIBatchTask }>(
-      `/api/v1/admin/ai/tasks`,
+      `/admin/ai/tasks`,
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -643,7 +643,7 @@ export const aiContentApi = {
 
   // 取消任务
   cancelTask: async (id: number): Promise<void> => {
-    await apiRequest(`/api/v1/admin/ai/tasks/${id}/cancel`, {
+    await apiRequest(`/admin/ai/tasks/${id}/cancel`, {
       method: "POST",
     });
   },
@@ -651,7 +651,7 @@ export const aiContentApi = {
   // 重试任务
   retryTask: async (id: number): Promise<AIBatchTask> => {
     const res = await apiRequest<{ data: AIBatchTask }>(
-      `/api/v1/admin/ai/tasks/${id}/retry`,
+      `/admin/ai/tasks/${id}/retry`,
       {
         method: "POST",
       }
@@ -666,7 +666,7 @@ export const aiContentApi = {
   // 获取质量统计
   getQualityStats: async (): Promise<AIQualityStats> => {
     const res = await apiRequest<{ data: AIQualityStats }>(
-      `/api/v1/admin/ai/quality/stats`
+      `/admin/ai/quality/stats`
     );
     return res.data;
   },
@@ -681,7 +681,7 @@ export const aiContentApi = {
     if (limit) query.set("limit", limit.toString());
 
     const res = await apiRequest<{ data: { contents: AIGeneratedContent[] } }>(
-      `/api/v1/admin/ai/quality/low-quality?${query.toString()}`
+      `/admin/ai/quality/low-quality?${query.toString()}`
     );
     return res.data.contents;
   },
@@ -696,7 +696,7 @@ export const aiContentApi = {
     if (limit) query.set("limit", limit.toString());
 
     const res = await apiRequest<{ data: { contents: AIGeneratedContent[] } }>(
-      `/api/v1/admin/ai/quality/high-quality?${query.toString()}`
+      `/admin/ai/quality/high-quality?${query.toString()}`
     );
     return res.data.contents;
   },
@@ -712,14 +712,14 @@ export const aiContentApi = {
     const query = category ? `?category=${category}` : "";
     const res = await apiRequest<{
       data: { templates: PromptTemplate[]; total: number };
-    }>(`/api/v1/admin/ai/prompts${query}`);
+    }>(`/admin/ai/prompts${query}`);
     return res.data;
   },
 
   // 获取单个模板
   getPromptTemplate: async (id: number): Promise<PromptTemplate> => {
     const res = await apiRequest<{ data: PromptTemplate }>(
-      `/api/v1/admin/ai/prompts/${id}`
+      `/admin/ai/prompts/${id}`
     );
     return res.data;
   },
@@ -729,7 +729,7 @@ export const aiContentApi = {
     data: CreatePromptTemplateRequest
   ): Promise<PromptTemplate> => {
     const res = await apiRequest<{ data: PromptTemplate }>(
-      `/api/v1/admin/ai/prompts`,
+      `/admin/ai/prompts`,
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -744,7 +744,7 @@ export const aiContentApi = {
     data: UpdatePromptTemplateRequest
   ): Promise<PromptTemplate> => {
     const res = await apiRequest<{ data: PromptTemplate }>(
-      `/api/v1/admin/ai/prompts/${id}`,
+      `/admin/ai/prompts/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(data),
@@ -755,7 +755,7 @@ export const aiContentApi = {
 
   // 删除模板
   deletePromptTemplate: async (id: number): Promise<void> => {
-    await apiRequest(`/api/v1/admin/ai/prompts/${id}`, {
+    await apiRequest(`/admin/ai/prompts/${id}`, {
       method: "DELETE",
     });
   },
@@ -765,7 +765,7 @@ export const aiContentApi = {
     id: number
   ): Promise<PromptTemplateVersion[]> => {
     const res = await apiRequest<{ data: { versions: PromptTemplateVersion[] } }>(
-      `/api/v1/admin/ai/prompts/${id}/versions`
+      `/admin/ai/prompts/${id}/versions`
     );
     return res.data.versions;
   },
@@ -776,7 +776,7 @@ export const aiContentApi = {
     versionId: number
   ): Promise<PromptTemplate> => {
     const res = await apiRequest<{ data: PromptTemplate }>(
-      `/api/v1/admin/ai/prompts/${id}/rollback`,
+      `/admin/ai/prompts/${id}/rollback`,
       {
         method: "POST",
         body: JSON.stringify({ version_id: versionId }),
@@ -791,7 +791,7 @@ export const aiContentApi = {
   ): Promise<{ result: string; tokens_used: number; time_ms: number }> => {
     const res = await apiRequest<{
       data: { result: string; tokens_used: number; time_ms: number };
-    }>(`/api/v1/admin/ai/prompts/test`, {
+    }>(`/admin/ai/prompts/test`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -805,7 +805,7 @@ export const aiContentApi = {
   // 获取配置
   getConfig: async (): Promise<AIGenerationConfig> => {
     const res = await apiRequest<{ data: AIGenerationConfig }>(
-      `/api/v1/admin/ai/config`
+      `/admin/ai/config`
     );
     return res.data;
   },
@@ -815,7 +815,7 @@ export const aiContentApi = {
     data: UpdateAIConfigRequest
   ): Promise<AIGenerationConfig> => {
     const res = await apiRequest<{ data: AIGenerationConfig }>(
-      `/api/v1/admin/ai/config`,
+      `/admin/ai/config`,
       {
         method: "PUT",
         body: JSON.stringify(data),
@@ -838,13 +838,13 @@ export const aiContentApi = {
         total_tokens: number;
         total_cost: number;
       };
-    }>(`/api/v1/admin/ai/config/usage`);
+    }>(`/admin/ai/config/usage`);
     return res.data;
   },
 
   // 重置每日限额
   resetDailyLimit: async (): Promise<void> => {
-    await apiRequest(`/api/v1/admin/ai/config/reset-daily`, {
+    await apiRequest(`/admin/ai/config/reset-daily`, {
       method: "POST",
     });
   },

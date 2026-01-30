@@ -1140,4 +1140,39 @@ export const wechatMpAuthApi = {
   },
 };
 
+// Fetch-like API request wrapper for compatibility
+// This wraps the response in { data: result } format
+export async function apiRequest<T>(
+  url: string,
+  options?: {
+    method?: string;
+    body?: string;
+    headers?: Record<string, string>;
+  }
+): Promise<T> {
+  const method = options?.method?.toLowerCase() || "get";
+  const data = options?.body ? JSON.parse(options.body) : undefined;
+
+  let result: unknown;
+  switch (method) {
+    case "post":
+      result = await request.post(url, data);
+      break;
+    case "put":
+      result = await request.put(url, data);
+      break;
+    case "delete":
+      result = await request.delete(url);
+      break;
+    case "patch":
+      result = await request.patch(url, data);
+      break;
+    default:
+      result = await request.get(url);
+  }
+
+  // Wrap result in { data: ... } to match expected format
+  return { data: result } as T;
+}
+
 export default request;

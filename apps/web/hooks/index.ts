@@ -7,7 +7,6 @@ export * from "./useLocalStorage";
 export * from "./useUser";
 export * from "./useFavorite";
 export * from "./useSubscription";
-export * from "./useCommunity";
 export * from "./useCourse";
 export * from "./usePractice";
 export * from "./useSessionAutoSave";

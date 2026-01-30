@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -48,42 +48,97 @@ import {
   UserCheck,
   BadgeCheck,
   Info,
+  MousePointer2,
+  ArrowUpRight,
+  Play,
+  Compass,
 } from "lucide-react";
 
-// 动画数字组件
+// 动画数字组件 - 支持滚动触发
 function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(value); // 初始值设置为最终值，避免 hydration 不匹配
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  // 确保只在客户端挂载后才开始动画
   useEffect(() => {
-    const duration = 2000,
-      steps = 60,
-      increment = value / steps;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        setCount(value);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(current));
-      }
-    }, duration / steps);
-    return () => clearInterval(timer);
-  }, [value]);
+    setIsMounted(true);
+    setCount(0); // 挂载后重置为 0 开始动画
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 2000;
+          const steps = 60;
+          const increment = value / steps;
+          let current = 0;
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= value) {
+              setCount(value);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(current));
+            }
+          }, duration / steps);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [value, hasAnimated, isMounted]);
+
   return (
-    <span className="font-display font-bold">
+    <span ref={ref} className="font-display font-bold tabular-nums">
       {count.toLocaleString()}
       {suffix}
     </span>
   );
 }
 
+// 悬浮粒子动画
+function FloatingParticles() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(6)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-2 h-2 rounded-full bg-amber-400/30 animate-float"
+          style={{
+            left: `${15 + i * 15}%`,
+            top: `${20 + (i % 3) * 25}%`,
+            animationDelay: `${i * 0.5}s`,
+            animationDuration: `${3 + i * 0.5}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // 滚动公告组件
 function ScrollingNotice({ items }: { items: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
     const timer = setInterval(() => setCurrentIndex((i) => (i + 1) % items.length), 3000);
     return () => clearInterval(timer);
-  }, [items.length]);
+  }, [items.length, isMounted]);
+
   return (
     <div className="overflow-hidden h-6">
       <div
@@ -540,122 +595,192 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   return (
-    <div className="pb-20 lg:pb-0 bg-stone-50">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-white via-amber-50/30 to-white">
-        <div className="absolute top-10 right-0 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-100/30 rounded-full blur-2xl" />
+    <div className="pb-20 lg:pb-0 bg-gradient-to-b from-stone-50 to-white">
+      {/* Hero Section - 全新设计 */}
+      <section className="relative overflow-hidden">
+        {/* 背景装饰 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-radial from-amber-200/40 via-amber-100/20 to-transparent rounded-full blur-3xl translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-radial from-orange-200/30 via-orange-100/10 to-transparent rounded-full blur-3xl -translate-x-1/3 translate-y-1/3" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-amber-100/20 to-transparent rounded-full blur-3xl" />
+        
+        {/* 网格背景 */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+        
+        <FloatingParticles />
 
-        <div className="container relative mx-auto px-4 lg:px-6 pt-10 pb-12">
-          {/* Top Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="container relative mx-auto px-4 lg:px-6 pt-8 pb-16">
+          {/* Top Bar - 重新设计 */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 border border-amber-200 text-sm font-medium text-amber-700">
-                <Sparkles className="w-4 h-4" /> 2024国考报名进行中
+              <span className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all cursor-pointer">
+                <Sparkles className="w-4 h-4 animate-pulse" /> 
+                2024国考报名进行中
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </span>
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-200 text-sm font-medium text-red-600">
-                <Timer className="w-4 h-4" /> 截止还剩 3天12时
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/80 backdrop-blur-sm border border-red-200 text-sm font-semibold text-red-600 shadow-sm">
+                <Timer className="w-4 h-4 animate-pulse" /> 
+                <span className="tabular-nums">截止还剩 3天12时</span>
               </span>
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="flex items-center gap-1.5 text-emerald-600">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> 实时更新
+            <div className="flex items-center gap-4 text-sm">
+              <span className="flex items-center gap-2 text-emerald-600 bg-emerald-50/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                实时更新
               </span>
-              <div className="w-64 hidden md:block">
+              <div className="w-72 hidden md:block bg-white/60 backdrop-blur-sm rounded-full px-4 py-1.5 border border-stone-200/50">
                 <ScrollingNotice items={liveUpdates} />
               </div>
             </div>
           </div>
 
-          {/* Title + Search */}
-          <div className="max-w-3xl mx-auto text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-stone-900 mb-4">
-              找到你的<span className="text-gradient-amber">理想公职</span>
+          {/* Title + Search - 全新设计 */}
+          <div className="max-w-4xl mx-auto text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100/80 text-amber-700 text-sm font-medium mb-6">
+              <Compass className="w-4 h-4" />
+              一站式公考信息服务平台
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-stone-900 mb-6 leading-tight">
+              找到你的
+              <span className="relative inline-block mx-2">
+                <span className="relative z-10 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 bg-clip-text text-transparent">
+                  理想公职
+                </span>
+                <span className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-amber-200 to-orange-200 rounded-full -z-0 opacity-60" />
+              </span>
             </h1>
-            <p className="text-base md:text-lg text-stone-600 mb-6">
-              覆盖全国 24,690+ 职位 · 智能匹配精准定位 · 128,000+ 考生的选择
+            
+            <p className="text-lg md:text-xl text-stone-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+              覆盖全国 <span className="font-semibold text-amber-600">24,690+</span> 职位 · 
+              智能匹配精准定位 · 
+              <span className="font-semibold text-amber-600">128,000+</span> 考生的选择
             </p>
 
-            <div className="relative flex items-center bg-white rounded-2xl shadow-lg border border-stone-200 p-2 mb-5">
-              <Search className="absolute left-5 w-5 h-5 text-stone-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索职位、部门、专业、地区..."
-                className="flex-1 pl-12 pr-4 py-3 bg-transparent text-base outline-none"
-              />
-              <Link
-                href={`/positions?q=${encodeURIComponent(searchQuery)}`}
-                className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-base font-medium rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all"
-              >
-                搜索职位
-              </Link>
+            {/* 搜索框 - 玻璃态设计 */}
+            <div className={`relative max-w-2xl mx-auto transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
+              <div className={`absolute -inset-1 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 rounded-2xl opacity-0 blur-lg transition-opacity duration-300 ${isSearchFocused ? 'opacity-70' : ''}`} />
+              <div className="relative flex items-center bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-stone-200/50 border border-white p-2">
+                <div className="flex items-center gap-3 pl-4">
+                  <Search className={`w-5 h-5 transition-colors duration-300 ${isSearchFocused ? 'text-amber-500' : 'text-stone-400'}`} />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  placeholder="搜索职位、部门、专业、地区..."
+                  className="flex-1 px-4 py-3.5 bg-transparent text-base outline-none placeholder:text-stone-400"
+                />
+                <Link
+                  href={`/positions?q=${encodeURIComponent(searchQuery)}`}
+                  className="group px-6 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-base font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 flex items-center gap-2"
+                >
+                  搜索职位
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
 
-            {/* Hot Searches */}
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <span className="text-sm text-stone-500">热门搜索:</span>
+            {/* Hot Searches - 改进设计 */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+              <span className="text-sm text-stone-500 mr-1">热门搜索:</span>
               {hotSearches.map((item, i) => (
                 <Link
                   key={item.word}
                   href={`/positions?q=${item.word}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white rounded-lg border border-stone-200 hover:border-amber-300 hover:text-amber-700 transition-colors"
+                  className="group inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-white/80 backdrop-blur-sm rounded-full border border-stone-200/80 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all shadow-sm hover:shadow-md"
                 >
-                  {i < 3 && <Flame className="w-4 h-4 text-orange-500" />}
+                  {i < 3 && <Flame className="w-4 h-4 text-orange-500 group-hover:animate-bounce" />}
                   {item.word}
-                  <span className="text-emerald-600 text-xs">{item.trend}</span>
+                  <span className="text-emerald-600 text-xs font-medium">{item.trend}</span>
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Quick Filters */}
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 max-w-3xl mx-auto">
-            {quickFilters.map((f) => (
+          {/* Quick Filters - 重新设计卡片 */}
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4 max-w-4xl mx-auto">
+            {quickFilters.map((f, index) => (
               <Link
                 key={f.href}
                 href={f.href}
-                className="group flex flex-col items-center p-4 bg-white rounded-xl border border-stone-200 hover:border-amber-300 hover:shadow-md transition-all"
+                className="group relative flex flex-col items-center p-5 bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-lg shadow-stone-200/30 hover:shadow-xl hover:shadow-amber-200/30 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div
-                  className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}
-                >
-                  <f.icon className={`w-6 h-6 ${f.color}`} />
+                {/* 悬浮时的渐变背景 */}
+                <div className={`absolute inset-0 ${f.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                
+                <div className={`relative z-10 w-14 h-14 rounded-2xl ${f.bg} flex items-center justify-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg ${f.bg.replace('bg-', 'shadow-')}/30`}>
+                  <f.icon className={`w-7 h-7 ${f.color}`} />
                 </div>
-                <span className="text-sm font-medium text-stone-800">{f.title}</span>
-                <span className="text-sm text-stone-500">{f.count}</span>
+                <span className="relative z-10 text-sm font-semibold text-stone-800 group-hover:text-stone-900">{f.title}</span>
+                <span className="relative z-10 text-sm text-stone-500 font-medium">{f.count}</span>
+                
+                {/* 角标装饰 */}
+                {f.title === "智能匹配" && (
+                  <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md">
+                    AI
+                  </span>
+                )}
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Live Stats Bar */}
-      <section className="container mx-auto px-4 lg:px-6 -mt-4 relative z-10">
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Activity className="w-5 h-5 text-emerald-500" />
-              <span className="text-base font-medium text-stone-800">今日实时数据</span>
-              <span className="text-sm text-stone-400">更新于 10:25</span>
+      {/* Live Stats Bar - 全新设计 */}
+      <section className="container mx-auto px-4 lg:px-6 -mt-6 relative z-10">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white shadow-2xl shadow-stone-200/50 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <Activity className="w-4 h-4 text-emerald-600" />
+              </div>
+              <span className="text-lg font-semibold text-stone-800">今日实时数据</span>
+              <span className="text-sm text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md">更新于 10:25</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-emerald-600">
+            <button className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors">
               <RefreshCw className="w-4 h-4" /> 自动刷新
-            </div>
+            </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {todayStats.map((s, i) => (
-              <div key={i} className={`flex items-center gap-4 p-4 ${s.bg} rounded-xl`}>
-                <s.icon className={`w-6 h-6 ${s.color}`} />
+              <div 
+                key={i} 
+                className={`group relative flex items-center gap-4 p-5 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-default overflow-hidden`}
+                style={{ background: `linear-gradient(135deg, ${s.bg === 'bg-blue-50' ? '#eff6ff, #dbeafe' : s.bg === 'bg-emerald-50' ? '#ecfdf5, #d1fae5' : s.bg === 'bg-violet-50' ? '#f5f3ff, #ede9fe' : '#fffbeb, #fef3c7'})` }}
+              >
+                <div className={`w-14 h-14 rounded-2xl ${s.bg} flex items-center justify-center shadow-lg ${s.bg.replace('bg-', 'shadow-')}/30 group-hover:scale-110 transition-transform`}>
+                  <s.icon className={`w-7 h-7 ${s.color}`} />
+                </div>
                 <div>
-                  <p className="text-2xl font-display font-bold text-stone-900">
+                  <p className="text-3xl font-display font-bold text-stone-900 tabular-nums">
                     {s.value.toLocaleString()}
                   </p>
-                  <p className="text-sm text-stone-600">
-                    {s.label} <span className="text-emerald-600 font-medium">{s.change}</span>
+                  <p className="text-sm text-stone-600 flex items-center gap-2">
+                    {s.label} 
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-semibold text-xs">
+                      <TrendingUp className="w-3 h-3 mr-0.5" />
+                      {s.change}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -664,18 +789,39 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Main Stats */}
-      <section className="container mx-auto px-4 lg:px-6 py-8">
-        <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 rounded-2xl p-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl" />
+      {/* Main Stats - 全新设计 */}
+      <section className="container mx-auto px-4 lg:px-6 py-10">
+        <div className="relative rounded-3xl p-10 overflow-hidden">
+          {/* 渐变背景 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900" />
+          
+          {/* 装饰元素 */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-60 h-60 bg-orange-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-radial from-amber-500/10 to-transparent rounded-full" />
+          
+          {/* 网格背景 */}
+          <div 
+            className="absolute inset-0 opacity-5"
+            style={{
+              backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
+              backgroundSize: '40px 40px'
+            }}
+          />
+
           <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((s, i) => (
-              <div key={i} className="text-center">
-                <p className="text-3xl lg:text-4xl text-amber-400 font-display font-bold mb-1">
+              <div 
+                key={i} 
+                className="group text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all duration-300"
+              >
+                <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <s.icon className="w-7 h-7 text-amber-400" />
+                </div>
+                <p className="text-4xl lg:text-5xl text-transparent bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text font-display font-bold mb-2">
                   <AnimatedCounter value={s.value} suffix={s.suffix} />
                 </p>
-                <p className="text-sm text-stone-400 flex items-center justify-center gap-2">
-                  <s.icon className="w-4 h-4" />
+                <p className="text-sm text-stone-400 font-medium">
                   {s.label}
                 </p>
               </div>
@@ -804,73 +950,128 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Hot Positions */}
-      <section className="container mx-auto px-4 lg:px-6 pb-8">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="flex items-center gap-2 text-xl font-bold text-stone-800">
-            <Flame className="w-6 h-6 text-orange-500" />
-            热门职位
-            <span className="text-sm font-normal text-stone-500 bg-stone-100 px-2 py-1 rounded-lg">
-              实时更新
-            </span>
-          </h2>
+      {/* Hot Positions - 全新设计 */}
+      <section className="container mx-auto px-4 lg:px-6 pb-10">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+              <Flame className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-stone-800">热门职位</h2>
+              <div className="flex items-center gap-2 text-sm text-stone-500">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                实时更新
+              </div>
+            </div>
+          </div>
           <Link
             href="/positions"
-            className="text-sm text-amber-600 hover:text-amber-700 flex items-center gap-1"
+            className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-full transition-all"
           >
-            查看全部 <ArrowRight className="w-4 h-4" />
+            查看全部 
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {hotPositions.map((p) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {hotPositions.map((p, index) => (
             <Link
               key={p.id}
               href={`/positions/${p.id}`}
-              className="group bg-white rounded-2xl border border-stone-200 hover:border-amber-300 hover:shadow-lg transition-all overflow-hidden"
+              className="group relative bg-white rounded-2xl border border-stone-200/80 hover:border-transparent hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-300 overflow-hidden hover:-translate-y-1"
+              style={{ animationDelay: `${index * 50}ms` }}
             >
+              {/* 顶部渐变条 */}
               <div
-                className={`h-1 ${p.score >= 90 ? "bg-emerald-500" : p.score >= 85 ? "bg-amber-500" : "bg-orange-500"}`}
+                className={`h-1.5 ${p.score >= 90 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : p.score >= 85 ? "bg-gradient-to-r from-amber-400 to-amber-500" : "bg-gradient-to-r from-orange-400 to-orange-500"}`}
               />
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
+              
+              {/* 悬浮时的背景渐变 */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/0 to-orange-50/0 group-hover:from-amber-50/50 group-hover:to-orange-50/30 transition-all duration-300" />
+              
+              <div className="relative p-5">
+                <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                       <span
-                        className={`px-2 py-1 text-xs font-medium rounded-lg ${p.type === "国考" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${p.type === "国考" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
                       >
                         {p.type}
                       </span>
-                      <h3 className="text-base font-semibold text-stone-800 group-hover:text-amber-600 truncate">
+                      <h3 className="text-base font-bold text-stone-800 group-hover:text-amber-600 truncate transition-colors">
                         {p.name}
                       </h3>
                     </div>
-                    <p className="text-sm text-stone-500 truncate">{p.dept}</p>
+                    <p className="text-sm text-stone-500 truncate flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
+                      {p.dept}
+                    </p>
                   </div>
-                  <span
-                    className={`text-xl font-display font-bold ${p.score >= 90 ? "text-emerald-600" : p.score >= 85 ? "text-amber-600" : "text-orange-600"}`}
-                  >
-                    {p.score}%
-                  </span>
+                  
+                  {/* 匹配度圆环 */}
+                  <div className="relative">
+                    <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-stone-100"
+                      />
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeDasharray={`${p.score}, 100`}
+                        strokeLinecap="round"
+                        className={p.score >= 90 ? "text-emerald-500" : p.score >= 85 ? "text-amber-500" : "text-orange-500"}
+                      />
+                    </svg>
+                    <span className={`absolute inset-0 flex items-center justify-center text-sm font-bold ${p.score >= 90 ? "text-emerald-600" : p.score >= 85 ? "text-amber-600" : "text-orange-600"}`}>
+                      {p.score}
+                    </span>
+                  </div>
                 </div>
+                
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="px-2 py-1 text-sm bg-stone-100 rounded-lg text-stone-600">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm bg-stone-100/80 rounded-lg text-stone-600 font-medium">
+                    <MapPin className="w-3.5 h-3.5" />
                     {p.loc}
                   </span>
-                  <span className="px-2 py-1 text-sm bg-stone-100 rounded-lg text-stone-600">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm bg-stone-100/80 rounded-lg text-stone-600 font-medium">
+                    <GraduationCap className="w-3.5 h-3.5" />
                     {p.edu}
                   </span>
-                  <span className="px-2 py-1 text-sm bg-stone-100 rounded-lg text-stone-600">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm bg-stone-100/80 rounded-lg text-stone-600 font-medium">
+                    <Users className="w-3.5 h-3.5" />
                     招{p.num}人
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-sm border-t border-stone-100 pt-3">
-                  <span className="text-stone-500">
-                    竞争比 <span className="font-semibold text-amber-600">{p.ratio}</span>
-                  </span>
-                  <span className="text-stone-500">
-                    已报名 <span className="font-semibold text-stone-700">{p.apps}人</span>
-                  </span>
+                
+                <div className="flex items-center justify-between text-sm border-t border-stone-100 pt-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-stone-500">竞争比</span>
+                    <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">{p.ratio}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-stone-500">已报名</span>
+                    <span className="font-bold text-stone-700">{p.apps}</span>
+                    <span className="text-stone-400">人</span>
+                  </div>
                 </div>
+              </div>
+              
+              {/* 查看详情箭头 */}
+              <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                <ArrowUpRight className="w-4 h-4 text-amber-600" />
               </div>
             </Link>
           ))}
@@ -1150,58 +1351,111 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-white border-y border-stone-200">
-        <div className="container mx-auto px-4 lg:px-6 py-10">
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-bold text-stone-800 mb-2">为什么选择公考智选</h2>
-            <p className="text-base text-stone-500">一站式公务员考试信息服务平台</p>
+      {/* Features - 全新设计 */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-stone-50 via-white to-amber-50/30 border-y border-stone-200">
+        {/* 装饰元素 */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-amber-200/20 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-orange-200/20 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
+
+        <div className="container relative mx-auto px-4 lg:px-6 py-16">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100/80 text-amber-700 text-sm font-medium mb-4">
+              <Shield className="w-4 h-4" />
+              核心优势
+            </div>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-800 mb-3">
+              为什么选择
+              <span className="relative inline-block mx-2">
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">公考智选</span>
+                <span className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-amber-300 to-orange-300 rounded-full opacity-50" />
+              </span>
+            </h2>
+            <p className="text-lg text-stone-500 max-w-xl mx-auto">一站式公务员考试信息服务平台，助力您的公考之路</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
             {features.map((f, i) => (
               <div
                 key={i}
-                className="group text-center p-5 rounded-2xl hover:bg-amber-50 transition-colors"
+                className="group relative text-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-lg shadow-stone-200/30 hover:shadow-xl hover:shadow-amber-200/30 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
               >
-                <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center group-hover:from-amber-200 group-hover:to-amber-100 transition-colors">
-                  <f.icon className="w-7 h-7 text-amber-600" />
+                {/* 悬浮时的渐变背景 */}
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-amber-200/30">
+                    <f.icon className="w-8 h-8 text-amber-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-stone-800 mb-1.5 group-hover:text-amber-700 transition-colors">{f.title}</h3>
+                  <p className="text-sm text-stone-500 leading-relaxed">{f.desc}</p>
                 </div>
-                <h3 className="text-base font-semibold text-stone-800 mb-1">{f.title}</h3>
-                <p className="text-sm text-stone-500">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="container mx-auto px-4 lg:px-6 py-10">
-        <div className="text-center mb-8">
-          <h2 className="flex items-center justify-center gap-2 text-xl font-bold text-stone-800">
-            <Heart className="w-5 h-5 text-red-500" />
+      {/* Testimonials - 全新设计 */}
+      <section className="container mx-auto px-4 lg:px-6 py-14">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-100/80 text-red-600 text-sm font-medium mb-4">
+            <Heart className="w-4 h-4 fill-current" />
+            真实反馈
+          </div>
+          <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-800 mb-3">
             用户心声
           </h2>
-          <p className="text-base text-stone-500 mt-1">听听已上岸的小伙伴怎么说</p>
+          <p className="text-lg text-stone-500">听听已上岸的小伙伴怎么说</p>
         </div>
+        
         <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <div key={t.id} className="relative bg-white rounded-2xl border border-stone-200 p-6">
-              <Quote className="absolute top-5 right-5 w-8 h-8 text-amber-100" />
-              <div className="flex gap-1 mb-4">
-                {Array.from({ length: t.rating }).map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
-                ))}
+          {testimonials.map((t, index) => (
+            <div 
+              key={t.id} 
+              className="group relative bg-white rounded-2xl border border-stone-200/80 p-7 hover:border-transparent hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              {/* 悬浮背景 */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/0 to-orange-50/0 group-hover:from-amber-50/50 group-hover:to-orange-50/30 transition-all duration-300" />
+              
+              {/* 引号装饰 */}
+              <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-amber-100/50 flex items-center justify-center">
+                <Quote className="w-6 h-6 text-amber-400/60" />
               </div>
-              <p className="text-base text-stone-600 mb-5 leading-relaxed">"{t.content}"</p>
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-base font-semibold ${t.type === "国考" ? "bg-blue-500" : t.type === "省考" ? "bg-emerald-500" : "bg-violet-500"}`}
-                >
-                  {t.avatar}
+              
+              <div className="relative z-10">
+                {/* 星级评分 */}
+                <div className="flex gap-1 mb-5">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400 drop-shadow-sm" />
+                  ))}
                 </div>
-                <div>
-                  <p className="text-base font-semibold text-stone-800">{t.name}</p>
-                  <p className="text-sm text-stone-500">{t.title}</p>
+                
+                {/* 评价内容 */}
+                <p className="text-base text-stone-700 mb-6 leading-relaxed font-medium">
+                  "{t.content}"
+                </p>
+                
+                {/* 用户信息 */}
+                <div className="flex items-center gap-4 pt-4 border-t border-stone-100">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg ${
+                      t.type === "国考" 
+                        ? "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/30" 
+                        : t.type === "省考" 
+                        ? "bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/30" 
+                        : "bg-gradient-to-br from-violet-500 to-violet-600 shadow-violet-500/30"
+                    }`}
+                  >
+                    {t.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-base font-bold text-stone-800">{t.name}</p>
+                    <p className="text-sm text-stone-500 flex items-center gap-1.5">
+                      <BadgeCheck className="w-4 h-4 text-emerald-500" />
+                      {t.title}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1276,34 +1530,83 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container mx-auto px-4 lg:px-6 py-10">
-        <div className="relative bg-gradient-to-r from-amber-500 to-orange-500 rounded-3xl p-10 text-center overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-5 left-5 w-24 h-24 border-2 border-white rounded-full" />
-            <div className="absolute bottom-5 right-5 w-16 h-16 border-2 border-white rounded-full" />
+      {/* CTA - 全新设计 */}
+      <section className="container mx-auto px-4 lg:px-6 py-12">
+        <div className="relative rounded-[2rem] overflow-hidden">
+          {/* 背景渐变 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500" />
+          
+          {/* 装饰元素 */}
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-orange-300/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+          
+          {/* 浮动圆环 */}
+          <div className="absolute inset-0 overflow-hidden opacity-20">
+            <div className="absolute top-10 left-10 w-32 h-32 border-2 border-white rounded-full animate-float" />
+            <div className="absolute top-20 right-20 w-20 h-20 border-2 border-white rounded-full animate-float" style={{ animationDelay: '1s' }} />
+            <div className="absolute bottom-16 left-1/4 w-16 h-16 border-2 border-white rounded-full animate-float" style={{ animationDelay: '0.5s' }} />
+            <div className="absolute bottom-10 right-1/3 w-24 h-24 border-2 border-white rounded-full animate-float" style={{ animationDelay: '1.5s' }} />
           </div>
-          <div className="relative">
-            <h2 className="text-2xl lg:text-3xl font-serif font-bold text-white mb-4">
-              开始您的公考之旅
+          
+          {/* 网格背景 */}
+          <div 
+            className="absolute inset-0 opacity-5"
+            style={{
+              backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
+              backgroundSize: '40px 40px'
+            }}
+          />
+
+          <div className="relative px-8 py-16 md:py-20 text-center">
+            {/* 顶部装饰徽章 */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4" />
+              128,000+ 考生的选择
+            </div>
+            
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-white mb-5 leading-tight">
+              开始您的
+              <span className="relative inline-block mx-2">
+                公考之旅
+                <span className="absolute -bottom-1 left-0 right-0 h-1 bg-white/50 rounded-full" />
+              </span>
             </h2>
-            <p className="text-base text-amber-100 mb-6 max-w-lg mx-auto">
+            
+            <p className="text-lg md:text-xl text-white/90 mb-10 max-w-xl mx-auto leading-relaxed">
               注册账号完善个人信息，立即获取个性化的职位推荐
             </p>
-            <div className="flex items-center justify-center gap-4">
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="px-8 py-3 bg-white text-amber-600 text-base font-semibold rounded-xl hover:bg-amber-50 transition-colors shadow-lg"
+                className="group px-8 py-4 bg-white text-amber-600 text-lg font-bold rounded-2xl hover:bg-amber-50 transition-all shadow-2xl shadow-black/20 hover:shadow-3xl hover:-translate-y-1 flex items-center gap-2"
               >
                 免费注册
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 href="/match"
-                className="px-8 py-3 bg-amber-600 text-white text-base font-semibold rounded-xl border-2 border-white/30 hover:bg-amber-700 transition-colors flex items-center gap-2"
+                className="group px-8 py-4 bg-white/10 backdrop-blur-sm text-white text-lg font-bold rounded-2xl border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all flex items-center gap-2"
               >
-                <Target className="w-5 h-5" />
+                <Target className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                 立即匹配
               </Link>
+            </div>
+            
+            {/* 底部信息 */}
+            <div className="mt-10 flex items-center justify-center gap-6 text-white/70 text-sm">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" />
+                免费使用
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" />
+                无需下载
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" />
+                实时更新
+              </span>
             </div>
           </div>
         </div>

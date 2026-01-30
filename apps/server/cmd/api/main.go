@@ -122,13 +122,6 @@ func main() {
 	// Major repository
 	majorRepo := repository.NewMajorRepository(db)
 
-	// Community repositories
-	postRepo := repository.NewPostRepository(db)
-	commentRepo := repository.NewCommentRepository(db)
-	likeRepo := repository.NewLikeRepository(db)
-	postCategoryRepo := repository.NewPostCategoryRepository(db)
-	hotTopicRepo := repository.NewHotTopicRepository(db)
-
 	// Course learning system repositories
 	courseCategoryRepo := repository.NewCourseCategoryRepository(db)
 	courseRepo := repository.NewCourseRepository(db)
@@ -188,6 +181,12 @@ func main() {
 	aiContentRepo := repository.NewAIContentRepository(db)
 	aiBatchTaskRepo := repository.NewAIBatchTaskRepository(db)
 
+	// LLM Generation task repository (LLM 内容生成)
+	generationTaskRepo := repository.NewGenerationTaskRepository(db)
+
+	// Learning content repository (学习内容通用API)
+	learningContentRepo := repository.NewLearningContentRepository(db)
+
 	// ============================================
 	// Initialize Services
 	// ============================================
@@ -217,14 +216,8 @@ func main() {
 	// Major service
 	majorService := service.NewMajorService(majorRepo)
 
-	// Community services
-	postService := service.NewPostService(postRepo, commentRepo, likeRepo, postCategoryRepo, userRepo)
-	commentService := service.NewCommentService(commentRepo, postRepo, likeRepo, userRepo)
-	categoryService := service.NewCategoryService(postCategoryRepo)
-	hotTopicService := service.NewHotTopicService(hotTopicRepo)
-
 	// Course learning system services
-	courseCategoryService := service.NewCourseCategoryService(courseCategoryRepo)
+	courseCategoryService := service.NewCourseCategoryService(courseCategoryRepo, courseRepo)
 	courseService := service.NewCourseService(courseRepo, courseCategoryRepo, courseChapterRepo, userCourseProgressRepo, userCourseCollectRepo)
 	knowledgePointService := service.NewKnowledgePointService(knowledgePointRepo, courseCategoryRepo)
 
@@ -275,6 +268,18 @@ func main() {
 	// AI learning path service (AI个性化学习 §26.5)
 	aiLearningPathService := service.NewAILearningPathService(userProfileRepo, dailyLearningStatsRepo, questionRepo, courseRepo, knowledgePointRepo)
 	aiWeaknessService := service.NewAIWeaknessAnalyzerService(practiceSessionRepo, questionRepo, dailyLearningStatsRepo)
+
+	// Learning content service (学习内容通用API)
+	learningContentService := service.NewLearningContentService(learningContentRepo)
+
+	// LLM Generator service (LLM 内容生成 V2)
+	llmGeneratorService := service.NewLLMGeneratorService(llmConfigService, courseCategoryRepo, courseRepo, courseChapterRepo, generationTaskRepo, log.Logger)
+
+	// Content import service (内容导入服务)
+	contentImportService := service.NewContentImportService(db, courseChapterRepo, courseRepo, courseCategoryRepo, questionRepo, materialRepo, aiContentRepo, log.Logger)
+
+	// 设置 LLM 生成服务的内容导入服务（用于自动导入）
+	llmGeneratorService.SetContentImportService(contentImportService)
 
 	// Fenbi service
 	fenbiService := service.NewFenbiService(fenbiCredRepo, fenbiCategoryRepo, fenbiAnnouncementRepo, fenbiParseTaskRepo, positionRepo, nil, llmConfigService, log.Logger)
@@ -349,9 +354,6 @@ func main() {
 	// Calendar handler
 	calendarHandler := handler.NewCalendarHandler(calendarService)
 
-	// Community handler
-	communityHandler := handler.NewCommunityHandler(postService, commentService, categoryService, hotTopicService)
-
 	// Course learning system handler
 	courseHandler := handler.NewCourseHandler(courseService, courseCategoryService, knowledgePointService)
 
@@ -377,7 +379,7 @@ func main() {
 	materialHandler := handler.NewMaterialHandler(materialService)
 
 	// Content generator handler (内容生成)
-	contentGeneratorHandler := handler.NewContentGeneratorHandler(contentGeneratorService)
+	contentGeneratorHandler := handler.NewContentGeneratorHandler(contentGeneratorService, llmGeneratorService)
 
 	// Knowledge content handler (知识点内容生成 §25.3)
 	knowledgeContentHandler := handler.NewKnowledgeContentHandler(knowledgeDetailService, flashCardService, mindMapService, knowledgeContentService)
@@ -385,12 +387,19 @@ func main() {
 	// Knowledge content seeder (知识点内容种子数据生成器)
 	knowledgeContentSeeder := service.NewKnowledgeContentSeeder(knowledgeDetailRepo, flashCardRepo, mindMapRepo)
 	knowledgeContentHandler.SetSeeder(knowledgeContentSeeder)
+	// NOTE: knowledgeContentHandler.RegisterRoutes() is called later in route registration section
 
 	// AI content handler (AI内容预生成 §26.1)
 	aiContentHandler := handler.NewAIContentHandler(aiContentGenService, aiBatchGenService)
 
+	// AI content V2 handler (LLM 内容生成 V2 - 批量生成和自动导入)
+	aiContentV2Handler := handler.NewAIContentV2Handler(llmGeneratorService, contentImportService, log.Logger)
+
 	// AI learning path handler (AI个性化学习 §26.5)
 	aiLearningPathHandler := handler.NewAILearningPathHandler(aiLearningPathService, aiWeaknessService)
+
+	// Learning content handler (学习内容通用API)
+	learningContentHandler := handler.NewLearningContentHandler(learningContentService)
 
 	// Content import handler (MCP内容导入)
 	contentImportHandler := handler.NewContentImportHandler(db, courseService, questionService, materialService)
@@ -529,14 +538,9 @@ func main() {
 	// Compare routes (public)
 	compareHandler.RegisterRoutes(v1)
 
-	// Community routes (public + some protected)
-	communityHandler.RegisterRoutes(v1, authMiddleware.JWT())
-
-	// Community admin routes (admin only)
-	communityHandler.RegisterAdminRoutes(adminGroup, adminAuthMiddleware.JWT())
-
 	// Course learning system routes
 	courseHandler.RegisterRoutes(e, authMiddleware.JWT())
+	courseHandler.RegisterAdminRoutes(adminGroup)
 
 	// Learning stats routes
 	learningStatsHandler.RegisterRoutes(e, authMiddleware.JWT())
@@ -566,17 +570,33 @@ func main() {
 	// Content import routes (MCP内容导入) - admin only
 	contentImportHandler.RegisterRoutes(e, adminAuthMiddleware.JWT())
 
+	// 开发环境：注册内部生成器路由（无需认证，用于调试）
+	if cfg.Server.Mode == "development" {
+		contentGeneratorHandler.RegisterInternalRoutes(e)
+		log.Info("Development mode: Internal generator routes enabled at /api/v1/internal/generator")
+	}
+
 	// 开发环境：注册内部导入路由（无需认证，仅用于 MCP 脚本导入）
 	if cfg.Server.Mode == "development" {
 		contentImportHandler.RegisterInternalRoutes(e)
 		log.Info("Development mode: Internal content import routes enabled at /api/v1/internal/content/import")
 	}
 
+	// Knowledge content routes (知识点内容生成 §25.3) - admin only
+	knowledgeContentHandler.RegisterRoutes(adminGroup, adminAuthMiddleware.JWT())
+
 	// AI content routes (AI内容预生成 §26.1)
 	aiContentHandler.RegisterRoutes(e, authMiddleware.JWT(), adminAuthMiddleware.JWT())
 
+	// AI content V2 routes (LLM 内容生成 V2 - 批量生成和自动导入)
+	aiContentV2Handler.RegisterRoutes(e, adminAuthMiddleware.JWT())
+
 	// AI learning path routes (AI个性化学习 §26.5)
 	aiLearningPathHandler.RegisterRoutes(e, authMiddleware.JWT())
+
+	// Learning content routes (学习内容通用API)
+	learningContentHandler.RegisterRoutes(e)
+	learningContentHandler.RegisterAdminRoutes(adminGroup)
 
 	// Exam tools routes
 	toolsGroup := v1.Group("/tools")

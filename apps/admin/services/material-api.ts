@@ -1,4 +1,4 @@
-import { request } from './api'
+import request from './api'
 
 // =====================================================
 // 类型定义

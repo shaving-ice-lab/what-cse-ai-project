@@ -7,10 +7,15 @@ import {
   CourseBrief,
   CourseCategory,
   CourseChapter,
+  ChapterContentResponse,
   KnowledgePoint,
   UserCourseProgress,
   UserCourseCollect,
   UpdateProgressRequest,
+  LearningContent,
+  LearningContentType,
+  LearningContentQueryParams,
+  LearningContentFilterOption,
 } from "@/services/api/course";
 import { toast } from "@what-cse/ui";
 
@@ -36,10 +41,10 @@ export function useCourseCategories() {
     }
   }, []);
 
-  const fetchCategoriesBySubject = useCallback(async (subject: string) => {
+  const fetchCategoriesBySubject = useCallback(async (subject: string, status?: string) => {
     setLoading(true);
     try {
-      const result = await courseApi.getCategoriesBySubject(subject);
+      const result = await courseApi.getCategoriesBySubject(subject, status);
       setCategories(result.categories || []);
       return result.categories;
     } catch (error) {
@@ -185,7 +190,10 @@ export function useCourse() {
 export function useChapter() {
   const [loading, setLoading] = useState(false);
   const [chapter, setChapter] = useState<CourseChapter | null>(null);
+  const [fullContent, setFullContent] = useState<ChapterContentResponse | null>(null);
+  const [contentLoading, setContentLoading] = useState(false);
 
+  // 获取章节基础信息
   const fetchChapter = useCallback(async (chapterId: number) => {
     setLoading(true);
     try {
@@ -200,10 +208,47 @@ export function useChapter() {
     }
   }, []);
 
+  // 获取章节完整内容（含 13 个模块）
+  const fetchChapterFullContent = useCallback(async (chapterId: number) => {
+    setContentLoading(true);
+    try {
+      const result = await courseApi.getChapterFullContent(chapterId);
+      setFullContent(result);
+      // 同时更新基础章节信息
+      if (result.chapter) {
+        setChapter(result.chapter);
+      }
+      return result;
+    } catch (error) {
+      // 如果获取完整内容失败，回退到基础内容
+      console.warn("获取完整内容失败，回退到基础内容");
+      return null;
+    } finally {
+      setContentLoading(false);
+    }
+  }, []);
+
+  // 检查是否有模块化内容
+  const hasModuleContent = fullContent?.modules && fullContent.modules.length > 0;
+
+  // 解析内容为 LessonContent 格式
+  const parsedLessonContent = fullContent?.content ? {
+    exam_analysis: fullContent.content.exam_analysis as any,
+    lesson_content: fullContent.content.lesson_content as any,
+    lesson_sections: fullContent.content.lesson_sections as any,
+    practice_problems: fullContent.content.practice_problems as any,
+    homework: fullContent.content.homework as any,
+  } : null;
+
   return {
     loading,
     chapter,
+    fullContent,
+    contentLoading,
+    hasModuleContent,
+    parsedLessonContent,
     fetchChapter,
+    fetchChapterFullContent,
   };
 }
 
@@ -326,6 +371,146 @@ export function useKnowledge() {
     hotKnowledge,
     fetchKnowledgeTree,
     fetchHotKnowledge,
+  };
+}
+
+// =====================================================
+// 学习内容 Hook
+// =====================================================
+
+export function useLearningContent() {
+  const [loading, setLoading] = useState(false);
+  const [contents, setContents] = useState<LearningContent[]>([]);
+  const [total, setTotal] = useState(0);
+  const [filters, setFilters] = useState<{
+    subjects: LearningContentFilterOption[];
+    content_types: LearningContentFilterOption[];
+  } | null>(null);
+  const [modules, setModules] = useState<LearningContentFilterOption[]>([]);
+
+  // 按类型获取学习内容
+  const fetchByType = useCallback(async (
+    contentType: LearningContentType,
+    params?: Omit<LearningContentQueryParams, 'content_type'>
+  ) => {
+    setLoading(true);
+    try {
+      const result = await courseApi.getLearningContent(contentType, params);
+      setContents(result.contents || []);
+      setTotal(result.total || 0);
+      return result.contents || [];
+    } catch (error) {
+      // Return empty array on error, don't show toast
+      setContents([]);
+      setTotal(0);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 获取所有学习内容
+  const fetchAll = useCallback(async (params?: LearningContentQueryParams) => {
+    setLoading(true);
+    try {
+      const result = await courseApi.getAllLearningContent(params);
+      setContents(result.contents || []);
+      setTotal(result.total || 0);
+      return result.contents || [];
+    } catch (error) {
+      setContents([]);
+      setTotal(0);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 按科目获取学习内容
+  const fetchBySubject = useCallback(async (subject: string, module?: string) => {
+    setLoading(true);
+    try {
+      const result = await courseApi.getLearningContentBySubject(subject, module);
+      setContents(result.contents || []);
+      return result.contents || [];
+    } catch (error) {
+      setContents([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 获取过滤选项
+  const fetchFilters = useCallback(async () => {
+    try {
+      const result = await courseApi.getLearningContentFilters();
+      setFilters(result);
+      return result;
+    } catch (error) {
+      return null;
+    }
+  }, []);
+
+  // 获取某科目下的模块列表
+  const fetchModules = useCallback(async (subject: string) => {
+    try {
+      const result = await courseApi.getLearningContentModules(subject);
+      setModules(result.modules || []);
+      return result.modules || [];
+    } catch (error) {
+      setModules([]);
+      return [];
+    }
+  }, []);
+
+  // 获取学习技巧
+  const fetchTips = useCallback(async (subject?: string, module?: string) => {
+    return fetchByType('tips', { subject, module });
+  }, [fetchByType]);
+
+  // 获取公式口诀
+  const fetchFormulas = useCallback(async (subject?: string, module?: string) => {
+    return fetchByType('formulas', { subject, module });
+  }, [fetchByType]);
+
+  // 获取学习指南
+  const fetchGuides = useCallback(async (subject?: string, module?: string) => {
+    return fetchByType('guides', { subject, module });
+  }, [fetchByType]);
+
+  // 获取热点话题
+  const fetchHotTopics = useCallback(async (subject?: string, module?: string) => {
+    return fetchByType('hot_topics', { subject, module });
+  }, [fetchByType]);
+
+  // 获取图形规律
+  const fetchPatterns = useCallback(async (subject?: string, module?: string) => {
+    return fetchByType('patterns', { subject, module });
+  }, [fetchByType]);
+
+  // 获取学习方法
+  const fetchMethods = useCallback(async (subject?: string, module?: string) => {
+    return fetchByType('methods', { subject, module });
+  }, [fetchByType]);
+
+  return {
+    loading,
+    contents,
+    total,
+    filters,
+    modules,
+    fetchByType,
+    fetchAll,
+    fetchBySubject,
+    fetchFilters,
+    fetchModules,
+    fetchTips,
+    fetchFormulas,
+    fetchGuides,
+    fetchHotTopics,
+    fetchPatterns,
+    fetchMethods,
   };
 }
 

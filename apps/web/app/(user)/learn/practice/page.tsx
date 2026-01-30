@@ -29,7 +29,7 @@ import {
   PartyPopper,
   CheckCheck,
 } from "lucide-react";
-import { cn } from "@what-cse/ui/lib/utils";
+import { cn } from "@what-cse/ui";
 import {
   useDailyPractice,
   useStreak,

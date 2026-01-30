@@ -596,7 +596,7 @@ func NewLearningFavoriteService(favoriteRepo *repository.LearningFavoriteReposit
 
 // AddFavoriteRequest 添加收藏请求
 type AddLearningFavoriteRequest struct {
-	ContentType model.LearningContentType `json:"content_type" validate:"required"`
+	ContentType model.FavoriteContentType `json:"content_type" validate:"required"`
 	ContentID   uint                      `json:"content_id" validate:"required"`
 	FolderID    *uint                     `json:"folder_id"`
 	Note        string                    `json:"note"`
@@ -633,7 +633,7 @@ func (s *LearningFavoriteService) Add(userID uint, req *AddLearningFavoriteReque
 }
 
 // Remove 取消收藏
-func (s *LearningFavoriteService) Remove(userID uint, contentType model.LearningContentType, contentID uint) error {
+func (s *LearningFavoriteService) Remove(userID uint, contentType model.FavoriteContentType, contentID uint) error {
 	return s.favoriteRepo.Remove(userID, contentType, contentID)
 }
 
@@ -643,12 +643,12 @@ func (s *LearningFavoriteService) RemoveByID(userID, favoriteID uint) error {
 }
 
 // IsFavorite 检查是否已收藏
-func (s *LearningFavoriteService) IsFavorite(userID uint, contentType model.LearningContentType, contentID uint) bool {
+func (s *LearningFavoriteService) IsFavorite(userID uint, contentType model.FavoriteContentType, contentID uint) bool {
 	return s.favoriteRepo.IsFavorite(userID, contentType, contentID)
 }
 
 // BatchCheck 批量检查
-func (s *LearningFavoriteService) BatchCheck(userID uint, contentType model.LearningContentType, contentIDs []uint) (map[uint]bool, error) {
+func (s *LearningFavoriteService) BatchCheck(userID uint, contentType model.FavoriteContentType, contentIDs []uint) (map[uint]bool, error) {
 	return s.favoriteRepo.BatchCheckFavorites(userID, contentType, contentIDs)
 }
 

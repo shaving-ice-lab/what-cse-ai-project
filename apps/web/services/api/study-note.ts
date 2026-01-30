@@ -1,4 +1,4 @@
-import { request } from "../request";
+import request from "../request";
 
 // =====================================================
 // 错题本类型定义

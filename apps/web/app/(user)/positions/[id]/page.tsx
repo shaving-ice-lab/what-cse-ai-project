@@ -33,6 +33,10 @@ import {
   Info,
   BarChart2,
   TrendingDown,
+  Target,
+  ArrowUpRight,
+  Flame,
+  Star,
 } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { usePositionDetail, useAddFavorite, useRemoveFavorite, usePositionHistory } from "@/hooks/usePosition";
@@ -40,6 +44,26 @@ import { usePositionMatchDetail, getMatchScoreColor, getMatchScoreLabel, getStar
 import { useAuthStore } from "@/stores/authStore";
 import type { Position, PositionDetail, PositionHistoryItem, YearlyTrendItem } from "@/services/api/position";
 import type { MatchCondition } from "@/services/api/match";
+
+// 悬浮粒子动画
+function FloatingParticles() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(4)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-2 h-2 rounded-full bg-amber-400/30 animate-float"
+          style={{
+            left: `${20 + i * 20}%`,
+            top: `${30 + (i % 2) * 30}%`,
+            animationDelay: `${i * 0.5}s`,
+            animationDuration: `${3 + i * 0.5}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 // 本地存储键
 const COMPARE_STORAGE_KEY = "position_compare_list";
@@ -312,9 +336,17 @@ export default function PositionDetailPage() {
   // 加载状态
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 lg:px-6 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
+        <div className="container mx-auto px-4 lg:px-6 py-8">
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center animate-pulse">
+                <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+              </div>
+              <div className="absolute -inset-2 bg-amber-400/20 rounded-3xl blur-xl animate-pulse" />
+            </div>
+            <p className="mt-4 text-stone-500 animate-pulse">加载职位信息中...</p>
+          </div>
         </div>
       </div>
     );
@@ -323,250 +355,336 @@ export default function PositionDetailPage() {
   // 错误状态
   if (error || !position) {
     return (
-      <div className="container mx-auto px-4 lg:px-6 py-8">
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <AlertCircle className="w-16 h-16 text-stone-300 mb-4" />
-          <h2 className="text-xl font-semibold text-stone-700 mb-2">职位不存在</h2>
-          <p className="text-stone-500 mb-6">该职位可能已被删除或链接无效</p>
-          <Link
-            href="/positions"
-            className="px-6 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors"
-          >
-            返回职位列表
-          </Link>
+      <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
+        <div className="container mx-auto px-4 lg:px-6 py-8">
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-stone-400" />
+              </div>
+              <div className="absolute -inset-2 bg-stone-200/50 rounded-3xl blur-xl" />
+            </div>
+            <h2 className="text-2xl font-serif font-bold text-stone-800 mb-2">职位不存在</h2>
+            <p className="text-stone-500 mb-6 max-w-md">该职位可能已被删除或链接无效，请返回职位列表重新查找</p>
+            <Link
+              href="/positions"
+              className="group inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              返回职位列表
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 lg:px-6 py-6 lg:py-8 pb-24 lg:pb-8">
-      {/* Back Button */}
-      <Link
-        href="/positions"
-        className="inline-flex items-center gap-2 text-stone-600 hover:text-stone-800 mb-6 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span>返回列表</span>
-      </Link>
+    <div className="min-h-screen pb-20 lg:pb-0 bg-gradient-to-b from-stone-50 to-white">
+      {/* Hero Header Section */}
+      <section className="relative overflow-hidden">
+        {/* 背景装饰 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50" />
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-radial from-amber-200/40 via-amber-100/20 to-transparent rounded-full blur-3xl translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-gradient-radial from-orange-200/30 via-orange-100/10 to-transparent rounded-full blur-3xl -translate-x-1/3 translate-y-1/3" />
+        
+        {/* 网格背景 */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+        
+        <FloatingParticles />
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="container relative mx-auto px-4 lg:px-6 pt-6 pb-10">
+          {/* Back Button */}
+          <Link
+            href="/positions"
+            className="group inline-flex items-center gap-2 text-stone-600 hover:text-amber-600 mb-6 transition-colors bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-stone-200/50 shadow-sm hover:shadow-md"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">返回列表</span>
+          </Link>
+
           {/* Position Header Card */}
-          <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white shadow-2xl shadow-stone-200/50 overflow-hidden">
+            {/* 顶部渐变条 */}
+            <div className={`h-2 ${
+              matchData && matchData.match_score >= 90 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
+              matchData && matchData.match_score >= 70 ? "bg-gradient-to-r from-amber-400 to-amber-500" :
+              "bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400"
+            }`} />
+            
             <div className="p-6 lg:p-8">
               {/* Title Row */}
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className="flex items-start justify-between gap-4 mb-8">
                 <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-3 mb-3">
-                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-stone-800">
-                      {position.position_name}
-                    </h1>
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
                     {position.exam_type && (
-                      <span className="px-3 py-1 text-sm font-medium rounded-lg bg-blue-100 text-blue-700">
+                      <span className={`px-3 py-1.5 text-sm font-semibold rounded-xl shadow-sm ${
+                        position.exam_type === "国考" 
+                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white" 
+                          : position.exam_type === "省考"
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
+                          : "bg-gradient-to-r from-violet-500 to-violet-600 text-white"
+                      }`}>
                         {position.exam_type}
                       </span>
                     )}
                     {position.is_unlimited_major && (
-                      <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-100 text-emerald-700 flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 border border-emerald-200">
+                        <Zap className="w-4 h-4" />
                         不限专业
                       </span>
                     )}
                     {position.is_for_fresh_graduate && (
-                      <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-purple-100 text-purple-700 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 border border-purple-200">
+                        <Sparkles className="w-4 h-4" />
                         应届可报
                       </span>
                     )}
                   </div>
+                  <h1 className="text-2xl lg:text-3xl font-serif font-bold text-stone-900 mb-3 leading-tight">
+                    {position.position_name}
+                  </h1>
                   <p className="flex items-center gap-2 text-lg text-stone-600">
-                    <Building2 className="w-5 h-5 text-stone-400 flex-shrink-0" />
-                    <span>{position.department_name}</span>
+                    <div className="p-1.5 bg-stone-100 rounded-lg">
+                      <Building2 className="w-5 h-5 text-stone-500" />
+                    </div>
+                    <span className="font-medium">{position.department_name}</span>
                     {position.department_level && (
-                      <span className="text-sm text-stone-400">({position.department_level})</span>
+                      <span className="text-sm text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md">
+                        {position.department_level}
+                      </span>
                     )}
                   </p>
                   {position.position_code && (
-                    <p className="text-sm text-stone-400 mt-1">职位代码：{position.position_code}</p>
+                    <p className="text-sm text-stone-400 mt-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      职位代码：<span className="font-mono">{position.position_code}</span>
+                    </p>
                   )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <button
                     onClick={handleToggleFavorite}
                     disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
-                    className={`p-3 rounded-xl border transition-colors ${
+                    className={`group p-3.5 rounded-2xl border-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
                       isFavorited
-                        ? "bg-red-50 border-red-200 text-red-500"
-                        : "border-stone-200 text-stone-500 hover:bg-stone-50"
+                        ? "bg-red-50 border-red-200 text-red-500 shadow-red-100 hover:shadow-red-200"
+                        : "bg-white border-stone-200 text-stone-400 hover:border-amber-300 hover:text-amber-500 hover:shadow-amber-100"
                     }`}
                     title={isFavorited ? "取消收藏" : "收藏职位"}
                   >
-                    <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
+                    <Heart className={`w-5 h-5 transition-transform group-hover:scale-110 ${isFavorited ? "fill-current" : ""}`} />
                   </button>
                   <button
                     onClick={handleToggleCompare}
-                    className={`p-3 rounded-xl border transition-colors ${
+                    className={`group p-3.5 rounded-2xl border-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
                       isInCompare
-                        ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                        : "border-stone-200 text-stone-500 hover:bg-stone-50"
+                        ? "bg-emerald-50 border-emerald-200 text-emerald-600 shadow-emerald-100 hover:shadow-emerald-200"
+                        : "bg-white border-stone-200 text-stone-400 hover:border-amber-300 hover:text-amber-500 hover:shadow-amber-100"
                     }`}
                     title={isInCompare ? "移除对比" : "加入对比"}
                   >
-                    <Scale className="w-5 h-5" />
+                    <Scale className="w-5 h-5 transition-transform group-hover:scale-110" />
                   </button>
                   <button
                     onClick={handleShare}
-                    className="p-3 rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 transition-colors relative"
+                    className="group p-3.5 rounded-2xl border-2 bg-white border-stone-200 text-stone-400 hover:border-amber-300 hover:text-amber-500 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-100"
                     title="分享职位"
                   >
                     {copySuccess ? (
                       <CheckCircle className="w-5 h-5 text-emerald-500" />
                     ) : (
-                      <Share2 className="w-5 h-5" />
+                      <Share2 className="w-5 h-5 transition-transform group-hover:scale-110" />
                     )}
                   </button>
                 </div>
               </div>
 
-              {/* Quick Stats */}
+              {/* Quick Stats - 全新设计 */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-stone-50 rounded-xl p-4">
-                  <p className="text-sm text-stone-500 flex items-center gap-1.5 mb-1">
-                    <Users className="w-4 h-4" />
-                    招录人数
-                  </p>
-                  <p className="text-2xl font-bold text-stone-800">{position.recruit_count}<span className="text-base font-normal">人</span></p>
-                </div>
-                <div className="bg-stone-50 rounded-xl p-4">
-                  <p className="text-sm text-stone-500 flex items-center gap-1.5 mb-1">
-                    <TrendingUp className="w-4 h-4" />
-                    报名人数
-                  </p>
-                  <p className="text-2xl font-bold text-stone-800">
-                    {position.applicant_count ?? "-"}<span className="text-base font-normal">人</span>
+                <div className="group relative p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 hover:shadow-lg hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-0.5">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Users className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <span className="text-sm text-blue-600 font-medium">招录人数</span>
+                  </div>
+                  <p className="text-3xl font-display font-bold text-stone-900 tabular-nums">
+                    {position.recruit_count}<span className="text-lg font-normal text-stone-500 ml-1">人</span>
                   </p>
                 </div>
-                <div className="bg-stone-50 rounded-xl p-4">
-                  <p className="text-sm text-stone-500 flex items-center gap-1.5 mb-1">
-                    <Award className="w-4 h-4" />
-                    竞争比
+                <div className="group relative p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-100 hover:shadow-lg hover:shadow-emerald-100/50 transition-all duration-300 hover:-translate-y-0.5">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <TrendingUp className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <span className="text-sm text-emerald-600 font-medium">报名人数</span>
+                  </div>
+                  <p className="text-3xl font-display font-bold text-stone-900 tabular-nums">
+                    {position.applicant_count ?? "-"}<span className="text-lg font-normal text-stone-500 ml-1">人</span>
                   </p>
-                  <p className={`text-2xl font-bold ${competitionRatio && competitionRatio > 100 ? "text-red-500" : "text-amber-600"}`}>
+                </div>
+                <div className={`group relative p-5 rounded-2xl border hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 ${
+                  competitionRatio && competitionRatio > 100 
+                    ? "bg-gradient-to-br from-red-50 to-red-100/50 border-red-100 hover:shadow-red-100/50" 
+                    : "bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-100 hover:shadow-amber-100/50"
+                }`}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${
+                      competitionRatio && competitionRatio > 100 ? "bg-red-100" : "bg-amber-100"
+                    }`}>
+                      <Flame className={`w-5 h-5 ${competitionRatio && competitionRatio > 100 ? "text-red-600" : "text-amber-600"}`} />
+                    </div>
+                    <span className={`text-sm font-medium ${competitionRatio && competitionRatio > 100 ? "text-red-600" : "text-amber-600"}`}>
+                      竞争比
+                    </span>
+                  </div>
+                  <p className={`text-3xl font-display font-bold tabular-nums ${
+                    competitionRatio && competitionRatio > 100 ? "text-red-600" : "text-amber-600"
+                  }`}>
                     {competitionRatio ? `${competitionRatio}:1` : "-"}
                   </p>
                 </div>
-                <div className="bg-stone-50 rounded-xl p-4">
-                  <p className="text-sm text-stone-500 flex items-center gap-1.5 mb-1">
-                    <MapPin className="w-4 h-4" />
-                    工作地点
-                  </p>
-                  <p className="text-lg font-semibold text-stone-800 truncate" title={position.work_location || `${position.province || ""}${position.city || ""}`}>
+                <div className="group relative p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-violet-100/50 border border-violet-100 hover:shadow-lg hover:shadow-violet-100/50 transition-all duration-300 hover:-translate-y-0.5">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <MapPin className="w-5 h-5 text-violet-600" />
+                    </div>
+                    <span className="text-sm text-violet-600 font-medium">工作地点</span>
+                  </div>
+                  <p className="text-xl font-semibold text-stone-900 truncate" title={position.work_location || `${position.province || ""}${position.city || ""}`}>
                     {position.work_location || `${position.province || ""}${position.city || ""}` || "-"}
                   </p>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 lg:px-6 -mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-6">
 
           {/* Basic Info Card */}
-          <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card p-6 lg:p-8">
-            <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-amber-500" />
+          <div className="group bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 hover:shadow-2xl hover:shadow-stone-200/40 transition-all duration-300 p-6 lg:p-8 overflow-hidden relative">
+            {/* 装饰背景 */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-100/30 to-orange-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            
+            <h2 className="relative text-lg font-serif font-bold text-stone-800 mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shadow-sm">
+                <FileText className="w-5 h-5 text-amber-600" />
+              </div>
               基本信息
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
-              <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                <span className="text-stone-500">职位名称</span>
-                <span className="font-medium text-stone-800">{position.position_name}</span>
+            <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                <span className="text-stone-500 text-sm">职位名称</span>
+                <span className="font-semibold text-stone-800">{position.position_name}</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                <span className="text-stone-500">招录单位</span>
-                <span className="font-medium text-stone-800 text-right max-w-[200px] truncate" title={position.department_name}>
+              <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                <span className="text-stone-500 text-sm">招录单位</span>
+                <span className="font-semibold text-stone-800 text-right max-w-[180px] truncate" title={position.department_name}>
                   {position.department_name}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                <span className="text-stone-500">招录人数</span>
-                <span className="font-medium text-stone-800">{position.recruit_count}人</span>
+              <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                <span className="text-stone-500 text-sm">招录人数</span>
+                <span className="font-semibold text-stone-800">{position.recruit_count}人</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                <span className="text-stone-500">工作地点</span>
-                <span className="font-medium text-stone-800">
+              <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                <span className="text-stone-500 text-sm">工作地点</span>
+                <span className="font-semibold text-stone-800">
                   {position.work_location || `${position.province || ""}${position.city || ""}${position.district || ""}` || "-"}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                <span className="text-stone-500">报名时间</span>
-                <span className="font-medium text-stone-800">
+              <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                <span className="text-stone-500 text-sm">报名时间</span>
+                <span className="font-semibold text-stone-800 text-right text-sm">
                   {position.registration_start ? formatDate(position.registration_start) : "待定"}
                   {position.registration_end ? ` ~ ${formatDate(position.registration_end)}` : ""}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                <span className="text-stone-500">考试时间</span>
-                <span className="font-medium text-stone-800">{formatDate(position.exam_date)}</span>
+              <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                <span className="text-stone-500 text-sm">考试时间</span>
+                <span className="font-semibold text-stone-800">{formatDate(position.exam_date)}</span>
               </div>
               {position.interview_date && (
-                <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                  <span className="text-stone-500">面试时间</span>
-                  <span className="font-medium text-stone-800">{formatDate(position.interview_date)}</span>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                  <span className="text-stone-500 text-sm">面试时间</span>
+                  <span className="font-semibold text-stone-800">{formatDate(position.interview_date)}</span>
                 </div>
               )}
               {position.exam_category && (
-                <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                  <span className="text-stone-500">考试类别</span>
-                  <span className="font-medium text-stone-800">{position.exam_category}</span>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                  <span className="text-stone-500 text-sm">考试类别</span>
+                  <span className="font-semibold text-stone-800">{position.exam_category}</span>
                 </div>
               )}
               {position.service_period && (
-                <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                  <span className="text-stone-500">服务期限</span>
-                  <span className="font-medium text-stone-800">{position.service_period}</span>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-stone-50/80 hover:bg-stone-100/80 transition-colors">
+                  <span className="text-stone-500 text-sm">服务期限</span>
+                  <span className="font-semibold text-stone-800">{position.service_period}</span>
                 </div>
               )}
               {position.salary_range && (
-                <div className="flex justify-between items-center py-3 border-b border-stone-100">
-                  <span className="text-stone-500">薪资范围</span>
-                  <span className="font-medium text-emerald-600">{position.salary_range}</span>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-emerald-100/50 border border-emerald-100">
+                  <span className="text-emerald-600 text-sm font-medium">薪资范围</span>
+                  <span className="font-bold text-emerald-600">{position.salary_range}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Requirements Card */}
-          <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card p-6 lg:p-8">
-            <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-amber-500" />
+          <div className="group bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 hover:shadow-2xl hover:shadow-stone-200/40 transition-all duration-300 p-6 lg:p-8 overflow-hidden relative">
+            {/* 装饰背景 */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-100/30 to-purple-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            
+            <h2 className="relative text-lg font-serif font-bold text-stone-800 mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center shadow-sm">
+                <GraduationCap className="w-5 h-5 text-violet-600" />
+              </div>
               报考条件
             </h2>
-            <div className="space-y-3">
+            <div className="relative space-y-3">
               {requirements.map((req, index) => (
                 <div
                   key={index}
-                  className={`flex items-start justify-between p-4 rounded-xl border ${
+                  className={`group/item flex items-start justify-between p-4 rounded-xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
                     req.highlight === "positive"
-                      ? "bg-emerald-50/50 border-emerald-200"
-                      : "bg-stone-50 border-stone-200"
+                      ? "bg-gradient-to-r from-emerald-50 to-emerald-100/30 border-emerald-200 hover:shadow-emerald-100"
+                      : "bg-stone-50/80 border-stone-200/50 hover:bg-stone-100/80 hover:shadow-stone-100"
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      req.highlight === "positive" ? "bg-emerald-100 text-emerald-600" : "bg-stone-200 text-stone-500"
+                  <div className="flex items-start gap-4">
+                    <div className={`p-2.5 rounded-xl transition-transform group-hover/item:scale-110 ${
+                      req.highlight === "positive" 
+                        ? "bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-600 shadow-sm" 
+                        : "bg-gradient-to-br from-stone-100 to-stone-200 text-stone-500"
                     }`}>
                       {req.icon}
                     </div>
                     <div>
-                      <p className="text-sm text-stone-500">{req.name}</p>
-                      <p className="font-medium text-stone-800 mt-0.5">{req.value}</p>
+                      <p className={`text-sm mb-0.5 ${req.highlight === "positive" ? "text-emerald-600" : "text-stone-500"}`}>
+                        {req.name}
+                      </p>
+                      <p className="font-semibold text-stone-800">{req.value}</p>
                     </div>
                   </div>
                   {req.highlight === "positive" && (
-                    <span className="px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-lg">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg shadow-sm">
+                      <Star className="w-3 h-3" />
                       优势
                     </span>
                   )}
@@ -575,12 +693,14 @@ export default function PositionDetailPage() {
               
               {/* 其他条件 */}
               {position.other_conditions && (
-                <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                  <p className="text-sm text-amber-700 font-medium mb-2 flex items-center gap-2">
-                    <Info className="w-4 h-4" />
+                <div className="mt-4 p-5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                  <p className="text-sm text-amber-700 font-semibold mb-3 flex items-center gap-2">
+                    <div className="p-1.5 bg-amber-100 rounded-lg">
+                      <Info className="w-4 h-4" />
+                    </div>
                     其他条件
                   </p>
-                  <p className="text-sm text-stone-700 whitespace-pre-wrap">{position.other_conditions}</p>
+                  <p className="text-sm text-stone-700 whitespace-pre-wrap leading-relaxed">{position.other_conditions}</p>
                 </div>
               )}
             </div>
@@ -588,31 +708,52 @@ export default function PositionDetailPage() {
 
           {/* Match Analysis Card - Only for logged in users */}
           {isAuthenticated && (
-            <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card p-6 lg:p-8">
-              <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
+            <div className="group bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 hover:shadow-2xl hover:shadow-stone-200/40 transition-all duration-300 p-6 lg:p-8 overflow-hidden relative">
+              {/* 装饰背景 */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-amber-100/40 to-orange-100/30 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+              
+              <h2 className="relative text-lg font-serif font-bold text-stone-800 mb-6 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-5 h-5 text-amber-600" />
+                </div>
                 匹配分析
+                <span className="ml-auto px-3 py-1 text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full">
+                  AI 分析
+                </span>
               </h2>
               
               {matchLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
-                  <span className="ml-2 text-stone-500">分析匹配度...</span>
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 text-amber-500 animate-spin" />
+                    </div>
+                    <div className="absolute -inset-2 bg-amber-400/20 rounded-3xl blur-xl animate-pulse" />
+                  </div>
+                  <span className="mt-4 text-stone-500">智能分析匹配度...</span>
                 </div>
               ) : matchData ? (
-                <div className="space-y-6">
-                  {/* Overall Match Score */}
-                  <div className={`p-5 rounded-xl bg-gradient-to-r ${
-                    matchData.match_score >= 90 ? "from-emerald-50 to-emerald-100 border border-emerald-200" :
-                    matchData.match_score >= 70 ? "from-amber-50 to-amber-100 border border-amber-200" :
-                    matchData.match_score >= 50 ? "from-orange-50 to-orange-100 border border-orange-200" :
-                    "from-stone-50 to-stone-100 border border-stone-200"
+                <div className="relative space-y-6">
+                  {/* Overall Match Score - 全新设计 */}
+                  <div className={`relative p-6 rounded-2xl overflow-hidden ${
+                    matchData.match_score >= 90 ? "bg-gradient-to-br from-emerald-50 via-emerald-100/50 to-teal-50" :
+                    matchData.match_score >= 70 ? "bg-gradient-to-br from-amber-50 via-amber-100/50 to-orange-50" :
+                    matchData.match_score >= 50 ? "bg-gradient-to-br from-orange-50 via-orange-100/50 to-red-50" :
+                    "bg-gradient-to-br from-stone-50 via-stone-100/50 to-stone-100"
                   }`}>
+                    {/* 装饰圆环 */}
+                    <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-30 ${
+                      matchData.match_score >= 90 ? "bg-emerald-300" :
+                      matchData.match_score >= 70 ? "bg-amber-300" :
+                      matchData.match_score >= 50 ? "bg-orange-300" :
+                      "bg-stone-300"
+                    }`} />
+                    
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-stone-600 mb-1">整体匹配度</p>
-                        <div className="flex items-baseline gap-2">
-                          <span className={`text-3xl font-bold ${
+                        <p className="text-sm text-stone-600 mb-2">整体匹配度</p>
+                        <div className="flex items-baseline gap-3">
+                          <span className={`text-5xl font-display font-bold tabular-nums ${
                             matchData.match_score >= 90 ? "text-emerald-600" :
                             matchData.match_score >= 70 ? "text-amber-600" :
                             matchData.match_score >= 50 ? "text-orange-600" :
@@ -620,21 +761,31 @@ export default function PositionDetailPage() {
                           }`}>
                             {matchData.match_score.toFixed(0)}
                           </span>
-                          <span className="text-lg text-stone-500">分</span>
-                          <span className={`px-2 py-0.5 text-sm font-medium rounded-lg ${
-                            matchData.match_score >= 90 ? "bg-emerald-100 text-emerald-700" :
-                            matchData.match_score >= 70 ? "bg-amber-100 text-amber-700" :
-                            matchData.match_score >= 50 ? "bg-orange-100 text-orange-700" :
-                            "bg-stone-100 text-stone-700"
+                          <span className="text-xl text-stone-400 font-medium">分</span>
+                          <span className={`px-3 py-1 text-sm font-bold rounded-xl shadow-sm ${
+                            matchData.match_score >= 90 ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white" :
+                            matchData.match_score >= 70 ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white" :
+                            matchData.match_score >= 50 ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white" :
+                            "bg-gradient-to-r from-stone-400 to-stone-500 text-white"
                           }`}>
                             {matchData.match_level || getMatchScoreLabel(matchData.match_score)}
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl text-amber-500">{getStarLevelText(matchData.star_level)}</p>
-                        <p className={`text-sm font-medium ${matchData.is_eligible ? "text-emerald-600" : "text-red-500"}`}>
-                          {matchData.is_eligible ? "✓ 符合报考条件" : "✗ 可能不符合条件"}
+                        <p className="text-3xl mb-1">{getStarLevelText(matchData.star_level)}</p>
+                        <p className={`text-sm font-bold flex items-center gap-1.5 justify-end ${matchData.is_eligible ? "text-emerald-600" : "text-red-500"}`}>
+                          {matchData.is_eligible ? (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              符合报考条件
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-4 h-4" />
+                              可能不符合条件
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -643,43 +794,50 @@ export default function PositionDetailPage() {
                   {/* Match Details by Dimension */}
                   {matchData.match_details && matchData.match_details.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-medium text-stone-600 mb-3">各维度匹配详情</h3>
-                      <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-stone-600 mb-4 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-amber-500" />
+                        各维度匹配详情
+                      </h3>
+                      <div className="space-y-3">
                         {matchData.match_details.map((detail: MatchCondition, index: number) => (
                           <div
                             key={index}
-                            className={`flex items-center justify-between p-3 rounded-xl border ${
+                            className={`group/detail flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
                               detail.is_match
-                                ? "bg-emerald-50/50 border-emerald-200"
+                                ? "bg-gradient-to-r from-emerald-50 to-emerald-100/30 border-emerald-200 hover:shadow-emerald-100"
                                 : detail.is_hard_match
-                                  ? "bg-red-50/50 border-red-200"
-                                  : "bg-amber-50/50 border-amber-200"
+                                  ? "bg-gradient-to-r from-red-50 to-red-100/30 border-red-200 hover:shadow-red-100"
+                                  : "bg-gradient-to-r from-amber-50 to-amber-100/30 border-amber-200 hover:shadow-amber-100"
                             }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                detail.is_match ? "bg-emerald-100" : detail.is_hard_match ? "bg-red-100" : "bg-amber-100"
+                            <div className="flex items-center gap-4">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover/detail:scale-110 ${
+                                detail.is_match 
+                                  ? "bg-gradient-to-br from-emerald-100 to-emerald-200" 
+                                  : detail.is_hard_match 
+                                    ? "bg-gradient-to-br from-red-100 to-red-200" 
+                                    : "bg-gradient-to-br from-amber-100 to-amber-200"
                               }`}>
                                 {detail.is_match ? (
-                                  <Check className="w-4 h-4 text-emerald-600" />
+                                  <Check className="w-5 h-5 text-emerald-600" />
                                 ) : (
-                                  <X className={`w-4 h-4 ${detail.is_hard_match ? "text-red-600" : "text-amber-600"}`} />
+                                  <X className={`w-5 h-5 ${detail.is_hard_match ? "text-red-600" : "text-amber-600"}`} />
                                 )}
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-stone-800">{detail.condition}</p>
-                                <p className="text-xs text-stone-500">
-                                  你的条件: <span className="font-medium">{detail.user_value || "未填写"}</span>
-                                  {detail.required && ` · 要求: ${detail.required}`}
+                                <p className="text-sm font-semibold text-stone-800">{detail.condition}</p>
+                                <p className="text-xs text-stone-500 mt-0.5">
+                                  你的条件: <span className="font-semibold text-stone-700">{detail.user_value || "未填写"}</span>
+                                  {detail.required && (
+                                    <span className="ml-2 text-stone-400">· 要求: {detail.required}</span>
+                                  )}
                                 </p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <span className={`text-sm font-bold ${
-                                detail.is_match ? "text-emerald-600" : detail.is_hard_match ? "text-red-600" : "text-amber-600"
-                              }`}>
-                                {detail.score}/{detail.max_score}
-                              </span>
+                            <div className={`text-lg font-bold tabular-nums ${
+                              detail.is_match ? "text-emerald-600" : detail.is_hard_match ? "text-red-600" : "text-amber-600"
+                            }`}>
+                              {detail.score}/{detail.max_score}
                             </div>
                           </div>
                         ))}
@@ -689,15 +847,17 @@ export default function PositionDetailPage() {
 
                   {/* Unmatch Reasons */}
                   {matchData.unmatch_reasons && matchData.unmatch_reasons.length > 0 && (
-                    <div className="p-4 bg-red-50 rounded-xl border border-red-200">
-                      <p className="text-sm font-medium text-red-700 mb-2 flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
+                    <div className="p-5 bg-gradient-to-r from-red-50 to-red-100/30 rounded-xl border border-red-200">
+                      <p className="text-sm font-bold text-red-700 mb-3 flex items-center gap-2">
+                        <div className="p-1.5 bg-red-100 rounded-lg">
+                          <AlertCircle className="w-4 h-4" />
+                        </div>
                         不符合项提示
                       </p>
-                      <ul className="space-y-1">
+                      <ul className="space-y-2">
                         {matchData.unmatch_reasons.map((reason: string, index: number) => (
-                          <li key={index} className="text-sm text-red-600 flex items-start gap-2">
-                            <span className="mt-1">•</span>
+                          <li key={index} className="text-sm text-red-600 flex items-start gap-2 bg-white/50 p-2 rounded-lg">
+                            <X className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             {reason}
                           </li>
                         ))}
@@ -707,15 +867,17 @@ export default function PositionDetailPage() {
 
                   {/* Suggestions */}
                   {matchData.suggestions && matchData.suggestions.length > 0 && (
-                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                      <p className="text-sm font-medium text-blue-700 mb-2 flex items-center gap-2">
-                        <Info className="w-4 h-4" />
+                    <div className="p-5 bg-gradient-to-r from-blue-50 to-blue-100/30 rounded-xl border border-blue-200">
+                      <p className="text-sm font-bold text-blue-700 mb-3 flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-100 rounded-lg">
+                          <Info className="w-4 h-4" />
+                        </div>
                         报考建议
                       </p>
-                      <ul className="space-y-1">
+                      <ul className="space-y-2">
                         {matchData.suggestions.map((suggestion: string, index: number) => (
-                          <li key={index} className="text-sm text-blue-600 flex items-start gap-2">
-                            <span className="mt-1">•</span>
+                          <li key={index} className="text-sm text-blue-600 flex items-start gap-2 bg-white/50 p-2 rounded-lg">
+                            <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             {suggestion}
                           </li>
                         ))}
@@ -724,15 +886,21 @@ export default function PositionDetailPage() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Sparkles className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-                  <p className="text-stone-500 mb-2">完善个人画像后可查看匹配分析</p>
+                <div className="text-center py-12">
+                  <div className="relative inline-block mb-4">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center">
+                      <Sparkles className="w-8 h-8 text-stone-400" />
+                    </div>
+                    <div className="absolute -inset-2 bg-stone-200/50 rounded-3xl blur-xl" />
+                  </div>
+                  <p className="text-stone-600 font-medium mb-2">完善个人画像后可查看匹配分析</p>
+                  <p className="text-sm text-stone-400 mb-4">AI 将为您分析该职位与您条件的匹配程度</p>
                   <Link
                     href="/preferences"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium"
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 text-sm font-semibold"
                   >
                     完善个人画像
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               )}
@@ -741,22 +909,30 @@ export default function PositionDetailPage() {
 
           {/* Not logged in hint for match analysis */}
           {!isAuthenticated && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-amber-100 rounded-xl">
-                  <Sparkles className="w-6 h-6 text-amber-600" />
+            <div className="relative bg-gradient-to-br from-amber-50 via-orange-50/50 to-amber-100/30 rounded-2xl border border-amber-200/50 p-6 overflow-hidden">
+              {/* 装饰元素 */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-200/30 to-orange-200/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+              
+              <div className="relative flex items-start gap-4">
+                <div className="p-3.5 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl shadow-lg shadow-amber-200/30">
+                  <Sparkles className="w-7 h-7 text-amber-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-stone-800 mb-1">查看匹配分析</h3>
-                  <p className="text-sm text-stone-600 mb-3">
-                    登录并完善个人画像后，可查看该职位与您条件的详细匹配分析
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-serif font-bold text-stone-800 text-lg">AI 匹配分析</h3>
+                    <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full">
+                      智能
+                    </span>
+                  </div>
+                  <p className="text-sm text-stone-600 mb-4 leading-relaxed">
+                    登录并完善个人画像后，AI 将为您分析该职位与您条件的详细匹配程度，包括学历、专业、年龄等多维度分析
                   </p>
                   <Link
                     href="/login"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium"
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 text-sm font-semibold"
                   >
-                    登录查看
-                    <ChevronRight className="w-4 h-4" />
+                    登录查看分析
+                    <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </Link>
                 </div>
               </div>
@@ -765,86 +941,107 @@ export default function PositionDetailPage() {
 
           {/* Remark */}
           {position.remark && (
-            <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card p-6 lg:p-8">
-              <h2 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
-                <Info className="w-5 h-5 text-amber-500" />
+            <div className="group bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 hover:shadow-2xl hover:shadow-stone-200/40 transition-all duration-300 p-6 lg:p-8 overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100/30 to-indigo-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+              
+              <h2 className="relative text-lg font-serif font-bold text-stone-800 mb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-sm">
+                  <Info className="w-5 h-5 text-blue-600" />
+                </div>
                 备注说明
               </h2>
-              <p className="text-stone-600 whitespace-pre-wrap leading-relaxed">{position.remark}</p>
+              <div className="relative p-4 bg-stone-50/80 rounded-xl">
+                <p className="text-stone-600 whitespace-pre-wrap leading-relaxed">{position.remark}</p>
+              </div>
             </div>
           )}
 
           {/* 历年数据卡片 */}
-          <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card p-6 lg:p-8">
-            <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
-              <BarChart2 className="w-5 h-5 text-amber-500" />
+          <div className="group bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 hover:shadow-2xl hover:shadow-stone-200/40 transition-all duration-300 p-6 lg:p-8 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-100/30 to-teal-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            
+            <h2 className="relative text-lg font-serif font-bold text-stone-800 mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center shadow-sm">
+                <BarChart2 className="w-5 h-5 text-cyan-600" />
+              </div>
               历年数据
+              <span className="ml-auto text-xs font-medium text-stone-400 bg-stone-100 px-2 py-1 rounded-lg">
+                数据支持
+              </span>
             </h2>
             
             {historyLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
-                <span className="ml-2 text-stone-500">加载历年数据...</span>
+              <div className="relative flex flex-col items-center justify-center py-12">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center">
+                    <Loader2 className="w-7 h-7 text-cyan-500 animate-spin" />
+                  </div>
+                  <div className="absolute -inset-2 bg-cyan-400/20 rounded-3xl blur-xl animate-pulse" />
+                </div>
+                <span className="mt-4 text-stone-500">加载历年数据...</span>
               </div>
             ) : historyData && historyData.histories && historyData.histories.length > 0 ? (
-              <div className="space-y-6">
+              <div className="relative space-y-6">
                 {/* 趋势图表 */}
                 {historyData.yearly_trend && historyData.yearly_trend.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-stone-600 mb-3">招录趋势</h3>
-                    <div className="flex items-end justify-between gap-2 h-32 px-2">
+                  <div className="p-5 bg-gradient-to-br from-stone-50 to-stone-100/50 rounded-xl">
+                    <h3 className="text-sm font-semibold text-stone-600 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-amber-500" />
+                      招录趋势
+                    </h3>
+                    <div className="flex items-end justify-between gap-3 h-36 px-2">
                       {historyData.yearly_trend.slice(-5).map((item: YearlyTrendItem, index: number) => {
                         const maxRatio = Math.max(...historyData.yearly_trend.slice(-5).map((t: YearlyTrendItem) => t.competition_ratio || 1));
                         const height = maxRatio > 0 ? (item.competition_ratio / maxRatio) * 100 : 20;
                         return (
-                          <div key={item.year} className="flex-1 flex flex-col items-center gap-1">
+                          <div key={item.year} className="flex-1 flex flex-col items-center gap-2">
                             <div className="w-full flex flex-col items-center">
-                              <span className="text-xs text-stone-500 mb-1">{item.competition_ratio.toFixed(0)}:1</span>
+                              <span className="text-xs font-semibold text-amber-600 mb-1">{item.competition_ratio.toFixed(0)}:1</span>
                               <div 
-                                className="w-full max-w-12 bg-gradient-to-t from-amber-500 to-amber-400 rounded-t-lg transition-all duration-300"
-                                style={{ height: `${Math.max(height, 10)}%` }}
+                                className="w-full max-w-14 bg-gradient-to-t from-amber-500 to-amber-400 rounded-t-xl transition-all duration-500 hover:from-amber-600 hover:to-amber-500 shadow-sm"
+                                style={{ height: `${Math.max(height, 15)}%` }}
                               />
                             </div>
-                            <span className="text-xs text-stone-600 font-medium">{item.year}</span>
+                            <span className="text-xs text-stone-600 font-semibold bg-white px-2 py-0.5 rounded-lg shadow-sm">{item.year}</span>
                           </div>
                         );
                       })}
                     </div>
-                    <p className="text-xs text-stone-400 text-center mt-2">竞争比趋势（近5年）</p>
+                    <p className="text-xs text-stone-400 text-center mt-3">竞争比趋势（近5年）</p>
                   </div>
                 )}
 
                 {/* 历年数据表格 */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto rounded-xl border border-stone-200/50">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-stone-200">
-                        <th className="text-left py-2 px-2 font-medium text-stone-600">年份</th>
-                        <th className="text-center py-2 px-2 font-medium text-stone-600">招录</th>
-                        <th className="text-center py-2 px-2 font-medium text-stone-600">报名</th>
-                        <th className="text-center py-2 px-2 font-medium text-stone-600">竞争比</th>
-                        <th className="text-center py-2 px-2 font-medium text-stone-600">进面分</th>
+                      <tr className="bg-gradient-to-r from-stone-100 to-stone-50">
+                        <th className="text-left py-3 px-4 font-semibold text-stone-600">年份</th>
+                        <th className="text-center py-3 px-4 font-semibold text-stone-600">招录</th>
+                        <th className="text-center py-3 px-4 font-semibold text-stone-600">报名</th>
+                        <th className="text-center py-3 px-4 font-semibold text-stone-600">竞争比</th>
+                        <th className="text-center py-3 px-4 font-semibold text-stone-600">进面分</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {historyData.histories.slice(0, 5).map((h: PositionHistoryItem) => (
-                        <tr key={h.id} className="border-b border-stone-100 hover:bg-stone-50">
-                          <td className="py-2 px-2 font-medium text-stone-800">{h.year}年</td>
-                          <td className="py-2 px-2 text-center text-stone-700">{h.recruit_count}人</td>
-                          <td className="py-2 px-2 text-center text-stone-700">{h.applicant_count || '-'}</td>
-                          <td className="py-2 px-2 text-center">
+                      {historyData.histories.slice(0, 5).map((h: PositionHistoryItem, index: number) => (
+                        <tr key={h.id} className={`border-t border-stone-100 hover:bg-amber-50/50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-stone-50/30'}`}>
+                          <td className="py-3 px-4 font-semibold text-stone-800">{h.year}年</td>
+                          <td className="py-3 px-4 text-center text-stone-700">{h.recruit_count}人</td>
+                          <td className="py-3 px-4 text-center text-stone-700">{h.applicant_count || '-'}</td>
+                          <td className="py-3 px-4 text-center">
                             {h.competition_ratio > 0 ? (
-                              <span className={`font-medium ${
-                                h.competition_ratio > 100 ? 'text-red-600' : 
-                                h.competition_ratio > 50 ? 'text-amber-600' : 'text-emerald-600'
+                              <span className={`inline-flex px-2 py-0.5 rounded-lg font-semibold ${
+                                h.competition_ratio > 100 ? 'bg-red-100 text-red-600' : 
+                                h.competition_ratio > 50 ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
                               }`}>
                                 {h.competition_ratio.toFixed(0)}:1
                               </span>
                             ) : '-'}
                           </td>
-                          <td className="py-2 px-2 text-center">
+                          <td className="py-3 px-4 text-center">
                             {h.interview_score > 0 ? (
-                              <span className="font-medium text-blue-600">{h.interview_score.toFixed(1)}</span>
+                              <span className="font-semibold text-blue-600">{h.interview_score.toFixed(1)}</span>
                             ) : '-'}
                           </td>
                         </tr>
@@ -855,157 +1052,217 @@ export default function PositionDetailPage() {
 
                 {/* 分数线预测 */}
                 {historyData.prediction && historyData.prediction.predicted_score > 0 && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                    <div className="flex items-center justify-between">
+                  <div className="p-5 bg-gradient-to-br from-blue-50 via-indigo-50/50 to-blue-100/30 rounded-xl border border-blue-200/50 relative overflow-hidden">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-blue-200/30 rounded-full blur-2xl" />
+                    <div className="relative flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-blue-700 font-medium flex items-center gap-1.5">
-                          <TrendingUp className="w-4 h-4" />
+                        <p className="text-sm text-blue-700 font-semibold flex items-center gap-2 mb-2">
+                          <div className="p-1.5 bg-blue-100 rounded-lg">
+                            <TrendingUp className="w-4 h-4" />
+                          </div>
                           分数线预测
                         </p>
-                        <p className="text-2xl font-bold text-blue-600 mt-1">
-                          {historyData.prediction.predicted_score.toFixed(1)} 分
+                        <p className="text-4xl font-display font-bold text-blue-600 tabular-nums">
+                          {historyData.prediction.predicted_score.toFixed(1)} <span className="text-xl font-normal text-blue-400">分</span>
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-stone-500">预测置信度</p>
-                        <p className="text-lg font-semibold text-blue-600">
-                          {(historyData.prediction.confidence * 100).toFixed(0)}%
-                        </p>
+                        <p className="text-xs text-stone-500 mb-1">预测置信度</p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-2 bg-blue-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full"
+                              style={{ width: `${historyData.prediction.confidence * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-lg font-bold text-blue-600">
+                            {(historyData.prediction.confidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-xs text-stone-500 mt-2">{historyData.prediction.basis}</p>
+                    <p className="text-xs text-stone-500 mt-3 pt-3 border-t border-blue-200/50">{historyData.prediction.basis}</p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <BarChart2 className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-                <p className="text-stone-500">暂无历年数据</p>
+              <div className="relative text-center py-12">
+                <div className="relative inline-block mb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center">
+                    <BarChart2 className="w-8 h-8 text-stone-400" />
+                  </div>
+                  <div className="absolute -inset-2 bg-stone-200/50 rounded-3xl blur-xl" />
+                </div>
+                <p className="text-stone-600 font-medium">暂无历年数据</p>
                 <p className="text-sm text-stone-400 mt-1">该职位暂未收录历年招录数据</p>
               </div>
             )}
           </div>
-        </div>
+          </div>
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Registration Status Card */}
+          {/* Registration Status Card - 全新设计 */}
           {registrationStatus && (
-            <div className={`rounded-2xl border p-5 ${
-              registrationStatus.status === "ended" ? "bg-red-50 border-red-200" :
-              registrationStatus.status === "urgent" ? "bg-amber-50 border-amber-200" :
-              registrationStatus.status === "upcoming" ? "bg-blue-50 border-blue-200" :
-              "bg-emerald-50 border-emerald-200"
+            <div className={`relative rounded-2xl border-2 p-6 overflow-hidden transition-all duration-300 hover:shadow-lg ${
+              registrationStatus.status === "ended" 
+                ? "bg-gradient-to-br from-red-50 to-red-100/50 border-red-200 hover:shadow-red-100" 
+                : registrationStatus.status === "urgent" 
+                  ? "bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 hover:shadow-amber-100" 
+                  : registrationStatus.status === "upcoming" 
+                    ? "bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 hover:shadow-blue-100" 
+                    : "bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 hover:shadow-emerald-100"
             }`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${
-                  registrationStatus.status === "ended" ? "bg-red-100" :
-                  registrationStatus.status === "urgent" ? "bg-amber-100" :
-                  registrationStatus.status === "upcoming" ? "bg-blue-100" :
-                  "bg-emerald-100"
+              {/* 装饰 */}
+              <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-50 ${
+                registrationStatus.status === "ended" ? "bg-red-200" :
+                registrationStatus.status === "urgent" ? "bg-amber-200" :
+                registrationStatus.status === "upcoming" ? "bg-blue-200" :
+                "bg-emerald-200"
+              }`} />
+              
+              <div className="relative flex items-center gap-4">
+                <div className={`p-3.5 rounded-2xl shadow-lg ${
+                  registrationStatus.status === "ended" 
+                    ? "bg-gradient-to-br from-red-400 to-red-500 shadow-red-200" 
+                    : registrationStatus.status === "urgent" 
+                      ? "bg-gradient-to-br from-amber-400 to-amber-500 shadow-amber-200" 
+                      : registrationStatus.status === "upcoming" 
+                        ? "bg-gradient-to-br from-blue-400 to-blue-500 shadow-blue-200" 
+                        : "bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-emerald-200"
                 }`}>
-                  <Clock className={`w-6 h-6 ${
-                    registrationStatus.status === "ended" ? "text-red-600" :
-                    registrationStatus.status === "urgent" ? "text-amber-600" :
-                    registrationStatus.status === "upcoming" ? "text-blue-600" :
-                    "text-emerald-600"
-                  }`} />
+                  <Clock className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-stone-600">报名状态</p>
-                  <p className={`text-lg font-bold ${registrationStatus.color}`}>
+                  <p className="text-sm text-stone-500 font-medium">报名状态</p>
+                  <p className={`text-xl font-bold ${registrationStatus.color}`}>
                     {registrationStatus.text}
                   </p>
                 </div>
               </div>
               {position.registration_end && registrationStatus.status !== "ended" && (
-                <p className="text-sm text-stone-500 mt-3">
-                  截止时间：{formatDate(position.registration_end)}
+                <p className="relative text-sm text-stone-500 mt-4 pt-4 border-t border-dashed border-stone-200">
+                  截止时间：<span className="font-semibold text-stone-700">{formatDate(position.registration_end)}</span>
                 </p>
               )}
             </div>
           )}
 
-          {/* Timeline Card */}
-          <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card p-6">
-            <h3 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-amber-500" />
+          {/* Timeline Card - 全新设计 */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 p-6 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-100/30 to-orange-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            
+            <h3 className="relative text-lg font-serif font-bold text-stone-800 mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shadow-sm">
+                <Calendar className="w-5 h-5 text-amber-600" />
+              </div>
               时间节点
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className={`w-3 h-3 mt-1.5 rounded-full flex-shrink-0 ${
+            <div className="relative space-y-0">
+              {/* 连接线 */}
+              <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-gradient-to-b from-emerald-200 via-amber-200 to-stone-200" />
+              
+              <div className="relative flex items-start gap-4 pb-6">
+                <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-md ${
                   registrationStatus?.status === "ended" || registrationStatus?.status === "active" || registrationStatus?.status === "urgent"
-                    ? "bg-emerald-500" : "bg-stone-300"
-                }`} />
-                <div>
-                  <p className="font-medium text-stone-800">报名开始</p>
-                  <p className="text-sm text-stone-500">{formatDate(position.registration_start)}</p>
+                    ? "bg-gradient-to-br from-emerald-400 to-emerald-500" : "bg-stone-200"
+                }`}>
+                  <Check className={`w-4 h-4 ${
+                    registrationStatus?.status === "ended" || registrationStatus?.status === "active" || registrationStatus?.status === "urgent"
+                      ? "text-white" : "text-stone-400"
+                  }`} />
+                </div>
+                <div className="flex-1 pt-1">
+                  <p className="font-semibold text-stone-800">报名开始</p>
+                  <p className="text-sm text-stone-500 mt-0.5">{formatDate(position.registration_start)}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className={`w-3 h-3 mt-1.5 rounded-full flex-shrink-0 ${
-                  registrationStatus?.status === "ended" ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
-                }`} />
-                <div>
-                  <p className="font-medium text-stone-800">报名截止</p>
-                  <p className="text-sm text-stone-500">{formatDate(position.registration_end)}</p>
+              
+              <div className="relative flex items-start gap-4 pb-6">
+                <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-md ${
+                  registrationStatus?.status === "ended" 
+                    ? "bg-gradient-to-br from-emerald-400 to-emerald-500" 
+                    : "bg-gradient-to-br from-amber-400 to-amber-500 animate-pulse"
+                }`}>
+                  {registrationStatus?.status === "ended" ? (
+                    <Check className="w-4 h-4 text-white" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-white" />
+                  )}
+                </div>
+                <div className="flex-1 pt-1">
+                  <p className="font-semibold text-stone-800">报名截止</p>
+                  <p className="text-sm text-stone-500 mt-0.5">{formatDate(position.registration_end)}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-3 h-3 mt-1.5 rounded-full flex-shrink-0 bg-stone-300" />
-                <div>
-                  <p className="font-medium text-stone-800">笔试时间</p>
-                  <p className="text-sm text-stone-500">{formatDate(position.exam_date)}</p>
+              
+              <div className="relative flex items-start gap-4 pb-6">
+                <div className="relative z-10 w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center shadow-md">
+                  <FileText className="w-4 h-4 text-stone-400" />
+                </div>
+                <div className="flex-1 pt-1">
+                  <p className="font-semibold text-stone-800">笔试时间</p>
+                  <p className="text-sm text-stone-500 mt-0.5">{formatDate(position.exam_date)}</p>
                 </div>
               </div>
+              
               {position.interview_date && (
-                <div className="flex items-start gap-3">
-                  <div className="w-3 h-3 mt-1.5 rounded-full flex-shrink-0 bg-stone-300" />
-                  <div>
-                    <p className="font-medium text-stone-800">面试时间</p>
-                    <p className="text-sm text-stone-500">{formatDate(position.interview_date)}</p>
+                <div className="relative flex items-start gap-4">
+                  <div className="relative z-10 w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center shadow-md">
+                    <User className="w-4 h-4 text-stone-400" />
+                  </div>
+                  <div className="flex-1 pt-1">
+                    <p className="font-semibold text-stone-800">面试时间</p>
+                    <p className="text-sm text-stone-500 mt-0.5">{formatDate(position.interview_date)}</p>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Quick Actions Card */}
-          <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card p-6">
-            <h3 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-amber-500" />
+          {/* Quick Actions Card - 全新设计 */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 p-6 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-violet-100/30 to-purple-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            
+            <h3 className="relative text-lg font-serif font-bold text-stone-800 mb-5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center shadow-sm">
+                <Zap className="w-5 h-5 text-violet-600" />
+              </div>
               快捷操作
             </h3>
-            <div className="space-y-3">
+            <div className="relative space-y-3">
               <button
                 onClick={handleToggleFavorite}
                 disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
-                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${
+                className={`group w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
                   isFavorited
-                    ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-                    : "bg-stone-50 text-stone-700 border border-stone-200 hover:bg-stone-100"
+                    ? "bg-gradient-to-r from-red-50 to-red-100/50 text-red-600 border-2 border-red-200 hover:shadow-red-100"
+                    : "bg-stone-50 text-stone-700 border-2 border-stone-200 hover:border-amber-300 hover:shadow-amber-100"
                 }`}
               >
-                <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
+                <Heart className={`w-5 h-5 transition-transform group-hover:scale-110 ${isFavorited ? "fill-current" : ""}`} />
                 {isFavorited ? "取消收藏" : "收藏职位"}
               </button>
               <button
                 onClick={handleToggleCompare}
-                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${
+                className={`group w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
                   isInCompare
-                    ? "bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100"
-                    : "bg-stone-50 text-stone-700 border border-stone-200 hover:bg-stone-100"
+                    ? "bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-600 border-2 border-emerald-200 hover:shadow-emerald-100"
+                    : "bg-stone-50 text-stone-700 border-2 border-stone-200 hover:border-amber-300 hover:shadow-amber-100"
                 }`}
               >
-                <Scale className="w-5 h-5" />
+                <Scale className="w-5 h-5 transition-transform group-hover:scale-110" />
                 {isInCompare ? "移除对比" : "加入对比"}
               </button>
               <button
                 onClick={handleShare}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-stone-50 text-stone-700 border border-stone-200 hover:bg-stone-100 transition-colors"
+                className="group w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-semibold bg-stone-50 text-stone-700 border-2 border-stone-200 hover:border-amber-300 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-amber-100"
               >
-                {copySuccess ? <CheckCircle className="w-5 h-5 text-emerald-500" /> : <Share2 className="w-5 h-5" />}
+                {copySuccess ? (
+                  <CheckCircle className="w-5 h-5 text-emerald-500" />
+                ) : (
+                  <Share2 className="w-5 h-5 transition-transform group-hover:scale-110" />
+                )}
                 {copySuccess ? "链接已复制" : "分享职位"}
               </button>
               {position.source_url && (
@@ -1013,80 +1270,89 @@ export default function PositionDetailPage() {
                   href={position.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
+                  className="group w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30"
                 >
-                  <ExternalLink className="w-5 h-5" />
+                  <ExternalLink className="w-5 h-5 transition-transform group-hover:scale-110" />
                   查看原公告
                 </a>
               )}
             </div>
           </div>
 
-          {/* Compare Bar (if items in compare) */}
+          {/* Compare Bar (if items in compare) - 全新设计 */}
           {compareList.length > 0 && (
-            <div className="bg-emerald-50 rounded-2xl border border-emerald-200 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-emerald-700">
-                  已选 {compareList.length}/{MAX_COMPARE_COUNT} 个职位
-                </span>
-                <button
-                  onClick={() => {
-                    setCompareList([]);
-                    saveCompareList([]);
-                  }}
-                  className="text-xs text-emerald-600 hover:text-emerald-800"
+            <div className="relative bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl border-2 border-emerald-200 p-5 overflow-hidden">
+              <div className="absolute -top-6 -right-6 w-20 h-20 bg-emerald-200/30 rounded-full blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+                    <Scale className="w-4 h-4" />
+                    已选 <span className="text-lg">{compareList.length}</span>/{MAX_COMPARE_COUNT} 个职位
+                  </span>
+                  <button
+                    onClick={() => {
+                      setCompareList([]);
+                      saveCompareList([]);
+                    }}
+                    className="text-xs font-medium text-emerald-600 hover:text-emerald-800 bg-white px-2 py-1 rounded-lg shadow-sm hover:shadow transition-all"
+                  >
+                    清空
+                  </button>
+                </div>
+                <Link
+                  href={`/positions/compare?ids=${compareList.join(",")}`}
+                  className="group flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5"
                 >
-                  清空
-                </button>
+                  开始对比
+                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
               </div>
-              <Link
-                href={`/positions/compare?ids=${compareList.join(",")}`}
-                className="block w-full py-2.5 text-center bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors"
-              >
-                开始对比
-              </Link>
             </div>
           )}
 
-          {/* Related Announcement Link */}
+          {/* Related Announcement Link - 全新设计 */}
           {position.announcement_id && (
             <Link
               href={`/announcements/${position.announcement_id}`}
-              className="block bg-white rounded-2xl border border-stone-200/50 shadow-card p-5 hover:border-amber-200 hover:shadow-card-hover transition-all group"
+              className="group block bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-xl shadow-stone-200/30 p-5 hover:shadow-2xl hover:shadow-amber-100/30 transition-all duration-300 hover:-translate-y-0.5 overflow-hidden relative"
             >
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition-colors">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-100/30 to-orange-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+              
+              <div className="relative flex items-center gap-4">
+                <div className="p-3.5 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-amber-200/30">
                   <FileText className="w-6 h-6 text-amber-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-stone-800 group-hover:text-amber-700 transition-colors">
+                  <p className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors">
                     查看相关公告
                   </p>
                   <p className="text-sm text-stone-500">了解更多职位详情</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-stone-400 group-hover:text-amber-500 transition-colors" />
+                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                  <ChevronRight className="w-5 h-5 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                </div>
               </div>
             </Link>
           )}
 
-          {/* Mobile Fixed Bottom Bar */}
-          <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-stone-200 flex gap-3">
+          {/* Mobile Fixed Bottom Bar - 全新设计 */}
+          <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-stone-200/50 flex gap-3 shadow-2xl shadow-stone-900/10">
             <button
               onClick={handleToggleFavorite}
-              className={`p-4 rounded-xl border ${
+              className={`p-4 rounded-2xl border-2 transition-all duration-300 ${
                 isFavorited
                   ? "bg-red-50 border-red-200 text-red-500"
-                  : "border-stone-200 text-stone-500"
+                  : "border-stone-200 text-stone-400 hover:border-amber-300 hover:text-amber-500"
               }`}
             >
               <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
             </button>
             <button
               onClick={handleToggleCompare}
-              className={`p-4 rounded-xl border ${
+              className={`p-4 rounded-2xl border-2 transition-all duration-300 ${
                 isInCompare
                   ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                  : "border-stone-200 text-stone-500"
+                  : "border-stone-200 text-stone-400 hover:border-amber-300 hover:text-amber-500"
               }`}
             >
               <Scale className="w-5 h-5" />
@@ -1096,20 +1362,32 @@ export default function PositionDetailPage() {
                 href={position.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl text-center hover:from-amber-600 hover:to-amber-700 transition-all shadow-amber-md"
+                className="flex-1 flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-2xl text-center hover:from-amber-600 hover:to-orange-600 transition-all shadow-xl shadow-amber-500/30"
               >
+                <ExternalLink className="w-5 h-5" />
                 查看原公告
               </a>
             ) : (
               <button
                 onClick={handleShare}
-                className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-amber-md"
+                className="flex-1 flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-2xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-xl shadow-amber-500/30"
               >
-                {copySuccess ? "链接已复制" : "分享职位"}
+                {copySuccess ? (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    链接已复制
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-5 h-5" />
+                    分享职位
+                  </>
+                )}
               </button>
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

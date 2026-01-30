@@ -310,17 +310,17 @@ export const courseApi = {
 
   // =============== 分类管理 ===============
   
-  // 获取分类列表（树形）
+  // 获取分类列表（树形）- 使用公共API
   getCategories: (params?: CategoryListParams) => {
     return request.get<{
       categories: CourseCategory[];
       total: number;
-    }>("/admin/courses/categories", { params });
+    }>("/courses/categories", { params });
   },
 
-  // 获取单个分类
+  // 获取单个分类 - 使用公共API
   getCategory: (id: number) => {
-    return request.get<CourseCategory>(`/admin/courses/categories/${id}`);
+    return request.get<CourseCategory>(`/courses/categories/${id}`);
   },
 
   // 创建分类

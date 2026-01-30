@@ -1,5 +1,5 @@
 export { default as Loading } from "./Loading";
-export { default as Empty } from "./Empty";
+export { default as Empty, EmptyState } from "./Empty";
 export { default as Pagination } from "./Pagination";
 export { default as SearchInput } from "./SearchInput";
 export { default as Card } from "./Card";

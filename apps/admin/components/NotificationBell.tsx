@@ -25,6 +25,7 @@ import {
   ScrollArea,
 } from "@what-cse/ui";
 import { notificationApi } from "@/services/notification-api";
+import { useAuthStore } from "@/stores/authStore";
 import type { Notification, NotificationType } from "@/types/notification";
 
 // 通知类型图标
@@ -53,6 +54,7 @@ export function NotificationBell({
   previewCount = 5,
 }: NotificationBellProps) {
   const router = useRouter();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,11 @@ export function NotificationBell({
 
   // 加载通知
   const fetchNotifications = useCallback(async () => {
+    // 只有在已认证时才获取通知
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const data = await notificationApi.getNotifications({
@@ -70,31 +77,37 @@ export function NotificationBell({
       setNotifications(data.notifications || []);
       setUnreadCount(data.unread_count || 0);
     } catch (err) {
+      // 静默处理认证错误，避免控制台刷屏
+      if (err instanceof Error && err.message === "Unauthorized") {
+        return;
+      }
       console.error("获取通知失败:", err);
     } finally {
       setLoading(false);
     }
-  }, [previewCount]);
+  }, [previewCount, isAuthenticated]);
 
-  // 初始加载
+  // 初始加载 - 等待 hydration 完成后再获取
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    if (_hasHydrated) {
+      fetchNotifications();
+    }
+  }, [fetchNotifications, _hasHydrated]);
 
-  // 自动刷新
+  // 自动刷新 - 只有认证后才自动刷新
   useEffect(() => {
-    if (refreshInterval <= 0) return;
+    if (refreshInterval <= 0 || !isAuthenticated) return;
 
     const interval = setInterval(fetchNotifications, refreshInterval);
     return () => clearInterval(interval);
-  }, [refreshInterval, fetchNotifications]);
+  }, [refreshInterval, fetchNotifications, isAuthenticated]);
 
   // 下拉框打开时刷新
   useEffect(() => {
-    if (open) {
+    if (open && isAuthenticated) {
       fetchNotifications();
     }
-  }, [open, fetchNotifications]);
+  }, [open, fetchNotifications, isAuthenticated]);
 
   // 标记为已读
   const handleMarkAsRead = async (id: number, e: React.MouseEvent) => {

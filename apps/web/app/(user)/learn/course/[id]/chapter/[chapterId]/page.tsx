@@ -42,6 +42,11 @@ import {
 import { CourseChapter, CourseDetail } from "@/services/api/course";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "@what-cse/ui";
+import {
+  LessonContentRenderer,
+  LessonContent,
+} from "@/components/learning/LessonContentRenderer";
+import { LessonContentSkeleton } from "@/components/learning/LessonContentSkeleton";
 
 // 播放速度选项
 const playbackRates = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -487,7 +492,16 @@ export default function ChapterPage() {
 
   const { isAuthenticated, user } = useAuthStore();
   const { loading: courseLoading, course, fetchCourse } = useCourse();
-  const { loading: chapterLoading, chapter, fetchChapter } = useChapter();
+  const {
+    loading: chapterLoading,
+    chapter,
+    fullContent,
+    contentLoading,
+    hasModuleContent,
+    parsedLessonContent,
+    fetchChapter,
+    fetchChapterFullContent,
+  } = useChapter();
   const { updateProgress } = useMyLearning();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -502,9 +516,12 @@ export default function ChapterPage() {
 
   useEffect(() => {
     if (chapterId) {
+      // 先获取基础信息
       fetchChapter(chapterId);
+      // 然后尝试获取完整内容（含模块化内容）
+      fetchChapterFullContent(chapterId);
     }
-  }, [chapterId, fetchChapter]);
+  }, [chapterId, fetchChapter, fetchChapterFullContent]);
 
   // VIP状态
   const isVIP = user?.is_vip || false;
@@ -756,16 +773,18 @@ export default function ChapterPage() {
               </div>
             </div>
 
-            {/* Content based on type */}
-            {chapter.content_type === "video" && chapter.content_url ? (
+            {/* 媒体内容（视频/音频） */}
+            {chapter.content_type === "video" && chapter.content_url && (
               <VideoPlayer
                 src={chapter.content_url}
                 onProgress={handleProgress}
                 onComplete={handleComplete}
                 initialProgress={course.study_progress}
               />
-            ) : chapter.content_type === "audio" && chapter.content_url ? (
-              <div className="bg-white rounded-xl p-6 border border-stone-200">
+            )}
+            
+            {chapter.content_type === "audio" && chapter.content_url && (
+              <div className="bg-white rounded-xl p-6 border border-stone-200 mb-8">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-amber-100 flex items-center justify-center">
                     <Headphones className="w-8 h-8 text-amber-600" />
@@ -786,11 +805,36 @@ export default function ChapterPage() {
                   onEnded={handleComplete}
                 />
               </div>
+            )}
+
+            {/* 模块化课程内容（MCP 生成的 13 模块内容） */}
+            {contentLoading ? (
+              <LessonContentSkeleton />
+            ) : parsedLessonContent ? (
+              <div className="mt-8">
+                {/* 字数统计信息 */}
+                {fullContent?.word_count?.total && (
+                  <div className="mb-6 flex items-center gap-4 text-sm text-stone-500">
+                    <span className="flex items-center gap-1">
+                      <FileText className="w-4 h-4" />
+                      约 {Math.round(fullContent.word_count.total / 1000)}k 字
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      预计阅读 {Math.ceil(fullContent.word_count.total / 500)} 分钟
+                    </span>
+                  </div>
+                )}
+                <LessonContentRenderer content={parsedLessonContent as LessonContent} />
+              </div>
             ) : (
-              <DocumentReader
-                content={chapter.content_text}
-                url={chapter.content_url}
-              />
+              /* 回退到文档阅读器（无模块化内容时） */
+              !chapter.content_url?.match(/\.(mp4|webm|mp3|wav)$/i) && (
+                <DocumentReader
+                  content={chapter.content_text}
+                  url={chapter.content_url}
+                />
+              )
             )}
 
             {/* Navigation */}

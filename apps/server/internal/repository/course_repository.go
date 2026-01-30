@@ -125,6 +125,56 @@ func (r *CourseCategoryRepository) UpdateFields(id uint, updates map[string]inte
 	return r.db.Model(&model.CourseCategory{}).Where("id = ?", id).Updates(updates).Error
 }
 
+// GetDescendants 获取所有子孙分类（递归）
+func (r *CourseCategoryRepository) GetDescendants(parentID uint) ([]model.CourseCategory, error) {
+	var allDescendants []model.CourseCategory
+
+	// 使用递归CTE查询所有子孙（MySQL 8.0+）
+	// 如果数据库不支持CTE，则使用迭代方法
+	err := r.db.Raw(`
+		WITH RECURSIVE descendants AS (
+			SELECT * FROM what_course_categories WHERE parent_id = ? AND deleted_at IS NULL
+			UNION ALL
+			SELECT c.* FROM what_course_categories c
+			INNER JOIN descendants d ON c.parent_id = d.id
+			WHERE c.deleted_at IS NULL
+		)
+		SELECT * FROM descendants WHERE is_active = 1
+		ORDER BY level ASC, sort_order ASC
+	`, parentID).Scan(&allDescendants).Error
+
+	if err != nil {
+		// 如果CTE不支持，使用迭代方法
+		return r.getDescendantsIterative(parentID)
+	}
+
+	return allDescendants, nil
+}
+
+// getDescendantsIterative 迭代获取所有子孙分类（兼容旧版本MySQL）
+func (r *CourseCategoryRepository) getDescendantsIterative(parentID uint) ([]model.CourseCategory, error) {
+	var allDescendants []model.CourseCategory
+	var queue []uint
+	queue = append(queue, parentID)
+
+	for len(queue) > 0 {
+		currentID := queue[0]
+		queue = queue[1:]
+
+		children, err := r.GetChildren(currentID)
+		if err != nil {
+			continue
+		}
+
+		for _, child := range children {
+			allDescendants = append(allDescendants, child)
+			queue = append(queue, child.ID)
+		}
+	}
+
+	return allDescendants, nil
+}
+
 // =====================================================
 // Course Repository
 // =====================================================
@@ -146,11 +196,29 @@ type CourseQueryParams struct {
 	Difficulty  string `query:"difficulty"`
 	IsFree      *bool  `query:"is_free"`
 	VIPOnly     *bool  `query:"vip_only"`
-	Status      *int   `query:"status"`
+	Status      string `query:"status"` // draft, published, archived, or empty for all
 	Keyword     string `query:"keyword"`
 	OrderBy     string `query:"order_by"` // latest, popular, views, rating
 	Page        int    `query:"page"`
 	PageSize    int    `query:"page_size"`
+}
+
+// parseStatus 将字符串状态转换为整数
+func parseStatus(status string) *int {
+	var s int
+	switch status {
+	case "draft":
+		s = int(model.CourseStatusDraft)
+		return &s
+	case "published":
+		s = int(model.CourseStatusPublished)
+		return &s
+	case "archived":
+		s = int(model.CourseStatusArchived)
+		return &s
+	default:
+		return nil
+	}
 }
 
 // Create creates a new course
@@ -229,12 +297,14 @@ func (r *CourseRepository) GetList(params *CourseQueryParams) ([]model.Course, i
 	if params.VIPOnly != nil {
 		query = query.Where("vip_only = ?", *params.VIPOnly)
 	}
-	if params.Status != nil {
-		query = query.Where("what_courses.status = ?", *params.Status)
-	} else {
-		// Default: only published courses
+	if statusInt := parseStatus(params.Status); statusInt != nil {
+		query = query.Where("what_courses.status = ?", *statusInt)
+	} else if params.Status == "" {
+		// Default for public API: only published courses
+		// Note: Admin API should pass "all" or empty to get all statuses
 		query = query.Where("what_courses.status = ?", model.CourseStatusPublished)
 	}
+	// If params.Status is "all" or other invalid value, no filter is applied
 	if params.Keyword != "" {
 		keyword := "%" + params.Keyword + "%"
 		query = query.Where("what_courses.title LIKE ? OR what_courses.subtitle LIKE ?", keyword, keyword)
@@ -279,6 +349,20 @@ func (r *CourseRepository) GetByCategory(categoryID uint, page, pageSize int) ([
 		Page:       page,
 		PageSize:   pageSize,
 	})
+}
+
+// GetByCategoryID 根据分类ID获取课程列表（简化版，用于批量生成）
+func (r *CourseRepository) GetByCategoryID(categoryID uint, offset, limit int) ([]model.Course, error) {
+	var courses []model.Course
+	query := r.db.Where("category_id = ? AND status = ?", categoryID, model.CourseStatusPublished)
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	err := query.Order("sort_order ASC, id ASC").Find(&courses).Error
+	return courses, err
 }
 
 // GetFeatured gets featured/recommended courses
@@ -363,6 +447,36 @@ func (r *CourseRepository) CountFree(count *int64) error {
 // CountVIP counts VIP courses
 func (r *CourseRepository) CountVIP(count *int64) error {
 	return r.db.Model(&model.Course{}).Where("vip_only = ?", true).Count(count).Error
+}
+
+// CountByCategoryIDs counts courses per category with optional status filter
+func (r *CourseRepository) CountByCategoryIDs(categoryIDs []uint, status *model.CourseStatus) (map[uint]int64, error) {
+	counts := make(map[uint]int64)
+	if len(categoryIDs) == 0 {
+		return counts, nil
+	}
+
+	type categoryCount struct {
+		CategoryID uint  `gorm:"column:category_id"`
+		Count      int64 `gorm:"column:count"`
+	}
+	var rows []categoryCount
+
+	query := r.db.Model(&model.Course{}).
+		Select("category_id, COUNT(*) as count").
+		Where("category_id IN ?", categoryIDs)
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+
+	if err := query.Group("category_id").Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		counts[row.CategoryID] = row.Count
+	}
+	return counts, nil
 }
 
 // SumStudyCount sums total study count
@@ -470,6 +584,45 @@ func (r *CourseChapterRepository) CountByCourse(courseID uint) (int64, error) {
 // UpdateFields updates specific fields
 func (r *CourseChapterRepository) UpdateFields(id uint, updates map[string]interface{}) error {
 	return r.db.Model(&model.CourseChapter{}).Where("id = ?", id).Updates(updates).Error
+}
+
+// GetByIDWithModules gets a chapter by ID with all modules
+func (r *CourseChapterRepository) GetByIDWithModules(id uint) (*model.CourseChapter, error) {
+	var chapter model.CourseChapter
+	err := r.db.Preload("Modules", func(db *gorm.DB) *gorm.DB {
+		return db.Order("sort_order ASC")
+	}).First(&chapter, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &chapter, nil
+}
+
+// GetModulesByChapterID gets all modules for a chapter
+func (r *CourseChapterRepository) GetModulesByChapterID(chapterID uint) ([]model.CourseLessonModule, error) {
+	var modules []model.CourseLessonModule
+	err := r.db.Where("chapter_id = ?", chapterID).
+		Order("sort_order ASC").
+		Find(&modules).Error
+	return modules, err
+}
+
+// CreateModule creates a new lesson module
+func (r *CourseChapterRepository) CreateModule(module *model.CourseLessonModule) error {
+	return r.db.Create(module).Error
+}
+
+// CreateModules creates multiple lesson modules
+func (r *CourseChapterRepository) CreateModules(modules []model.CourseLessonModule) error {
+	if len(modules) == 0 {
+		return nil
+	}
+	return r.db.Create(&modules).Error
+}
+
+// DeleteModulesByChapterID deletes all modules for a chapter
+func (r *CourseChapterRepository) DeleteModulesByChapterID(chapterID uint) error {
+	return r.db.Where("chapter_id = ?", chapterID).Delete(&model.CourseLessonModule{}).Error
 }
 
 // =====================================================

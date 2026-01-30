@@ -145,12 +145,12 @@ export function LessonGeneratorDialog({
           {/* 科目选择 */}
           <div className="space-y-2">
             <Label htmlFor="subject">科目（可选）</Label>
-            <Select value={subject} onValueChange={setSubject}>
+            <Select value={subject || "auto"} onValueChange={(v) => setSubject(v === "auto" ? "" : v)}>
               <SelectTrigger id="subject">
                 <SelectValue placeholder="选择科目以获得更精准的内容" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">自动识别</SelectItem>
+                <SelectItem value="auto">自动识别</SelectItem>
                 {SUBJECTS.map((s) => (
                   <SelectItem key={s.value} value={s.value}>
                     {s.label}

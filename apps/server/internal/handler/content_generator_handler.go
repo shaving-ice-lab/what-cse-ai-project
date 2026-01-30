@@ -11,13 +11,15 @@ import (
 
 // ContentGeneratorHandler 内容生成处理器
 type ContentGeneratorHandler struct {
-	generatorService *service.ContentGeneratorService
+	generatorService    *service.ContentGeneratorService
+	llmGeneratorService *service.LLMGeneratorService
 }
 
 // NewContentGeneratorHandler 创建内容生成处理器
-func NewContentGeneratorHandler(generatorService *service.ContentGeneratorService) *ContentGeneratorHandler {
+func NewContentGeneratorHandler(generatorService *service.ContentGeneratorService, llmGeneratorService *service.LLMGeneratorService) *ContentGeneratorHandler {
 	return &ContentGeneratorHandler{
-		generatorService: generatorService,
+		generatorService:    generatorService,
+		llmGeneratorService: llmGeneratorService,
 	}
 }
 
@@ -56,6 +58,15 @@ func (h *ContentGeneratorHandler) RegisterRoutes(e *echo.Echo, authMiddleware ec
 	// 预设结构
 	admin.GET("/structures/:subject", h.GetSubjectStructure)
 
+	// AI 丰富分类描述
+	admin.POST("/categories/:id/enrich", h.EnrichCategoryDescription)
+
+	// 课程结构树（用于内容生成页面）
+	admin.GET("/course-tree", h.GetCourseTree)
+
+	// 批量生成章节内容（按章节 ID 列表）
+	admin.POST("/generate/chapter-lessons-batch", h.BatchGenerateChapterLessons)
+
 	// AI 内容生成
 	admin.POST("/ai/generate", h.GenerateAIContent)
 
@@ -66,6 +77,34 @@ func (h *ContentGeneratorHandler) RegisterRoutes(e *echo.Echo, authMiddleware ec
 	admin.POST("/quality/check", h.RunQualityCheck)
 	admin.GET("/quality/results", h.GetQualityResults)
 	admin.POST("/quality/resolve/:id", h.ResolveQualityIssue)
+}
+
+// RegisterInternalRoutes 注册内部路由（无需认证，仅用于开发环境初始化）
+func (h *ContentGeneratorHandler) RegisterInternalRoutes(e *echo.Echo) {
+	internal := e.Group("/api/v1/internal/generator")
+	// 获取预设结构
+	internal.GET("/structures/:subject", h.GetSubjectStructure)
+	// 调试：清理指定科目数据
+	internal.DELETE("/cleanup/:subject", h.CleanupSubjectData)
+}
+
+// CleanupSubjectData 清理指定科目的数据（调试用）
+func (h *ContentGeneratorHandler) CleanupSubjectData(c echo.Context) error {
+	subject := c.Param("subject")
+
+	result, err := h.generatorService.CleanupSubjectData(subject)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "清理失败: " + err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "清理成功",
+		"data":    result,
+	})
 }
 
 // GetStats 获取内容统计
@@ -569,6 +608,114 @@ func (h *ContentGeneratorHandler) GetSubjectStructure(c echo.Context) error {
 	})
 }
 
+// EnrichCategoryDescription AI丰富分类描述
+// @Summary AI丰富分类描述（调用LLM生成详细描述、特点、学习目标等）
+// @Tags ContentGenerator
+// @Param id path int true "分类ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /api/v1/admin/generator/categories/{id}/enrich [post]
+func (h *ContentGeneratorHandler) EnrichCategoryDescription(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "无效的分类ID",
+		})
+	}
+
+	// 调用服务丰富描述
+	category, err := h.generatorService.EnrichCategoryDescription(uint(id))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "丰富描述失败: " + err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "分类描述已更新",
+		"data":    category,
+	})
+}
+
+// GetCourseTree 获取课程结构树（用于内容生成页面）
+// @Summary 获取课程结构树，含章节生成状态
+// @Tags ContentGenerator
+// @Success 200 {object} service.CourseTreeResponse
+// @Router /api/v1/admin/generator/course-tree [get]
+func (h *ContentGeneratorHandler) GetCourseTree(c echo.Context) error {
+	tree, err := h.generatorService.GetCourseTreeForContent()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "获取课程树失败: " + err.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "success",
+		"data":    tree,
+	})
+}
+
+// BatchGenerateChapterLessonsRequest 批量生成章节内容请求
+// 注意：SkipExisting 由前端在调用前过滤待生成章节，此处不需要
+type BatchGenerateChapterLessonsRequest struct {
+	ChapterIDs         []uint `json:"chapter_ids" validate:"required,min=1"`
+	Subject            string `json:"subject,omitempty"`
+	AutoApprove        bool   `json:"auto_approve,omitempty"`
+	AutoImport         bool   `json:"auto_import,omitempty"`
+	// 从前端传入的 prompt（可选，如果不传则使用后端默认）
+	SystemPrompt       string `json:"system_prompt,omitempty"`
+	UserPromptTemplate string `json:"user_prompt_template,omitempty"`
+}
+
+// BatchGenerateChapterLessons 按章节 ID 列表批量生成课程内容
+// @Summary 批量生成章节教学内容
+// @Tags ContentGenerator
+// @Accept json
+// @Produce json
+// @Param body body BatchGenerateChapterLessonsRequest true "请求参数"
+// @Success 200 {object} model.BatchGenerateResult
+// @Router /api/v1/admin/generator/generate/chapter-lessons-batch [post]
+func (h *ContentGeneratorHandler) BatchGenerateChapterLessons(c echo.Context) error {
+	var req BatchGenerateChapterLessonsRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "参数错误: " + err.Error(),
+		})
+	}
+	if len(req.ChapterIDs) == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "chapter_ids 不能为空",
+		})
+	}
+
+	result, err := h.llmGeneratorService.BatchGenerateChapterLessons(c.Request().Context(), model.BatchGenerateChapterLessonsRequest{
+		ChapterIDs:         req.ChapterIDs,
+		Subject:            req.Subject,
+		AutoApprove:        req.AutoApprove,
+		AutoImport:         req.AutoImport,
+		SystemPrompt:       req.SystemPrompt,
+		UserPromptTemplate: req.UserPromptTemplate,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "批量生成失败: " + err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "批量生成任务已创建",
+		"data":    result,
+	})
+}
+
 // =====================================================
 // 统计 API
 // =====================================================
@@ -652,23 +799,28 @@ func (h *ContentGeneratorHandler) GetQualityStats(c echo.Context) error {
 // AI 内容生成 API
 // =====================================================
 
+// GenerateAIContentRequest AI内容生成请求
+type GenerateAIContentRequest struct {
+	GenerateType string            `json:"generate_type" validate:"required"` // question_analysis, knowledge_summary, similar_questions, material_classify
+	Prompt       string            `json:"prompt,omitempty"`                  // 自定义 prompt
+	TargetIDs    []uint            `json:"target_ids,omitempty"`              // 目标ID列表
+	TargetData   map[string]string `json:"target_data,omitempty"`             // 目标数据（如题目内容）
+	Options      struct {
+		BatchSize int    `json:"batch_size,omitempty"`
+		Model     string `json:"model,omitempty"`
+		Overwrite bool   `json:"overwrite,omitempty"`
+	} `json:"options,omitempty"`
+}
+
 // GenerateAIContent AI内容生成
-// @Summary AI内容生成
+// @Summary AI内容生成（使用自定义Prompt）
 // @Tags ContentGenerator
 // @Accept json
-// @Param request body map[string]interface{} true "生成请求"
-// @Success 200 {object} model.ContentGeneratorTaskResponse
+// @Param request body GenerateAIContentRequest true "生成请求"
+// @Success 200 {object} map[string]interface{}
 // @Router /api/v1/admin/generator/ai/generate [post]
 func (h *ContentGeneratorHandler) GenerateAIContent(c echo.Context) error {
-	var req struct {
-		GenerateType string `json:"generate_type" binding:"required"`
-		TargetIDs    []uint `json:"target_ids,omitempty"`
-		Options      struct {
-			BatchSize int    `json:"batch_size,omitempty"`
-			Model     string `json:"model,omitempty"`
-			Overwrite bool   `json:"overwrite,omitempty"`
-		} `json:"options,omitempty"`
-	}
+	var req GenerateAIContentRequest
 
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -677,23 +829,56 @@ func (h *ContentGeneratorHandler) GenerateAIContent(c echo.Context) error {
 		})
 	}
 
-	adminID := getAdminID(c)
-
-	// 创建模拟任务
-	task := &model.ContentGeneratorTask{
-		TaskType:     "ai_generate",
-		Status:       model.TaskStatusProcessing,
-		Subject:      req.GenerateType,
-		TemplateName: getGenerateTypeName(req.GenerateType),
-		TotalItems:   req.Options.BatchSize,
-		CreatedBy:    adminID,
+	// 验证生成类型
+	validTypes := map[string]bool{
+		"question_analysis":  true,
+		"knowledge_summary":  true,
+		"similar_questions":  true,
+		"material_classify":  true,
+	}
+	if !validTypes[req.GenerateType] {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "不支持的生成类型: " + req.GenerateType,
+		})
 	}
 
-	// 在实际实现中，这里应该调用AIContentGeneratorService
+	// 检查 LLM 生成服务是否可用
+	if h.llmGeneratorService == nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "LLM 生成服务不可用",
+		})
+	}
+
+	// 构建生成请求
+	generateReq := service.GenerateContentRequest{
+		GenerateType: req.GenerateType,
+		Prompt:       req.Prompt,
+		TargetIDs:    req.TargetIDs,
+		TargetData:   req.TargetData,
+	}
+	generateReq.Options.BatchSize = req.Options.BatchSize
+	generateReq.Options.Model = req.Options.Model
+	generateReq.Options.Overwrite = req.Options.Overwrite
+
+	// 调用 LLM 生成服务
+	task, err := h.llmGeneratorService.GenerateWithCustomPrompt(c.Request().Context(), generateReq)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "创建生成任务失败: " + err.Error(),
+		})
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"code":    0,
 		"message": "AI生成任务已创建",
-		"data":    task.ToResponse(),
+		"data": map[string]interface{}{
+			"task_id":       task.ID,
+			"generate_type": req.GenerateType,
+			"status":        task.Status,
+		},
 	})
 }
 

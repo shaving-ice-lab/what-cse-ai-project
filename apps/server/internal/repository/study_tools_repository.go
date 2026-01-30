@@ -433,7 +433,7 @@ func (r *LearningFavoriteRepository) Add(favorite *model.LearningFavorite) error
 }
 
 // Remove 删除收藏
-func (r *LearningFavoriteRepository) Remove(userID uint, contentType model.LearningContentType, contentID uint) error {
+func (r *LearningFavoriteRepository) Remove(userID uint, contentType model.FavoriteContentType, contentID uint) error {
 	return r.db.Where("user_id = ? AND content_type = ? AND content_id = ?",
 		userID, contentType, contentID).
 		Delete(&model.LearningFavorite{}).Error
@@ -446,7 +446,7 @@ func (r *LearningFavoriteRepository) RemoveByID(userID, favoriteID uint) error {
 }
 
 // IsFavorite 检查是否已收藏
-func (r *LearningFavoriteRepository) IsFavorite(userID uint, contentType model.LearningContentType, contentID uint) bool {
+func (r *LearningFavoriteRepository) IsFavorite(userID uint, contentType model.FavoriteContentType, contentID uint) bool {
 	var count int64
 	r.db.Model(&model.LearningFavorite{}).
 		Where("user_id = ? AND content_type = ? AND content_id = ?", userID, contentType, contentID).
@@ -455,7 +455,7 @@ func (r *LearningFavoriteRepository) IsFavorite(userID uint, contentType model.L
 }
 
 // BatchCheckFavorites 批量检查是否已收藏
-func (r *LearningFavoriteRepository) BatchCheckFavorites(userID uint, contentType model.LearningContentType, contentIDs []uint) (map[uint]bool, error) {
+func (r *LearningFavoriteRepository) BatchCheckFavorites(userID uint, contentType model.FavoriteContentType, contentIDs []uint) (map[uint]bool, error) {
 	result := make(map[uint]bool)
 	if len(contentIDs) == 0 {
 		return result, nil
@@ -477,7 +477,7 @@ func (r *LearningFavoriteRepository) BatchCheckFavorites(userID uint, contentTyp
 
 // LearningFavoriteQueryParams 查询参数
 type LearningFavoriteQueryParams struct {
-	ContentType model.LearningContentType
+	ContentType model.FavoriteContentType
 	FolderID    *uint
 	Page        int
 	PageSize    int

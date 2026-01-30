@@ -345,10 +345,88 @@ export interface PracticeStats {
 }
 
 // ============================================
+// Types - Daily Practice & Streak
+// ============================================
+
+export interface UserStreakResponse {
+  current_streak: number;
+  longest_streak: number;
+  today_completed: boolean;
+  total_questions: number;
+  avg_correct_rate: number;
+  last_practice_date?: string;
+}
+
+export interface DailyPracticeResponse {
+  id: number;
+  date: string;
+  total_questions: number;
+  completed_questions: number;
+  correct_count: number;
+  is_completed: boolean;
+}
+
+export interface DailyPracticeDetailResponse extends DailyPracticeResponse {
+  questions: Question[];
+}
+
+export interface CalendarItem {
+  date: string;
+  is_completed: boolean;
+  correct_rate?: number;
+}
+
+export interface WeakCategoryResponse {
+  category_id: number;
+  category_name: string;
+  correct_rate: number;
+  attempt_count: number;
+}
+
+export interface QuestionDetailResponse extends Question {
+  user_answer?: string;
+  is_answered?: boolean;
+}
+
+// ============================================
 // API Functions
 // ============================================
 
 export const practiceApi = {
+  // ============ Daily Practice & Streak ============
+  
+  // Get user streak info
+  getStreak: () => {
+    return request.get<UserStreakResponse>("/practice/streak");
+  },
+
+  // Get today's daily practice
+  getDailyPractice: () => {
+    return request.get<DailyPracticeDetailResponse>("/practice/daily");
+  },
+
+  // Get daily practice history
+  getDailyHistory: (params?: { page?: number; page_size?: number }) => {
+    return request.get<{
+      items: DailyPracticeResponse[];
+      total: number;
+    }>("/practice/daily/history", { params });
+  },
+
+  // Get calendar data
+  getCalendar: (year: number, month: number) => {
+    return request.get<{ items: CalendarItem[] }>("/practice/calendar", {
+      params: { year, month },
+    });
+  },
+
+  // Get weak categories
+  getWeakCategories: (limit?: number) => {
+    return request.get<{ categories: WeakCategoryResponse[] }>("/practice/weak-categories", {
+      params: { limit },
+    });
+  },
+
   // ============ Questions ============
   
   // Get question list
@@ -500,17 +578,17 @@ export const practiceApi = {
 
   // Create a new practice session
   createSession: (data: CreatePracticeSessionRequest) => {
-    return request.post<PracticeSessionDetail>("/api/v1/practice/session", data);
+    return request.post<PracticeSessionDetail>("/practice/session", data);
   },
 
   // Get session detail
   getSession: (sessionId: number) => {
-    return request.get<PracticeSessionDetail>(`/api/v1/practice/session/${sessionId}`);
+    return request.get<PracticeSessionDetail>(`/practice/session/${sessionId}`);
   },
 
   // Start a session
   startSession: (sessionId: number) => {
-    return request.post<PracticeSessionDetail>(`/api/v1/practice/session/${sessionId}/start`);
+    return request.post<PracticeSessionDetail>(`/practice/session/${sessionId}/start`);
   },
 
   // Submit answer for session
@@ -520,12 +598,12 @@ export const practiceApi = {
       answer: string;
       analysis?: string;
       tips?: string;
-    }>(`/api/v1/practice/session/${sessionId}/answer`, data);
+    }>(`/practice/session/${sessionId}/answer`, data);
   },
 
   // Abandon session
   abandonSession: (sessionId: number) => {
-    return request.post(`/api/v1/practice/session/${sessionId}/abandon`);
+    return request.post(`/practice/session/${sessionId}/abandon`);
   },
 
   // Get user's sessions
@@ -535,49 +613,49 @@ export const practiceApi = {
       total: number;
       page: number;
       page_size: number;
-    }>("/api/v1/practice/session/list", { params });
+    }>("/practice/session/list", { params });
   },
 
   // Get active sessions
   getActiveSessions: () => {
-    return request.get<PracticeSession[]>("/api/v1/practice/session/active");
+    return request.get<PracticeSession[]>("/practice/session/active");
   },
 
   // Get practice stats
   getPracticeStats: () => {
-    return request.get<PracticeStats>("/api/v1/practice/session/stats");
+    return request.get<PracticeStats>("/practice/session/stats");
   },
 
   // Get quick templates
   getQuickTemplates: () => {
-    return request.get<PracticeTemplate[]>("/api/v1/practice/session/templates");
+    return request.get<PracticeTemplate[]>("/practice/session/templates");
   },
 
   // ============ 断点续做 (Resume) ============
 
   // Save session progress (auto-save)
   saveProgress: (sessionId: number, data: SaveProgressRequest) => {
-    return request.post<{ message: string }>(`/api/v1/practice/session/${sessionId}/save`, data);
+    return request.post<{ message: string }>(`/practice/session/${sessionId}/save`, data);
   },
 
   // Interrupt session (when user leaves)
   interruptSession: (sessionId: number, data: InterruptSessionRequest) => {
-    return request.post<{ message: string }>(`/api/v1/practice/session/${sessionId}/interrupt`, data);
+    return request.post<{ message: string }>(`/practice/session/${sessionId}/interrupt`, data);
   },
 
   // Resume an interrupted session
   resumeSession: (sessionId: number) => {
-    return request.post<PracticeSessionDetail>(`/api/v1/practice/session/${sessionId}/resume`);
+    return request.post<PracticeSessionDetail>(`/practice/session/${sessionId}/resume`);
   },
 
   // Get all resumable sessions
   getResumableSessions: () => {
-    return request.get<PracticeSession[]>("/api/v1/practice/session/resumable");
+    return request.get<PracticeSession[]>("/practice/session/resumable");
   },
 
   // Get latest resumable session (for auto-prompt)
   getLatestResumable: () => {
-    return request.get<PracticeSessionDetail | null>("/api/v1/practice/session/resumable/latest");
+    return request.get<PracticeSessionDetail | null>("/practice/session/resumable/latest");
   },
 };
 

@@ -419,7 +419,18 @@ func (s *LLMConfigService) callLLM(config *model.LLMConfig, apiKey string, promp
 	// Create a copy of config to modify max tokens if needed
 	effectiveConfig := *config
 	if customMaxTokens > 0 {
-		effectiveConfig.MaxTokens = customMaxTokens
+		// Clamp to configured max to avoid provider invalid-argument errors
+		if config.MaxTokens > 0 && customMaxTokens > config.MaxTokens {
+			s.logger.Warn("Requested max_tokens exceeds config cap, clamping",
+				zap.Int("requested", customMaxTokens),
+				zap.Int("cap", config.MaxTokens),
+				zap.String("provider", effectiveConfig.Provider),
+				zap.String("model", effectiveConfig.Model),
+			)
+			effectiveConfig.MaxTokens = config.MaxTokens
+		} else {
+			effectiveConfig.MaxTokens = customMaxTokens
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)

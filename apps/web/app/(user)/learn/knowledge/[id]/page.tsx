@@ -27,6 +27,7 @@ import {
   Heart,
   BookmarkPlus,
   ExternalLink,
+  XCircle,
 } from "lucide-react";
 import { toast } from "@what-cse/ui";
 import { cn } from "@/lib/utils";
@@ -80,220 +81,173 @@ export default function KnowledgeDetailPage() {
 
   // 加载知识点信息
   useEffect(() => {
-    // 模拟加载知识点基础信息
-    const mockInfo: KnowledgePointInfo = {
-      id: knowledgeId,
-      name: "增长率计算",
-      subject: "资料分析",
-      category: "资料分析 > 增长问题",
-      difficulty: 3,
-      description: "增长率是资料分析的核心考点之一，掌握基期值、现期值和增长率之间的关系是解题关键。",
-      relatedPoints: [
-        { id: 101, name: "比重计算" },
-        { id: 102, name: "平均数计算" },
-        { id: 103, name: "倍数计算" },
-      ],
+    const loadKnowledgeInfo = async () => {
+      try {
+        setIsLoading(true);
+        // 从课程 API 获取知识点详情
+        const { courseApi } = await import("@/services/api/course");
+        const response = await courseApi.getKnowledgePoint(knowledgeId);
+        
+        // 转换 API 响应为页面需要的格式
+        const info: KnowledgePointInfo = {
+          id: response.id,
+          name: response.name,
+          subject: response.frequency || "资料分析",
+          category: response.code || "未分类",
+          difficulty: response.importance || 3,
+          description: response.description,
+          relatedPoints: response.children?.map((child: { id: number; name: string }) => ({
+            id: child.id,
+            name: child.name,
+          })) || [],
+        };
+        setKnowledgeInfo(info);
+      } catch (error) {
+        console.error("加载知识点信息失败:", error);
+        // 使用默认数据作为 fallback
+        const mockInfo: KnowledgePointInfo = {
+          id: knowledgeId,
+          name: "知识点加载中",
+          subject: "资料分析",
+          category: "资料分析 > 增长问题",
+          difficulty: 3,
+          description: "知识点详情加载失败，请刷新重试。",
+          relatedPoints: [],
+        };
+        setKnowledgeInfo(mockInfo);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setKnowledgeInfo(mockInfo);
-    setIsLoading(false);
+
+    if (knowledgeId) {
+      loadKnowledgeInfo();
+    }
   }, [knowledgeId]);
 
   // 加载 AI 总结内容
   useEffect(() => {
     const loadSummary = async () => {
       try {
-        // 使用模拟数据（实际应调用 API）
-        const mockSummary: AIGeneratedContent = {
-          id: 1,
+        // 尝试从 API 获取知识点总结
+        const response = await getKnowledgeSummary(knowledgeId);
+        if (response) {
+          setSummaryContent(response);
+        }
+      } catch (error) {
+        console.error("加载知识点总结失败，使用默认数据:", error);
+        // 使用默认数据作为 fallback
+        const fallbackSummary: AIGeneratedContent = {
+          id: 0,
           content_type: "knowledge_summary",
           related_type: "knowledge_point",
           related_id: knowledgeId,
-          title: "增长率计算知识点总结",
+          title: "知识点总结",
           content: {
-            definition: "增长率是指某一指标在一定时期内的增长幅度与基期值的比率，反映事物发展变化的相对程度。",
-            summary: "增长率计算是资料分析必考题型，需掌握基本公式、特殊技巧和估算方法。",
-            key_points: [
-              "增长率 = (现期值 - 基期值) / 基期值 × 100%",
-              "基期值 = 现期值 / (1 + 增长率)",
-              "现期值 = 基期值 × (1 + 增长率)",
-              "增长量 = 现期值 - 基期值 = 基期值 × 增长率",
-              "年均增长率计算：末期值 = 初期值 × (1 + r)^n",
-            ],
-            mnemonics: "口诀：现基增，三量关联；除一加，求基必会；乘一加，求现无忧。",
-            tips: [
-              "遇到百分点变化，注意是增长率之差，不是比值",
-              "年均增长率估算：r ≈ (n次方根-1)，可用特殊值表",
-              "负增长时，基期值比现期值大",
-              "同比增长看去年同期，环比增长看上一期",
-            ],
-            common_types: [
-              "直接计算类：给定两期数据求增长率",
-              "逆向计算类：给定增长率求基期值",
-              "比较类：多个增长率的比较排序",
-              "综合应用类：结合比重、倍数的复合题",
-            ],
-            memory_methods: [
-              "联想记忆：把增长率想象成'速度'，基期值是'起点'，现期值是'终点'",
-              "公式变形：三个量知二求一，灵活变形",
-              "特殊值法：记住常见分数对应的百分数（1/8=12.5%，1/6≈16.7%等）",
-            ],
+            summary: "正在加载知识点内容...",
+            key_points: ["内容加载中，请稍候"],
+            tips: [],
           },
-          quality_score: 4.5,
-          status: "approved",
+          quality_score: 0,
+          status: "pending",
           version: 1,
           generated_at: new Date().toISOString(),
         };
-        setSummaryContent(mockSummary);
-      } catch (error) {
-        console.error("加载知识点总结失败:", error);
-        toast.error("加载内容失败，请重试");
+        setSummaryContent(fallbackSummary);
       } finally {
         setLoadingStates(prev => ({ ...prev, summary: false }));
       }
     };
 
-    loadSummary();
+    if (knowledgeId) {
+      loadSummary();
+    }
   }, [knowledgeId]);
 
   // 加载思维导图
   useEffect(() => {
     const loadMindmap = async () => {
       try {
-        // 模拟思维导图数据
-        const mockMindmap: AIGeneratedContent = {
-          id: 2,
+        // 从 API 获取思维导图
+        const response = await getKnowledgeMindmap(knowledgeId);
+        if (response) {
+          setMindmapContent(response);
+        }
+      } catch (error) {
+        console.error("加载思维导图失败，使用默认数据:", error);
+        // 使用默认数据作为 fallback
+        const fallbackMindmap: AIGeneratedContent = {
+          id: 0,
           content_type: "knowledge_mindmap",
           related_type: "knowledge_point",
           related_id: knowledgeId,
-          title: "增长率计算思维导图",
+          title: "知识点思维导图",
           content: {
             mindmap_data: {
               root: {
                 id: "root",
-                label: "增长率计算",
+                label: knowledgeInfo?.name || "知识点",
                 color: "#f59e0b",
                 children: [
-                  {
-                    id: "1",
-                    label: "基本概念",
-                    color: "#10b981",
-                    children: [
-                      { id: "1-1", label: "基期值" },
-                      { id: "1-2", label: "现期值" },
-                      { id: "1-3", label: "增长量" },
-                      { id: "1-4", label: "增长率" },
-                    ],
-                  },
-                  {
-                    id: "2",
-                    label: "核心公式",
-                    color: "#3b82f6",
-                    children: [
-                      { id: "2-1", label: "增长率 = 增长量/基期值" },
-                      { id: "2-2", label: "基期值 = 现期值/(1+r)" },
-                      { id: "2-3", label: "现期值 = 基期值×(1+r)" },
-                    ],
-                  },
-                  {
-                    id: "3",
-                    label: "题型分类",
-                    color: "#8b5cf6",
-                    children: [
-                      { id: "3-1", label: "直接计算型" },
-                      { id: "3-2", label: "逆向计算型" },
-                      { id: "3-3", label: "比较排序型" },
-                      { id: "3-4", label: "年均增长型" },
-                    ],
-                  },
-                  {
-                    id: "4",
-                    label: "解题技巧",
-                    color: "#ef4444",
-                    children: [
-                      { id: "4-1", label: "特殊值速算" },
-                      { id: "4-2", label: "截位直除" },
-                      { id: "4-3", label: "分数比较" },
-                    ],
-                  },
+                  { id: "1", label: "加载中...", color: "#10b981" },
                 ],
               },
             },
           },
-          quality_score: 4.2,
-          status: "approved",
+          quality_score: 0,
+          status: "pending",
           version: 1,
           generated_at: new Date().toISOString(),
         };
-        setMindmapContent(mockMindmap);
-      } catch (error) {
-        console.error("加载思维导图失败:", error);
+        setMindmapContent(fallbackMindmap);
       } finally {
         setLoadingStates(prev => ({ ...prev, mindmap: false }));
       }
     };
 
-    loadMindmap();
-  }, [knowledgeId]);
+    if (knowledgeId) {
+      loadMindmap();
+    }
+  }, [knowledgeId, knowledgeInfo?.name]);
 
   // 加载例题
   useEffect(() => {
     const loadExamples = async () => {
       try {
-        // 模拟例题数据
-        const mockExamples: AIGeneratedContent = {
-          id: 3,
+        // 从 API 获取例题
+        const response = await getKnowledgeAIContent(knowledgeId, "knowledge_examples");
+        if (response) {
+          setExamplesContent(response);
+        }
+      } catch (error) {
+        console.error("加载例题失败，使用默认数据:", error);
+        // 使用默认数据作为 fallback
+        const fallbackExamples: AIGeneratedContent = {
+          id: 0,
           content_type: "knowledge_examples",
           related_type: "knowledge_point",
           related_id: knowledgeId,
-          title: "增长率计算经典例题",
+          title: "经典例题",
           content: {
-            summary: "精选3道典型例题，涵盖常见题型和解题方法",
-            examples: [
-              {
-                question: "【例题1】2023年某市GDP为5000亿元，比上年增长8%。则2022年该市GDP约为多少亿元？",
-                options: ["A. 4600亿元", "B. 4630亿元", "C. 4800亿元", "D. 5400亿元"],
-                answer: "B",
-                analysis: "【解析】\n这是典型的逆向计算题，已知现期值和增长率，求基期值。\n\n解题步骤：\n1. 根据公式：基期值 = 现期值 ÷ (1 + 增长率)\n2. 代入数据：基期值 = 5000 ÷ (1 + 8%) = 5000 ÷ 1.08\n3. 计算结果：≈ 4629.6 ≈ 4630亿元\n\n【技巧提示】\n÷1.08 可用截位直除法，5000÷1.08 ≈ 500÷0.108 ≈ 4630",
-              },
-              {
-                question: "【例题2】某商品原价200元，先降价20%后又涨价20%，则现价是多少元？",
-                options: ["A. 192元", "B. 200元", "C. 208元", "D. 180元"],
-                answer: "A",
-                analysis: "【解析】\n这是连续变化问题，注意每次变化的基数不同。\n\n解题步骤：\n1. 第一次降价后：200 × (1-20%) = 200 × 0.8 = 160元\n2. 第二次涨价后：160 × (1+20%) = 160 × 1.2 = 192元\n\n【易错警示】\n不能直接认为先降后涨会回到原价！因为两次变化的基数不同。\n实际上：(1-20%)(1+20%) = 0.8 × 1.2 = 0.96，相当于总共下降了4%。",
-              },
-              {
-                question: "【例题3】2022年某企业营收同比增长15%，2023年同比增长20%，则两年共增长了多少？",
-                options: ["A. 35%", "B. 38%", "C. 40%", "D. 32%"],
-                answer: "B",
-                analysis: "【解析】\n这是复合增长率问题，不能直接相加。\n\n解题步骤：\n1. 设2021年营收为1（基准）\n2. 2022年营收 = 1 × (1+15%) = 1.15\n3. 2023年营收 = 1.15 × (1+20%) = 1.15 × 1.2 = 1.38\n4. 两年总增长率 = 1.38 - 1 = 38%\n\n【公式总结】\n两年复合增长率 = (1+r₁)(1+r₂) - 1 = r₁ + r₂ + r₁×r₂\n= 15% + 20% + 15%×20% = 35% + 3% = 38%",
-              },
-            ],
-            key_points: [
-              "典型题型覆盖",
-              "详细解题步骤",
-              "解题模板总结",
-              "易错点提醒",
-            ],
-            tips: [
-              "先理解题意，明确已知条件和所求",
-              "套用对应公式，注意单位换算",
-              "验算答案，排除明显错误选项",
-            ],
+            summary: "暂无例题数据",
+            examples: [],
+            key_points: [],
+            tips: [],
           },
-          quality_score: 4.8,
-          status: "approved",
+          quality_score: 0,
+          status: "pending",
           version: 1,
           generated_at: new Date().toISOString(),
         };
-        setExamplesContent(mockExamples);
-      } catch (error) {
-        console.error("加载例题失败:", error);
+        setExamplesContent(fallbackExamples);
       } finally {
         setLoadingStates(prev => ({ ...prev, examples: false }));
       }
     };
 
-    loadExamples();
+    if (knowledgeId) {
+      loadExamples();
+    }
   }, [knowledgeId]);
 
   // 复制内容
@@ -750,7 +704,13 @@ function ExampleCard({
               isCorrect ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
             )}
           >
-            {isCorrect ? "✅ 回答正确！" : `❌ 回答错误，正确答案是 ${example.answer}`}
+            <span className="flex items-center gap-2">
+              {isCorrect ? (
+                <><CheckCircle2 className="w-5 h-5" /> 回答正确！</>
+              ) : (
+                <><XCircle className="w-5 h-5" /> 回答错误，正确答案是 {example.answer}</>
+              )}
+            </span>
           </div>
         )}
 

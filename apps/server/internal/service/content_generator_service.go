@@ -627,6 +627,68 @@ func (s *ContentGeneratorService) GenerateSubjectCourses(subject string, categor
 	return task, nil
 }
 
+// EnrichCategoryDescription 使用 AI 丰富分类描述
+func (s *ContentGeneratorService) EnrichCategoryDescription(categoryID uint) (*model.CourseCategory, error) {
+	// 获取分类
+	category, err := s.categoryRepo.GetByID(categoryID)
+	if err != nil {
+		return nil, fmt.Errorf("分类不存在: %w", err)
+	}
+
+	// TODO: 调用 LLM 生成丰富的描述
+	// 这里是一个占位实现，实际应该调用 AI 服务
+	// 根据分类名称和现有描述生成：
+	// - long_description (详细描述 200-300 字)
+	// - features (功能亮点 3-5 条)
+	// - learning_objectives (学习目标 3-5 条)
+	// - key_points (核心考点 5-8 条)
+
+	// 占位实现：根据分类名称生成基础描述
+	if category.LongDescription == "" {
+		category.LongDescription = fmt.Sprintf(
+			"%s是公务员考试中的重要考点，系统学习本模块可以帮助考生掌握核心知识点和解题技巧。"+
+				"通过本课程的学习，您将了解%s的基本概念、常见题型和高效解题方法，"+
+				"提升应试能力，在考试中取得优异成绩。",
+			category.Name, category.Name,
+		)
+	}
+
+	if len(category.Features) == 0 {
+		category.Features = []string{
+			"系统化知识体系梳理",
+			"高频考点精准覆盖",
+			"典型例题深度剖析",
+			"解题技巧方法总结",
+		}
+	}
+
+	if len(category.LearningObjectives) == 0 {
+		category.LearningObjectives = []string{
+			fmt.Sprintf("掌握%s的基本概念和核心原理", category.Name),
+			"熟悉常见题型和出题规律",
+			"学会高效的解题方法和技巧",
+			"能够举一反三，灵活应对各类变式题",
+		}
+	}
+
+	if len(category.KeyPoints) == 0 {
+		category.KeyPoints = []string{
+			"核心概念",
+			"基础方法",
+			"常见题型",
+			"解题技巧",
+			"易错点分析",
+		}
+	}
+
+	// 保存更新
+	if err := s.db.Save(category).Error; err != nil {
+		return nil, fmt.Errorf("保存更新失败: %w", err)
+	}
+
+	return category, nil
+}
+
 // =====================================================
 // 统计
 // =====================================================
@@ -697,4 +759,265 @@ func (s *ContentGeneratorService) UpdateTemplate(template *model.CourseTemplate)
 // DeleteTemplate 删除模板
 func (s *ContentGeneratorService) DeleteTemplate(id uint) error {
 	return s.db.Delete(&model.CourseTemplate{}, id).Error
+}
+
+// CleanupSubjectData 清理指定科目的所有数据（调试用）
+func (s *ContentGeneratorService) CleanupSubjectData(subject string) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"subject": subject,
+	}
+
+	codePrefix := subject + "_%"
+
+	// 1. 查询分类数量
+	var categoryCount int64
+	s.db.Table("what_course_categories").Where("subject = ? OR code LIKE ?", subject, codePrefix).Count(&categoryCount)
+	result["categories_found"] = categoryCount
+
+	// 2. 查询课程数量
+	var courseCount int64
+	s.db.Raw(`
+		SELECT COUNT(*) FROM what_courses c
+		INNER JOIN what_course_categories cat ON c.category_id = cat.id
+		WHERE cat.subject = ? OR cat.code LIKE ?
+	`, subject, codePrefix).Scan(&courseCount)
+	result["courses_found"] = courseCount
+
+	// 3. 查询章节数量
+	var chapterCount int64
+	s.db.Raw(`
+		SELECT COUNT(*) FROM what_course_chapters ch
+		INNER JOIN what_courses c ON ch.course_id = c.id
+		INNER JOIN what_course_categories cat ON c.category_id = cat.id
+		WHERE cat.subject = ? OR cat.code LIKE ?
+	`, subject, codePrefix).Scan(&chapterCount)
+	result["chapters_found"] = chapterCount
+
+	// 4. 执行删除（使用 GORM 的方式，而不是原生 SQL）
+	// 获取分类ID列表
+	var categoryIDs []uint
+	s.db.Table("what_course_categories").
+		Where("subject = ? OR code LIKE ?", subject, codePrefix).
+		Pluck("id", &categoryIDs)
+	result["category_ids_count"] = len(categoryIDs)
+
+	if len(categoryIDs) > 0 {
+		// 获取课程ID列表
+		var courseIDs []uint
+		s.db.Table("what_courses").Where("category_id IN ?", categoryIDs).Pluck("id", &courseIDs)
+
+		// 删除章节
+		if len(courseIDs) > 0 {
+			chapterResult := s.db.Table("what_course_chapters").Where("course_id IN ?", courseIDs).Delete(nil)
+			result["chapters_deleted"] = chapterResult.RowsAffected
+			if chapterResult.Error != nil {
+				result["chapters_delete_error"] = chapterResult.Error.Error()
+			}
+		} else {
+			result["chapters_deleted"] = int64(0)
+		}
+
+		// 删除课程
+		courseResult := s.db.Table("what_courses").Where("category_id IN ?", categoryIDs).Delete(nil)
+		result["courses_deleted"] = courseResult.RowsAffected
+		if courseResult.Error != nil {
+			result["courses_delete_error"] = courseResult.Error.Error()
+		}
+
+		// 删除分类（按层级从深到浅删除，避免外键约束问题）
+		var totalDeleted int64
+		// 先删除 Level 3（专题）
+		level3Result := s.db.Table("what_course_categories").Where("id IN ? AND level = 3", categoryIDs).Delete(nil)
+		totalDeleted += level3Result.RowsAffected
+
+		// 再删除 Level 2（分类）
+		level2Result := s.db.Table("what_course_categories").Where("id IN ? AND level = 2", categoryIDs).Delete(nil)
+		totalDeleted += level2Result.RowsAffected
+
+		// 最后删除 Level 1（模块）
+		level1Result := s.db.Table("what_course_categories").Where("id IN ? AND level = 1", categoryIDs).Delete(nil)
+		totalDeleted += level1Result.RowsAffected
+
+		// 删除任何剩余的（可能 level 字段未设置的）
+		remainingResult := s.db.Table("what_course_categories").Where("id IN ?", categoryIDs).Delete(nil)
+		totalDeleted += remainingResult.RowsAffected
+
+		result["categories_deleted"] = totalDeleted
+		if level1Result.Error != nil {
+			result["categories_delete_error"] = level1Result.Error.Error()
+		}
+	} else {
+		result["chapters_deleted"] = int64(0)
+		result["courses_deleted"] = int64(0)
+		result["categories_deleted"] = int64(0)
+	}
+
+	// 5. 再次查询确认
+	var remainingCount int64
+	s.db.Table("what_course_categories").Where("subject = ? OR code LIKE ?", subject, codePrefix).Count(&remainingCount)
+	result["categories_remaining"] = remainingCount
+
+	return result, nil
+}
+
+// =====================================================
+// 课程树（用于内容生成页面）
+// =====================================================
+
+// CourseTreeChapterNode 课程树章节节点
+type CourseTreeChapterNode struct {
+	ID         uint   `json:"id"`
+	Title      string `json:"title"`
+	CourseID   uint   `json:"course_id"`
+	HasContent bool   `json:"has_content"`
+}
+
+// CourseTreeCourseNode 课程树课程节点
+type CourseTreeCourseNode struct {
+	ID        uint                    `json:"id"`
+	Title     string                  `json:"title"`
+	CategoryID uint                   `json:"category_id"`
+	Chapters  []CourseTreeChapterNode `json:"chapters"`
+}
+
+// CourseTreeCategoryNode 课程树分类节点
+type CourseTreeCategoryNode struct {
+	ID       uint                      `json:"id"`
+	Name     string                    `json:"name"`
+	Subject  string                    `json:"subject"`
+	Children []CourseTreeCategoryNode  `json:"children,omitempty"`
+	Courses  []CourseTreeCourseNode    `json:"courses,omitempty"`
+}
+
+// CourseTreeSubjectNode 课程树科目节点
+type CourseTreeSubjectNode struct {
+	Subject    string                   `json:"subject"`
+	Name       string                   `json:"name"`
+	Categories []CourseTreeCategoryNode `json:"categories"`
+}
+
+// CourseTreeResponse 课程树响应
+type CourseTreeResponse struct {
+	Subjects []CourseTreeSubjectNode `json:"subjects"`
+}
+
+var subjectNames = map[string]string{
+	"xingce":  "行测",
+	"shenlun": "申论",
+	"mianshi": "面试",
+	"gongji":  "公基",
+}
+
+// GetCourseTreeForContent 获取课程结构树（用于内容生成页面，含章节生成状态）
+func (s *ContentGeneratorService) GetCourseTreeForContent() (*CourseTreeResponse, error) {
+	allCats, err := s.categoryRepo.GetTree()
+	if err != nil {
+		return nil, err
+	}
+
+	// 按 subject 分组，并找出根节点（parent_id 为空）
+	bySubject := make(map[string][]model.CourseCategory)
+	for _, c := range allCats {
+		if c.ParentID == nil || *c.ParentID == 0 {
+			bySubject[c.Subject] = append(bySubject[c.Subject], c)
+		}
+	}
+
+	// 为每个 subject 排序根分类
+	for subj := range bySubject {
+		cats := bySubject[subj]
+		for i := 0; i < len(cats); i++ {
+			for j := i + 1; j < len(cats); j++ {
+				if cats[j].SortOrder < cats[i].SortOrder || (cats[j].SortOrder == cats[i].SortOrder && cats[j].ID < cats[i].ID) {
+					cats[i], cats[j] = cats[j], cats[i]
+				}
+			}
+		}
+		bySubject[subj] = cats
+	}
+
+	// 构建父子映射
+	childrenMap := make(map[uint][]model.CourseCategory)
+	for _, c := range allCats {
+		if c.ParentID != nil && *c.ParentID > 0 {
+			childrenMap[*c.ParentID] = append(childrenMap[*c.ParentID], c)
+		}
+	}
+
+	// 对每个 parent 下的 children 排序
+	for pid := range childrenMap {
+		ch := childrenMap[pid]
+		for i := 0; i < len(ch); i++ {
+			for j := i + 1; j < len(ch); j++ {
+				if ch[j].SortOrder < ch[i].SortOrder || (ch[j].SortOrder == ch[i].SortOrder && ch[j].ID < ch[i].ID) {
+					ch[i], ch[j] = ch[j], ch[i]
+				}
+			}
+		}
+		childrenMap[pid] = ch
+	}
+
+	var subjects []CourseTreeSubjectNode
+	subjectOrder := []string{"xingce", "shenlun", "mianshi", "gongji"}
+	for _, subj := range subjectOrder {
+		roots := bySubject[subj]
+		if len(roots) == 0 {
+			continue
+		}
+		name := subjectNames[subj]
+		if name == "" {
+			name = subj
+		}
+		var categories []CourseTreeCategoryNode
+		for _, r := range roots {
+			catNode := s.buildCategoryNode(r, childrenMap)
+			categories = append(categories, catNode)
+		}
+		subjects = append(subjects, CourseTreeSubjectNode{
+			Subject:    subj,
+			Name:       name,
+			Categories: categories,
+		})
+	}
+
+	return &CourseTreeResponse{Subjects: subjects}, nil
+}
+
+// buildCategoryNode 递归构建分类节点（含子分类与课程）
+func (s *ContentGeneratorService) buildCategoryNode(cat model.CourseCategory, childrenMap map[uint][]model.CourseCategory) CourseTreeCategoryNode {
+	node := CourseTreeCategoryNode{
+		ID:      cat.ID,
+		Name:    cat.Name,
+		Subject: cat.Subject,
+	}
+
+	// 子分类
+	children := childrenMap[cat.ID]
+	for _, ch := range children {
+		node.Children = append(node.Children, s.buildCategoryNode(ch, childrenMap))
+	}
+
+	// 直接属于该分类的课程
+	courses, _ := s.courseRepo.GetByCategoryID(cat.ID, 0, 500)
+	for _, course := range courses {
+		chapters, _ := s.chapterRepo.GetByCourse(course.ID)
+		var chapterNodes []CourseTreeChapterNode
+		for _, ch := range chapters {
+			hasContent := len(ch.ContentJSON) > 0 && string(ch.ContentJSON) != "{}" && string(ch.ContentJSON) != "null"
+			chapterNodes = append(chapterNodes, CourseTreeChapterNode{
+				ID:         ch.ID,
+				Title:      ch.Title,
+				CourseID:   ch.CourseID,
+				HasContent: hasContent,
+			})
+		}
+		node.Courses = append(node.Courses, CourseTreeCourseNode{
+			ID:         course.ID,
+			Title:      course.Title,
+			CategoryID: cat.ID,
+			Chapters:   chapterNodes,
+		})
+	}
+
+	return node
 }

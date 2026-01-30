@@ -204,7 +204,7 @@ export default function QuestionEditPage({
       };
       await questionApi.updateQuestion(questionId, updateData);
       toast.success("题目已保存");
-      router.push("/learning/questions");
+      router.push("/learning/manager?tab=questions");
     } catch (error: any) {
       toast.error(error.message || "保存失败");
     } finally {
@@ -217,7 +217,7 @@ export default function QuestionEditPage({
     try {
       await questionApi.deleteQuestion(questionId);
       toast.success("题目已删除");
-      router.push("/learning/questions");
+      router.push("/learning/manager?tab=questions");
     } catch (error: any) {
       toast.error(error.message || "删除失败");
     }
@@ -359,7 +359,7 @@ export default function QuestionEditPage({
         <FileQuestion className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
         <p className="text-lg font-medium">题目不存在</p>
         <Button asChild className="mt-4">
-          <Link href="/learning/questions">返回列表</Link>
+          <Link href="/learning/manager?tab=questions">返回列表</Link>
         </Button>
       </div>
     );
@@ -371,7 +371,7 @@ export default function QuestionEditPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/learning/questions">
+            <Link href="/learning/manager?tab=questions">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -720,16 +720,16 @@ export default function QuestionEditPage({
               <div className="space-y-2">
                 <Label>来源年份</Label>
                 <Select
-                  value={formData.source_year?.toString() || ""}
+                  value={formData.source_year?.toString() || "none"}
                   onValueChange={(v) =>
-                    setFormData({ ...formData, source_year: v ? Number(v) : undefined })
+                    setFormData({ ...formData, source_year: v && v !== "none" ? Number(v) : undefined })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="选择年份" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">不限</SelectItem>
+                    <SelectItem value="none">不限</SelectItem>
                     {getYearOptions().map((year) => (
                       <SelectItem key={year.value} value={year.value.toString()}>
                         {year.label}

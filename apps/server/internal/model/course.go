@@ -22,16 +22,29 @@ type CourseCategory struct {
 	ExamType    string         `gorm:"type:varchar(50);index" json:"exam_type,omitempty"` // 考试类型（公务员/事业单位/教师等）
 	Subject     string         `gorm:"type:varchar(50);index" json:"subject,omitempty"`   // 科目（行测/申论/面试/公基/专业）
 	Icon        string         `gorm:"type:varchar(200)" json:"icon,omitempty"`
-	Color       string         `gorm:"type:varchar(20);default:'#6366f1'" json:"color"`
+	Color       string         `gorm:"type:varchar(100);default:'#6366f1'" json:"color"`
 	Description string         `gorm:"type:varchar(500)" json:"description,omitempty"`
 	SortOrder   int            `gorm:"default:0" json:"sort_order"`
 	IsActive    bool           `gorm:"default:true;index" json:"is_active"`
 	Level       int            `gorm:"default:1" json:"level"`                  // 层级深度
 	Path        string         `gorm:"type:varchar(200)" json:"path,omitempty"` // 完整路径，如 "1/2/3"
 	CourseCount int            `gorm:"default:0" json:"course_count"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+
+	// 新增：LLM生成的丰富描述信息
+	LongDescription    string          `gorm:"type:text" json:"long_description,omitempty"`              // 详细描述（200-300字）
+	Features           JSONStringArray `gorm:"type:json" json:"features,omitempty"`                      // 功能亮点列表
+	LearningObjectives JSONStringArray `gorm:"type:json" json:"learning_objectives,omitempty"`           // 学习目标
+	Keywords           JSONStringArray `gorm:"type:json" json:"keywords,omitempty"`                      // 关键词
+	EstimatedDuration  string          `gorm:"type:varchar(50)" json:"estimated_duration,omitempty"`     // 预计学习时长，如 "45课时"
+	Difficulty         string          `gorm:"type:varchar(20)" json:"difficulty,omitempty"`             // 难度等级：基础/进阶/提高/冲刺
+	QuestionCount      int             `gorm:"default:0" json:"question_count"`                          // 题目数量
+	AvgTime            int             `gorm:"default:0" json:"avg_time"`                                // 平均用时（秒）
+	Weight             float64         `gorm:"default:0" json:"weight"`                                  // 考试权重
+	KeyPoints          JSONStringArray `gorm:"type:json" json:"key_points,omitempty"`                    // 核心考点
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// 关联
 	Parent   *CourseCategory  `gorm:"foreignKey:ParentID" json:"parent,omitempty"`
@@ -56,7 +69,20 @@ type CourseCategoryResponse struct {
 	SortOrder   int                       `json:"sort_order"`
 	Level       int                       `json:"level"`
 	CourseCount int                       `json:"course_count"`
-	Children    []*CourseCategoryResponse `json:"children,omitempty"`
+
+	// 新增：丰富描述信息
+	LongDescription    string   `json:"long_description,omitempty"`
+	Features           []string `json:"features,omitempty"`
+	LearningObjectives []string `json:"learning_objectives,omitempty"`
+	Keywords           []string `json:"keywords,omitempty"`
+	EstimatedDuration  string   `json:"estimated_duration,omitempty"`
+	Difficulty         string   `json:"difficulty,omitempty"`
+	QuestionCount      int      `json:"question_count,omitempty"`
+	AvgTime            int      `json:"avg_time,omitempty"`
+	Weight             float64  `json:"weight,omitempty"`
+	KeyPoints          []string `json:"key_points,omitempty"`
+
+	Children []*CourseCategoryResponse `json:"children,omitempty"`
 }
 
 // ToResponse 转换为响应结构
@@ -74,6 +100,18 @@ func (c *CourseCategory) ToResponse() *CourseCategoryResponse {
 		SortOrder:   c.SortOrder,
 		Level:       c.Level,
 		CourseCount: c.CourseCount,
+
+		// 新增字段
+		LongDescription:    c.LongDescription,
+		Features:           c.Features,
+		LearningObjectives: c.LearningObjectives,
+		Keywords:           c.Keywords,
+		EstimatedDuration:  c.EstimatedDuration,
+		Difficulty:         c.Difficulty,
+		QuestionCount:      c.QuestionCount,
+		AvgTime:            c.AvgTime,
+		Weight:             c.Weight,
+		KeyPoints:          c.KeyPoints,
 	}
 	if len(c.Children) > 0 {
 		resp.Children = make([]*CourseCategoryResponse, len(c.Children))
@@ -273,18 +311,141 @@ type CourseChapter struct {
 	IsFreePreview bool              `gorm:"default:false" json:"is_free_preview"`           // 是否免费试看
 	SortOrder     int               `gorm:"default:0" json:"sort_order"`
 	Level         int               `gorm:"default:1" json:"level"` // 层级：1-章，2-节
-	CreatedAt     time.Time         `json:"created_at"`
-	UpdatedAt     time.Time         `json:"updated_at"`
-	DeletedAt     gorm.DeletedAt    `gorm:"index" json:"-"`
+
+	// 新增字段：支持 MCP 生成的结构化内容
+	ContentJSON  JSONRawMessage `gorm:"type:json" json:"content_json,omitempty"`   // 结构化内容（MCP 生成的完整数据）
+	ExamAnalysis string         `gorm:"type:text" json:"exam_analysis,omitempty"`  // 考情分析
+	WordCount    int            `gorm:"default:0" json:"word_count"`               // 字数统计
+	LessonOrder  int            `gorm:"default:0;index" json:"lesson_order"`       // 课程全局顺序
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// 关联
-	Course   *Course         `gorm:"foreignKey:CourseID" json:"-"`
-	Parent   *CourseChapter  `gorm:"foreignKey:ParentID" json:"parent,omitempty"`
-	Children []CourseChapter `gorm:"foreignKey:ParentID" json:"children,omitempty"`
+	Course   *Course               `gorm:"foreignKey:CourseID" json:"-"`
+	Parent   *CourseChapter        `gorm:"foreignKey:ParentID" json:"parent,omitempty"`
+	Children []CourseChapter       `gorm:"foreignKey:ParentID" json:"children,omitempty"`
+	Modules  []CourseLessonModule  `gorm:"foreignKey:ChapterID" json:"modules,omitempty"` // 关联模块
 }
 
 func (CourseChapter) TableName() string {
 	return "what_course_chapters"
+}
+
+// =====================================================
+// 课程模块（存储 MCP 生成的 13 个必含模块）
+// =====================================================
+
+// LessonModuleType 课程模块类型
+type LessonModuleType string
+
+const (
+	ModuleTypeExamAnalysis  LessonModuleType = "exam_analysis"  // 考情分析
+	ModuleTypeIntroduction  LessonModuleType = "introduction"   // 课程导入
+	ModuleTypeConcepts      LessonModuleType = "core_concepts"  // 核心概念
+	ModuleTypeMethods       LessonModuleType = "method_steps"   // 方法步骤
+	ModuleTypeFormulas      LessonModuleType = "formulas"       // 记忆口诀
+	ModuleTypeExamples      LessonModuleType = "examples"       // 精讲例题
+	ModuleTypeMistakes      LessonModuleType = "mistakes"       // 易错陷阱
+	ModuleTypeDrills        LessonModuleType = "drills"         // 真题演练
+	ModuleTypePractice      LessonModuleType = "practice"       // 练习题目
+	ModuleTypeVocabulary    LessonModuleType = "vocabulary"     // 高频词汇
+	ModuleTypeExtension     LessonModuleType = "extension"      // 拓展知识
+	ModuleTypeSummary       LessonModuleType = "summary"        // 课程总结
+	ModuleTypeHomework      LessonModuleType = "homework"       // 课后作业
+	ModuleTypeMindMap       LessonModuleType = "mind_map"       // 思维导图 (Mermaid)
+	ModuleTypeQuickNotes    LessonModuleType = "quick_notes"    // 快速笔记
+)
+
+// CourseLessonModule 课程模块表
+type CourseLessonModule struct {
+	ID          uint             `gorm:"primaryKey" json:"id"`
+	ChapterID   uint             `gorm:"index;not null" json:"chapter_id"`    // 关联章节
+	ModuleType  LessonModuleType `gorm:"type:varchar(30);index" json:"module_type"` // 模块类型
+	Title       string           `gorm:"type:varchar(200)" json:"title"`      // 模块标题
+	ContentJSON JSONRawMessage   `gorm:"type:json" json:"content_json"`       // 模块内容（JSON）
+	ContentText string           `gorm:"type:mediumtext" json:"content_text,omitempty"` // 纯文本内容
+	WordCount   int              `gorm:"default:0" json:"word_count"`         // 字数
+	SortOrder   int              `gorm:"default:0" json:"sort_order"`         // 排序
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt   `gorm:"index" json:"-"`
+
+	// 关联
+	Chapter *CourseChapter `gorm:"foreignKey:ChapterID" json:"-"`
+}
+
+func (CourseLessonModule) TableName() string {
+	return "what_course_lesson_modules"
+}
+
+// CourseLessonModuleResponse 课程模块响应
+type CourseLessonModuleResponse struct {
+	ID          uint             `json:"id"`
+	ChapterID   uint             `json:"chapter_id"`
+	ModuleType  LessonModuleType `json:"module_type"`
+	Title       string           `json:"title"`
+	ContentJSON json.RawMessage  `json:"content_json,omitempty"`
+	ContentText string           `json:"content_text,omitempty"`
+	WordCount   int              `json:"word_count"`
+	SortOrder   int              `json:"sort_order"`
+}
+
+// ToResponse 转换为响应
+func (m *CourseLessonModule) ToResponse() *CourseLessonModuleResponse {
+	resp := &CourseLessonModuleResponse{
+		ID:          m.ID,
+		ChapterID:   m.ChapterID,
+		ModuleType:  m.ModuleType,
+		Title:       m.Title,
+		ContentText: m.ContentText,
+		WordCount:   m.WordCount,
+		SortOrder:   m.SortOrder,
+	}
+	// Validate JSON before adding to response to prevent marshal errors
+	if len(m.ContentJSON) > 0 && json.Valid([]byte(m.ContentJSON)) {
+		resp.ContentJSON = json.RawMessage(m.ContentJSON)
+	}
+	return resp
+}
+
+// ModuleTypeNames 模块类型名称映射
+var ModuleTypeNames = map[LessonModuleType]string{
+	ModuleTypeExamAnalysis: "考情分析",
+	ModuleTypeIntroduction: "课程导入",
+	ModuleTypeConcepts:     "核心概念",
+	ModuleTypeMethods:      "方法步骤",
+	ModuleTypeFormulas:     "记忆口诀",
+	ModuleTypeExamples:     "精讲例题",
+	ModuleTypeMistakes:     "易错陷阱",
+	ModuleTypeDrills:       "真题演练",
+	ModuleTypePractice:     "练习题目",
+	ModuleTypeVocabulary:   "高频词汇",
+	ModuleTypeExtension:    "拓展知识",
+	ModuleTypeSummary:      "课程总结",
+	ModuleTypeHomework:     "课后作业",
+	ModuleTypeMindMap:      "思维导图",
+	ModuleTypeQuickNotes:   "快速笔记",
+}
+
+// ModuleTypeSortOrder 模块类型排序
+var ModuleTypeSortOrder = map[LessonModuleType]int{
+	ModuleTypeExamAnalysis: 1,
+	ModuleTypeIntroduction: 2,
+	ModuleTypeConcepts:     3,
+	ModuleTypeMethods:      4,
+	ModuleTypeFormulas:     5,
+	ModuleTypeExamples:     6,
+	ModuleTypeMistakes:     7,
+	ModuleTypeDrills:       8,
+	ModuleTypePractice:     9,
+	ModuleTypeVocabulary:   10,
+	ModuleTypeExtension:    11,
+	ModuleTypeSummary:      12,
+	ModuleTypeHomework:     13,
+	ModuleTypeMindMap:      14,
+	ModuleTypeQuickNotes:   15,
 }
 
 // CourseChapterResponse 章节响应
@@ -298,6 +459,8 @@ type CourseChapterResponse struct {
 	IsFreePreview bool                     `json:"is_free_preview"`
 	SortOrder     int                      `json:"sort_order"`
 	Level         int                      `json:"level"`
+	WordCount     int                      `json:"word_count"`
+	LessonOrder   int                      `json:"lesson_order"`
 	Children      []*CourseChapterResponse `json:"children,omitempty"`
 	IsCompleted   bool                     `json:"is_completed"` // 用户是否已学完
 }
@@ -314,6 +477,8 @@ func (c *CourseChapter) ToResponse() *CourseChapterResponse {
 		IsFreePreview: c.IsFreePreview,
 		SortOrder:     c.SortOrder,
 		Level:         c.Level,
+		WordCount:     c.WordCount,
+		LessonOrder:   c.LessonOrder,
 	}
 	if len(c.Children) > 0 {
 		resp.Children = make([]*CourseChapterResponse, len(c.Children))
@@ -322,6 +487,21 @@ func (c *CourseChapter) ToResponse() *CourseChapterResponse {
 		}
 	}
 	return resp
+}
+
+// CourseChapterContentResponse 章节内容详情响应（含完整内容）
+type CourseChapterContentResponse struct {
+	Chapter      *CourseChapterResponse        `json:"chapter"`
+	Content      json.RawMessage               `json:"content,omitempty"`       // 结构化内容
+	ExamAnalysis string                        `json:"exam_analysis,omitempty"` // 考情分析
+	Modules      []*CourseLessonModuleResponse `json:"modules,omitempty"`       // 模块列表
+	WordCount    *ChapterWordCount             `json:"word_count,omitempty"`    // 字数统计
+}
+
+// ChapterWordCount 章节字数统计
+type ChapterWordCount struct {
+	Total    int            `json:"total"`
+	ByModule map[string]int `json:"by_module,omitempty"`
 }
 
 // =====================================================
@@ -513,4 +693,53 @@ func (j *JSONIntArray) Scan(value interface{}) error {
 	}
 
 	return json.Unmarshal(bytes, j)
+}
+
+// JSONRawMessage JSON原始消息类型（用于存储任意JSON结构）
+type JSONRawMessage json.RawMessage
+
+// Value 实现 driver.Valuer 接口
+func (j JSONRawMessage) Value() (driver.Value, error) {
+	if len(j) == 0 {
+		return "{}", nil
+	}
+	return []byte(j), nil
+}
+
+// Scan 实现 sql.Scanner 接口
+func (j *JSONRawMessage) Scan(value interface{}) error {
+	if value == nil {
+		*j = JSONRawMessage("{}")
+		return nil
+	}
+
+	var bytes []byte
+	switch v := value.(type) {
+	case []byte:
+		bytes = v
+	case string:
+		bytes = []byte(v)
+	default:
+		return errors.New("invalid type for JSONRawMessage")
+	}
+
+	*j = JSONRawMessage(bytes)
+	return nil
+}
+
+// MarshalJSON 实现 json.Marshaler 接口
+func (j JSONRawMessage) MarshalJSON() ([]byte, error) {
+	if len(j) == 0 {
+		return []byte("{}"), nil
+	}
+	return []byte(j), nil
+}
+
+// UnmarshalJSON 实现 json.Unmarshaler 接口
+func (j *JSONRawMessage) UnmarshalJSON(data []byte) error {
+	if j == nil {
+		return errors.New("JSONRawMessage: UnmarshalJSON on nil pointer")
+	}
+	*j = append((*j)[0:0], data...)
+	return nil
 }
