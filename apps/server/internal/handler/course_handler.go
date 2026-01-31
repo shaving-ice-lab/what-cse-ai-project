@@ -1195,6 +1195,35 @@ func (h *CourseHandler) AdminDeleteChapter(c echo.Context) error {
 	})
 }
 
+// AdminDeleteChapterContent clears chapter content (keeps chapter structure)
+func (h *CourseHandler) AdminDeleteChapterContent(c echo.Context) error {
+	chapterID, err := strconv.ParseUint(c.Param("chapterId"), 10, 32)
+	if err != nil {
+		return fail(c, 400, "Invalid chapter ID")
+	}
+
+	if err := h.courseService.ClearChapterContent(uint(chapterID)); err != nil {
+		return fail(c, 500, "Failed to clear chapter content: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"message": "章节内容已清空",
+	})
+}
+
+// AdminClearAllChapterContents clears all chapter contents (keeps chapter structure)
+func (h *CourseHandler) AdminClearAllChapterContents(c echo.Context) error {
+	affected, err := h.courseService.ClearAllChapterContents()
+	if err != nil {
+		return fail(c, 500, "Failed to clear all chapter contents: "+err.Error())
+	}
+
+	return success(c, map[string]interface{}{
+		"message":  "所有课堂内容已清空",
+		"affected": affected,
+	})
+}
+
 // =====================================================
 // Admin APIs - Knowledge Point Management
 // =====================================================
@@ -1433,6 +1462,8 @@ func (h *CourseHandler) RegisterAdminRoutes(adminGroup *echo.Group) {
 	courses.POST("/:id/chapters", h.AdminCreateChapter)
 	courses.PUT("/chapters/:chapterId", h.AdminUpdateChapter)
 	courses.DELETE("/chapters/:chapterId", h.AdminDeleteChapter)
+	courses.DELETE("/chapters/:chapterId/content", h.AdminDeleteChapterContent)
+	courses.DELETE("/chapters/all/content", h.AdminClearAllChapterContents)
 
 	// Knowledge point management
 	courses.GET("/knowledge", h.AdminGetKnowledgePoints)

@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/authStore";
+import { ADMIN_AUTH_CONFIG } from "@what-cse/shared";
 import type {
   Announcement,
   AnnouncementBrief,
@@ -44,7 +45,7 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       const { logout } = useAuthStore.getState();
       logout();
-      window.location.href = "/login";
+      window.location.href = ADMIN_AUTH_CONFIG.loginPath;
     }
     const message = error.response?.data?.message || error.message || "Network error";
     return Promise.reject(new Error(message));

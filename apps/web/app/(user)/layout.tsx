@@ -36,9 +36,11 @@ import {
   Route,
   AlertCircle,
   StickyNote,
+  Palette,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useActivityTracker, useTokenRefresh } from "@/hooks";
 
 // 导航项类型定义
 interface NavItem {
@@ -78,6 +80,7 @@ const navItems: NavItem[] = [
       { href: "/practice", label: "刷题练习", icon: ClipboardList, description: "快速练习与专项训练" },
       { href: "/practice/papers", label: "真题试卷", icon: FileCheck, description: "历年真题模拟考" },
       { href: "/learn/mistakes", label: "错题本", icon: AlertCircle, description: "错题回顾与分析" },
+      { href: "/learn/materials", label: "素材库", icon: Palette, description: "名言案例写作素材" },
     ],
   },
   {
@@ -265,6 +268,12 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // 启用活动追踪和 Token 自动刷新
+  useActivityTracker();
+  useTokenRefresh();
 
   // 确保客户端挂载后再显示认证状态
   useEffect(() => {
@@ -280,6 +289,19 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // 键盘快捷键：⌘K / Ctrl+K 打开搜索
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchExpanded(true);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // 关闭移动菜单时锁定/解锁body滚动
@@ -308,6 +330,14 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     return false;
   };
 
+  // 判断是否是课程章节页面（全屏学习模式，隐藏header/footer）
+  const isChapterPage = /^\/learn\/course\/\d+\/chapter\/\d+/.test(pathname);
+
+  // 课程章节页面使用全屏布局，不显示header/footer
+  if (isChapterPage) {
+    return <div className="min-h-screen bg-stone-50">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Header with Glass Effect */}
@@ -319,9 +349,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         }`}
       >
         <div className="container mx-auto px-4 lg:px-6">
-          <div className="flex items-center justify-between h-16 lg:h-18">
-            {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2 group">
+          <div className="relative flex items-center h-16 lg:h-18">
+            {/* Logo - 左侧固定 */}
+            <Link href="/" className="flex items-center space-x-2 group z-10">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-amber-md group-hover:shadow-amber-lg transition-shadow">
                 <span className="text-white font-bold text-lg">智</span>
               </div>
@@ -330,8 +360,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               </span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
+            {/* Desktop Navigation - 绝对居中 */}
+            <nav className="hidden lg:flex items-center space-x-1 absolute left-1/2 -translate-x-1/2">
               {navItems.map((item) =>
                 item.children ? (
                   <NavDropdown
@@ -364,25 +394,63 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               )}
             </nav>
 
-            {/* Right Side Actions */}
-            <div className="flex items-center space-x-2">
-              {/* Search Bar - Desktop */}
-              <div className="hidden md:flex items-center">
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-200/40 via-orange-200/40 to-amber-200/40 rounded-2xl blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300" />
-                  <div className="relative flex items-center bg-stone-100/80 hover:bg-white focus-within:bg-white border border-stone-200/50 hover:border-stone-300 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-500/20 rounded-2xl transition-all duration-300 overflow-hidden">
-                    <Search className="w-4 h-4 text-stone-400 ml-3.5 flex-shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="搜索职位、课程、知识点..."
-                      className="w-40 lg:w-52 xl:w-64 py-2.5 pl-2.5 pr-3 bg-transparent text-sm text-stone-700 placeholder-stone-400 outline-none transition-all duration-300 focus:w-52 lg:focus:w-64 xl:focus:w-80"
+            {/* Right Side Actions - 右侧固定 */}
+            <div className="flex items-center space-x-2 ml-auto z-10">
+              {/* Search - Desktop: 可展开搜索框 */}
+              <div className="hidden md:block relative">
+                {searchExpanded ? (
+                  // 展开的搜索框 - 使用固定定位覆盖，不影响布局
+                  <div className="fixed inset-0 z-50">
+                    {/* 背景遮罩 */}
+                    <div 
+                      className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-fade-in"
+                      onClick={() => setSearchExpanded(false)}
                     />
-                    <div className="hidden lg:flex items-center gap-1 px-2 py-1 mr-2 bg-stone-200/60 rounded-lg text-[10px] text-stone-400 font-medium tracking-wide">
-                      <kbd className="font-sans">⌘</kbd>
-                      <kbd className="font-sans">K</kbd>
+                    {/* 搜索框容器 */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-xl px-4">
+                      <div className="relative group animate-scale-in">
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-200/40 via-orange-200/40 to-amber-200/40 rounded-2xl blur-md opacity-100" />
+                        <div className="relative flex items-center bg-white border border-amber-400 ring-2 ring-amber-500/20 rounded-2xl overflow-hidden shadow-warm-lg">
+                          <Search className="w-5 h-5 text-amber-500 ml-4 flex-shrink-0" />
+                          <input
+                            ref={searchInputRef}
+                            type="text"
+                            placeholder="搜索职位、课程、知识点..."
+                            className="flex-1 py-3.5 pl-3 pr-4 bg-transparent text-sm text-stone-700 placeholder-stone-400 outline-none"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') setSearchExpanded(false);
+                            }}
+                          />
+                          <div className="flex items-center gap-1 px-2.5 py-1.5 mr-3 bg-stone-100 rounded-lg text-xs text-stone-400 font-medium">
+                            <kbd className="font-sans">ESC</kbd>
+                          </div>
+                          <button
+                            onClick={() => setSearchExpanded(false)}
+                            className="p-2 mr-2 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  // 收起状态 - 搜索图标按钮带快捷键提示
+                  <button
+                    onClick={() => {
+                      setSearchExpanded(true);
+                      setTimeout(() => searchInputRef.current?.focus(), 100);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-stone-100/80 hover:bg-stone-200/80 border border-stone-200/50 hover:border-stone-300 transition-all duration-200 text-stone-500 hover:text-stone-700 group"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span className="hidden lg:flex items-center gap-0.5 text-[10px] text-stone-400 font-medium">
+                      <kbd className="px-1.5 py-0.5 bg-stone-200/60 rounded text-[10px]">⌘</kbd>
+                      <kbd className="px-1.5 py-0.5 bg-stone-200/60 rounded text-[10px]">K</kbd>
+                    </span>
+                  </button>
+                )}
               </div>
               
               {/* Search Button - Mobile */}

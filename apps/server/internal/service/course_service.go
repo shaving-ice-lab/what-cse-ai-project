@@ -1029,6 +1029,24 @@ func (s *CourseService) DeleteChapter(id uint) error {
 	return nil
 }
 
+// ClearChapterContent clears the content of a chapter (keeps chapter structure)
+func (s *CourseService) ClearChapterContent(id uint) error {
+	return s.chapterRepo.UpdateFields(id, map[string]interface{}{
+		"content_json": nil,
+		"content_text": "",
+	})
+}
+
+// ClearAllChapterContents clears content of all chapters (keeps chapter structure)
+func (s *CourseService) ClearAllChapterContents() (int64, error) {
+	// First delete all lesson modules
+	if err := s.chapterRepo.DeleteAllModules(); err != nil {
+		return 0, err
+	}
+	// Then clear all chapter contents
+	return s.chapterRepo.ClearAllContents()
+}
+
 // CourseStats course statistics
 type CourseStats struct {
 	TotalCourses     int64            `json:"total_courses"`

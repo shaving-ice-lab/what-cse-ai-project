@@ -986,7 +986,7 @@ export default function StudyPlanPage() {
             <h2 className="text-2xl font-bold text-stone-800 mb-2">请先登录</h2>
             <p className="text-stone-500 mb-6">登录后即可创建和管理学习计划</p>
             <Link
-              href="/auth/login"
+              href="/login"
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
             >
               立即登录

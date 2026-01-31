@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { WEB_AUTH_CONFIG } from "@what-cse/shared";
 import { authApi, LoginRequest, RegisterRequest, ResetPasswordRequest } from "@/services/api/auth";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -14,7 +15,7 @@ export function useLogin() {
     onSuccess: (res) => {
       // 只设置用户状态，不跳转
       // 跳转由调用方处理，确保状态同步后再跳转
-      setUser(res.user, res.tokens.access_token, res.tokens.refresh_token);
+      setUser(res.user, res.tokens.access_token, res.tokens.refresh_token, res.tokens.expires_in);
       queryClient.clear();
     },
   });
@@ -26,7 +27,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterRequest) => authApi.register(data),
     onSuccess: () => {
-      router.push("/login");
+      router.push(WEB_AUTH_CONFIG.loginPath);
     },
   });
 }
@@ -39,7 +40,7 @@ export function useLogout() {
   return () => {
     logout();
     queryClient.clear();
-    router.push("/login");
+    router.push(WEB_AUTH_CONFIG.loginPath);
   };
 }
 
@@ -55,7 +56,7 @@ export function useResetPassword() {
   return useMutation({
     mutationFn: (data: ResetPasswordRequest) => authApi.resetPassword(data),
     onSuccess: () => {
-      router.push("/login");
+      router.push(WEB_AUTH_CONFIG.loginPath);
     },
   });
 }

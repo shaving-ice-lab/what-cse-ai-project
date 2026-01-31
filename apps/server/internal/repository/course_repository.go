@@ -365,6 +365,20 @@ func (r *CourseRepository) GetByCategoryID(categoryID uint, offset, limit int) (
 	return courses, err
 }
 
+// GetAllByCategoryID 根据分类ID获取所有课程（不过滤状态，用于管理后台展示）
+func (r *CourseRepository) GetAllByCategoryID(categoryID uint, offset, limit int) ([]model.Course, error) {
+	var courses []model.Course
+	query := r.db.Where("category_id = ?", categoryID)
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	err := query.Order("sort_order ASC, id ASC").Find(&courses).Error
+	return courses, err
+}
+
 // GetFeatured gets featured/recommended courses
 func (r *CourseRepository) GetFeatured(limit int) ([]model.Course, error) {
 	var courses []model.Course
@@ -623,6 +637,22 @@ func (r *CourseChapterRepository) CreateModules(modules []model.CourseLessonModu
 // DeleteModulesByChapterID deletes all modules for a chapter
 func (r *CourseChapterRepository) DeleteModulesByChapterID(chapterID uint) error {
 	return r.db.Where("chapter_id = ?", chapterID).Delete(&model.CourseLessonModule{}).Error
+}
+
+// ClearAllContents clears content of all chapters (keeps chapter structure)
+func (r *CourseChapterRepository) ClearAllContents() (int64, error) {
+	result := r.db.Model(&model.CourseChapter{}).
+		Where("content_json IS NOT NULL OR content_text != ''").
+		Updates(map[string]interface{}{
+			"content_json": nil,
+			"content_text": "",
+		})
+	return result.RowsAffected, result.Error
+}
+
+// DeleteAllModules deletes all lesson modules
+func (r *CourseChapterRepository) DeleteAllModules() error {
+	return r.db.Where("1 = 1").Delete(&model.CourseLessonModule{}).Error
 }
 
 // =====================================================

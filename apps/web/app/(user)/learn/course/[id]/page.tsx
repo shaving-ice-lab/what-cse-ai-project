@@ -486,7 +486,7 @@ export default function CourseDetailPage() {
 
     if (!isAuthenticated) {
       toast.error("请先登录");
-      router.push("/auth/login");
+      router.push("/login");
       return;
     }
 
@@ -533,7 +533,7 @@ export default function CourseDetailPage() {
 
     if (!isAuthenticated) {
       toast.error("请先登录");
-      router.push("/auth/login");
+      router.push("/login");
       return;
     }
 
@@ -575,7 +575,7 @@ export default function CourseDetailPage() {
 
       if (!isAuthenticated) {
         toast.error("请先登录");
-        router.push("/auth/login");
+        router.push("/login");
         return;
       }
 

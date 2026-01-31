@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@what-cse/ui";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
+import { useActivityTracker } from "@/hooks";
 
 // Pages that need full height without padding (for internal scrolling)
 const fullHeightPages = ["/learning/manager", "/learning/content"];
@@ -11,6 +12,9 @@ const fullHeightPages = ["/learning/manager", "/learning/content"];
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isFullHeight = fullHeightPages.some(p => pathname.startsWith(p));
+
+  // 启用活动追踪
+  useActivityTracker();
 
   return (
     <SidebarProvider>

@@ -3,6 +3,8 @@
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "@what-cse/ui";
+import { ADMIN_AUTH_CONFIG } from "@what-cse/shared";
+import { useAuthStore } from "@/stores/authStore";
 
 // Global error handler for API errors
 const handleGlobalError = (error: unknown) => {
@@ -12,10 +14,11 @@ const handleGlobalError = (error: unknown) => {
   };
 
   if (err?.response?.status === 401) {
-    // Token expired or invalid - redirect to login
+    // Token expired or invalid - logout and redirect to login
     if (typeof window !== "undefined") {
-      localStorage.removeItem("admin_token");
-      window.location.href = "/login";
+      const { logout } = useAuthStore.getState();
+      logout();
+      window.location.href = ADMIN_AUTH_CONFIG.loginPath;
     }
     return;
   }

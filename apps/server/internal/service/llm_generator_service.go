@@ -883,6 +883,7 @@ func isCourseContentComplete(content *model.GeneratedCourseContent) bool {
 	if content == nil {
 		return false
 	}
+	// 基础信息
 	if strings.TrimSpace(content.ChapterTitle) == "" {
 		return false
 	}
@@ -892,25 +893,66 @@ func isCourseContentComplete(content *model.GeneratedCourseContent) bool {
 	if strings.TrimSpace(content.KnowledgePoint) == "" {
 		return false
 	}
+	// 考情分析
 	if strings.TrimSpace(content.ExamAnalysis.Description) == "" {
 		return false
 	}
+	// 课程导入与学习目标
 	if strings.TrimSpace(content.LessonContent.Introduction) == "" {
 		return false
 	}
 	if len(content.LessonContent.LearningGoals) == 0 {
 		return false
 	}
+	// 核心概念
 	if len(content.LessonContent.CoreConcepts) == 0 {
 		return false
 	}
+	// 方法步骤
 	if len(content.LessonContent.MethodSteps) == 0 {
 		return false
 	}
+	// 记忆口诀
+	if len(content.LessonContent.Formulas) == 0 {
+		return false
+	}
+	// 记忆技巧
+	if len(content.LessonContent.MemoryTips) == 0 {
+		return false
+	}
+	// 易错点
+	if len(content.LessonContent.CommonMistakes) == 0 {
+		return false
+	}
+	// 应试策略
+	if len(content.LessonContent.ExamStrategies) == 0 {
+		return false
+	}
+	// 高频词汇
+	if content.LessonContent.VocabularyAccum == nil || len(content.LessonContent.VocabularyAccum.MustKnow) == 0 {
+		return false
+	}
+	// 拓展知识与总结
+	if strings.TrimSpace(content.LessonContent.ExtensionKnow) == "" {
+		return false
+	}
+	if len(content.LessonContent.SummaryPoints) == 0 {
+		return false
+	}
+	// 快速笔记
+	if content.LessonContent.QuickNotes == nil || len(content.LessonContent.QuickNotes.KeyPoints) == 0 {
+		return false
+	}
+	// 课程章节
 	if len(content.LessonSections) == 0 {
 		return false
 	}
+	// 练习题目
 	if len(content.PracticeProblems) == 0 {
+		return false
+	}
+	// 课后作业
+	if len(content.Homework.Required) == 0 && len(content.Homework.Optional) == 0 && len(content.Homework.ThinkingQuestions) == 0 {
 		return false
 	}
 	return true
@@ -1330,7 +1372,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		content.LessonContent.MethodSteps = wrap.MethodSteps
 	}
 
-	// 6) 记忆口诀（可选）
+	// 6) 记忆口诀（必需）
 	{
 		schema := `{
   "formulas": [
@@ -1356,14 +1398,13 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.LessonContent.Formulas = wrap.Formulas
-		} else {
-			s.logger.Warn("记忆口诀生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("记忆口诀生成失败: %w", err)
 		}
+		content.LessonContent.Formulas = wrap.Formulas
 	}
 
-	// 7) 记忆技巧（可选）
+	// 7) 记忆技巧（必需）
 	{
 		schema := `{
   "memory_tips": [
@@ -1388,14 +1429,13 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.LessonContent.MemoryTips = wrap.MemoryTips
-		} else {
-			s.logger.Warn("记忆技巧生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("记忆技巧生成失败: %w", err)
 		}
+		content.LessonContent.MemoryTips = wrap.MemoryTips
 	}
 
-	// 8) 易错点（可选）
+	// 8) 易错点（必需）
 	{
 		schema := `{
   "common_mistakes": [
@@ -1421,14 +1461,13 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.LessonContent.CommonMistakes = wrap.CommonMistakes
-		} else {
-			s.logger.Warn("易错点生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("易错点生成失败: %w", err)
 		}
+		content.LessonContent.CommonMistakes = wrap.CommonMistakes
 	}
 
-	// 9) 应试策略（可选）
+	// 9) 应试策略（必需）
 	{
 		schema := `{
   "exam_strategies": [
@@ -1451,14 +1490,13 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.LessonContent.ExamStrategies = wrap.ExamStrategies
-		} else {
-			s.logger.Warn("应试策略生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("应试策略生成失败: %w", err)
 		}
+		content.LessonContent.ExamStrategies = wrap.ExamStrategies
 	}
 
-	// 10) 高频词汇（可选）
+	// 10) 高频词汇（必需）
 	{
 		schema := `{
   "vocabulary_accumulation": {
@@ -1483,14 +1521,13 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.LessonContent.VocabularyAccum = wrap.VocabularyAccumulation
-		} else {
-			s.logger.Warn("高频词汇生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("高频词汇生成失败: %w", err)
 		}
+		content.LessonContent.VocabularyAccum = wrap.VocabularyAccumulation
 	}
 
-	// 11) 拓展知识 + 总结 + 思维导图（可选）
+	// 11) 拓展知识 + 总结 + 思维导图（必需）
 	{
 		schema := `{
   "extension_knowledge": "拓展知识内容",
@@ -1512,16 +1549,15 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.LessonContent.ExtensionKnow = wrap.ExtensionKnowledge
-			content.LessonContent.SummaryPoints = wrap.SummaryPoints
-			content.LessonContent.MindMapMermaid = wrap.MindMapMermaid
-		} else {
-			s.logger.Warn("拓展知识生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("拓展知识与总结生成失败: %w", err)
 		}
+		content.LessonContent.ExtensionKnow = wrap.ExtensionKnowledge
+		content.LessonContent.SummaryPoints = wrap.SummaryPoints
+		content.LessonContent.MindMapMermaid = wrap.MindMapMermaid
 	}
 
-	// 12) 快速笔记（可选）
+	// 12) 快速笔记（必需）
 	{
 		schema := `{
   "quick_notes": {
@@ -1555,11 +1591,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.LessonContent.QuickNotes = wrap.QuickNotes
-		} else {
-			s.logger.Warn("快速笔记生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("快速笔记生成失败: %w", err)
 		}
+		content.LessonContent.QuickNotes = wrap.QuickNotes
 	}
 
 	// 13) 课程章节
@@ -1693,7 +1728,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		})
 	}
 
-	// 15) 课后作业（可选）
+	// 15) 课后作业（必需）
 	{
 		schema := `{
   "homework": {
@@ -1715,11 +1750,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			}
 			return nil
 		})
-		if err == nil {
-			content.Homework = wrap.Homework
-		} else {
-			s.logger.Warn("课后作业生成失败，跳过该模块", zap.Uint("task_id", taskID), zap.Error(err))
+		if err != nil {
+			return "", nil, fmt.Errorf("课后作业生成失败: %w", err)
 		}
+		content.Homework = wrap.Homework
 	}
 
 	if !isCourseContentComplete(content) {
@@ -1818,12 +1852,60 @@ func (s *LLMGeneratorService) executeCourseGenerationV2(taskID uint, req Generat
 		}
 	}
 
-	subjectFull := GetSubjectFullName(req.Subject)
-
-	s.logger.Info("开始生成课程内容（分模块）",
+	useCustomPrompt := strings.TrimSpace(req.SystemPrompt) != "" || strings.TrimSpace(req.UserPromptTemplate) != ""
+	s.logger.Info("开始生成课程内容",
 		zap.Uint("task_id", taskID),
 		zap.String("chapter_title", chapterTitle),
-		zap.Bool("use_frontend_prompt", req.SystemPrompt != ""))
+		zap.Bool("use_custom_prompt", useCustomPrompt))
+
+	if useCustomPrompt {
+		systemPrompt := strings.TrimSpace(req.SystemPrompt)
+		if systemPrompt == "" {
+			systemPrompt = CourseContentSystemPromptV2
+		}
+		userPrompt := strings.TrimSpace(req.UserPromptTemplate)
+		if userPrompt == "" {
+			userPrompt = buildCourseContentUserPrompt(req, chapterTitle)
+		}
+
+		response, parsedContent, err := s.generateCourseContentWithContinuation(
+			taskID,
+			systemPrompt,
+			userPrompt,
+			600,   // 单次生成超时
+			32768, // max tokens
+		)
+
+		duration := time.Since(startTime).Milliseconds()
+		if err != nil {
+			s.logger.Error("课程内容生成失败", zap.Error(err))
+			s.taskRepo.UpdateStatus(taskID, model.GenerationTaskStatusFailed, err.Error(), 0, int(duration))
+			return
+		}
+
+		s.taskRepo.UpdateResult(ctx, taskID, response, int(duration))
+
+		if req.AutoImport && s.contentImportService != nil {
+			if parsedContent != nil {
+				if result, err := s.contentImportService.ImportCourseContent(ctx, req.ChapterID, parsedContent); err != nil {
+					s.logger.Error("导入课程内容失败", zap.Error(err), zap.Uint("task_id", taskID))
+				} else {
+					s.logger.Info("课程内容导入成功",
+						zap.Uint("task_id", taskID),
+						zap.Uint("chapter_id", req.ChapterID),
+						zap.Int("modules_created", result.ModulesCreated),
+						zap.Int("word_count", result.WordCount),
+					)
+				}
+			} else {
+				s.logger.Warn("课程内容解析未完成，跳过自动导入", zap.Uint("task_id", taskID))
+			}
+		}
+
+		return
+	}
+
+	subjectFull := GetSubjectFullName(req.Subject)
 
 	moduleCtx := courseModuleContext{
 		ChapterTitle:   chapterTitle,
@@ -1872,6 +1954,40 @@ func (s *LLMGeneratorService) executeCourseGenerationV2(taskID uint, req Generat
 			s.logger.Warn("课程内容解析未完成，跳过自动导入", zap.Uint("task_id", taskID))
 		}
 	}
+}
+
+func buildCourseContentUserPrompt(req GenerateCourseContentV2Request, chapterTitle string) string {
+	title := strings.TrimSpace(chapterTitle)
+	if title == "" {
+		title = "未命名章节"
+	}
+	section := strings.TrimSpace(req.Section)
+	if section == "" {
+		section = "未分类"
+	}
+	subsection := strings.TrimSpace(req.Subsection)
+	if subsection == "" {
+		subsection = "未分类"
+	}
+	parent := strings.TrimSpace(req.ParentTopic)
+	if parent == "" {
+		parent = "无"
+	}
+	subjectFull := strings.TrimSpace(GetSubjectFullName(req.Subject))
+	if subjectFull == "" {
+		subjectFull = req.Subject
+	}
+	specialRequirements := "无特殊要求"
+
+	return fmt.Sprintf(
+		CourseContentUserPromptTemplate,
+		title,
+		section,
+		subsection,
+		subjectFull,
+		parent,
+		specialRequirements,
+	)
 }
 
 // autoImportCourseContent 自动导入课程内容
@@ -2564,4 +2680,149 @@ func (s *LLMGeneratorService) executeCustomGeneration(taskID uint, generateType,
 		zap.String("generate_type", generateType),
 		zap.Int64("duration_ms", duration),
 	)
+}
+
+// =====================================================
+// AI 生成知识点
+// =====================================================
+
+// GeneratedKnowledgePoint AI 生成的知识点结构
+type GeneratedKnowledgePoint struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Importance  int    `json:"importance"`
+	Frequency   string `json:"frequency"`
+	Tips        string `json:"tips"`
+}
+
+// knowledgePointGenerationPrompt 知识点生成 Prompt 模板
+const knowledgePointGenerationPrompt = `你是一位资深的公务员考试辅导专家，拥有20年的教学经验。
+
+现在需要你为【%s】科目的【%s】分类生成%d个核心知识点。
+
+%s
+
+## 输出要求
+
+请严格按照以下 JSON 格式输出，不要包含任何解释文字：
+
+{
+    "items": [
+        {
+            "code": "KP-001",
+            "name": "知识点名称（简洁准确）",
+            "description": "知识点的详细描述，包括定义、核心内容、关键要素等（100-200字）",
+            "importance": 5,
+            "frequency": "high",
+            "tips": "学习建议和考试技巧（50-100字）"
+        }
+    ]
+}
+
+## 字段说明
+
+- code: 知识点编码，格式为 "KP-XXX"，XXX 为三位数字
+- name: 知识点名称，简洁准确，10-20字
+- description: 详细描述，包括定义、核心要点、适用场景等
+- importance: 重要程度，1-5分，5分最重要
+- frequency: 考试出现频率，可选值：high（高频）、medium（中频）、low（低频）
+- tips: 学习建议，包括记忆技巧、易错点提醒、备考策略等
+
+## 注意事项
+
+1. 知识点必须与该分类直接相关，内容专业、准确
+2. 重要程度和考频要根据实际考试情况合理分配
+3. 描述要具体、有价值，不要空泛
+4. 学习建议要实用，能帮助考生高效备考
+5. 只输出 JSON，不要任何其他内容`
+
+// GenerateKnowledgePoints 使用 AI 生成知识点
+func (s *LLMGeneratorService) GenerateKnowledgePoints(ctx context.Context, categoryID uint, subject, topic string, count int) ([]GeneratedKnowledgePoint, error) {
+	// 获取分类信息
+	category, err := s.categoryRepo.GetByID(categoryID)
+	if err != nil {
+		return nil, fmt.Errorf("获取分类信息失败: %w", err)
+	}
+
+	// 科目名称映射
+	subjectNames := map[string]string{
+		"xingce":  "行测",
+		"shenlun": "申论",
+		"mianshi": "面试",
+		"gongji":  "公共基础",
+	}
+	subjectName := subjectNames[subject]
+	if subjectName == "" {
+		subjectName = subject
+	}
+
+	// 构建主题说明
+	topicSection := ""
+	if topic != "" {
+		topicSection = fmt.Sprintf("\n主题方向：%s\n请围绕该主题生成相关知识点。", topic)
+	}
+
+	// 构建 Prompt
+	prompt := fmt.Sprintf(knowledgePointGenerationPrompt, subjectName, category.Name, count, topicSection)
+
+	// 调用 LLM
+	response, err := s.llmConfigService.CallWithOptions(prompt, 180, 8192)
+	if err != nil {
+		s.logger.Error("LLM 调用失败",
+			zap.Error(err),
+			zap.Uint("category_id", categoryID),
+			zap.String("subject", subject),
+		)
+		return nil, fmt.Errorf("AI 生成失败: %w", err)
+	}
+
+	// 解析 JSON 响应
+	// 尝试提取 JSON 内容（处理可能的 markdown 代码块）
+	jsonStr := response
+	if strings.Contains(response, "```json") {
+		start := strings.Index(response, "```json") + 7
+		end := strings.LastIndex(response, "```")
+		if end > start {
+			jsonStr = strings.TrimSpace(response[start:end])
+		}
+	} else if strings.Contains(response, "```") {
+		start := strings.Index(response, "```") + 3
+		end := strings.LastIndex(response, "```")
+		if end > start {
+			jsonStr = strings.TrimSpace(response[start:end])
+		}
+	}
+
+	var result struct {
+		Items []GeneratedKnowledgePoint `json:"items"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		s.logger.Error("解析 AI 响应失败",
+			zap.Error(err),
+			zap.String("response", response),
+		)
+		return nil, fmt.Errorf("解析 AI 响应失败: %w", err)
+	}
+
+	// 验证并补充数据
+	for i := range result.Items {
+		if result.Items[i].Code == "" {
+			result.Items[i].Code = fmt.Sprintf("KP-%s-%03d", time.Now().Format("20060102"), i+1)
+		}
+		if result.Items[i].Importance < 1 || result.Items[i].Importance > 5 {
+			result.Items[i].Importance = 3
+		}
+		if result.Items[i].Frequency == "" {
+			result.Items[i].Frequency = "medium"
+		}
+	}
+
+	s.logger.Info("AI 知识点生成完成",
+		zap.Uint("category_id", categoryID),
+		zap.String("subject", subject),
+		zap.Int("count", len(result.Items)),
+	)
+
+	return result.Items, nil
 }

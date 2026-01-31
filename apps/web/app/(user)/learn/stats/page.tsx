@@ -239,7 +239,7 @@ export default function StudyStatsPage() {
             <h2 className="text-2xl font-bold text-stone-800 mb-2">请先登录</h2>
             <p className="text-stone-500 mb-6">登录后即可查看学习统计</p>
             <Link
-              href="/auth/login"
+              href="/login"
               className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 transition-colors"
             >
               立即登录

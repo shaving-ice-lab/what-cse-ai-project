@@ -106,6 +106,32 @@ const iconMap: Record<string, LucideIcon> = {
   Trophy,
 };
 
+// 根据课程属性生成封面配色
+function getCoverGradient(course: CourseBrief): { gradient: string; accent: string; pattern: string } {
+  const colorSchemes = [
+    { gradient: "from-blue-500 via-blue-600 to-indigo-700", accent: "bg-blue-400/30", pattern: "text-blue-300/20" },
+    { gradient: "from-emerald-500 via-teal-600 to-cyan-700", accent: "bg-emerald-400/30", pattern: "text-emerald-300/20" },
+    { gradient: "from-violet-500 via-purple-600 to-indigo-700", accent: "bg-violet-400/30", pattern: "text-violet-300/20" },
+    { gradient: "from-amber-500 via-orange-600 to-red-600", accent: "bg-amber-400/30", pattern: "text-amber-300/20" },
+    { gradient: "from-rose-500 via-pink-600 to-fuchsia-700", accent: "bg-rose-400/30", pattern: "text-rose-300/20" },
+    { gradient: "from-cyan-500 via-sky-600 to-blue-700", accent: "bg-cyan-400/30", pattern: "text-cyan-300/20" },
+    { gradient: "from-lime-500 via-green-600 to-emerald-700", accent: "bg-lime-400/30", pattern: "text-lime-300/20" },
+    { gradient: "from-fuchsia-500 via-purple-600 to-violet-700", accent: "bg-fuchsia-400/30", pattern: "text-fuchsia-300/20" },
+  ];
+  const index = (course.id + (course.category_id || 0)) % colorSchemes.length;
+  return colorSchemes[index];
+}
+
+// 获取难度对应的装饰点数量
+function getDifficultyDots(difficulty: string): number {
+  switch (difficulty) {
+    case "beginner": return 1;
+    case "intermediate": return 2;
+    case "advanced": return 3;
+    default: return 1;
+  }
+}
+
 // 科目入口卡片 - 新设计
 function SubjectCard({ subject, index }: { subject: SubjectOverview; index: number }) {
   const IconComponent = iconMap[subject.icon] || BookOpen;
@@ -172,13 +198,16 @@ function SubjectCard({ subject, index }: { subject: SubjectOverview; index: numb
 
 // 课程卡片组件
 function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
+  const { gradient, accent, pattern } = getCoverGradient(course);
+  const difficultyDots = getDifficultyDots(course.difficulty);
+
   return (
     <Link
       href={`/learn/course/${course.id}`}
       className="group block bg-white rounded-2xl border border-stone-200 hover:border-amber-300 hover:shadow-md transition-all duration-300 overflow-hidden"
     >
-      {/* Cover Image */}
-      <div className="relative aspect-video bg-stone-100 overflow-hidden">
+      {/* Dynamic Cover - 文字课程专用设计 */}
+      <div className={`relative aspect-video bg-gradient-to-br ${gradient} overflow-hidden`}>
         {course.cover_image ? (
           <img
             src={course.cover_image}
@@ -186,9 +215,49 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
-            <BookOpen className="w-12 h-12 text-stone-300" />
-          </div>
+          <>
+            {/* 装饰性几何图案背景 */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className={`absolute -top-8 -right-8 w-32 h-32 rounded-full ${accent} blur-xl`} />
+              <div className={`absolute -bottom-4 -left-4 w-24 h-24 rounded-full ${accent} blur-lg`} />
+              
+              <svg className={`absolute inset-0 w-full h-full ${pattern}`} xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id={`grid-home-${course.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
+                    <path d="M 24 0 L 0 0 0 24" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#grid-home-${course.id})`} />
+              </svg>
+              
+              {/* 难度指示点 */}
+              <div className="absolute top-4 left-4 flex gap-1.5">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className={`w-2 h-2 rounded-full ${i < difficultyDots ? 'bg-white/60' : 'bg-white/20'}`} />
+                ))}
+              </div>
+            </div>
+            
+            {/* 中心内容区 */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white">
+              <div className={`w-12 h-12 rounded-xl ${accent} backdrop-blur-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1.5 text-white/90 text-sm font-medium">
+                <BookMarked className="w-3.5 h-3.5" />
+                <span>{course.chapter_count} 章节</span>
+              </div>
+            </div>
+
+            {/* hover 效果 */}
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="px-3 py-1.5 bg-white/95 rounded-full flex items-center gap-1.5 shadow-lg">
+                <BookOpen className="w-3.5 h-3.5 text-stone-700" />
+                <span className="text-xs font-medium text-stone-700">开始学习</span>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-500" />
+              </div>
+            </div>
+          </>
         )}
         
         {/* Duration Badge */}
@@ -208,13 +277,6 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
             VIP
           </div>
         ) : null}
-
-        {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg">
-            <Play className="w-5 h-5 text-amber-600 ml-0.5" />
-          </div>
-        </div>
       </div>
 
       {/* Content */}
@@ -255,18 +317,23 @@ function ContinueLearningCard({ progress, index }: { progress: UserCourseProgres
   const course = progress.course;
   if (!course) return null;
 
+  const { gradient, accent } = getCoverGradient(course);
+
   return (
     <Link
       href={`/learn/course/${course.id}`}
       className="group flex gap-4 p-4 bg-white rounded-xl border border-stone-200 hover:border-amber-300 hover:shadow-md transition-all duration-300"
     >
-      {/* Thumbnail */}
-      <div className="relative w-28 h-20 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0">
+      {/* Thumbnail - 动态封面 */}
+      <div className={`relative w-28 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br ${gradient}`}>
         {course.cover_image ? (
           <img src={course.cover_image} alt={course.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
-            <BookOpen className="w-6 h-6 text-stone-300" />
+          <div className="w-full h-full flex items-center justify-center relative">
+            <div className={`absolute -top-4 -right-4 w-16 h-16 rounded-full ${accent} blur-lg`} />
+            <div className={`w-10 h-10 rounded-lg ${accent} backdrop-blur-sm flex items-center justify-center`}>
+              <FileText className="w-5 h-5 text-white" />
+            </div>
           </div>
         )}
       </div>
@@ -287,10 +354,10 @@ function ContinueLearningCard({ progress, index }: { progress: UserCourseProgres
         </div>
       </div>
 
-      {/* Continue button */}
+      {/* Continue button - 改为阅读图标 */}
       <div className="flex items-center">
         <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-          <Play className="w-5 h-5 ml-0.5" />
+          <BookOpen className="w-5 h-5" />
         </div>
       </div>
     </Link>
@@ -721,7 +788,7 @@ export default function LearnPage() {
                     免费注册
                   </Link>
                   <Link
-                    href="/auth/login"
+                    href="/login"
                     className="px-8 py-3 bg-amber-600 text-white text-base font-semibold rounded-xl border-2 border-white/30 hover:bg-amber-700 transition-colors flex items-center gap-2"
                   >
                     <ArrowRight className="w-5 h-5" />

@@ -400,6 +400,19 @@ export const contentGeneratorApi = {
     });
   },
 
+  // AI Generate Knowledge Points (uses LLM to generate and returns for preview)
+  aiGenerateKnowledgePoints: async (req: {
+    category_id: number;
+    subject: string;
+    topic?: string;
+    count: number;
+  }): Promise<{ items: BatchCreateKnowledgeItem[]; count: number }> => {
+    return apiRequest<{ items: BatchCreateKnowledgeItem[]; count: number }>("/admin/generator/ai/knowledge-points", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
   // Templates
   getTemplates: async (subject?: string): Promise<{ templates: CourseTemplate[]; total: number }> => {
     const query = subject ? `?subject=${subject}` : "";
@@ -569,6 +582,20 @@ export const contentGeneratorApi = {
   // Get chapter content (for test preview)
   getChapterContent: async (chapterId: number): Promise<any> => {
     return apiRequest<any>(`/courses/chapters/${chapterId}/content`);
+  },
+
+  // Delete chapter content (clear generated content)
+  deleteChapterContent: async (chapterId: number): Promise<void> => {
+    await apiRequest<void>(`/admin/courses/chapters/${chapterId}/content`, {
+      method: "DELETE",
+    });
+  },
+
+  // Clear all chapter contents (delete all generated classroom data)
+  clearAllChapterContents: async (): Promise<{ message: string; affected: number }> => {
+    return apiRequest<{ message: string; affected: number }>("/admin/courses/chapters/all/content", {
+      method: "DELETE",
+    });
   },
 
   // Get generation task by ID (uses ai-content endpoint for LLM generation tasks)

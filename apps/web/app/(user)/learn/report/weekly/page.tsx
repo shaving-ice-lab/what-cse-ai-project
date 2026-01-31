@@ -249,7 +249,7 @@ export default function WeeklyReportPage() {
           <h2 className="text-xl font-semibold text-stone-700 mb-2">登录查看学习报告</h2>
           <p className="text-stone-500 mb-6">登录后即可查看你的每周学习数据</p>
           <Link
-            href="/auth/login"
+            href="/login"
             className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 transition-colors"
           >
             立即登录

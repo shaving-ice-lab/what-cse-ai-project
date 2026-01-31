@@ -12,3 +12,4 @@ export * from "./course";
 export * from "./practice";
 export * from "./study-note";
 export * from "./ai-learning";
+export * from "./material";

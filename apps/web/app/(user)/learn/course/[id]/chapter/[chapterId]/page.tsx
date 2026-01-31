@@ -1,37 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  Minimize,
-  Settings,
+  ChevronDown,
   Clock,
-  BookOpen,
   FileText,
-  CheckCircle,
   Lock,
   Loader2,
   AlertCircle,
-  ListChecks,
-  StickyNote,
-  Lightbulb,
-  ChevronDown,
-  ChevronUp,
-  PlayCircle,
   Video,
   Headphones,
-  BookMarked,
+  PlayCircle,
+  BookOpen,
   Menu,
   X,
+  CheckCircle,
+  Home,
 } from "lucide-react";
 import {
   useCourse,
@@ -42,16 +32,15 @@ import {
 import { CourseChapter, CourseDetail } from "@/services/api/course";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "@what-cse/ui";
-import {
-  LessonContentRenderer,
-  LessonContent,
-} from "@/components/learning/LessonContentRenderer";
+import { LessonContent } from "@/components/learning/LessonContentRenderer";
 import { LessonContentSkeleton } from "@/components/learning/LessonContentSkeleton";
+import { StepBasedRenderer } from "@/components/learning/InteractiveClassroom/StepBasedRenderer";
+import { cn } from "@/lib/utils";
 
-// 播放速度选项
-const playbackRates = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+// =====================================================
+// 图标组件
+// =====================================================
 
-// 获取内容类型图标
 function getContentTypeIcon(contentType: string, className?: string) {
   switch (contentType) {
     case "video":
@@ -65,424 +54,255 @@ function getContentTypeIcon(contentType: string, className?: string) {
   }
 }
 
-// 简化的章节列表组件
-function ChapterListItem({
-  chapter,
-  currentChapterId,
-  courseId,
-  level = 0,
-  isFree,
-  isVIP,
-}: {
-  chapter: CourseChapter;
+// =====================================================
+// 左侧课程章节导航
+// =====================================================
+
+interface ChapterSidebarProps {
+  course: CourseDetail;
   currentChapterId: number;
-  courseId: number;
-  level?: number;
-  isFree?: boolean;
-  isVIP?: boolean;
-}) {
-  const [expanded, setExpanded] = useState(true);
-  const hasChildren = chapter.children && chapter.children.length > 0;
-  const isCurrent = chapter.id === currentChapterId;
-  const canAccess = isFree || chapter.is_free_preview || isVIP;
-
-  return (
-    <div>
-      {hasChildren ? (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-stone-700 hover:bg-stone-50 rounded-lg"
-          style={{ paddingLeft: `${12 + level * 12}px` }}
-        >
-          <ChevronRight
-            className={`w-4 h-4 text-stone-400 transition-transform ${
-              expanded ? "rotate-90" : ""
-            }`}
-          />
-          <span className="truncate">{chapter.title}</span>
-        </button>
-      ) : (
-        <Link
-          href={
-            canAccess
-              ? `/learn/course/${courseId}/chapter/${chapter.id}`
-              : "#"
-          }
-          onClick={(e) => {
-            if (!canAccess) {
-              e.preventDefault();
-              toast.error("请开通VIP后观看此章节");
-            }
-          }}
-          className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
-            isCurrent
-              ? "bg-amber-100 text-amber-700 font-medium"
-              : canAccess
-              ? "hover:bg-stone-50 text-stone-600"
-              : "opacity-50 cursor-not-allowed text-stone-400"
-          }`}
-          style={{ paddingLeft: `${12 + level * 12}px` }}
-        >
-          <div
-            className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-              isCurrent
-                ? "bg-amber-500 text-white"
-                : canAccess
-                ? "bg-stone-100 text-stone-500"
-                : "bg-stone-100 text-stone-400"
-            }`}
-          >
-            {canAccess ? (
-              getContentTypeIcon(chapter.content_type, "w-3.5 h-3.5")
-            ) : (
-              <Lock className="w-3 h-3" />
-            )}
-          </div>
-          <span className="flex-1 truncate">{chapter.title}</span>
-          {chapter.duration_minutes > 0 && (
-            <span className="text-xs text-stone-400 flex-shrink-0">
-              {formatDuration(chapter.duration_minutes)}
-            </span>
-          )}
-        </Link>
-      )}
-
-      {hasChildren && expanded && (
-        <div>
-          {chapter.children!.map((child) => (
-            <ChapterListItem
-              key={child.id}
-              chapter={child}
-              currentChapterId={currentChapterId}
-              courseId={courseId}
-              level={level + 1}
-              isFree={isFree}
-              isVIP={isVIP}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  isVIP: boolean;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-// 视频播放器组件
-function VideoPlayer({
-  src,
-  onProgress,
-  onComplete,
-  initialProgress = 0,
-}: {
-  src: string;
-  onProgress?: (progress: number) => void;
-  onComplete?: () => void;
-  initialProgress?: number;
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const [showControls, setShowControls] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
-  const hideControlsTimeout = useRef<NodeJS.Timeout>();
+function ChapterSidebar({
+  course,
+  currentChapterId,
+  isVIP,
+  isOpen,
+  onClose,
+}: ChapterSidebarProps) {
+  const router = useRouter();
 
-  // 格式化时间
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+  // 统计章节数量
+  const chapterCount = useMemo(() => {
+    let count = 0;
+    const traverse = (items: CourseChapter[]) => {
+      for (const item of items) {
+        if (item.children && item.children.length > 0) {
+          traverse(item.children);
+        } else {
+          count++;
+        }
+      }
+    };
+    if (course.chapters) traverse(course.chapters);
+    return count;
+  }, [course.chapters]);
+
+  // 检查章节是否可访问
+  const canAccess = (chapter: CourseChapter) => {
+    return course.is_free || chapter.is_free_preview || isVIP;
   };
 
-  // 播放/暂停切换
-  const togglePlay = useCallback(() => {
-    if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play();
+  // 处理章节点击
+  const handleChapterClick = (chapter: CourseChapter) => {
+    if (!canAccess(chapter)) {
+      toast.error("请开通VIP后观看此章节");
+      return;
     }
-  }, [isPlaying]);
+    router.push(`/learn/course/${course.id}/chapter/${chapter.id}`);
+    onClose();
+  };
 
-  // 静音切换
-  const toggleMute = useCallback(() => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
-  }, [isMuted]);
+  // 章节树节点
+  const ChapterNode = ({
+    chapter,
+    level = 0,
+  }: {
+    chapter: CourseChapter;
+    level?: number;
+  }) => {
+    const [expanded, setExpanded] = useState(true);
+    const hasChildren = chapter.children && chapter.children.length > 0;
+    const isCurrent = chapter.id === currentChapterId;
+    const accessible = canAccess(chapter);
 
-  // 全屏切换
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    if (isFullscreen) {
-      document.exitFullscreen?.();
-    } else {
-      containerRef.current.requestFullscreen?.();
-    }
-  }, [isFullscreen]);
-
-  // 进度跳转
-  const handleSeek = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!videoRef.current) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const percent = (e.clientX - rect.left) / rect.width;
-      videoRef.current.currentTime = percent * duration;
-    },
-    [duration]
-  );
-
-  // 设置播放速度
-  const handleSetRate = useCallback((rate: number) => {
-    if (!videoRef.current) return;
-    videoRef.current.playbackRate = rate;
-    setPlaybackRate(rate);
-    setShowSettings(false);
-  }, []);
-
-  // 自动隐藏控制栏
-  const resetControlsTimeout = useCallback(() => {
-    setShowControls(true);
-    if (hideControlsTimeout.current) {
-      clearTimeout(hideControlsTimeout.current);
-    }
-    if (isPlaying) {
-      hideControlsTimeout.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
-  }, [isPlaying]);
-
-  // 监听视频事件
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-      const progress = duration > 0 ? (video.currentTime / duration) * 100 : 0;
-      onProgress?.(progress);
-    };
-    const handleLoadedMetadata = () => {
-      setDuration(video.duration);
-      // 恢复上次进度
-      if (initialProgress > 0) {
-        video.currentTime = (initialProgress / 100) * video.duration;
-      }
-    };
-    const handleEnded = () => {
-      setIsPlaying(false);
-      onComplete?.();
-    };
-
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("loadedmetadata", handleLoadedMetadata);
-    video.addEventListener("ended", handleEnded);
-
-    return () => {
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      video.removeEventListener("ended", handleEnded);
-    };
-  }, [duration, initialProgress, onProgress, onComplete]);
-
-  // 监听全屏变化
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-
-  // 键盘快捷键
-  useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (!videoRef.current) return;
-      switch (e.key) {
-        case " ":
-          e.preventDefault();
-          togglePlay();
-          break;
-        case "ArrowLeft":
-          videoRef.current.currentTime -= 5;
-          break;
-        case "ArrowRight":
-          videoRef.current.currentTime += 5;
-          break;
-        case "m":
-          toggleMute();
-          break;
-        case "f":
-          toggleFullscreen();
-          break;
-      }
-    };
-    window.addEventListener("keydown", handleKeydown);
-    return () => window.removeEventListener("keydown", handleKeydown);
-  }, [togglePlay, toggleMute, toggleFullscreen]);
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative bg-black aspect-video rounded-xl overflow-hidden group"
-      onMouseMove={resetControlsTimeout}
-      onMouseLeave={() => isPlaying && setShowControls(false)}
-    >
-      <video
-        ref={videoRef}
-        src={src}
-        className="w-full h-full"
-        onClick={togglePlay}
-      />
-
-      {/* Play button overlay (when paused) */}
-      {!isPlaying && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
-          onClick={togglePlay}
-        >
-          <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center hover:scale-105 transition-transform">
-            <Play className="w-10 h-10 text-stone-800 ml-1" />
-          </div>
-        </div>
-      )}
-
-      {/* Controls */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity ${
-          showControls ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {/* Progress bar */}
-        <div
-          className="h-1 bg-white/30 rounded-full cursor-pointer mb-3 group/progress"
-          onClick={handleSeek}
-        >
-          <div
-            className="h-full bg-amber-500 rounded-full relative"
-            style={{ width: `${(currentTime / duration) * 100}%` }}
-          >
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white opacity-0 group-hover/progress:opacity-100 transition-opacity" />
-          </div>
-        </div>
-
-        {/* Control buttons */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={togglePlay}
-            className="text-white hover:text-amber-400 transition-colors"
-          >
-            {isPlaying ? (
-              <Pause className="w-6 h-6" />
-            ) : (
-              <Play className="w-6 h-6" />
-            )}
-          </button>
-
-          <button
-            onClick={toggleMute}
-            className="text-white hover:text-amber-400 transition-colors"
-          >
-            {isMuted ? (
-              <VolumeX className="w-5 h-5" />
-            ) : (
-              <Volume2 className="w-5 h-5" />
-            )}
-          </button>
-
-          <span className="text-white text-sm">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </span>
-
-          <div className="flex-1" />
-
-          {/* Playback rate */}
-          <div className="relative">
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="text-white hover:text-amber-400 transition-colors text-sm font-medium"
-            >
-              {playbackRate}x
-            </button>
-            {showSettings && (
-              <div className="absolute bottom-full right-0 mb-2 bg-stone-800 rounded-lg py-2 shadow-lg">
-                {playbackRates.map((rate) => (
-                  <button
-                    key={rate}
-                    onClick={() => handleSetRate(rate)}
-                    className={`block w-full px-4 py-1.5 text-sm text-left transition-colors ${
-                      rate === playbackRate
-                        ? "text-amber-400"
-                        : "text-white hover:text-amber-400"
-                    }`}
-                  >
-                    {rate}x
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={toggleFullscreen}
-            className="text-white hover:text-amber-400 transition-colors"
-          >
-            {isFullscreen ? (
-              <Minimize className="w-5 h-5" />
-            ) : (
-              <Maximize className="w-5 h-5" />
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 文档阅读器组件
-function DocumentReader({ content, url }: { content?: string; url?: string }) {
-  if (url && url.endsWith(".pdf")) {
     return (
-      <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-        <iframe
-          src={`${url}#toolbar=0&navpanes=0`}
-          className="w-full h-[70vh]"
-          title="PDF Document"
-        />
+      <div>
+        {hasChildren ? (
+          // 父级章节（可展开）
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 rounded-lg transition-colors"
+            style={{ paddingLeft: `${12 + level * 16}px` }}
+          >
+            <motion.div
+              animate={{ rotate: expanded ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRight className="w-4 h-4 text-stone-400" />
+            </motion.div>
+            <span className="font-medium text-stone-700 text-sm truncate">
+              {chapter.title}
+            </span>
+            <span className="ml-auto text-xs text-stone-400">
+              {chapter.children!.length}
+            </span>
+          </button>
+        ) : (
+          // 叶子节点（可点击学习）
+          <button
+            onClick={() => handleChapterClick(chapter)}
+            disabled={!accessible}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
+              isCurrent
+                ? "bg-amber-50 border-l-3 border-amber-500"
+                : accessible
+                ? "hover:bg-stone-50"
+                : "opacity-50 cursor-not-allowed"
+            )}
+            style={{ paddingLeft: `${12 + level * 16}px` }}
+          >
+            <div
+              className={cn(
+                "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
+                isCurrent
+                  ? "bg-amber-500 text-white"
+                  : accessible
+                  ? "bg-stone-100 text-stone-500"
+                  : "bg-stone-100 text-stone-400"
+              )}
+            >
+              {accessible ? (
+                getContentTypeIcon(chapter.content_type, "w-3.5 h-3.5")
+              ) : (
+                <Lock className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className={cn(
+                  "text-sm truncate",
+                  isCurrent
+                    ? "font-medium text-amber-800"
+                    : accessible
+                    ? "text-stone-700"
+                    : "text-stone-400"
+                )}
+              >
+                {chapter.title}
+              </p>
+              {chapter.duration_minutes > 0 && (
+                <p className="text-xs text-stone-400 mt-0.5">
+                  {formatDuration(chapter.duration_minutes)}
+                </p>
+              )}
+            </div>
+            {chapter.is_free_preview && !course.is_free && (
+              <span className="px-1.5 py-0.5 text-[10px] bg-green-100 text-green-700 rounded">
+                试看
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* 子章节 */}
+        <AnimatePresence>
+          {hasChildren && expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              {chapter.children!.map((child) => (
+                <ChapterNode key={child.id} chapter={child} level={level + 1} />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
-  }
+  };
+
+  const sidebarContent = (
+    <>
+      {/* 头部 */}
+      <div className="p-4 border-b border-stone-200 bg-gradient-to-br from-stone-50 to-white">
+        <Link
+          href={`/learn/course/${course.id}`}
+          className="flex items-center gap-2 text-stone-600 hover:text-amber-600 transition-colors mb-3 group"
+        >
+          <div className="p-1.5 rounded-lg bg-stone-100 group-hover:bg-amber-100 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </div>
+          <span className="text-sm font-medium">返回课程</span>
+        </Link>
+        <h2 className="font-bold text-stone-800 line-clamp-2 leading-snug">
+          {course.title}
+        </h2>
+        <div className="flex items-center gap-3 mt-2 text-xs text-stone-500">
+          <span className="flex items-center gap-1">
+            <BookOpen className="w-3.5 h-3.5" />
+            {chapterCount} 节课
+          </span>
+          {course.study_progress > 0 && (
+            <span className="flex items-center gap-1">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+              已学 {Math.round(course.study_progress)}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 章节列表 */}
+      <div className="flex-1 overflow-y-auto p-2">
+        {course.chapters?.map((chapter) => (
+          <ChapterNode key={chapter.id} chapter={chapter} />
+        ))}
+      </div>
+    </>
+  );
 
   return (
-    <div className="bg-white rounded-xl border border-stone-200 p-8">
-      {content ? (
-        <div
-          className="prose prose-stone max-w-none prose-headings:text-stone-800 prose-p:text-stone-600 prose-a:text-amber-600"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-      ) : (
-        <div className="text-center py-12">
-          <FileText className="w-16 h-16 text-stone-300 mx-auto mb-4" />
-          <p className="text-stone-500">暂无文档内容</p>
-        </div>
-      )}
-    </div>
+    <>
+      {/* 桌面端侧边栏 - 固定高度，不随页面滚动 */}
+      <aside className="hidden lg:flex w-72 flex-shrink-0 flex-col bg-white border-r border-stone-200 h-screen fixed left-0 top-0 z-20">
+        {sidebarContent}
+      </aside>
+      {/* 占位元素，防止内容被侧边栏遮挡 */}
+      <div className="hidden lg:block w-72 flex-shrink-0" />
+
+      {/* 移动端抽屉 */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="lg:hidden fixed inset-0 bg-black/40 z-40"
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-white z-50 flex flex-col shadow-2xl"
+            >
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 hover:bg-stone-100 rounded-lg z-10"
+              >
+                <X className="w-5 h-5 text-stone-500" />
+              </button>
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
+
+// =====================================================
+// 主页面
+// =====================================================
 
 export default function ChapterPage() {
   const params = useParams();
@@ -497,15 +317,13 @@ export default function ChapterPage() {
     chapter,
     fullContent,
     contentLoading,
-    hasModuleContent,
     parsedLessonContent,
     fetchChapter,
     fetchChapterFullContent,
   } = useChapter();
   const { updateProgress } = useMyLearning();
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // 加载数据
   useEffect(() => {
@@ -516,9 +334,7 @@ export default function ChapterPage() {
 
   useEffect(() => {
     if (chapterId) {
-      // 先获取基础信息
       fetchChapter(chapterId);
-      // 然后尝试获取完整内容（含模块化内容）
       fetchChapterFullContent(chapterId);
     }
   }, [chapterId, fetchChapter, fetchChapterFullContent]);
@@ -526,7 +342,7 @@ export default function ChapterPage() {
   // VIP状态
   const isVIP = user?.is_vip || false;
 
-  // 获取扁平化的章节列表用于导航
+  // 获取扁平化的章节列表
   const flatChapters = useMemo(() => {
     if (!course?.chapters) return [];
     const result: CourseChapter[] = [];
@@ -543,7 +359,6 @@ export default function ChapterPage() {
     return result;
   }, [course?.chapters]);
 
-  // 当前章节索引
   const currentIndex = flatChapters.findIndex((c) => c.id === chapterId);
   const prevChapter = currentIndex > 0 ? flatChapters[currentIndex - 1] : null;
   const nextChapter =
@@ -559,43 +374,7 @@ export default function ChapterPage() {
     [course?.is_free, isVIP]
   );
 
-  // 处理进度更新
-  const handleProgress = useCallback(
-    (progress: number) => {
-      if (isAuthenticated && courseId && chapterId) {
-        // 每10%保存一次进度
-        if (Math.floor(progress / 10) !== Math.floor((progress - 1) / 10)) {
-          updateProgress(courseId, { chapter_id: chapterId, progress });
-        }
-      }
-    },
-    [isAuthenticated, courseId, chapterId, updateProgress]
-  );
-
-  // 处理章节完成
-  const handleComplete = useCallback(() => {
-    if (isAuthenticated && courseId && chapterId) {
-      updateProgress(courseId, { chapter_id: chapterId, progress: 100 });
-      toast.success("章节学习完成！");
-
-      // 自动跳转下一章
-      if (nextChapter && canAccessChapter(nextChapter)) {
-        setTimeout(() => {
-          router.push(`/learn/course/${courseId}/chapter/${nextChapter.id}`);
-        }, 1500);
-      }
-    }
-  }, [
-    isAuthenticated,
-    courseId,
-    chapterId,
-    nextChapter,
-    canAccessChapter,
-    updateProgress,
-    router,
-  ]);
-
-  // 导航到上一章/下一章
+  // 处理章节导航
   const handleNavigate = useCallback(
     (ch: CourseChapter | null) => {
       if (!ch) return;
@@ -611,8 +390,17 @@ export default function ChapterPage() {
   // 加载状态
   if (courseLoading || chapterLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-100">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-100">
+            <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+          </div>
+          <p className="text-stone-600 font-medium">正在加载课程内容...</p>
+        </motion.div>
       </div>
     );
   }
@@ -620,18 +408,25 @@ export default function ChapterPage() {
   // 错误状态
   if (!course || !chapter) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-100">
-        <AlertCircle className="w-16 h-16 text-stone-300 mb-4" />
-        <h2 className="text-xl font-semibold text-stone-700 mb-2">
-          内容不存在
-        </h2>
-        <p className="text-stone-500 mb-6">该章节可能已被删除或链接无效</p>
-        <Link
-          href={`/learn/course/${courseId}`}
-          className="px-6 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors"
+      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center px-4"
         >
-          返回课程
-        </Link>
+          <div className="w-20 h-20 bg-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-stone-400" />
+          </div>
+          <h2 className="text-xl font-bold text-stone-800 mb-2">内容不存在</h2>
+          <p className="text-stone-500 mb-6">该章节可能已被删除或链接无效</p>
+          <Link
+            href={`/learn/course/${courseId}`}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            返回课程
+          </Link>
+        </motion.div>
       </div>
     );
   }
@@ -639,235 +434,203 @@ export default function ChapterPage() {
   // 检查访问权限
   if (!canAccessChapter(chapter)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-100">
-        <Lock className="w-16 h-16 text-stone-300 mb-4" />
-        <h2 className="text-xl font-semibold text-stone-700 mb-2">
-          VIP专享内容
-        </h2>
-        <p className="text-stone-500 mb-6">开通VIP会员，解锁全部课程内容</p>
-        <div className="flex gap-4">
-          <Link
-            href={`/learn/course/${courseId}`}
-            className="px-6 py-2.5 border border-stone-300 text-stone-700 rounded-xl hover:bg-stone-50 transition-colors"
-          >
-            返回课程
-          </Link>
-          <Link
-            href="/vip"
-            className="px-6 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors"
-          >
-            开通VIP
-          </Link>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md px-4"
+        >
+          <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-100">
+            <Lock className="w-10 h-10 text-amber-500" />
+          </div>
+          <h2 className="text-xl font-bold text-stone-800 mb-2">VIP专享内容</h2>
+          <p className="text-stone-500 mb-6">开通VIP会员，解锁全部课程内容</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href={`/learn/course/${courseId}`}
+              className="px-6 py-3 border border-stone-300 text-stone-700 rounded-xl hover:bg-stone-50 transition-colors font-medium"
+            >
+              返回课程
+            </Link>
+            <Link
+              href="/vip"
+              className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-colors font-medium shadow-lg shadow-amber-200"
+            >
+              立即开通VIP
+            </Link>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-stone-100 flex">
-      {/* Mobile sidebar toggle */}
-      <button
-        onClick={() => setMobileSidebarOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md"
-      >
-        <Menu className="w-5 h-5 text-stone-600" />
-      </button>
+      {/* 左侧课程导航 */}
+      <ChapterSidebar
+        course={course}
+        currentChapterId={chapterId}
+        isVIP={isVIP}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed lg:relative inset-y-0 left-0 z-40
-          w-80 bg-white border-r border-stone-200 flex flex-col
-          transform transition-transform duration-300
-          ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          ${sidebarOpen ? "lg:w-80" : "lg:w-0 lg:overflow-hidden"}
-        `}
-      >
-        {/* Sidebar header */}
-        <div className="p-4 border-b border-stone-200 flex items-center gap-3">
-          <Link
-            href={`/learn/course/${courseId}`}
-            className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-stone-600" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-stone-800 truncate">
-              {course.title}
-            </h2>
-            <p className="text-sm text-stone-500">
-              {flatChapters.length} 个章节
-            </p>
-          </div>
-          <button
-            onClick={() => setMobileSidebarOpen(false)}
-            className="lg:hidden p-2 hover:bg-stone-100 rounded-lg"
-          >
-            <X className="w-5 h-5 text-stone-600" />
-          </button>
-        </div>
+      {/* 主内容区 */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* 顶部导航栏 */}
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-stone-200">
+          <div className="px-4 lg:px-6 py-3 flex items-center gap-4">
+            {/* 移动端菜单按钮 */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 hover:bg-stone-100 rounded-lg transition-colors"
+            >
+              <Menu className="w-5 h-5 text-stone-600" />
+            </button>
 
-        {/* Chapter list */}
-        <div className="flex-1 overflow-y-auto p-3">
-          {course.chapters?.map((ch) => (
-            <ChapterListItem
-              key={ch.id}
-              chapter={ch}
-              currentChapterId={chapterId}
-              courseId={courseId}
-              isFree={course.is_free}
-              isVIP={isVIP}
-            />
-          ))}
-        </div>
-      </aside>
-
-      {/* Mobile sidebar overlay */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main content */}
-      <main className="flex-1 min-w-0 flex flex-col">
-        {/* Toggle sidebar button (desktop) */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="hidden lg:flex absolute top-4 left-4 z-10 p-2 bg-white rounded-lg shadow-md hover:bg-stone-50 transition-colors"
-        >
-          {sidebarOpen ? (
-            <ChevronLeft className="w-5 h-5 text-stone-600" />
-          ) : (
-            <ChevronRight className="w-5 h-5 text-stone-600" />
-          )}
-        </button>
-
-        {/* Content area */}
-        <div className="flex-1 p-4 lg:p-8 overflow-y-auto">
-          <div className="max-w-4xl mx-auto">
-            {/* Chapter title */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-stone-800 mb-2">
+            {/* 面包屑导航 */}
+            <nav className="hidden sm:flex items-center gap-2 text-sm text-stone-500 flex-1 min-w-0">
+              <Link href="/learn" className="hover:text-amber-600 transition-colors">
+                学习
+              </Link>
+              <ChevronRight className="w-4 h-4 flex-shrink-0" />
+              <Link
+                href={`/learn/course/${course.id}`}
+                className="hover:text-amber-600 transition-colors truncate max-w-[200px]"
+              >
+                {course.title}
+              </Link>
+              <ChevronRight className="w-4 h-4 flex-shrink-0" />
+              <span className="text-stone-700 font-medium truncate">
                 {chapter.title}
-              </h1>
-              {chapter.description && (
-                <p className="text-stone-600">{chapter.description}</p>
-              )}
-              <div className="flex items-center gap-4 mt-3 text-sm text-stone-500">
-                {chapter.duration_minutes > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {formatDuration(chapter.duration_minutes)}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  {getContentTypeIcon(chapter.content_type, "w-4 h-4")}
-                  {chapter.content_type === "video"
-                    ? "视频"
-                    : chapter.content_type === "audio"
-                    ? "音频"
-                    : "文档"}
-                </span>
-              </div>
+              </span>
+            </nav>
+
+            {/* 移动端标题 */}
+            <div className="sm:hidden flex-1 min-w-0">
+              <p className="text-sm text-stone-500 truncate">{course.title}</p>
             </div>
 
-            {/* 媒体内容（视频/音频） */}
-            {chapter.content_type === "video" && chapter.content_url && (
-              <VideoPlayer
-                src={chapter.content_url}
-                onProgress={handleProgress}
-                onComplete={handleComplete}
-                initialProgress={course.study_progress}
-              />
-            )}
-            
-            {chapter.content_type === "audio" && chapter.content_url && (
-              <div className="bg-white rounded-xl p-6 border border-stone-200 mb-8">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-xl bg-amber-100 flex items-center justify-center">
-                    <Headphones className="w-8 h-8 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-stone-800">
-                      {chapter.title}
-                    </h3>
-                    <p className="text-sm text-stone-500">
-                      {formatDuration(chapter.duration_minutes)}
-                    </p>
-                  </div>
-                </div>
-                <audio
-                  src={chapter.content_url}
-                  controls
-                  className="w-full"
-                  onEnded={handleComplete}
+            {/* 进度指示 */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="hidden sm:inline text-stone-400">
+                第 {currentIndex + 1} / {flatChapters.length} 节
+              </span>
+              <div className="w-20 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all"
+                  style={{
+                    width: `${((currentIndex + 1) / flatChapters.length) * 100}%`,
+                  }}
                 />
               </div>
-            )}
+            </div>
+          </div>
+        </header>
 
-            {/* 模块化课程内容（MCP 生成的 13 模块内容） */}
-            {contentLoading ? (
-              <LessonContentSkeleton />
-            ) : parsedLessonContent ? (
-              <div className="mt-8">
-                {/* 字数统计信息 */}
-                {fullContent?.word_count?.total && (
-                  <div className="mb-6 flex items-center gap-4 text-sm text-stone-500">
-                    <span className="flex items-center gap-1">
+        {/* 章节信息卡片 */}
+        <div className="bg-white border-b border-stone-200">
+          <div className="max-w-4xl mx-auto px-4 lg:px-6 py-6">
+            <div className="flex items-start gap-4">
+              <div className="hidden sm:flex w-14 h-14 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl items-center justify-center flex-shrink-0">
+                {getContentTypeIcon(chapter.content_type, "w-7 h-7 text-amber-600")}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl lg:text-2xl font-bold text-stone-800 mb-2">
+                  {chapter.title}
+                </h1>
+                {chapter.description && (
+                  <p className="text-stone-600 text-sm lg:text-base mb-3 line-clamp-2">
+                    {chapter.description}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-3 text-sm text-stone-500">
+                  {chapter.duration_minutes > 0 && (
+                    <span className="flex items-center gap-1.5 bg-stone-100 px-2.5 py-1 rounded-lg">
+                      <Clock className="w-4 h-4" />
+                      {formatDuration(chapter.duration_minutes)}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1.5 bg-stone-100 px-2.5 py-1 rounded-lg">
+                    {getContentTypeIcon(chapter.content_type, "w-4 h-4")}
+                    {chapter.content_type === "video"
+                      ? "视频"
+                      : chapter.content_type === "audio"
+                      ? "音频"
+                      : "图文"}
+                  </span>
+                  {fullContent?.word_count?.total && (
+                    <span className="flex items-center gap-1.5 bg-stone-100 px-2.5 py-1 rounded-lg">
                       <FileText className="w-4 h-4" />
                       约 {Math.round(fullContent.word_count.total / 1000)}k 字
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      预计阅读 {Math.ceil(fullContent.word_count.total / 500)} 分钟
-                    </span>
-                  </div>
-                )}
-                <LessonContentRenderer content={parsedLessonContent as LessonContent} />
+                  )}
+                </div>
               </div>
-            ) : (
-              /* 回退到文档阅读器（无模块化内容时） */
-              !chapter.content_url?.match(/\.(mp4|webm|mp3|wav)$/i) && (
-                <DocumentReader
-                  content={chapter.content_text}
-                  url={chapter.content_url}
-                />
-              )
-            )}
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-stone-200">
-              <button
-                onClick={() => handleNavigate(prevChapter)}
-                disabled={!prevChapter}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-                  prevChapter
-                    ? "hover:bg-stone-200 text-stone-700"
-                    : "opacity-50 cursor-not-allowed text-stone-400"
-                }`}
-              >
-                <ChevronLeft className="w-5 h-5" />
-                <span>上一节</span>
-              </button>
-
-              <button
-                onClick={() => handleNavigate(nextChapter)}
-                disabled={!nextChapter}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-                  nextChapter
-                    ? "bg-amber-500 text-white hover:bg-amber-600"
-                    : "opacity-50 cursor-not-allowed bg-stone-300 text-stone-500"
-                }`}
-              >
-                <span>下一节</span>
-                <ChevronRight className="w-5 h-5" />
-              </button>
             </div>
           </div>
         </div>
-      </main>
+
+        {/* 媒体内容 */}
+        {chapter.content_type === "video" && chapter.content_url && (
+          <div className="bg-stone-900">
+            <div className="max-w-5xl mx-auto">
+              <video
+                src={chapter.content_url}
+                controls
+                className="w-full aspect-video"
+              />
+            </div>
+          </div>
+        )}
+
+        {chapter.content_type === "audio" && chapter.content_url && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+            <div className="max-w-4xl mx-auto px-4 lg:px-6 py-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center shadow-lg shadow-amber-200">
+                  <Headphones className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-stone-800">{chapter.title}</h3>
+                  <p className="text-sm text-stone-500">
+                    {formatDuration(chapter.duration_minutes)}
+                  </p>
+                </div>
+              </div>
+              <audio src={chapter.content_url} controls className="w-full" />
+            </div>
+          </div>
+        )}
+
+        {/* 课程内容 */}
+        <main className="flex-1 flex flex-col">
+          {contentLoading ? (
+            <div className="flex-1 py-8 px-4 lg:px-6">
+              <div className="max-w-4xl mx-auto">
+                <LessonContentSkeleton />
+              </div>
+            </div>
+          ) : parsedLessonContent ? (
+            <StepBasedRenderer
+              content={parsedLessonContent}
+              onNavigateNext={() => handleNavigate(nextChapter)}
+              onNavigatePrev={() => handleNavigate(prevChapter)}
+              hasNextChapter={!!nextChapter && canAccessChapter(nextChapter)}
+              hasPrevChapter={!!prevChapter && canAccessChapter(prevChapter)}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="w-8 h-8 text-stone-400" />
+                </div>
+                <p className="text-stone-500">暂无内容</p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

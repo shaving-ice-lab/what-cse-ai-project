@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -69,6 +71,7 @@ func (h *ContentGeneratorHandler) RegisterRoutes(e *echo.Echo, authMiddleware ec
 
 	// AI 内容生成
 	admin.POST("/ai/generate", h.GenerateAIContent)
+	admin.POST("/ai/knowledge-points", h.AIGenerateKnowledgePoints)
 
 	// 数据导入
 	admin.POST("/import", h.ImportContent)
@@ -129,7 +132,7 @@ func (h *ContentGeneratorHandler) GetStats(c echo.Context) error {
 }
 
 // GetTasks 获取任务列表
-// @Summary 获取任务列表
+// @Summary 获取任务列表（合并 ContentGeneratorTask 和 GenerationTask）
 // @Tags ContentGenerator
 // @Param page query int false "页码"
 // @Param page_size query int false "每页数量"
@@ -146,28 +149,151 @@ func (h *ContentGeneratorHandler) GetTasks(c echo.Context) error {
 		pageSize = 20
 	}
 
-	tasks, total, err := h.generatorService.GetTasks(page, pageSize)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"code":    500,
-			"message": "获取任务列表失败: " + err.Error(),
-		})
+	fetchLimit := page * pageSize
+	var responses []*model.ContentGeneratorTaskResponse
+	var total int64
+
+	// 获取 ContentGeneratorTask 任务
+	contentTasks, contentTotal, err := h.generatorService.GetTasks(1, fetchLimit)
+	if err == nil {
+		total += contentTotal
+		for _, task := range contentTasks {
+			responses = append(responses, task.ToResponse())
+		}
 	}
 
-	var responses []*model.ContentGeneratorTaskResponse
-	for _, task := range tasks {
-		responses = append(responses, task.ToResponse())
+	// 获取 LLM GenerationTask 任务（如果 llmGeneratorService 可用）
+	if h.llmGeneratorService != nil {
+		llmTasks, llmTotal, err := h.llmGeneratorService.ListTasks("", "", 1, fetchLimit)
+		if err == nil {
+			total += llmTotal
+			for _, task := range llmTasks {
+				responses = append(responses, convertGenerationTaskToResponse(&task))
+			}
+		}
 	}
+
+	// 按创建时间排序（最新的在前面）
+	sortTaskResponsesByCreatedAt(responses)
+
+	// 分页处理
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start > len(responses) {
+		start = len(responses)
+	}
+	if end > len(responses) {
+		end = len(responses)
+	}
+	pagedResponses := responses[start:end]
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"code":    0,
 		"message": "success",
 		"data": map[string]interface{}{
-			"tasks":     responses,
+			"tasks":     pagedResponses,
 			"total":     total,
 			"page":      page,
 			"page_size": pageSize,
 		},
+	})
+}
+
+// convertGenerationTaskToResponse 将 GenerationTask 转换为 ContentGeneratorTaskResponse 格式
+func convertGenerationTaskToResponse(task *model.GenerationTask) *model.ContentGeneratorTaskResponse {
+	// 从 TargetInfo 中解析章节标题等信息
+	var targetInfo map[string]interface{}
+	templateName := ""
+	subject := ""
+	if task.TargetInfo != "" {
+		if err := json.Unmarshal([]byte(task.TargetInfo), &targetInfo); err == nil {
+			if title, ok := targetInfo["chapter_title"].(string); ok {
+				templateName = title
+			}
+			if s, ok := targetInfo["subject"].(string); ok {
+				subject = s
+			}
+		}
+	}
+
+	// 状态映射
+	status := model.TaskStatusPending
+	switch task.Status {
+	case model.GenerationTaskStatusPending:
+		status = model.TaskStatusPending
+	case model.GenerationTaskStatusGenerating:
+		status = model.TaskStatusGenerating
+	case model.GenerationTaskStatusCompleted:
+		status = model.TaskStatusCompleted
+	case model.GenerationTaskStatusFailed:
+		status = model.TaskStatusFailed
+	case model.GenerationTaskStatusCancelled:
+		status = model.TaskStatusFailed
+	default:
+		// 默认处理
+		if string(task.Status) == "processing" {
+			status = model.TaskStatusProcessing
+		}
+	}
+
+	// 任务类型映射
+	taskType := model.TaskTypeChapter
+	switch task.TaskType {
+	case model.GenerationTaskTypeCourse:
+		taskType = model.TaskTypeChapter
+	case model.GenerationTaskTypeQuestion:
+		taskType = model.TaskTypeAIGenerate
+	case model.GenerationTaskTypeMaterial:
+		taskType = model.TaskTypeAIGenerate
+	default:
+		taskType = model.TaskTypeChapter
+	}
+
+	// 计算进度
+	progress := float64(0)
+	if task.Status == model.GenerationTaskStatusCompleted {
+		progress = 100
+	} else if task.Status == model.GenerationTaskStatusGenerating {
+		progress = 50 // 生成中默认50%
+	}
+
+	return &model.ContentGeneratorTaskResponse{
+		ID:           task.ID,
+		TaskType:     taskType,
+		Status:       status,
+		Subject:      subject,
+		TemplateName: templateName,
+		TotalItems:   1,
+		ProcessedItems: func() int {
+			if task.Status == model.GenerationTaskStatusCompleted {
+				return 1
+			}
+			return 0
+		}(),
+		SuccessItems: func() int {
+			if task.Status == model.GenerationTaskStatusCompleted {
+				return 1
+			}
+			return 0
+		}(),
+		FailedItems: func() int {
+			if task.Status == model.GenerationTaskStatusFailed {
+				return 1
+			}
+			return 0
+		}(),
+		ErrorMessage: task.ErrorMessage,
+		Progress:     progress,
+		StartedAt:    &task.CreatedAt,
+		CompletedAt:  task.CompletedAt,
+		CreatedAt:    task.CreatedAt,
+	}
+}
+
+// sortTaskResponsesByCreatedAt 按创建时间排序任务（最新的在前面）
+func sortTaskResponsesByCreatedAt(responses []*model.ContentGeneratorTaskResponse) {
+	sort.Slice(responses, func(i, j int) bool {
+		return responses[i].CreatedAt.After(responses[j].CreatedAt)
 	})
 }
 
@@ -662,10 +788,10 @@ func (h *ContentGeneratorHandler) GetCourseTree(c echo.Context) error {
 // BatchGenerateChapterLessonsRequest 批量生成章节内容请求
 // 注意：SkipExisting 由前端在调用前过滤待生成章节，此处不需要
 type BatchGenerateChapterLessonsRequest struct {
-	ChapterIDs         []uint `json:"chapter_ids" validate:"required,min=1"`
-	Subject            string `json:"subject,omitempty"`
-	AutoApprove        bool   `json:"auto_approve,omitempty"`
-	AutoImport         bool   `json:"auto_import,omitempty"`
+	ChapterIDs  []uint `json:"chapter_ids" validate:"required,min=1"`
+	Subject     string `json:"subject,omitempty"`
+	AutoApprove bool   `json:"auto_approve,omitempty"`
+	AutoImport  bool   `json:"auto_import,omitempty"`
 	// 从前端传入的 prompt（可选，如果不传则使用后端默认）
 	SystemPrompt       string `json:"system_prompt,omitempty"`
 	UserPromptTemplate string `json:"user_prompt_template,omitempty"`
@@ -831,10 +957,10 @@ func (h *ContentGeneratorHandler) GenerateAIContent(c echo.Context) error {
 
 	// 验证生成类型
 	validTypes := map[string]bool{
-		"question_analysis":  true,
-		"knowledge_summary":  true,
-		"similar_questions":  true,
-		"material_classify":  true,
+		"question_analysis": true,
+		"knowledge_summary": true,
+		"similar_questions": true,
+		"material_classify": true,
 	}
 	if !validTypes[req.GenerateType] {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -878,6 +1004,98 @@ func (h *ContentGeneratorHandler) GenerateAIContent(c echo.Context) error {
 			"task_id":       task.ID,
 			"generate_type": req.GenerateType,
 			"status":        task.Status,
+		},
+	})
+}
+
+// AIGenerateKnowledgePointsRequest AI 生成知识点请求
+type AIGenerateKnowledgePointsRequest struct {
+	CategoryID uint   `json:"category_id" validate:"required"`
+	Subject    string `json:"subject" validate:"required"`
+	Topic      string `json:"topic,omitempty"`
+	Count      int    `json:"count" validate:"required,min=1,max=50"`
+}
+
+// KnowledgePointItem 知识点项
+type KnowledgePointItem struct {
+	Code        string `json:"code,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Importance  int    `json:"importance,omitempty"`
+	Frequency   string `json:"frequency,omitempty"`
+	Tips        string `json:"tips,omitempty"`
+}
+
+// AIGenerateKnowledgePoints AI 生成知识点
+// @Summary AI 生成知识点（使用 LLM 生成知识点列表供预览）
+// @Tags ContentGenerator
+// @Accept json
+// @Param request body AIGenerateKnowledgePointsRequest true "生成请求"
+// @Success 200 {object} map[string]interface{}
+// @Router /api/v1/admin/generator/ai/knowledge-points [post]
+func (h *ContentGeneratorHandler) AIGenerateKnowledgePoints(c echo.Context) error {
+	var req AIGenerateKnowledgePointsRequest
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "无效的请求参数: " + err.Error(),
+		})
+	}
+
+	// 验证参数
+	if req.CategoryID == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "category_id 参数不能为空",
+		})
+	}
+	if req.Subject == "" {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "subject 参数不能为空",
+		})
+	}
+	if req.Count <= 0 || req.Count > 50 {
+		req.Count = 10 // 默认 10 个
+	}
+
+	// 检查 LLM 生成服务是否可用
+	if h.llmGeneratorService == nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "LLM 生成服务不可用",
+		})
+	}
+
+	// 调用 LLM 生成知识点
+	items, err := h.llmGeneratorService.GenerateKnowledgePoints(c.Request().Context(), req.CategoryID, req.Subject, req.Topic, req.Count)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "生成知识点失败: " + err.Error(),
+		})
+	}
+
+	// 转换为响应格式
+	responseItems := make([]KnowledgePointItem, len(items))
+	for i, item := range items {
+		responseItems[i] = KnowledgePointItem{
+			Code:        item.Code,
+			Name:        item.Name,
+			Description: item.Description,
+			Importance:  item.Importance,
+			Frequency:   item.Frequency,
+			Tips:        item.Tips,
+		}
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "生成成功",
+		"data": map[string]interface{}{
+			"items": responseItems,
+			"count": len(responseItems),
 		},
 	})
 }

@@ -405,7 +405,7 @@ export default function SpecializedPracticePage() {
           <h2 className="text-xl font-semibold text-stone-800 mb-2">登录后开始练习</h2>
           <p className="text-stone-500 mb-4">记录学习进度，智能推送题目</p>
           <Link
-            href="/auth/login"
+            href="/login"
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium hover:shadow-lg transition-shadow"
           >
             立即登录

@@ -16,6 +16,7 @@ type ContentGeneratorTaskStatus string
 const (
 	TaskStatusPending    ContentGeneratorTaskStatus = "pending"    // 待处理
 	TaskStatusProcessing ContentGeneratorTaskStatus = "processing" // 处理中
+	TaskStatusGenerating ContentGeneratorTaskStatus = "generating" // 生成中（LLM生成）
 	TaskStatusCompleted  ContentGeneratorTaskStatus = "completed"  // 已完成
 	TaskStatusFailed     ContentGeneratorTaskStatus = "failed"     // 失败
 )
@@ -24,12 +25,13 @@ const (
 type ContentGeneratorTaskType string
 
 const (
-	TaskTypeCategory   ContentGeneratorTaskType = "category"  // 分类生成
-	TaskTypeCourse     ContentGeneratorTaskType = "course"    // 课程生成
-	TaskTypeChapter    ContentGeneratorTaskType = "chapter"   // 章节生成
-	TaskTypeKnowledge  ContentGeneratorTaskType = "knowledge" // 知识点生成
-	TaskTypeBulkImport ContentGeneratorTaskType = "bulk"      // 批量导入
-	TaskTypeTemplate   ContentGeneratorTaskType = "template"  // 模板生成
+	TaskTypeCategory   ContentGeneratorTaskType = "category"    // 分类生成
+	TaskTypeCourse     ContentGeneratorTaskType = "course"      // 课程生成
+	TaskTypeChapter    ContentGeneratorTaskType = "chapter"     // 章节生成
+	TaskTypeKnowledge  ContentGeneratorTaskType = "knowledge"   // 知识点生成
+	TaskTypeBulkImport ContentGeneratorTaskType = "bulk"        // 批量导入
+	TaskTypeTemplate   ContentGeneratorTaskType = "template"    // 模板生成
+	TaskTypeAIGenerate ContentGeneratorTaskType = "ai_generate" // AI生成
 )
 
 // ContentGeneratorTask 内容生成任务

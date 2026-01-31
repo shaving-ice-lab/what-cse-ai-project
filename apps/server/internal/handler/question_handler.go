@@ -1256,7 +1256,7 @@ func (h *QuestionHandler) AdminSaveAIGeneratedQuestions(c echo.Context) error {
 			Tips:         q.Tips,
 			Options:      model.QuestionOptions(q.Options),
 			Tags:         q.Tags,
-			Status:       model.QuestionStatusDraft, // AI生成的默认为草稿状态
+			Status:       model.QuestionStatusPublished, // AI生成的题目直接发布
 		}
 		if req.SourceType != "" {
 			question.SourceType = model.QuestionSourceType(req.SourceType)

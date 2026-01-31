@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuthStore } from "@/stores/authStore";
+import { WEB_AUTH_CONFIG } from "@what-cse/shared";
 
 // Flag to prevent multiple simultaneous refresh requests
 let isRefreshing = false;
@@ -63,7 +64,7 @@ request.interceptors.response.use(
         const { logout } = useAuthStore.getState();
         logout();
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = WEB_AUTH_CONFIG.loginPath;
         }
         return Promise.reject(error);
       }
@@ -92,7 +93,7 @@ request.interceptors.response.use(
       if (!refreshToken) {
         logout();
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = WEB_AUTH_CONFIG.loginPath;
         }
         return Promise.reject(new Error("No refresh token available"));
       }
@@ -111,13 +112,11 @@ request.interceptors.response.use(
           throw new Error(response.data.message || "Token refresh failed");
         }
 
-        const { access_token, refresh_token } = response.data.data;
+        const { access_token, refresh_token, expires_in } = response.data.data;
 
-        // Update tokens in store
-        useAuthStore.setState({
-          accessToken: access_token,
-          refreshToken: refresh_token,
-        });
+        // Update tokens in store using the enhanced method
+        const { updateTokens } = useAuthStore.getState();
+        updateTokens(access_token, refresh_token, expires_in);
 
         // Process queued requests
         processQueue(null, access_token);
@@ -132,7 +131,7 @@ request.interceptors.response.use(
         processQueue(refreshError as Error, null);
         logout();
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = WEB_AUTH_CONFIG.loginPath;
         }
         return Promise.reject(refreshError);
       } finally {

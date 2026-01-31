@@ -591,7 +591,7 @@ export default function PositionsPage() {
     <div className="min-h-screen text-stone-800">
       {/* 筛选区域 */}
       <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200/50 sticky top-0 z-30 shadow-warm-sm">
-        <div className="max-w-[1800px] mx-auto">
+        <div className="container mx-auto px-4 lg:px-6">
           {/* 主筛选行 */}
           <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
             {/* 搜索 */}
@@ -842,7 +842,7 @@ export default function PositionsPage() {
       </div>
 
       {/* 数据表格 */}
-      <div className="max-w-[1800px] mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 lg:px-6 py-4">
         <div className="bg-white border border-stone-200/50 rounded-2xl overflow-hidden shadow-card">
           {/* 加载状态 */}
           {loading && (

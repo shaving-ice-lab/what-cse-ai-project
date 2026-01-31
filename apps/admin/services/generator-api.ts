@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/authStore";
+import { ADMIN_AUTH_CONFIG } from "@what-cse/shared";
 
 // 创建独立的 axios 实例（用于生成器 API，超时时间更长）
 const generatorAxios = axios.create({
@@ -35,7 +36,7 @@ generatorAxios.interceptors.response.use(
     if (error.response?.status === 401) {
       const { logout } = useAuthStore.getState();
       logout();
-      window.location.href = "/login";
+      window.location.href = ADMIN_AUTH_CONFIG.loginPath;
     }
     const message = error.response?.data?.message || error.response?.data?.error || error.message || "请求失败";
     return Promise.reject(new Error(message));

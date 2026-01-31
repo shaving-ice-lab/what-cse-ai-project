@@ -451,7 +451,7 @@ export default function PracticeSessionPage() {
           <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-amber-400" />
           <h2 className="text-xl font-semibold text-stone-800 mb-2">请先登录</h2>
           <Link
-            href="/auth/login"
+            href="/login"
             className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
           >
             立即登录

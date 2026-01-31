@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/authStore";
+import { ADMIN_AUTH_CONFIG } from "@what-cse/shared";
 import type {
   PositionHistory,
   PositionHistoryBrief,
@@ -52,7 +53,7 @@ axiosInstance.interceptors.response.use(
     }
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = "/login";
+      window.location.href = ADMIN_AUTH_CONFIG.loginPath;
     }
     const message = error.response?.data?.message || error.message || "网络错误";
     return Promise.reject(new Error(message));

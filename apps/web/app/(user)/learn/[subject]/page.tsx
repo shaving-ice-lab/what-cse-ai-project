@@ -211,52 +211,124 @@ function KnowledgeTreeNode({
   );
 }
 
+// 根据课程属性生成封面配色
+function getCoverGradient(course: CourseBrief): { gradient: string; accent: string; pattern: string } {
+  // 基于分类 ID 和难度生成不同的配色方案
+  const colorSchemes = [
+    { gradient: "from-blue-500 via-blue-600 to-indigo-700", accent: "bg-blue-400/30", pattern: "text-blue-300/20" },
+    { gradient: "from-emerald-500 via-teal-600 to-cyan-700", accent: "bg-emerald-400/30", pattern: "text-emerald-300/20" },
+    { gradient: "from-violet-500 via-purple-600 to-indigo-700", accent: "bg-violet-400/30", pattern: "text-violet-300/20" },
+    { gradient: "from-amber-500 via-orange-600 to-red-600", accent: "bg-amber-400/30", pattern: "text-amber-300/20" },
+    { gradient: "from-rose-500 via-pink-600 to-fuchsia-700", accent: "bg-rose-400/30", pattern: "text-rose-300/20" },
+    { gradient: "from-cyan-500 via-sky-600 to-blue-700", accent: "bg-cyan-400/30", pattern: "text-cyan-300/20" },
+    { gradient: "from-lime-500 via-green-600 to-emerald-700", accent: "bg-lime-400/30", pattern: "text-lime-300/20" },
+    { gradient: "from-fuchsia-500 via-purple-600 to-violet-700", accent: "bg-fuchsia-400/30", pattern: "text-fuchsia-300/20" },
+  ];
+  
+  // 使用课程 ID 来确定配色（保证同一课程始终相同配色）
+  const index = (course.id + (course.category_id || 0)) % colorSchemes.length;
+  return colorSchemes[index];
+}
+
+// 获取难度对应的装饰图标数量
+function getDifficultyStars(difficulty: string): number {
+  switch (difficulty) {
+    case "beginner": return 1;
+    case "intermediate": return 2;
+    case "advanced": return 3;
+    default: return 1;
+  }
+}
+
 // 课程卡片组件
 function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
+  const { gradient, accent, pattern } = getCoverGradient(course);
+  const difficultyStars = getDifficultyStars(course.difficulty);
+
   return (
     <Link
       href={`/learn/course/${course.id}`}
       className="group block bg-white rounded-2xl border border-stone-200/50 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden animate-fade-in"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      {/* Cover Image */}
-      <div className="relative aspect-video bg-gradient-to-br from-stone-100 to-stone-200 overflow-hidden">
+      {/* Dynamic Cover - 文字课程专用设计 */}
+      <div className={`relative aspect-video bg-gradient-to-br ${gradient} overflow-hidden`}>
         {course.cover_image ? (
+          // 如果有封面图片则显示
           <img
             src={course.cover_image}
             alt={course.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <BookOpen className="w-12 h-12 text-stone-400" />
-          </div>
+          // 动态生成的文字课程封面
+          <>
+            {/* 装饰性几何图案背景 */}
+            <div className="absolute inset-0 overflow-hidden">
+              {/* 大圆形装饰 */}
+              <div className={`absolute -top-8 -right-8 w-32 h-32 rounded-full ${accent} blur-xl`} />
+              <div className={`absolute -bottom-4 -left-4 w-24 h-24 rounded-full ${accent} blur-lg`} />
+              
+              {/* 网格线条装饰 */}
+              <svg className={`absolute inset-0 w-full h-full ${pattern}`} xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id={`grid-${course.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
+                    <path d="M 24 0 L 0 0 0 24" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#grid-${course.id})`} />
+              </svg>
+              
+              {/* 装饰性圆点 */}
+              <div className="absolute top-4 left-4 flex gap-1.5">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className={`w-2 h-2 rounded-full ${i < difficultyStars ? 'bg-white/60' : 'bg-white/20'}`} />
+                ))}
+              </div>
+            </div>
+            
+            {/* 中心内容区 */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white">
+              {/* 图标容器 */}
+              <div className={`w-14 h-14 rounded-2xl ${accent} backdrop-blur-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <FileText className="w-7 h-7 text-white" />
+              </div>
+              
+              {/* 章节数标签 */}
+              <div className="flex items-center gap-1.5 text-white/90 text-sm font-medium">
+                <BookMarked className="w-4 h-4" />
+                <span>{course.chapter_count} 章节</span>
+              </div>
+            </div>
+
+            {/* hover 效果 - 阅读提示 */}
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="px-4 py-2 bg-white/95 rounded-full flex items-center gap-2 shadow-lg">
+                <BookOpen className="w-4 h-4 text-stone-700" />
+                <span className="text-sm font-medium text-stone-700">开始学习</span>
+                <ChevronRight className="w-4 h-4 text-stone-500" />
+              </div>
+            </div>
+          </>
         )}
 
         {/* Duration Badge */}
-        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/70 text-white text-xs rounded-lg flex items-center gap-1">
+        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs rounded-lg flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {formatDuration(course.duration_minutes)}
         </div>
 
         {/* Free/VIP Badge */}
         {course.is_free ? (
-          <div className="absolute top-2 left-2 px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-lg">
+          <div className="absolute top-2 left-2 px-2.5 py-1 bg-emerald-500 text-white text-xs font-medium rounded-lg shadow-sm">
             免费
           </div>
         ) : course.vip_only ? (
-          <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded-lg flex items-center gap-1">
+          <div className="absolute top-2 left-2 px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-medium rounded-lg flex items-center gap-1 shadow-sm">
             <Star className="w-3 h-3" />
             VIP
           </div>
         ) : null}
-
-        {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center">
-            <Play className="w-6 h-6 text-stone-800 ml-1" />
-          </div>
-        </div>
       </div>
 
       {/* Content */}

@@ -997,8 +997,8 @@ func (s *ContentGeneratorService) buildCategoryNode(cat model.CourseCategory, ch
 		node.Children = append(node.Children, s.buildCategoryNode(ch, childrenMap))
 	}
 
-	// 直接属于该分类的课程
-	courses, _ := s.courseRepo.GetByCategoryID(cat.ID, 0, 500)
+	// 直接属于该分类的课程（使用 GetAllByCategoryID 获取所有课程，不过滤状态）
+	courses, _ := s.courseRepo.GetAllByCategoryID(cat.ID, 0, 500)
 	for _, course := range courses {
 		chapters, _ := s.chapterRepo.GetByCourse(course.ID)
 		var chapterNodes []CourseTreeChapterNode
