@@ -495,6 +495,7 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentProps<"li
       ref={ref}
       data-sidebar="menu-item"
       className={cn("group/menu-item relative", className)}
+      suppressHydrationWarning
       {...props}
     />
   )
@@ -553,6 +554,7 @@ const SidebarMenuButton = React.forwardRef<
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+        suppressHydrationWarning
         {...props}
       />
     );
@@ -683,7 +685,7 @@ const SidebarMenuSub = React.forwardRef<HTMLUListElement, React.ComponentProps<"
 SidebarMenuSub.displayName = "SidebarMenuSub";
 
 const SidebarMenuSubItem = React.forwardRef<HTMLLIElement, React.ComponentProps<"li">>(
-  ({ ...props }, ref) => <li ref={ref} {...props} />
+  ({ ...props }, ref) => <li ref={ref} suppressHydrationWarning {...props} />
 );
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem";
 
@@ -711,6 +713,7 @@ const SidebarMenuSubButton = React.forwardRef<
         "group-data-[collapsible=icon]:hidden",
         className
       )}
+      suppressHydrationWarning
       {...props}
     />
   );
