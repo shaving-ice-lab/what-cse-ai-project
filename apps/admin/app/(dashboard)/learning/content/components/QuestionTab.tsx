@@ -263,6 +263,27 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
     fetchCategories();
   }, [fetchCategories]);
 
+  // 收集所有叶子分类
+  const collectLeafCategories = useCallback((
+    cats: CourseCategory[],
+    path: string[] = []
+  ): { id: number; name: string; path: string }[] => {
+    let leaves: { id: number; name: string; path: string }[] = [];
+    for (const cat of cats) {
+      const currentPath = [...path, cat.name];
+      if (!cat.children || cat.children.length === 0) {
+        leaves.push({
+          id: cat.id,
+          name: cat.name,
+          path: currentPath.join(" / "),
+        });
+      } else {
+        leaves = leaves.concat(collectLeafCategories(cat.children, currentPath));
+      }
+    }
+    return leaves;
+  }, []);
+
   // 统计信息
   const stats = useMemo(() => {
     const countCategories = (cats: CourseCategory[]): number => {
@@ -452,27 +473,6 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
       });
     }
   };
-
-  // 收集所有叶子分类
-  const collectLeafCategories = useCallback((
-    cats: CourseCategory[],
-    path: string[] = []
-  ): { id: number; name: string; path: string }[] => {
-    let leaves: { id: number; name: string; path: string }[] = [];
-    for (const cat of cats) {
-      const currentPath = [...path, cat.name];
-      if (!cat.children || cat.children.length === 0) {
-        leaves.push({
-          id: cat.id,
-          name: cat.name,
-          path: currentPath.join(" / "),
-        });
-      } else {
-        leaves = leaves.concat(collectLeafCategories(cat.children, currentPath));
-      }
-    }
-    return leaves;
-  }, []);
 
   // 随机打乱数组
   const shuffleArray = <T,>(array: T[]): T[] => {

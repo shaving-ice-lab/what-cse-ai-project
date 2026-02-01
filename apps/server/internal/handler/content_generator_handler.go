@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/what-cse/server/internal/model"
@@ -15,6 +17,7 @@ import (
 type ContentGeneratorHandler struct {
 	generatorService    *service.ContentGeneratorService
 	llmGeneratorService *service.LLMGeneratorService
+	serverBootTime      time.Time
 }
 
 // NewContentGeneratorHandler 创建内容生成处理器
@@ -22,6 +25,7 @@ func NewContentGeneratorHandler(generatorService *service.ContentGeneratorServic
 	return &ContentGeneratorHandler{
 		generatorService:    generatorService,
 		llmGeneratorService: llmGeneratorService,
+		serverBootTime:      time.Now(),
 	}
 }
 
@@ -65,6 +69,9 @@ func (h *ContentGeneratorHandler) RegisterRoutes(e *echo.Echo, authMiddleware ec
 
 	// 课程结构树（用于内容生成页面）
 	admin.GET("/course-tree", h.GetCourseTree)
+	admin.GET("/course-tree/roots", h.GetCourseTreeRoots)
+	admin.GET("/course-tree/categories/:id", h.GetCourseTreeCategoryChildren)
+	admin.GET("/course-tree/courses/:id/chapters", h.GetCourseTreeCourseChapters)
 
 	// 批量生成章节内容（按章节 ID 列表）
 	admin.POST("/generate/chapter-lessons-batch", h.BatchGenerateChapterLessons)
@@ -141,6 +148,7 @@ func (h *ContentGeneratorHandler) GetStats(c echo.Context) error {
 func (h *ContentGeneratorHandler) GetTasks(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
+	sessionOnly := strings.EqualFold(c.QueryParam("session_only"), "true") || c.QueryParam("session_only") == "1"
 
 	if page < 1 {
 		page = 1
@@ -171,6 +179,12 @@ func (h *ContentGeneratorHandler) GetTasks(c echo.Context) error {
 				responses = append(responses, convertGenerationTaskToResponse(&task))
 			}
 		}
+	}
+
+	// 仅返回本次服务启动后的任务
+	if sessionOnly {
+		responses = filterTaskResponsesByBootTime(responses, h.serverBootTime)
+		total = int64(len(responses))
 	}
 
 	// 按创建时间排序（最新的在前面）
@@ -259,6 +273,7 @@ func convertGenerationTaskToResponse(task *model.GenerationTask) *model.ContentG
 
 	return &model.ContentGeneratorTaskResponse{
 		ID:           task.ID,
+		TaskSource:   "llm",
 		TaskType:     taskType,
 		Status:       status,
 		Subject:      subject,
@@ -295,6 +310,19 @@ func sortTaskResponsesByCreatedAt(responses []*model.ContentGeneratorTaskRespons
 	sort.Slice(responses, func(i, j int) bool {
 		return responses[i].CreatedAt.After(responses[j].CreatedAt)
 	})
+}
+
+func filterTaskResponsesByBootTime(responses []*model.ContentGeneratorTaskResponse, bootTime time.Time) []*model.ContentGeneratorTaskResponse {
+	if bootTime.IsZero() || len(responses) == 0 {
+		return responses
+	}
+	filtered := make([]*model.ContentGeneratorTaskResponse, 0, len(responses))
+	for _, task := range responses {
+		if !task.CreatedAt.Before(bootTime) {
+			filtered = append(filtered, task)
+		}
+	}
+	return filtered
 }
 
 // GetTask 获取任务详情
@@ -782,6 +810,86 @@ func (h *ContentGeneratorHandler) GetCourseTree(c echo.Context) error {
 		"code":    0,
 		"message": "success",
 		"data":    tree,
+	})
+}
+
+// GetCourseTreeRoots 获取课程树根节点（用于懒加载）
+// @Summary 获取课程树顶层分类（用于懒加载）
+// @Tags ContentGenerator
+// @Success 200 {object} service.CourseTreeResponse
+// @Router /api/v1/admin/generator/course-tree/roots [get]
+func (h *ContentGeneratorHandler) GetCourseTreeRoots(c echo.Context) error {
+	tree, err := h.generatorService.GetCourseTreeRoots()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "获取课程树失败: " + err.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "success",
+		"data":    tree,
+	})
+}
+
+// GetCourseTreeCategoryChildren 获取分类子树（用于懒加载）
+// @Summary 获取分类子分类与课程（用于懒加载）
+// @Tags ContentGenerator
+// @Param id path int true "分类ID"
+// @Success 200 {object} service.CourseTreeCategoryChildrenResponse
+// @Router /api/v1/admin/generator/course-tree/categories/{id} [get]
+func (h *ContentGeneratorHandler) GetCourseTreeCategoryChildren(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "无效的分类ID",
+		})
+	}
+
+	result, err := h.generatorService.GetCourseTreeCategoryChildren(uint(id))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "获取分类子树失败: " + err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "success",
+		"data":    result,
+	})
+}
+
+// GetCourseTreeCourseChapters 获取课程章节（用于懒加载）
+// @Summary 获取课程章节（用于懒加载）
+// @Tags ContentGenerator
+// @Param id path int true "课程ID"
+// @Success 200 {object} service.CourseTreeCourseChaptersResponse
+// @Router /api/v1/admin/generator/course-tree/courses/{id}/chapters [get]
+func (h *ContentGeneratorHandler) GetCourseTreeCourseChapters(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"code":    400,
+			"message": "无效的课程ID",
+		})
+	}
+
+	result, err := h.generatorService.GetCourseTreeCourseChapters(uint(id))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    500,
+			"message": "获取课程章节失败: " + err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"code":    0,
+		"message": "success",
+		"data":    result,
 	})
 }
 

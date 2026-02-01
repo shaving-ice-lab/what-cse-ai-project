@@ -97,6 +97,33 @@ func (r *CourseCategoryRepository) GetChildren(parentID uint) ([]model.CourseCat
 	return categories, err
 }
 
+// GetChildrenCountMap returns child counts for multiple parents
+func (r *CourseCategoryRepository) GetChildrenCountMap(parentIDs []uint) (map[uint]int, error) {
+	if len(parentIDs) == 0 {
+		return map[uint]int{}, nil
+	}
+
+	type childCountRow struct {
+		ParentID uint `gorm:"column:parent_id"`
+		Count    int  `gorm:"column:count"`
+	}
+	var rows []childCountRow
+	err := r.db.Model(&model.CourseCategory{}).
+		Select("parent_id, COUNT(*) as count").
+		Where("parent_id IN ? AND is_active = ?", parentIDs, true).
+		Group("parent_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uint]int, len(rows))
+	for _, row := range rows {
+		result[row.ParentID] = row.Count
+	}
+	return result, nil
+}
+
 // GetTree gets category tree (recursive)
 func (r *CourseCategoryRepository) GetTree() ([]model.CourseCategory, error) {
 	var categories []model.CourseCategory

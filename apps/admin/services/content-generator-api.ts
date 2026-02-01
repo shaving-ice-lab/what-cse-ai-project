@@ -22,6 +22,7 @@ export type TaskType = "category" | "course" | "chapter" | "knowledge" | "bulk" 
 
 export interface ContentTask {
   id: number;
+  task_source?: "content" | "llm" | string;
   task_type: TaskType;
   status: TaskStatus;
   subject?: string;
@@ -191,7 +192,10 @@ export interface CourseTreeCourseNode {
   id: number;
   title: string;
   category_id: number;
-  chapters: CourseTreeChapterNode[];
+  chapters?: CourseTreeChapterNode[];
+  chapter_count?: number;
+  has_chapters?: boolean;
+  pending_count?: number;
 }
 
 export interface CourseTreeCategoryNode {
@@ -200,16 +204,40 @@ export interface CourseTreeCategoryNode {
   subject: string;
   children?: CourseTreeCategoryNode[];
   courses?: CourseTreeCourseNode[];
+  has_children?: boolean;
+  has_courses?: boolean;
+  pending_count?: number;
+}
+
+export interface CourseTreeSummary {
+  categories: number;
+  courses: number;
+  chapters: number;
+  pending: number;
 }
 
 export interface CourseTreeSubjectNode {
   subject: string;
   name: string;
   categories: CourseTreeCategoryNode[];
+  summary?: CourseTreeSummary;
 }
 
 export interface CourseTreeResponse {
   subjects: CourseTreeSubjectNode[];
+}
+
+export interface CourseTreeCategoryChildrenResponse {
+  category_id: number;
+  children: CourseTreeCategoryNode[];
+  courses: CourseTreeCourseNode[];
+}
+
+export interface CourseTreeCourseChaptersResponse {
+  course_id: number;
+  chapters: CourseTreeChapterNode[];
+  chapter_count: number;
+  pending_count: number;
 }
 
 // Batch generate request/response
@@ -331,7 +359,7 @@ export const contentGeneratorApi = {
   },
 
   // Tasks
-  getTasks: async (params?: { page?: number; page_size?: number; status?: TaskStatus }): Promise<{
+  getTasks: async (params?: { page?: number; page_size?: number; status?: TaskStatus; session_only?: boolean }): Promise<{
     tasks: ContentTask[];
     total: number;
   }> => {
@@ -339,6 +367,7 @@ export const contentGeneratorApi = {
     if (params?.page) query.set("page", params.page.toString());
     if (params?.page_size) query.set("page_size", params.page_size.toString());
     if (params?.status) query.set("status", params.status);
+    if (params?.session_only) query.set("session_only", "1");
     
     return apiRequest<{ tasks: ContentTask[]; total: number }>(
       `/admin/generator/tasks?${query.toString()}`
@@ -461,6 +490,29 @@ export const contentGeneratorApi = {
   // Course tree (for content generation page)
   getCourseTree: async (): Promise<CourseTreeResponse> => {
     return apiRequest<CourseTreeResponse>("/admin/generator/course-tree");
+  },
+
+  // Course tree roots (lazy loading)
+  getCourseTreeRoots: async (): Promise<CourseTreeResponse> => {
+    return apiRequest<CourseTreeResponse>("/admin/generator/course-tree/roots");
+  },
+
+  // Category children and courses (lazy loading)
+  getCourseTreeCategoryChildren: async (
+    categoryId: number
+  ): Promise<CourseTreeCategoryChildrenResponse> => {
+    return apiRequest<CourseTreeCategoryChildrenResponse>(
+      `/admin/generator/course-tree/categories/${categoryId}`
+    );
+  },
+
+  // Course chapters (lazy loading)
+  getCourseTreeCourseChapters: async (
+    courseId: number
+  ): Promise<CourseTreeCourseChaptersResponse> => {
+    return apiRequest<CourseTreeCourseChaptersResponse>(
+      `/admin/generator/course-tree/courses/${courseId}/chapters`
+    );
   },
 
   // Batch generate chapter lessons (by chapter IDs)
@@ -671,6 +723,9 @@ export const getTaskTypeLabel = (type: TaskType): string => {
   };
   return labels[type] || type;
 };
+
+export const getTaskKey = (task: Pick<ContentTask, "id" | "task_source">): string =>
+  `${task.task_source ?? "content"}:${task.id}`;
 
 export const getSubjectLabel = (subject: string): string => {
   const labels: Record<string, string> = {

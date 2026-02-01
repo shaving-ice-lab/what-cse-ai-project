@@ -68,6 +68,7 @@ import {
   CourseTreeChapterNode,
   CourseTreeCourseNode,
   CourseTreeResponse,
+  CourseTreeSummary,
   CourseTreeSubjectNode,
   getSystemPrompt,
   SUBJECTS,
@@ -75,6 +76,7 @@ import {
   getSubjectName,
   getTaskStatusColor,
   getTaskStatusLabel,
+  getTaskKey,
   getUserPromptTemplate,
   PromptVariables,
   TaskStatus,
@@ -115,6 +117,8 @@ type TestGenerationTask = {
 // 内容生成任务类型（用于任务列表显示）
 type ContentGenerationTask = {
   id: number;
+  taskKey: string;
+  taskSource?: string;
   taskType: "chapter" | "course" | "category" | "batch";
   targetId: number;
   targetName: string;
@@ -139,6 +143,39 @@ type ChapterPreviewState = {
   subjectName?: string;
 };
 
+const EMPTY_SUMMARY: CourseTreeSummary = { categories: 0, courses: 0, chapters: 0, pending: 0 };
+const CATEGORY_RENDER_BATCH = 40;
+
+const sumSummary = (a: CourseTreeSummary, b: CourseTreeSummary): CourseTreeSummary => ({
+  categories: a.categories + b.categories,
+  courses: a.courses + b.courses,
+  chapters: a.chapters + b.chapters,
+  pending: a.pending + b.pending,
+});
+
+const buildChapterOption = (
+  subject: CourseTreeSubjectNode,
+  categoryPath: string,
+  course: CourseTreeCourseNode,
+  chapter: CourseTreeChapterNode
+): ChapterOption => {
+  const labelParts = [
+    subject.name || getSubjectName(subject.subject),
+    categoryPath,
+    course.title,
+    chapter.title,
+  ].filter(Boolean);
+  return {
+    id: chapter.id,
+    title: chapter.title,
+    courseTitle: course.title,
+    categoryPath,
+    subject: subject.subject as Subject,
+    subjectName: subject.name || getSubjectName(subject.subject),
+    label: labelParts.join(" - "),
+  };
+};
+
 const collectChapterOptions = (subjects: CourseTreeSubjectNode[]): ChapterOption[] => {
   const options: ChapterOption[] = [];
   const walkCategory = (
@@ -150,21 +187,7 @@ const collectChapterOptions = (subjects: CourseTreeSubjectNode[]): ChapterOption
     for (const course of node.courses ?? []) {
       for (const chapter of course.chapters ?? []) {
         const categoryPath = nextPath.join(" / ");
-        const labelParts = [
-          subject.name || getSubjectName(subject.subject),
-          categoryPath,
-          course.title,
-          chapter.title,
-        ].filter(Boolean);
-        options.push({
-          id: chapter.id,
-          title: chapter.title,
-          courseTitle: course.title,
-          categoryPath,
-          subject: subject.subject as Subject,
-          subjectName: subject.name || getSubjectName(subject.subject),
-          label: labelParts.join(" - "),
-        });
+        options.push(buildChapterOption(subject, categoryPath, course, chapter));
       }
     }
     for (const child of node.children ?? []) {
@@ -178,6 +201,39 @@ const collectChapterOptions = (subjects: CourseTreeSubjectNode[]): ChapterOption
     }
   }
   return options;
+};
+
+const findChapterOptionById = (
+  subjects: CourseTreeSubjectNode[],
+  chapterId: number
+): ChapterOption | undefined => {
+  const walkCategory = (
+    subject: CourseTreeSubjectNode,
+    node: CourseTreeCategoryNode,
+    path: string[]
+  ): ChapterOption | undefined => {
+    const nextPath = [...path, node.name];
+    for (const course of node.courses ?? []) {
+      for (const chapter of course.chapters ?? []) {
+        if (chapter.id === chapterId) {
+          return buildChapterOption(subject, nextPath.join(" / "), course, chapter);
+        }
+      }
+    }
+    for (const child of node.children ?? []) {
+      const found = walkCategory(subject, child, nextPath);
+      if (found) return found;
+    }
+    return undefined;
+  };
+
+  for (const subject of subjects) {
+    for (const category of subject.categories ?? []) {
+      const found = walkCategory(subject, category, []);
+      if (found) return found;
+    }
+  }
+  return undefined;
 };
 
 const extractAndParseJSON = (text: string): { parsed: any; isComplete: boolean; raw: string } => {
@@ -222,27 +278,97 @@ const extractAndParseJSON = (text: string): { parsed: any; isComplete: boolean; 
   }
 };
 
-const collectCategoryStats = (nodes: CourseTreeCategoryNode[]) => {
-  let categories = 0;
-  let courses = 0;
-  let chapters = 0;
-  let pending = 0;
+const findCategoryNodeById = (
+  nodes: CourseTreeCategoryNode[],
+  categoryId: number
+): CourseTreeCategoryNode | undefined => {
   for (const node of nodes) {
-    categories += 1;
-    for (const course of node.courses ?? []) {
-      courses += 1;
-      chapters += (course.chapters ?? []).length;
-      pending += (course.chapters ?? []).filter((ch) => !ch.has_content).length;
-    }
+    if (node.id === categoryId) return node;
     if (node.children?.length) {
-      const childStats = collectCategoryStats(node.children);
-      categories += childStats.categories;
-      courses += childStats.courses;
-      chapters += childStats.chapters;
-      pending += childStats.pending;
+      const found = findCategoryNodeById(node.children, categoryId);
+      if (found) return found;
     }
   }
-  return { categories, courses, chapters, pending };
+  return undefined;
+};
+
+const findCourseNodeById = (
+  nodes: CourseTreeCategoryNode[],
+  courseId: number
+): CourseTreeCourseNode | undefined => {
+  for (const node of nodes) {
+    const course = node.courses?.find((item) => item.id === courseId);
+    if (course) return course;
+    if (node.children?.length) {
+      const found = findCourseNodeById(node.children, courseId);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+
+const updateCategoryNodeById = (
+  nodes: CourseTreeCategoryNode[],
+  categoryId: number,
+  updater: (node: CourseTreeCategoryNode) => CourseTreeCategoryNode
+): CourseTreeCategoryNode[] => {
+  let changed = false;
+  const updated = nodes.map((node) => {
+    if (node.id === categoryId) {
+      changed = true;
+      return updater(node);
+    }
+    if (node.children?.length) {
+      const updatedChildren = updateCategoryNodeById(node.children, categoryId, updater);
+      if (updatedChildren !== node.children) {
+        changed = true;
+        return { ...node, children: updatedChildren };
+      }
+    }
+    return node;
+  });
+  return changed ? updated : nodes;
+};
+
+const updateCourseNodeById = (
+  nodes: CourseTreeCategoryNode[],
+  courseId: number,
+  updater: (node: CourseTreeCourseNode) => CourseTreeCourseNode
+): CourseTreeCategoryNode[] => {
+  let changed = false;
+  const updated = nodes.map((node) => {
+    let nextNode = node;
+    if (node.courses?.length) {
+      let courseChanged = false;
+      const updatedCourses = node.courses.map((course) => {
+        if (course.id !== courseId) return course;
+        courseChanged = true;
+        return updater(course);
+      });
+      if (courseChanged) {
+        nextNode = { ...nextNode, courses: updatedCourses };
+        changed = true;
+      }
+    }
+    if (node.children?.length) {
+      const updatedChildren = updateCourseNodeById(node.children, courseId, updater);
+      if (updatedChildren !== node.children) {
+        nextNode = { ...nextNode, children: updatedChildren };
+        changed = true;
+      }
+    }
+    return nextNode;
+  });
+  return changed ? updated : nodes;
+};
+
+const buildInitialRenderCounts = (subjects: CourseTreeSubjectNode[]) => {
+  const counts: Record<string, number> = {};
+  for (const subject of subjects) {
+    const total = subject.categories?.length ?? 0;
+    counts[subject.subject] = Math.min(total, CATEGORY_RENDER_BATCH);
+  }
+  return counts;
 };
 
 const collectChapterIds = (nodes: CourseTreeCategoryNode[], onlyPending: boolean): number[] => {
@@ -266,8 +392,9 @@ const collectChapterIds = (nodes: CourseTreeCategoryNode[], onlyPending: boolean
 const buildAllExpandableIds = (subjects: CourseTreeSubjectNode[]) => {
   const ids = new Set<string>();
   const walkCategory = (node: CourseTreeCategoryNode) => {
-    const hasChildren = (node.children?.length ?? 0) > 0 || (node.courses?.length ?? 0) > 0;
-    if (hasChildren) ids.add(`cat-${node.id}`);
+    const hasLoadedChildren = (node.children?.length ?? 0) > 0;
+    const hasLoadedCourses = (node.courses?.length ?? 0) > 0;
+    if (hasLoadedChildren || hasLoadedCourses) ids.add(`cat-${node.id}`);
     for (const child of node.children ?? []) walkCategory(child);
     for (const course of node.courses ?? []) {
       if ((course.chapters?.length ?? 0) > 0) ids.add(`course-${course.id}`);
@@ -293,18 +420,31 @@ const buildFirstLevelExpandedIds = (subjects: CourseTreeSubjectNode[]) => {
   return ids;
 };
 
-const getCoursePendingCount = (course: CourseTreeCourseNode) =>
-  (course.chapters ?? []).filter((ch) => !ch.has_content).length;
+const getCoursePendingCount = (course: CourseTreeCourseNode): number | null => {
+  if (typeof course.pending_count === "number") return course.pending_count;
+  if (course.chapters) {
+    return course.chapters.filter((ch) => !ch.has_content).length;
+  }
+  return null;
+};
 
-const getCategoryPendingCount = (node: CourseTreeCategoryNode) => {
-  let pending = 0;
+const getCategoryPendingCount = (node: CourseTreeCategoryNode): number | null => {
+  if (typeof node.pending_count === "number") return node.pending_count;
+  const hasLoadedChildren = node.children !== undefined;
+  const hasLoadedCourses = node.courses !== undefined;
+  if (!hasLoadedChildren && !hasLoadedCourses) return null;
+  let pendingTotal = 0;
   for (const course of node.courses ?? []) {
-    pending += (course.chapters ?? []).filter((ch) => !ch.has_content).length;
+    const pending = getCoursePendingCount(course);
+    if (pending === null) return null;
+    pendingTotal += pending;
   }
   for (const child of node.children ?? []) {
-    pending += getCategoryPendingCount(child);
+    const pending = getCategoryPendingCount(child);
+    if (pending === null) return null;
+    pendingTotal += pending;
   }
-  return pending;
+  return pendingTotal;
 };
 
 function TaskStatusBadge({ status }: { status: TaskStatus | "cancelled" }) {
@@ -461,6 +601,7 @@ const CourseNode = memo(function CourseNode({
   generatingCourse,
   generatingChapters,
   deletingChapters,
+  loadingCourses,
   skipExisting,
 }: {
   course: CourseTreeCourseNode;
@@ -473,19 +614,30 @@ const CourseNode = memo(function CourseNode({
   generatingCourse: boolean;
   generatingChapters: Set<number>;
   deletingChapters: Set<number>;
+  loadingCourses: Set<number>;
   skipExisting: boolean;
 }) {
   const pendingCount = getCoursePendingCount(course);
-  const canGenerateCourse = pendingCount > 0 || !skipExisting;
+  const hasPending = pendingCount === null ? true : pendingCount > 0;
+  const canGenerateCourse = hasPending || !skipExisting;
+  const hasChapters =
+    (course.chapters?.length ?? 0) > 0 ||
+    (course.chapter_count ?? 0) > 0 ||
+    course.has_chapters;
+  const isLoading = loadingCourses.has(course.id);
 
   return (
     <div className="border-l border-muted pl-2 ml-3">
       <div
         className="flex items-center gap-1.5 py-1.5 pr-2 cursor-pointer hover:bg-muted/50 rounded-md group"
-        onClick={onToggle}
+        onClick={() => {
+          if (!isLoading) onToggle();
+        }}
       >
-        {(course.chapters?.length ?? 0) > 0 ? (
-          expanded ? (
+        {hasChapters ? (
+          isLoading ? (
+            <Loader2 className="h-4 w-4 text-muted-foreground animate-spin flex-shrink-0" />
+          ) : expanded ? (
             <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           ) : (
             <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -495,7 +647,7 @@ const CourseNode = memo(function CourseNode({
         )}
         <BookOpen className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
         <span className="text-sm font-medium truncate flex-1">{course.title}</span>
-        {pendingCount > 0 && (
+        {pendingCount !== null && pendingCount > 0 && (
           <Badge variant="secondary" className="text-xs flex-shrink-0">
             待生成 {pendingCount}
           </Badge>
@@ -560,6 +712,8 @@ const CategoryNode = memo(function CategoryNode({
   generatingCourse,
   generatingChapters,
   deletingChapters,
+  loadingCategories,
+  loadingCourses,
   skipExisting,
 }: {
   node: CourseTreeCategoryNode;
@@ -574,14 +728,21 @@ const CategoryNode = memo(function CategoryNode({
   generatingCourse: Set<number>;
   generatingChapters: Set<number>;
   deletingChapters: Set<number>;
+  loadingCategories: Set<number>;
+  loadingCourses: Set<number>;
   skipExisting: boolean;
 }) {
   const idStr = `cat-${node.id}`;
   const isExpanded = expandedIds.has(idStr);
-  const hasChildren = (node.children?.length ?? 0) + (node.courses?.length ?? 0) > 0;
+  const hasChildren =
+    (node.children?.length ?? 0) + (node.courses?.length ?? 0) > 0 ||
+    node.has_children ||
+    node.has_courses;
   const pendingCount = getCategoryPendingCount(node);
-  const canGenerateCategory = pendingCount > 0 || !skipExisting;
+  const hasPending = pendingCount === null ? true : pendingCount > 0;
+  const canGenerateCategory = hasPending || !skipExisting;
   const isGeneratingCategory = generatingCategories.has(node.id);
+  const isLoading = loadingCategories.has(node.id);
 
   return (
     <div className="py-0.5">
@@ -596,8 +757,11 @@ const CategoryNode = memo(function CategoryNode({
             type="button"
             className="flex-shrink-0 p-0 border-0 bg-transparent"
             onClick={() => onToggle(idStr)}
+            disabled={isLoading}
           >
-            {isExpanded ? (
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+            ) : isExpanded ? (
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             ) : (
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -607,7 +771,7 @@ const CategoryNode = memo(function CategoryNode({
           <span className="w-4" />
         )}
         <span className="text-sm font-medium truncate flex-1">{node.name}</span>
-        {pendingCount > 0 && (
+        {pendingCount !== null && pendingCount > 0 && (
           <Badge variant="secondary" className="text-xs flex-shrink-0">
             待生成 {pendingCount}
           </Badge>
@@ -651,6 +815,8 @@ const CategoryNode = memo(function CategoryNode({
               generatingCourse={generatingCourse}
               generatingChapters={generatingChapters}
               deletingChapters={deletingChapters}
+              loadingCategories={loadingCategories}
+              loadingCourses={loadingCourses}
               skipExisting={skipExisting}
             />
           ))}
@@ -667,6 +833,7 @@ const CategoryNode = memo(function CategoryNode({
               generatingCourse={generatingCourse.has(course.id)}
               generatingChapters={generatingChapters}
               deletingChapters={deletingChapters}
+              loadingCourses={loadingCourses}
               skipExisting={skipExisting}
             />
           ))}
@@ -684,6 +851,9 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const [autoImport, setAutoImport] = useState(true);
   const [autoApprove, setAutoApprove] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [categoryRenderCounts, setCategoryRenderCounts] = useState<Record<string, number>>({});
+  const [loadingCategoryIds, setLoadingCategoryIds] = useState<Set<number>>(new Set());
+  const [loadingCourseIds, setLoadingCourseIds] = useState<Set<number>>(new Set());
   const [generatingChapters, setGeneratingChapters] = useState<Set<number>>(new Set());
   const [generatingCourses, setGeneratingCourses] = useState<Set<number>>(new Set());
   const [generatingCategories, setGeneratingCategories] = useState<Set<number>>(new Set());
@@ -704,6 +874,8 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const [promptPreviewOpen, setPromptPreviewOpen] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testResultOpen, setTestResultOpen] = useState(false);
+  const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
+  const [loadingChapterOptions, setLoadingChapterOptions] = useState(false);
   const [selectedTestTaskId, setSelectedTestTaskId] = useState<number | null>(null);
   const [previewChapterId, setPreviewChapterId] = useState<string>("");
   const [testChapterId, setTestChapterId] = useState<string>("");
@@ -735,8 +907,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const fetchTree = useCallback(async () => {
     setLoadingTree(true);
     try {
-      const result = await contentGeneratorApi.getCourseTree();
+      const result = await contentGeneratorApi.getCourseTreeRoots();
       setTree(result);
+      setCategoryRenderCounts(buildInitialRenderCounts(result.subjects));
+      setExpandedIds(new Set());
+      setLoadingCategoryIds(new Set());
+      setLoadingCourseIds(new Set());
       // 默认收缩状态，不自动展开任何节点
       // 如果需要展开第一层，可以使用: setExpandedIds(buildFirstLevelExpandedIds(result.subjects));
     } catch (error) {
@@ -755,6 +931,13 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         ? tree.subjects
         : tree.subjects.filter((s) => s.subject === filterSubject);
       setExpandedIds(buildAllExpandableIds(scopedSubjects));
+      setCategoryRenderCounts((prev) => {
+        const next = { ...prev };
+        for (const subject of scopedSubjects) {
+          next[subject.subject] = subject.categories?.length ?? 0;
+        }
+        return next;
+      });
     }
   }, [tree, filterSubject]);
 
@@ -767,9 +950,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const fetchGenerationTasks = useCallback(async () => {
     setLoadingTasks(true);
     try {
-      const result = await contentGeneratorApi.getTasks({ page: 1, page_size: 100 });
+      const result = await contentGeneratorApi.getTasks({ page: 1, page_size: 100, session_only: true });
       const tasks: ContentGenerationTask[] = (result.tasks || []).map((task) => ({
         id: task.id,
+        taskKey: getTaskKey(task),
+        taskSource: task.task_source,
         taskType: task.task_type as ContentGenerationTask["taskType"],
         targetId: task.id,
         targetName: task.template_name || `任务 #${task.id}`,
@@ -793,13 +978,16 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   // 添加任务到列表（生成时调用）
   const addGenerationTask = useCallback((task: ContentGenerationTask) => {
     setGenerationTasks((prev) => {
-      const exists = prev.some((t) => t.id === task.id);
+      const exists = prev.some((t) => t.taskKey === task.taskKey);
       if (exists) {
-        return prev.map((t) => (t.id === task.id ? task : t));
+        return prev.map((t) => (t.taskKey === task.taskKey ? task : t));
       }
       return [task, ...prev];
     });
-    generationTasksRef.current = [...generationTasksRef.current.filter((t) => t.id !== task.id), task];
+    generationTasksRef.current = [
+      ...generationTasksRef.current.filter((t) => t.taskKey !== task.taskKey),
+      task,
+    ];
   }, []);
 
   // 更新任务状态
@@ -818,9 +1006,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
 
     const interval = setInterval(async () => {
       try {
-        const result = await contentGeneratorApi.getTasks({ page: 1, page_size: 100 });
+        const result = await contentGeneratorApi.getTasks({ page: 1, page_size: 100, session_only: true });
         const tasks: ContentGenerationTask[] = (result.tasks || []).map((task) => ({
           id: task.id,
+          taskKey: getTaskKey(task),
+          taskSource: task.task_source,
           taskType: task.task_type as ContentGenerationTask["taskType"],
           targetId: task.id,
           targetName: task.template_name || `任务 #${task.id}`,
@@ -884,10 +1074,40 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
     failed: generationTasks.filter((t) => t.status === "failed").length,
   }), [generationTasks]);
 
-  const chapterOptions = useMemo(() => {
-    if (!tree) return [];
-    return collectChapterOptions(tree.subjects);
-  }, [tree]);
+  const chapterOptionMap = useMemo(
+    () => new Map(chapterOptions.map((option) => [option.id, option])),
+    [chapterOptions]
+  );
+
+  const fetchChapterOptions = useCallback(async () => {
+    setLoadingChapterOptions(true);
+    try {
+      const result = await contentGeneratorApi.getCourseTree();
+      setChapterOptions(collectChapterOptions(result.subjects));
+    } catch (error) {
+      console.error("Failed to fetch chapter options:", error);
+      toast.error("加载章节列表失败");
+    } finally {
+      setLoadingChapterOptions(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if ((promptPreviewOpen || testDialogOpen) && chapterOptions.length === 0 && !loadingChapterOptions) {
+      fetchChapterOptions();
+    }
+  }, [promptPreviewOpen, testDialogOpen, chapterOptions.length, loadingChapterOptions, fetchChapterOptions]);
+
+  const resolveChapterOptionById = useCallback(
+    (chapterId: number) => {
+      if (chapterOptionMap.size > 0) {
+        return chapterOptionMap.get(chapterId);
+      }
+      if (!tree) return undefined;
+      return findChapterOptionById(tree.subjects, chapterId);
+    },
+    [chapterOptionMap, tree]
+  );
 
   const buildPromptVarsFromChapter = useCallback((option: ChapterOption): PromptVariables => {
     const categoryPath = option.categoryPath || "未知分类";
@@ -902,22 +1122,13 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   }, []);
 
   const summary = useMemo(() => {
-    if (!tree) return { categories: 0, courses: 0, chapters: 0, pending: 0 };
+    if (!tree) return { ...EMPTY_SUMMARY };
     const scopedSubjects = filterSubject === "all"
       ? tree.subjects
       : tree.subjects.filter((s) => s.subject === filterSubject);
-    return scopedSubjects.reduce(
-      (acc, subject) => {
-        const stats = collectCategoryStats(subject.categories);
-        return {
-          categories: acc.categories + stats.categories,
-          courses: acc.courses + stats.courses,
-          chapters: acc.chapters + stats.chapters,
-          pending: acc.pending + stats.pending,
-        };
-      },
-      { categories: 0, courses: 0, chapters: 0, pending: 0 }
-    );
+    return scopedSubjects.reduce((acc, subject) => {
+      return sumSummary(acc, subject.summary ?? EMPTY_SUMMARY);
+    }, { ...EMPTY_SUMMARY });
   }, [tree, filterSubject]);
 
   useEffect(() => {
@@ -935,7 +1146,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
 
   const handlePreviewChapterChange = (value: string) => {
     setPreviewChapterId(value);
-    const option = chapterOptions.find((item) => item.id.toString() === value);
+    const option = chapterOptionMap.get(Number(value));
     if (option) {
       setPromptVars(buildPromptVarsFromChapter(option));
     }
@@ -943,7 +1154,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
 
   const handleTestChapterChange = (value: string) => {
     setTestChapterId(value);
-    const option = chapterOptions.find((item) => item.id.toString() === value);
+    const option = chapterOptionMap.get(Number(value));
     if (option) {
       if (testUseCustomPrompt) {
         setTestUserPromptTemplate(buildUserPrompt(buildPromptVarsFromChapter(option)));
@@ -1016,7 +1227,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
       setContentPreviewRaw("");
       setContentPreviewTruncated(false);
 
-      const option = chapterOptions.find((item) => item.id === chapter.id);
+      const option = resolveChapterOptionById(chapter.id);
       setContentPreviewChapter({
         chapterId: chapter.id,
         title: option?.title || chapter.title || `?? #${chapter.id}`,
@@ -1059,7 +1270,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         setContentPreviewLoading(false);
       }
     },
-    [chapterOptions]
+    [resolveChapterOptionById]
   );
 
   const refreshTestTasks = useCallback(
@@ -1121,17 +1332,181 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
     return () => clearInterval(timer);
   }, [refreshTestTasks, testTasks]);
 
-  const toggleExpanded = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+  const updateCategoryInTree = useCallback(
+    (categoryId: number, updater: (node: CourseTreeCategoryNode) => CourseTreeCategoryNode) => {
+      setTree((prev) => {
+        if (!prev) return prev;
+        let changed = false;
+        const subjects = prev.subjects.map((subject) => {
+          const updatedCategories = updateCategoryNodeById(subject.categories ?? [], categoryId, updater);
+          if (updatedCategories !== subject.categories) {
+            changed = true;
+            return { ...subject, categories: updatedCategories };
+          }
+          return subject;
+        });
+        return changed ? { ...prev, subjects } : prev;
+      });
+    },
+    []
+  );
+
+  const updateCourseInTree = useCallback(
+    (courseId: number, updater: (node: CourseTreeCourseNode) => CourseTreeCourseNode) => {
+      setTree((prev) => {
+        if (!prev) return prev;
+        let changed = false;
+        const subjects = prev.subjects.map((subject) => {
+          const updatedCategories = updateCourseNodeById(subject.categories ?? [], courseId, updater);
+          if (updatedCategories !== subject.categories) {
+            changed = true;
+            return { ...subject, categories: updatedCategories };
+          }
+          return subject;
+        });
+        return changed ? { ...prev, subjects } : prev;
+      });
+    },
+    []
+  );
+
+  const findCategoryInTree = useCallback(
+    (categoryId: number) => {
+      if (!tree) return undefined;
+      for (const subject of tree.subjects) {
+        const found = findCategoryNodeById(subject.categories ?? [], categoryId);
+        if (found) return found;
       }
-      return next;
+      return undefined;
+    },
+    [tree]
+  );
+
+  const findCourseInTree = useCallback(
+    (courseId: number) => {
+      if (!tree) return undefined;
+      for (const subject of tree.subjects) {
+        const found = findCourseNodeById(subject.categories ?? [], courseId);
+        if (found) return found;
+      }
+      return undefined;
+    },
+    [tree]
+  );
+
+  const loadCategoryChildren = useCallback(
+    async (categoryId: number) => {
+      if (loadingCategoryIds.has(categoryId)) return;
+      setLoadingCategoryIds((prev) => {
+        const next = new Set(prev);
+        next.add(categoryId);
+        return next;
+      });
+      try {
+        const result = await contentGeneratorApi.getCourseTreeCategoryChildren(categoryId);
+        updateCategoryInTree(categoryId, (node) => ({
+          ...node,
+          children: result.children,
+          courses: result.courses,
+          has_children: result.children.length > 0,
+          has_courses: result.courses.length > 0,
+        }));
+      } catch (error) {
+        console.error("Failed to load category children:", error);
+        toast.error("加载分类失败");
+      } finally {
+        setLoadingCategoryIds((prev) => {
+          const next = new Set(prev);
+          next.delete(categoryId);
+          return next;
+        });
+      }
+    },
+    [loadingCategoryIds, updateCategoryInTree]
+  );
+
+  const loadCourseChapters = useCallback(
+    async (courseId: number) => {
+      if (loadingCourseIds.has(courseId)) return;
+      setLoadingCourseIds((prev) => {
+        const next = new Set(prev);
+        next.add(courseId);
+        return next;
+      });
+      try {
+        const result = await contentGeneratorApi.getCourseTreeCourseChapters(courseId);
+        updateCourseInTree(courseId, (course) => ({
+          ...course,
+          chapters: result.chapters,
+          pending_count: result.pending_count,
+          chapter_count: result.chapter_count,
+          has_chapters: result.chapter_count > 0,
+        }));
+      } catch (error) {
+        console.error("Failed to load course chapters:", error);
+        toast.error("加载课程章节失败");
+      } finally {
+        setLoadingCourseIds((prev) => {
+          const next = new Set(prev);
+          next.delete(courseId);
+          return next;
+        });
+      }
+    },
+    [loadingCourseIds, updateCourseInTree]
+  );
+
+  const handleToggleExpanded = useCallback(
+    (id: string) => {
+      const isExpanded = expandedIds.has(id);
+      if (isExpanded) {
+        setExpandedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        return;
+      }
+
+      const [type, rawId] = id.split("-");
+      const numericId = Number(rawId);
+      if (!Number.isNaN(numericId)) {
+        if (type === "cat") {
+          const node = findCategoryInTree(numericId);
+          const shouldLoad =
+            node &&
+            node.children === undefined &&
+            node.courses === undefined &&
+            ((node.has_children ?? false) || (node.has_courses ?? false));
+          if (shouldLoad) {
+            loadCategoryChildren(numericId);
+          }
+        }
+        if (type === "course") {
+          const course = findCourseInTree(numericId);
+          const shouldLoad =
+            course &&
+            course.chapters === undefined &&
+            ((course.chapter_count ?? 0) > 0 || course.has_chapters);
+          if (shouldLoad) {
+            loadCourseChapters(numericId);
+          }
+        }
+      }
+
+      setExpandedIds((prev) => new Set(prev).add(id));
+    },
+    [expandedIds, findCategoryInTree, findCourseInTree, loadCategoryChildren, loadCourseChapters]
+  );
+
+  const handleLoadMoreCategories = useCallback((subjectKey: string, total: number) => {
+    setCategoryRenderCounts((prev) => {
+      const current = prev[subjectKey] ?? Math.min(total, CATEGORY_RENDER_BATCH);
+      const nextCount = Math.min(total, current + CATEGORY_RENDER_BATCH);
+      if (nextCount === current) return prev;
+      return { ...prev, [subjectKey]: nextCount };
     });
-  };
+  }, []);
 
   const handleGenerateChapter = async (chapterId: number) => {
     setGeneratingChapters((prev) => new Set(prev).add(chapterId));
@@ -1145,9 +1520,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
       
       // 添加任务到列表并切换到生成中 Tab
       if (result.task) {
-        const option = chapterOptions.find((c) => c.id === chapterId);
+        const option = resolveChapterOptionById(chapterId);
+        const taskKey = getTaskKey(result.task);
         addGenerationTask({
           id: result.task.id,
+          taskKey,
+          taskSource: result.task.task_source,
           taskType: "chapter",
           targetId: chapterId,
           targetName: option?.title || `章节 #${chapterId}`,
@@ -1269,19 +1647,19 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   };
 
   const handleGenerateAll = async () => {
-    if (!tree) return;
-    const targetSubjects = filterSubject === "all"
-      ? tree.subjects
-      : tree.subjects.filter((s) => s.subject === filterSubject);
-    const chapterIds = targetSubjects.flatMap((subject) =>
-      collectChapterIds(subject.categories ?? [], skipExisting)
-    );
-    if (chapterIds.length === 0) {
-      toast.info(skipExisting ? "没有需要生成的章节（已跳过已有内容）" : "没有需要生成的章节");
-      return;
-    }
     setGeneratingAll(true);
     try {
+      const fullTree = await contentGeneratorApi.getCourseTree();
+      const targetSubjects = filterSubject === "all"
+        ? fullTree.subjects
+        : fullTree.subjects.filter((s) => s.subject === filterSubject);
+      const chapterIds = targetSubjects.flatMap((subject) =>
+        collectChapterIds(subject.categories ?? [], skipExisting)
+      );
+      if (chapterIds.length === 0) {
+        toast.info(skipExisting ? "没有需要生成的章节（已跳过已有内容）" : "没有需要生成的章节");
+        return;
+      }
       const result = await contentGeneratorApi.batchGenerateChapterLessons({
         chapter_ids: chapterIds,
         subject: filterSubject !== "all" ? filterSubject : undefined,
@@ -1326,7 +1704,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
       return;
     }
     const chapterId = Number(testChapterId);
-    const option = chapterOptions.find((item) => item.id === chapterId);
+    const option = resolveChapterOptionById(chapterId);
     setTestGenerating(true);
 
     try {
@@ -1669,7 +2047,16 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   )}
                   {!loadingTree &&
                     subjectsToShow.map((subject) => {
-                      const stats = collectCategoryStats(subject.categories ?? []);
+                      const stats = subject.summary ?? EMPTY_SUMMARY;
+                      const totalCategories = subject.categories?.length ?? 0;
+                      const fallbackCount = Math.min(totalCategories, CATEGORY_RENDER_BATCH);
+                      const configuredCount = categoryRenderCounts[subject.subject];
+                      const visibleCount = Math.min(
+                        typeof configuredCount === "number" ? configuredCount : fallbackCount,
+                        totalCategories
+                      );
+                      const visibleCategories = (subject.categories ?? []).slice(0, visibleCount);
+                      const remainingCount = totalCategories - visibleCount;
                       return (
                         <div key={subject.subject} className="space-y-2">
                           <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-gradient-to-r from-muted/50 to-transparent">
@@ -1690,12 +2077,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                             </div>
                           </div>
                           <div className="pl-1">
-                            {(subject.categories ?? []).map((category) => (
+                            {visibleCategories.map((category) => (
                               <CategoryNode
                                 key={category.id}
                                 node={category}
                                 expandedIds={expandedIds}
-                                onToggle={toggleExpanded}
+                                onToggle={handleToggleExpanded}
                                 onGenerateCategory={handleGenerateCategory}
                                 onGenerateCourse={handleGenerateCourse}
                                 onGenerateChapter={handleGenerateChapter}
@@ -1705,9 +2092,23 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                                 generatingCourse={generatingCourses}
                                 generatingChapters={generatingChapters}
                                 deletingChapters={deletingChapters}
+                                loadingCategories={loadingCategoryIds}
+                                loadingCourses={loadingCourseIds}
                                 skipExisting={skipExisting}
                               />
                             ))}
+                            {remainingCount > 0 && (
+                              <div className="flex items-center justify-center pt-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleLoadMoreCategories(subject.subject, totalCategories)}
+                                  className="h-7 text-xs text-muted-foreground"
+                                >
+                                  加载更多分类（剩余 {remainingCount}）
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -1762,7 +2163,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   <div className="divide-y divide-border/50">
                     {generatingTasksList.map((task, index) => (
                       <div 
-                        key={task.id} 
+                        key={task.taskKey} 
                         className="px-4 py-3 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 transition-colors"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
@@ -1890,7 +2291,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   <div className="divide-y divide-border/50">
                     {completedTasksList.map((task) => (
                       <div 
-                        key={task.id} 
+                        key={task.taskKey} 
                         className={cn(
                           "px-4 py-3 transition-colors",
                           task.status === "completed" 
@@ -2007,7 +2408,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                     <SelectValue placeholder="请选择要预览的章节" />
                   </SelectTrigger>
                   <SelectContent>
-                    {chapterOptions.length === 0 && (
+                    {loadingChapterOptions && (
+                      <SelectItem value="loading" disabled>
+                        正在加载章节...
+                      </SelectItem>
+                    )}
+                    {!loadingChapterOptions && chapterOptions.length === 0 && (
                       <SelectItem value="empty" disabled>
                         暂无可选章节
                       </SelectItem>
@@ -2153,7 +2559,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                     <SelectValue placeholder="请选择测试章节" />
                   </SelectTrigger>
                   <SelectContent>
-                    {chapterOptions.length === 0 && (
+                    {loadingChapterOptions && (
+                      <SelectItem value="loading" disabled>
+                        正在加载章节...
+                      </SelectItem>
+                    )}
+                    {!loadingChapterOptions && chapterOptions.length === 0 && (
                       <SelectItem value="empty" disabled>
                         暂无可选章节
                       </SelectItem>

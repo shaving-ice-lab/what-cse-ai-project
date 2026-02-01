@@ -43,6 +43,7 @@ import {
   getTaskStatusLabel,
   getTaskTypeLabel,
   getTaskStatusColor,
+  getTaskKey,
 } from "@/services/content-generator-api";
 
 interface TaskHistoryPanelProps {
@@ -241,7 +242,7 @@ export function TaskHistoryPanel({
                     <TableBody>
                       {filteredTasks.map((task) => (
                         <TableRow
-                          key={`task-${task.id}`}
+                          key={getTaskKey(task)}
                           className={cn(
                             "transition-colors border-b border-border/50",
                             task.status === "completed"

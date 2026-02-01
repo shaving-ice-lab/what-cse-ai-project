@@ -874,10 +874,21 @@ type CourseTreeChapterNode struct {
 
 // CourseTreeCourseNode 课程树课程节点
 type CourseTreeCourseNode struct {
-	ID        uint                    `json:"id"`
-	Title     string                  `json:"title"`
-	CategoryID uint                   `json:"category_id"`
-	Chapters  []CourseTreeChapterNode `json:"chapters"`
+	ID           uint                    `json:"id"`
+	Title        string                  `json:"title"`
+	CategoryID   uint                    `json:"category_id"`
+	Chapters     []CourseTreeChapterNode `json:"chapters,omitempty"`
+	ChapterCount int                     `json:"chapter_count"`
+	HasChapters  bool                    `json:"has_chapters"`
+	PendingCount *int                    `json:"pending_count,omitempty"`
+}
+
+// CourseTreeSummary 课程树统计信息
+type CourseTreeSummary struct {
+	Categories int `json:"categories"`
+	Courses    int `json:"courses"`
+	Chapters   int `json:"chapters"`
+	Pending    int `json:"pending"`
 }
 
 // CourseTreeCategoryNode 课程树分类节点
@@ -887,6 +898,9 @@ type CourseTreeCategoryNode struct {
 	Subject  string                    `json:"subject"`
 	Children []CourseTreeCategoryNode  `json:"children,omitempty"`
 	Courses  []CourseTreeCourseNode    `json:"courses,omitempty"`
+	HasChildren bool                   `json:"has_children"`
+	HasCourses  bool                   `json:"has_courses"`
+	PendingCount *int                  `json:"pending_count,omitempty"`
 }
 
 // CourseTreeSubjectNode 课程树科目节点
@@ -894,11 +908,27 @@ type CourseTreeSubjectNode struct {
 	Subject    string                   `json:"subject"`
 	Name       string                   `json:"name"`
 	Categories []CourseTreeCategoryNode `json:"categories"`
+	Summary    *CourseTreeSummary       `json:"summary,omitempty"`
 }
 
 // CourseTreeResponse 课程树响应
 type CourseTreeResponse struct {
 	Subjects []CourseTreeSubjectNode `json:"subjects"`
+}
+
+// CourseTreeCategoryChildrenResponse 分类子树响应
+type CourseTreeCategoryChildrenResponse struct {
+	CategoryID uint                   `json:"category_id"`
+	Children   []CourseTreeCategoryNode `json:"children"`
+	Courses    []CourseTreeCourseNode `json:"courses"`
+}
+
+// CourseTreeCourseChaptersResponse 课程章节响应
+type CourseTreeCourseChaptersResponse struct {
+	CourseID     uint                    `json:"course_id"`
+	Chapters     []CourseTreeChapterNode `json:"chapters"`
+	ChapterCount int                     `json:"chapter_count"`
+	PendingCount int                     `json:"pending_count"`
 }
 
 var subjectNames = map[string]string{
@@ -983,6 +1013,232 @@ func (s *ContentGeneratorService) GetCourseTreeForContent() (*CourseTreeResponse
 	return &CourseTreeResponse{Subjects: subjects}, nil
 }
 
+// GetCourseTreeRoots 获取课程树根节点（仅返回顶层分类，适用于懒加载）
+func (s *ContentGeneratorService) GetCourseTreeRoots() (*CourseTreeResponse, error) {
+	roots, err := s.categoryRepo.GetTopLevel()
+	if err != nil {
+		return nil, err
+	}
+
+	summaries, err := s.getCourseTreeSubjectSummaries()
+	if err != nil {
+		return nil, err
+	}
+
+	rootIDs := make([]uint, 0, len(roots))
+	for _, cat := range roots {
+		rootIDs = append(rootIDs, cat.ID)
+	}
+	childCounts, err := s.categoryRepo.GetChildrenCountMap(rootIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	bySubject := make(map[string][]CourseTreeCategoryNode)
+	for _, cat := range roots {
+		hasChildren := childCounts[cat.ID] > 0
+		bySubject[cat.Subject] = append(bySubject[cat.Subject], CourseTreeCategoryNode{
+			ID:         cat.ID,
+			Name:       cat.Name,
+			Subject:    cat.Subject,
+			HasChildren: hasChildren,
+			HasCourses:  cat.CourseCount > 0,
+		})
+	}
+
+	var subjects []CourseTreeSubjectNode
+	subjectOrder := []string{"xingce", "shenlun", "mianshi", "gongji"}
+	for _, subj := range subjectOrder {
+		cats := bySubject[subj]
+		if len(cats) == 0 {
+			continue
+		}
+		name := subjectNames[subj]
+		if name == "" {
+			name = subj
+		}
+		summary := summaries[subj]
+		if summary == nil {
+			summary = &CourseTreeSummary{}
+		}
+		subjects = append(subjects, CourseTreeSubjectNode{
+			Subject:    subj,
+			Name:       name,
+			Categories: cats,
+			Summary:    summary,
+		})
+	}
+
+	return &CourseTreeResponse{Subjects: subjects}, nil
+}
+
+// GetCourseTreeCategoryChildren 获取分类的子分类与课程（用于懒加载）
+func (s *ContentGeneratorService) GetCourseTreeCategoryChildren(categoryID uint) (*CourseTreeCategoryChildrenResponse, error) {
+	children, err := s.categoryRepo.GetChildren(categoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	childIDs := make([]uint, 0, len(children))
+	for _, child := range children {
+		childIDs = append(childIDs, child.ID)
+	}
+	childCounts, err := s.categoryRepo.GetChildrenCountMap(childIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	childNodes := make([]CourseTreeCategoryNode, 0, len(children))
+	for _, child := range children {
+		childNodes = append(childNodes, CourseTreeCategoryNode{
+			ID:         child.ID,
+			Name:       child.Name,
+			Subject:    child.Subject,
+			HasChildren: childCounts[child.ID] > 0,
+			HasCourses:  child.CourseCount > 0,
+		})
+	}
+
+	courses, err := s.courseRepo.GetAllByCategoryID(categoryID, 0, 500)
+	if err != nil {
+		return nil, err
+	}
+	courseNodes := make([]CourseTreeCourseNode, 0, len(courses))
+	for _, course := range courses {
+		courseNodes = append(courseNodes, CourseTreeCourseNode{
+			ID:           course.ID,
+			Title:        course.Title,
+			CategoryID:   course.CategoryID,
+			ChapterCount: course.ChapterCount,
+			HasChapters:  course.ChapterCount > 0,
+		})
+	}
+
+	return &CourseTreeCategoryChildrenResponse{
+		CategoryID: categoryID,
+		Children:   childNodes,
+		Courses:    courseNodes,
+	}, nil
+}
+
+// GetCourseTreeCourseChapters 获取课程章节（用于懒加载）
+func (s *ContentGeneratorService) GetCourseTreeCourseChapters(courseID uint) (*CourseTreeCourseChaptersResponse, error) {
+	chapters, err := s.chapterRepo.GetByCourse(courseID)
+	if err != nil {
+		return nil, err
+	}
+
+	pending := 0
+	chapterNodes := make([]CourseTreeChapterNode, 0, len(chapters))
+	for _, ch := range chapters {
+		hasContent := len(ch.ContentJSON) > 0 && string(ch.ContentJSON) != "{}" && string(ch.ContentJSON) != "null"
+		if !hasContent {
+			pending += 1
+		}
+		chapterNodes = append(chapterNodes, CourseTreeChapterNode{
+			ID:         ch.ID,
+			Title:      ch.Title,
+			CourseID:   ch.CourseID,
+			HasContent: hasContent,
+		})
+	}
+
+	return &CourseTreeCourseChaptersResponse{
+		CourseID:     courseID,
+		Chapters:     chapterNodes,
+		ChapterCount: len(chapterNodes),
+		PendingCount: pending,
+	}, nil
+}
+
+func (s *ContentGeneratorService) getCourseTreeSubjectSummaries() (map[string]*CourseTreeSummary, error) {
+	summaries := make(map[string]*CourseTreeSummary)
+	ensure := func(subject string) *CourseTreeSummary {
+		if subject == "" {
+			return nil
+		}
+		if summaries[subject] == nil {
+			summaries[subject] = &CourseTreeSummary{}
+		}
+		return summaries[subject]
+	}
+
+	type countRow struct {
+		Subject string `gorm:"column:subject"`
+		Count   int    `gorm:"column:count"`
+	}
+
+	var categoryRows []countRow
+	if err := s.db.Model(&model.CourseCategory{}).
+		Select("subject, COUNT(*) as count").
+		Where("deleted_at IS NULL AND is_active = ?", true).
+		Group("subject").
+		Scan(&categoryRows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range categoryRows {
+		if summary := ensure(row.Subject); summary != nil {
+			summary.Categories = row.Count
+		}
+	}
+
+	var courseRows []countRow
+	if err := s.db.Raw(`
+		SELECT cat.subject as subject, COUNT(*) as count
+		FROM what_courses c
+		INNER JOIN what_course_categories cat ON c.category_id = cat.id
+		WHERE c.deleted_at IS NULL AND cat.deleted_at IS NULL AND cat.is_active = 1
+		GROUP BY cat.subject
+	`).Scan(&courseRows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range courseRows {
+		if summary := ensure(row.Subject); summary != nil {
+			summary.Courses = row.Count
+		}
+	}
+
+	var chapterRows []countRow
+	if err := s.db.Raw(`
+		SELECT cat.subject as subject, COUNT(*) as count
+		FROM what_course_chapters ch
+		INNER JOIN what_courses c ON ch.course_id = c.id
+		INNER JOIN what_course_categories cat ON c.category_id = cat.id
+		WHERE ch.deleted_at IS NULL AND c.deleted_at IS NULL AND cat.deleted_at IS NULL AND cat.is_active = 1
+		GROUP BY cat.subject
+	`).Scan(&chapterRows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range chapterRows {
+		if summary := ensure(row.Subject); summary != nil {
+			summary.Chapters = row.Count
+		}
+	}
+
+	var pendingRows []countRow
+	if err := s.db.Raw(`
+		SELECT cat.subject as subject, COUNT(*) as count
+		FROM what_course_chapters ch
+		INNER JOIN what_courses c ON ch.course_id = c.id
+		INNER JOIN what_course_categories cat ON c.category_id = cat.id
+		WHERE ch.deleted_at IS NULL
+		  AND c.deleted_at IS NULL
+		  AND cat.deleted_at IS NULL
+		  AND cat.is_active = 1
+		  AND (ch.content_json IS NULL OR JSON_LENGTH(ch.content_json) = 0)
+		GROUP BY cat.subject
+	`).Scan(&pendingRows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range pendingRows {
+		if summary := ensure(row.Subject); summary != nil {
+			summary.Pending = row.Count
+		}
+	}
+
+	return summaries, nil
+}
+
 // buildCategoryNode 递归构建分类节点（含子分类与课程）
 func (s *ContentGeneratorService) buildCategoryNode(cat model.CourseCategory, childrenMap map[uint][]model.CourseCategory) CourseTreeCategoryNode {
 	node := CourseTreeCategoryNode{
@@ -1002,8 +1258,12 @@ func (s *ContentGeneratorService) buildCategoryNode(cat model.CourseCategory, ch
 	for _, course := range courses {
 		chapters, _ := s.chapterRepo.GetByCourse(course.ID)
 		var chapterNodes []CourseTreeChapterNode
+		coursePending := 0
 		for _, ch := range chapters {
 			hasContent := len(ch.ContentJSON) > 0 && string(ch.ContentJSON) != "{}" && string(ch.ContentJSON) != "null"
+			if !hasContent {
+				coursePending += 1
+			}
 			chapterNodes = append(chapterNodes, CourseTreeChapterNode{
 				ID:         ch.ID,
 				Title:      ch.Title,
@@ -1011,13 +1271,32 @@ func (s *ContentGeneratorService) buildCategoryNode(cat model.CourseCategory, ch
 				HasContent: hasContent,
 			})
 		}
+		coursePendingCopy := coursePending
 		node.Courses = append(node.Courses, CourseTreeCourseNode{
-			ID:         course.ID,
-			Title:      course.Title,
-			CategoryID: cat.ID,
-			Chapters:   chapterNodes,
+			ID:           course.ID,
+			Title:        course.Title,
+			CategoryID:   cat.ID,
+			Chapters:     chapterNodes,
+			ChapterCount: len(chapterNodes),
+			HasChapters:  len(chapterNodes) > 0,
+			PendingCount: &coursePendingCopy,
 		})
 	}
+
+	pendingTotal := 0
+	for _, course := range node.Courses {
+		if course.PendingCount != nil {
+			pendingTotal += *course.PendingCount
+		}
+	}
+	for _, child := range node.Children {
+		if child.PendingCount != nil {
+			pendingTotal += *child.PendingCount
+		}
+	}
+	node.PendingCount = &pendingTotal
+	node.HasChildren = len(node.Children) > 0
+	node.HasCourses = len(node.Courses) > 0
 
 	return node
 }

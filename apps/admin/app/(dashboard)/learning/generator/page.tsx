@@ -62,6 +62,7 @@ import {
   getTaskStatusLabel,
   getTaskStatusColor,
   getTaskTypeLabel,
+  getTaskKey,
 } from "@/services/content-generator-api";
 import { toast } from "sonner";
 
@@ -490,7 +491,7 @@ export default function ContentGeneratorPage() {
                       </TableHeader>
                       <TableBody>
                         {tasks.map((task) => (
-                          <TableRow key={task.id}>
+                          <TableRow key={getTaskKey(task)}>
                             <TableCell>
                               <div>
                                 <p className="font-medium">

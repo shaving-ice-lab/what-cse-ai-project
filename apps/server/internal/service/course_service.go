@@ -56,12 +56,36 @@ func (s *CourseCategoryService) applyCourseCounts(categories []model.CourseCateg
 		return err
 	}
 
+	childrenMap := make(map[uint][]uint, len(categories))
 	for i := range categories {
-		if count, ok := counts[categories[i].ID]; ok {
-			categories[i].CourseCount = int(count)
-		} else {
-			categories[i].CourseCount = 0
+		if categories[i].ParentID != nil && *categories[i].ParentID != 0 {
+			parentID := *categories[i].ParentID
+			childrenMap[parentID] = append(childrenMap[parentID], categories[i].ID)
 		}
+	}
+
+	totals := make(map[uint]int, len(categories))
+	visiting := make(map[uint]bool, len(categories))
+	var computeTotal func(uint) int
+	computeTotal = func(id uint) int {
+		if total, ok := totals[id]; ok {
+			return total
+		}
+		if visiting[id] {
+			return int(counts[id])
+		}
+		visiting[id] = true
+		total := int(counts[id])
+		for _, childID := range childrenMap[id] {
+			total += computeTotal(childID)
+		}
+		visiting[id] = false
+		totals[id] = total
+		return total
+	}
+
+	for i := range categories {
+		categories[i].CourseCount = computeTotal(categories[i].ID)
 	}
 
 	return nil
@@ -136,15 +160,27 @@ func (s *CourseCategoryService) GetByIDWithStatus(id uint, status *model.CourseS
 		return nil, err
 	}
 
-	counts, err := s.courseRepo.CountByCategoryIDs([]uint{id}, status)
+	descendants, err := s.categoryRepo.GetDescendants(id)
 	if err != nil {
 		return nil, err
 	}
-	if count, ok := counts[id]; ok {
-		category.CourseCount = int(count)
-	} else {
-		category.CourseCount = 0
+
+	ids := make([]uint, 0, len(descendants)+1)
+	ids = append(ids, id)
+	for _, descendant := range descendants {
+		ids = append(ids, descendant.ID)
 	}
+
+	counts, err := s.courseRepo.CountByCategoryIDs(ids, status)
+	if err != nil {
+		return nil, err
+	}
+
+	var total int64
+	for _, count := range counts {
+		total += count
+	}
+	category.CourseCount = int(total)
 
 	return category.ToResponse(), nil
 }

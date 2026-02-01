@@ -454,6 +454,13 @@ export default function SubjectLearnPage() {
     }
   }, [selectedCategoryId, sidebarTab, fetchKnowledgeTree]);
 
+  const subjectTotal = useMemo(() => {
+    if (!categories || categories.length === 0) {
+      return total;
+    }
+    return categories.reduce((sum, category) => sum + (category.course_count || 0), 0);
+  }, [categories, total]);
+
   // 计算总页数
   const totalPages = Math.ceil(total / 12);
 
@@ -603,7 +610,7 @@ export default function SubjectLearnPage() {
                         >
                           <Sparkles className="w-4 h-4" />
                           <span>全部课程</span>
-                          <span className="text-xs text-stone-400 ml-auto">{total}</span>
+                          <span className="text-xs text-stone-400 ml-auto">{subjectTotal}</span>
                         </button>
 
                         {categories.map((category) => (

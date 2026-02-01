@@ -174,6 +174,7 @@ type BatchImportRequest struct {
 // ContentGeneratorTaskResponse 任务响应
 type ContentGeneratorTaskResponse struct {
 	ID             uint                       `json:"id"`
+	TaskSource     string                     `json:"task_source,omitempty"`
 	TaskType       ContentGeneratorTaskType   `json:"task_type"`
 	Status         ContentGeneratorTaskStatus `json:"status"`
 	Subject        string                     `json:"subject,omitempty"`
@@ -196,6 +197,7 @@ func (t *ContentGeneratorTask) ToResponse() *ContentGeneratorTaskResponse {
 	}
 	return &ContentGeneratorTaskResponse{
 		ID:             t.ID,
+		TaskSource:     "content",
 		TaskType:       t.TaskType,
 		Status:         t.Status,
 		Subject:        t.Subject,
