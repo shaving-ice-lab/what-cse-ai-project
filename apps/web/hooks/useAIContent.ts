@@ -370,14 +370,14 @@ export function useQuestionAIContent(questionId: number | null) {
     fetchAnalysis();
   }, [fetchAnalysis]);
 
-  return { 
-    loading, 
-    analysis, 
-    tips, 
-    similar, 
-    error, 
-    fetchTips, 
+  return {
+    loading,
+    analysis,
+    tips,
+    similar,
+    error,
+    fetchTips,
     fetchSimilar,
-    refetchAnalysis: fetchAnalysis 
+    refetchAnalysis: fetchAnalysis,
   };
 }

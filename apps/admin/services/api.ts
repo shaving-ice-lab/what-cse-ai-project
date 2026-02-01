@@ -324,7 +324,7 @@ export interface FenbiAnnouncement {
   fenbi_url: string;
   original_url?: string;
   final_url?: string;
-  list_page_url?: string;    // 列表页URL (用于监控)
+  list_page_url?: string; // 列表页URL (用于监控)
   list_page_source?: string; // 列表页来源 (url_parse/html_extract/llm)
   region_code?: string;
   region_name?: string;
@@ -666,7 +666,7 @@ export interface ParseURLData {
   page_content?: string;
   attachments?: AttachmentResultAPI[];
   llm_analysis?: LLMAnalysisResultAPI;
-  list_page_url?: string;    // 列表页URL (用于监控)
+  list_page_url?: string; // 列表页URL (用于监控)
   list_page_source?: string; // 列表页来源 (url_parse/html_extract/llm)
 }
 

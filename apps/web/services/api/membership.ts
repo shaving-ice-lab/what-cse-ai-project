@@ -150,7 +150,10 @@ export const membershipApi = {
   },
 
   // 获取订单列表
-  getOrders: (params?: { page?: number; page_size?: number }): Promise<{
+  getOrders: (params?: {
+    page?: number;
+    page_size?: number;
+  }): Promise<{
     orders: MembershipOrder[];
     total: number;
     page: number;

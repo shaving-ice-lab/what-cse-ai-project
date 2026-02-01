@@ -43,13 +43,7 @@ interface ToolbarButtonProps {
   title?: string;
 }
 
-function ToolbarButton({
-  onClick,
-  isActive,
-  disabled,
-  children,
-  title,
-}: ToolbarButtonProps) {
+function ToolbarButton({ onClick, isActive, disabled, children, title }: ToolbarButtonProps) {
   return (
     <button
       type="button"
@@ -247,11 +241,7 @@ function EditorToolbar({ editor }: EditorToolbarProps) {
       <ToolbarDivider />
 
       {/* Links and Images */}
-      <ToolbarButton
-        onClick={addLink}
-        isActive={editor.isActive("link")}
-        title="添加链接"
-      >
+      <ToolbarButton onClick={addLink} isActive={editor.isActive("link")} title="添加链接">
         <LinkIcon className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton onClick={addImage} title="添加图片">
@@ -321,10 +311,7 @@ export function RichTextEditor({
     content: value,
     editorProps: {
       attributes: {
-        class: cn(
-          "prose prose-sm max-w-none focus:outline-none p-4",
-          editorClassName
-        ),
+        class: cn("prose prose-sm max-w-none focus:outline-none p-4", editorClassName),
         style: `min-height: ${minHeight}`,
       },
     },

@@ -141,9 +141,7 @@ export function MaterialCard({
       >
         <div className="flex items-center gap-2">
           <TypeIcon className="w-4 h-4 text-stone-600" />
-          <span className="text-sm font-medium text-stone-700">
-            {config.label}
-          </span>
+          <span className="text-sm font-medium text-stone-700">{config.label}</span>
           {material.isFeatured && (
             <span className="px-1.5 py-0.5 bg-amber-400 text-white text-xs rounded font-medium">
               精选
@@ -156,18 +154,14 @@ export function MaterialCard({
       {/* 主要内容 */}
       <div className="p-5">
         {/* 引用符号 */}
-        {material.type === "quote" && (
-          <Quote className="w-8 h-8 text-stone-200 mb-2" />
-        )}
+        {material.type === "quote" && <Quote className="w-8 h-8 text-stone-200 mb-2" />}
 
         {/* 内容 */}
         <div className="relative">
           <p
             className={cn(
               "text-stone-700 leading-relaxed",
-              material.type === "quote"
-                ? "text-lg font-medium italic"
-                : "text-base"
+              material.type === "quote" ? "text-lg font-medium italic" : "text-base"
             )}
           >
             {material.content}
@@ -179,9 +173,7 @@ export function MaterialCard({
           <div className="mt-4 flex items-center gap-2 text-sm text-stone-500">
             <User className="w-4 h-4" />
             {material.author && <span>{material.author}</span>}
-            {material.source && (
-              <span className="text-stone-400">《{material.source}》</span>
-            )}
+            {material.source && <span className="text-stone-400">《{material.source}》</span>}
           </div>
         )}
 
@@ -217,9 +209,7 @@ export function MaterialCard({
             {/* 适用场景 */}
             {material.usageScenarios && material.usageScenarios.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-stone-700 mb-2">
-                  适用场景
-                </h4>
+                <h4 className="text-sm font-medium text-stone-700 mb-2">适用场景</h4>
                 <div className="flex flex-wrap gap-2">
                   {material.usageScenarios.map((scenario, index) => (
                     <span
@@ -236,21 +226,15 @@ export function MaterialCard({
             {/* 使用分析 */}
             {material.analysis && (
               <div>
-                <h4 className="text-sm font-medium text-stone-700 mb-2">
-                  使用技巧
-                </h4>
-                <p className="text-sm text-stone-600 leading-relaxed">
-                  {material.analysis}
-                </p>
+                <h4 className="text-sm font-medium text-stone-700 mb-2">使用技巧</h4>
+                <p className="text-sm text-stone-600 leading-relaxed">{material.analysis}</p>
               </div>
             )}
 
             {/* 相关素材 */}
             {material.relatedMaterials && material.relatedMaterials.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-stone-700 mb-2">
-                  相关素材
-                </h4>
+                <h4 className="text-sm font-medium text-stone-700 mb-2">相关素材</h4>
                 <div className="flex flex-wrap gap-2">
                   {material.relatedMaterials.map((id) => (
                     <button
@@ -277,17 +261,11 @@ export function MaterialCard({
             onClick={handleCopy}
             className={cn(
               "p-2 rounded-lg transition-colors",
-              copied
-                ? "bg-emerald-50 text-emerald-600"
-                : "hover:bg-stone-100 text-stone-500"
+              copied ? "bg-emerald-50 text-emerald-600" : "hover:bg-stone-100 text-stone-500"
             )}
             title="复制"
           >
-            {copied ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
 
           {/* 收藏 */}
@@ -295,15 +273,11 @@ export function MaterialCard({
             onClick={() => onFavoriteToggle?.(material.id)}
             className={cn(
               "p-2 rounded-lg transition-colors",
-              isFavorited
-                ? "bg-red-50 text-red-500"
-                : "hover:bg-stone-100 text-stone-500"
+              isFavorited ? "bg-red-50 text-red-500" : "hover:bg-stone-100 text-stone-500"
             )}
             title={isFavorited ? "取消收藏" : "收藏"}
           >
-            <Heart
-              className={cn("w-4 h-4", isFavorited && "fill-current")}
-            />
+            <Heart className={cn("w-4 h-4", isFavorited && "fill-current")} />
           </button>
 
           {/* 分享 */}
@@ -315,9 +289,7 @@ export function MaterialCard({
           </button>
         </div>
 
-        {copied && (
-          <span className="text-xs text-emerald-600">已复制到剪贴板</span>
-        )}
+        {copied && <span className="text-xs text-emerald-600">已复制到剪贴板</span>}
       </div>
     </div>
   );
@@ -387,9 +359,7 @@ export function MaterialCarousel({
             onClick={() => setCurrentIndex(index)}
             className={cn(
               "w-2 h-2 rounded-full transition-all",
-              index === currentIndex
-                ? "w-6 bg-amber-500"
-                : "bg-stone-300 hover:bg-stone-400"
+              index === currentIndex ? "w-6 bg-amber-500" : "bg-stone-300 hover:bg-stone-400"
             )}
           />
         ))}
@@ -439,9 +409,7 @@ export function MaterialLibrary({
         const query = searchQuery.toLowerCase();
         const matchesContent = material.content.toLowerCase().includes(query);
         const matchesAuthor = material.author?.toLowerCase().includes(query);
-        const matchesTags = material.tags?.some((t) =>
-          t.toLowerCase().includes(query)
-        );
+        const matchesTags = material.tags?.some((t) => t.toLowerCase().includes(query));
         if (!matchesContent && !matchesAuthor && !matchesTags) return false;
       }
 
@@ -479,11 +447,7 @@ export function MaterialLibrary({
   };
 
   const hasFilters =
-    searchQuery ||
-    selectedType ||
-    selectedCategory ||
-    selectedTag ||
-    showFavoritesOnly;
+    searchQuery || selectedType || selectedCategory || selectedTag || showFavoritesOnly;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -519,9 +483,7 @@ export function MaterialLibrary({
               return (
                 <button
                   key={type}
-                  onClick={() =>
-                    setSelectedType(selectedType === type ? null : type)
-                  }
+                  onClick={() => setSelectedType(selectedType === type ? null : type)}
                   className={cn(
                     "flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-colors",
                     selectedType === type
@@ -560,9 +522,7 @@ export function MaterialLibrary({
                 : "border-stone-200 text-stone-600 hover:bg-stone-50"
             )}
           >
-            <Heart
-              className={cn("w-3.5 h-3.5", showFavoritesOnly && "fill-current")}
-            />
+            <Heart className={cn("w-3.5 h-3.5", showFavoritesOnly && "fill-current")} />
             收藏
           </button>
 

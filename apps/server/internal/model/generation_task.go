@@ -35,6 +35,8 @@ type GenerationTask struct {
 	TargetID     *uint                `gorm:"index" json:"target_id,omitempty"`                       // 目标记录 ID（如分类ID、课程ID等）
 	TargetInfo   string               `gorm:"type:json" json:"target_info,omitempty"`                 // 目标详情（JSON格式）
 	Status       GenerationTaskStatus `gorm:"type:varchar(20);default:'pending';index" json:"status"` // 任务状态
+	Progress     float64              `gorm:"default:0" json:"progress"`                               // 进度 0-100
+	CurrentStep  string               `gorm:"type:varchar(255)" json:"current_step,omitempty"`         // 当前步骤
 	PromptUsed   string               `gorm:"type:text" json:"prompt_used,omitempty"`                 // 使用的 Prompt
 	Result       string               `gorm:"type:longtext" json:"result,omitempty"`                  // 生成结果（JSON格式）
 	ErrorMessage string               `gorm:"type:text" json:"error_message,omitempty"`               // 错误信息
@@ -59,6 +61,8 @@ type GenerationTaskResponse struct {
 	TargetID     *uint                `json:"target_id,omitempty"`
 	TargetInfo   interface{}          `json:"target_info,omitempty"`
 	Status       GenerationTaskStatus `json:"status"`
+	Progress     float64              `json:"progress"`
+	CurrentStep  string               `json:"current_step,omitempty"`
 	Result       interface{}          `json:"result,omitempty"`
 	ErrorMessage string               `json:"error_message,omitempty"`
 	TokensUsed   int                  `json:"tokens_used"`
@@ -74,6 +78,8 @@ func (t *GenerationTask) ToResponse() *GenerationTaskResponse {
 		TaskType:     t.TaskType,
 		TargetID:     t.TargetID,
 		Status:       t.Status,
+		Progress:     t.Progress,
+		CurrentStep:  t.CurrentStep,
 		ErrorMessage: t.ErrorMessage,
 		TokensUsed:   t.TokensUsed,
 		DurationMs:   t.DurationMs,

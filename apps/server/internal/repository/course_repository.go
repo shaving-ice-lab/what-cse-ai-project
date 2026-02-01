@@ -326,12 +326,8 @@ func (r *CourseRepository) GetList(params *CourseQueryParams) ([]model.Course, i
 	}
 	if statusInt := parseStatus(params.Status); statusInt != nil {
 		query = query.Where("what_courses.status = ?", *statusInt)
-	} else if params.Status == "" {
-		// Default for public API: only published courses
-		// Note: Admin API should pass "all" or empty to get all statuses
-		query = query.Where("what_courses.status = ?", model.CourseStatusPublished)
 	}
-	// If params.Status is "all" or other invalid value, no filter is applied
+	// If params.Status is "all" or empty or other invalid value, no filter is applied
 	if params.Keyword != "" {
 		keyword := "%" + params.Keyword + "%"
 		query = query.Where("what_courses.title LIKE ? OR what_courses.subtitle LIKE ?", keyword, keyword)
@@ -381,7 +377,7 @@ func (r *CourseRepository) GetByCategory(categoryID uint, page, pageSize int) ([
 // GetByCategoryID 根据分类ID获取课程列表（简化版，用于批量生成）
 func (r *CourseRepository) GetByCategoryID(categoryID uint, offset, limit int) ([]model.Course, error) {
 	var courses []model.Course
-	query := r.db.Where("category_id = ? AND status = ?", categoryID, model.CourseStatusPublished)
+	query := r.db.Where("category_id = ?", categoryID)
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
@@ -409,8 +405,7 @@ func (r *CourseRepository) GetAllByCategoryID(categoryID uint, offset, limit int
 // GetFeatured gets featured/recommended courses
 func (r *CourseRepository) GetFeatured(limit int) ([]model.Course, error) {
 	var courses []model.Course
-	err := r.db.Where("status = ?", model.CourseStatusPublished).
-		Order("sort_order ASC, study_count DESC, view_count DESC").
+	err := r.db.Order("sort_order ASC, study_count DESC, view_count DESC").
 		Limit(limit).
 		Preload("Category").
 		Find(&courses).Error
@@ -420,7 +415,7 @@ func (r *CourseRepository) GetFeatured(limit int) ([]model.Course, error) {
 // GetFreeCourses gets free courses
 func (r *CourseRepository) GetFreeCourses(limit int) ([]model.Course, error) {
 	var courses []model.Course
-	err := r.db.Where("status = ? AND is_free = ?", model.CourseStatusPublished, true).
+	err := r.db.Where("is_free = ?", true).
 		Order("sort_order ASC, study_count DESC").
 		Limit(limit).
 		Preload("Category").

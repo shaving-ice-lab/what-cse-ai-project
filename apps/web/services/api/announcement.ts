@@ -45,22 +45,22 @@ export interface AnnouncementQueryParams {
   province?: string;
   city?: string;
   source?: string;
-  
+
   // 状态筛选
   status?: number;
-  
+
   // 时间筛选
   start_date?: string;
   end_date?: string;
   reg_status?: "registering" | "upcoming" | "ended";
-  
+
   // 关键词搜索
   keyword?: string;
-  
+
   // 排序
   sort_by?: "created_at" | "publish_date" | "registration_end" | "position_count" | "views";
   sort_order?: "asc" | "desc";
-  
+
   // 分页
   page?: number;
   page_size?: number;
@@ -147,12 +147,13 @@ export const announcementApi = {
     request.get("/announcements/v2", { params }),
 
   // 获取公告列表（旧接口兼容）
-  getList: (params?: AnnouncementListParams): Promise<{ list: Announcement[]; total: number; page: number; page_size: number }> =>
+  getList: (
+    params?: AnnouncementListParams
+  ): Promise<{ list: Announcement[]; total: number; page: number; page_size: number }> =>
     request.get("/announcements", { params }),
 
   // 获取公告详情
-  getDetail: (id: number): Promise<AnnouncementDetail> =>
-    request.get(`/announcements/${id}`),
+  getDetail: (id: number): Promise<AnnouncementDetail> => request.get(`/announcements/${id}`),
 
   // 获取最新公告
   getLatest: (limit?: number): Promise<AnnouncementBrief[]> =>
@@ -163,23 +164,22 @@ export const announcementApi = {
     request.get("/announcements/search", { params: { keyword, ...params } }),
 
   // 获取统计数据
-  getStats: (): Promise<AnnouncementStats> =>
-    request.get("/announcements/stats"),
+  getStats: (): Promise<AnnouncementStats> => request.get("/announcements/stats"),
 
   // 按考试类型统计
-  getStatsByExamType: (): Promise<ExamTypeStats[]> =>
-    request.get("/announcements/stats/exam-type"),
+  getStatsByExamType: (): Promise<ExamTypeStats[]> => request.get("/announcements/stats/exam-type"),
 
   // 按省份统计
-  getStatsByProvince: (): Promise<ProvinceStats[]> =>
-    request.get("/announcements/stats/province"),
+  getStatsByProvince: (): Promise<ProvinceStats[]> => request.get("/announcements/stats/province"),
 
   // 获取筛选选项
-  getFilterOptions: (): Promise<FilterOptions> =>
-    request.get("/announcements/filter-options"),
+  getFilterOptions: (): Promise<FilterOptions> => request.get("/announcements/filter-options"),
 
   // 获取公告关联的职位
-  getPositions: (id: number, params?: { page?: number; page_size?: number }): Promise<{
+  getPositions: (
+    id: number,
+    params?: { page?: number; page_size?: number }
+  ): Promise<{
     positions: AnnouncementPosition[];
     total: number;
   }> => request.get(`/announcements/${id}/positions`, { params }),
@@ -201,7 +201,10 @@ export const announcementApi = {
     request.delete(`/announcements/${id}/favorite`),
 
   // 获取收藏列表
-  getFavorites: (params?: { page?: number; page_size?: number }): Promise<{
+  getFavorites: (params?: {
+    page?: number;
+    page_size?: number;
+  }): Promise<{
     announcements: AnnouncementBrief[];
     total: number;
   }> => request.get("/announcements/favorites", { params }),

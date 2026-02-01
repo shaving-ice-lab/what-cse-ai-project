@@ -137,9 +137,7 @@ function ErrorAnalysisCard({ analysis }: { analysis: ErrorAnalysis }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className={cn("font-bold text-lg", config.color)}>
-                {config.label}
-              </span>
+              <span className={cn("font-bold text-lg", config.color)}>{config.label}</span>
             </div>
             <p className="text-sm text-stone-600">{config.description}</p>
           </div>
@@ -194,26 +192,16 @@ function ResourceCard({
       onClick={onClick}
       className="w-full flex items-center gap-3 p-3 bg-stone-50 hover:bg-stone-100 rounded-lg transition-colors text-left"
     >
-      <span
-        className={cn(
-          "px-2 py-1 text-xs font-medium rounded",
-          config.bgColor,
-          config.color
-        )}
-      >
+      <span className={cn("px-2 py-1 text-xs font-medium rounded", config.bgColor, config.color)}>
         {config.label}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-stone-700 truncate">
-          {resource.title}
-        </p>
+        <p className="text-sm font-medium text-stone-700 truncate">{resource.title}</p>
         {resource.description && (
           <p className="text-xs text-stone-500 truncate">{resource.description}</p>
         )}
       </div>
-      {resource.duration && (
-        <span className="text-xs text-stone-400">{resource.duration}</span>
-      )}
+      {resource.duration && <span className="text-xs text-stone-400">{resource.duration}</span>}
       <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
     </button>
   );
@@ -247,9 +235,7 @@ function SimilarQuestionCard({
             ))}
           </div>
         </div>
-        {question.source && (
-          <span className="text-xs text-stone-400">{question.source}</span>
-        )}
+        {question.source && <span className="text-xs text-stone-400">{question.source}</span>}
       </div>
       <p className="text-sm text-stone-700 line-clamp-2">{question.content}</p>
     </button>
@@ -277,7 +263,10 @@ function ErrorStatisticsCard({ statistics }: { statistics: ErrorStatistics }) {
                 <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
                   <div
                     className={cn("h-full rounded-full", config.bgColor.replace("bg-", "bg-"))}
-                    style={{ width: `${item.percentage}%`, backgroundColor: config.color.replace("text-", "").replace("-600", "") }}
+                    style={{
+                      width: `${item.percentage}%`,
+                      backgroundColor: config.color.replace("text-", "").replace("-600", ""),
+                    }}
                   />
                 </div>
                 <span className="text-xs text-stone-500 w-12 text-right">
@@ -442,9 +431,7 @@ export function WrongQuestionAnalysis({
 
         {/* 需要复习的知识点 */}
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-stone-600 mb-3">
-            需要复习的知识点
-          </h4>
+          <h4 className="text-sm font-medium text-stone-600 mb-3">需要复习的知识点</h4>
           <div className="flex flex-wrap gap-2">
             {displayData.reviewKnowledge.map((knowledge) => (
               <button
@@ -455,15 +442,13 @@ export function WrongQuestionAnalysis({
                   knowledge.priority === "high"
                     ? "bg-red-100 text-red-700 hover:bg-red-200"
                     : knowledge.priority === "medium"
-                    ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                    : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+                      ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                      : "bg-stone-100 text-stone-700 hover:bg-stone-200"
                 )}
               >
                 <Brain className="w-4 h-4" />
                 {knowledge.name}
-                {knowledge.priority === "high" && (
-                  <span className="text-xs">优先</span>
-                )}
+                {knowledge.priority === "high" && <span className="text-xs">优先</span>}
               </button>
             ))}
           </div>
@@ -471,9 +456,7 @@ export function WrongQuestionAnalysis({
 
         {/* 推荐学习资料 */}
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-stone-600 mb-3">
-            推荐学习资料
-          </h4>
+          <h4 className="text-sm font-medium text-stone-600 mb-3">推荐学习资料</h4>
           <div className="space-y-2">
             {displayData.recommendedResources.map((resource) => (
               <ResourceCard
@@ -487,9 +470,7 @@ export function WrongQuestionAnalysis({
 
         {/* 相似题目练习 */}
         <div>
-          <h4 className="text-sm font-medium text-stone-600 mb-3">
-            相似题目练习
-          </h4>
+          <h4 className="text-sm font-medium text-stone-600 mb-3">相似题目练习</h4>
           <div className="space-y-2">
             {displayData.similarQuestions.map((question) => (
               <SimilarQuestionCard
@@ -503,9 +484,7 @@ export function WrongQuestionAnalysis({
       </div>
 
       {/* 错题统计 */}
-      {displayData.statistics && (
-        <ErrorStatisticsCard statistics={displayData.statistics} />
-      )}
+      {displayData.statistics && <ErrorStatisticsCard statistics={displayData.statistics} />}
 
       {/* 操作按钮 */}
       <div className="flex gap-3">

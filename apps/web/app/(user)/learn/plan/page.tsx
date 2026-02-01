@@ -115,13 +115,13 @@ const difficultyConfig: Record<string, { label: string; color: string; bgColor: 
 // ====================================================================
 // 组件：当前计划卡片
 // ====================================================================
-function ActivePlanCard({ 
-  plan, 
-  onPause, 
-  onComplete, 
-  onEdit 
-}: { 
-  plan: StudyPlan; 
+function ActivePlanCard({
+  plan,
+  onPause,
+  onComplete,
+  onEdit,
+}: {
+  plan: StudyPlan;
   onPause: () => void;
   onComplete: () => void;
   onEdit: () => void;
@@ -130,9 +130,9 @@ function ActivePlanCard({
   const daysRemaining = getDaysRemaining(plan.end_date);
   const totalDays = plan.total_days || 30;
   const completedDays = plan.completed_days || 0;
-  
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-6 md:p-8 text-white shadow-2xl"
@@ -155,9 +155,13 @@ function ActivePlanCard({
                 <Target className="w-4 h-4" />
               </div>
               <span className="text-sm font-medium text-white/80">当前学习计划</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                plan.status === 'active' ? 'bg-green-400/30 text-green-100' : 'bg-amber-400/30 text-amber-100'
-              }`}>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  plan.status === "active"
+                    ? "bg-green-400/30 text-green-100"
+                    : "bg-amber-400/30 text-amber-100"
+                }`}
+              >
                 {getStatusText(plan.status)}
               </span>
             </div>
@@ -169,7 +173,7 @@ function ActivePlanCard({
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -274,7 +278,7 @@ function ActivePlanCard({
             </span>
           </div>
           <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               className="h-full bg-white rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${(completedDays / totalDays) * 100}%` }}
@@ -333,7 +337,7 @@ function TodayTasks() {
   const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
@@ -346,12 +350,14 @@ function TodayTasks() {
           </div>
           <div>
             <h3 className="font-semibold text-stone-800">今日任务</h3>
-            <p className="text-sm text-stone-500">{completedCount}/{totalCount} 已完成</p>
+            <p className="text-sm text-stone-500">
+              {completedCount}/{totalCount} 已完成
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-24 h-2 bg-stone-100 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
@@ -397,7 +403,9 @@ function TodayTasks() {
                 {task.is_completed && <CheckCircle2 className="w-4 h-4" />}
               </motion.button>
               <div className="flex-1 min-w-0">
-                <p className={`font-medium truncate ${task.is_completed ? "text-stone-500 line-through" : "text-stone-800"}`}>
+                <p
+                  className={`font-medium truncate ${task.is_completed ? "text-stone-500 line-through" : "text-stone-800"}`}
+                >
                   {task.target_content}
                 </p>
                 <div className="flex items-center gap-4 text-xs text-stone-500 mt-1">
@@ -405,15 +413,19 @@ function TodayTasks() {
                     <Clock className="w-3 h-3" />
                     {task.target_time}分钟
                   </span>
-                  {task.target_count > 0 && (
-                    <span>目标: {task.target_count}题</span>
-                  )}
+                  {task.target_count > 0 && <span>目标: {task.target_count}题</span>}
                 </div>
               </div>
-              <span className={`flex-shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg ${
-                task.is_completed ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
-              }`}>
-                {task.task_type === "course" ? "课程" : task.task_type === "practice" ? "练习" : "复习"}
+              <span
+                className={`flex-shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg ${
+                  task.is_completed ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+                }`}
+              >
+                {task.task_type === "course"
+                  ? "课程"
+                  : task.task_type === "practice"
+                    ? "练习"
+                    : "复习"}
               </span>
             </motion.div>
           ))}
@@ -428,7 +440,7 @@ function TodayTasks() {
 // ====================================================================
 function StudyStatsCard() {
   const { weeklyStats, fetchWeeklyStats } = useStudyTime();
-  
+
   useEffect(() => {
     fetchWeeklyStats();
   }, [fetchWeeklyStats]);
@@ -438,7 +450,7 @@ function StudyStatsCard() {
   const questionCount = weeklyStats?.question_count || 0;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
@@ -475,17 +487,17 @@ function StudyStatsCard() {
 // ====================================================================
 // 组件：模板卡片
 // ====================================================================
-function TemplateCard({ 
-  template, 
+function TemplateCard({
+  template,
   onSelect,
-  index 
-}: { 
-  template: StudyPlanTemplate; 
+  index,
+}: {
+  template: StudyPlanTemplate;
   onSelect: () => void;
   index: number;
 }) {
   const config = difficultyConfig[template.difficulty] || difficultyConfig.medium;
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -496,14 +508,18 @@ function TemplateCard({
     >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h4 className="font-semibold text-stone-800 group-hover:text-amber-600 transition-colors">{template.name}</h4>
+          <h4 className="font-semibold text-stone-800 group-hover:text-amber-600 transition-colors">
+            {template.name}
+          </h4>
           <p className="text-sm text-stone-500">{template.exam_type}</p>
         </div>
-        <span className={`px-2.5 py-1 text-xs font-medium rounded-lg ${config.bgColor} ${config.color}`}>
+        <span
+          className={`px-2.5 py-1 text-xs font-medium rounded-lg ${config.bgColor} ${config.color}`}
+        >
           {config.label}
         </span>
       </div>
-      
+
       {template.description && (
         <p className="text-sm text-stone-600 mb-4 line-clamp-2">{template.description}</p>
       )}
@@ -539,21 +555,21 @@ function TemplateCard({
 // ====================================================================
 // 组件：空状态引导
 // ====================================================================
-function EmptyStateGuide({ 
+function EmptyStateGuide({
   templates,
   onSelectTemplate,
-  onCreateCustom 
+  onCreateCustom,
 }: {
   templates: StudyPlanTemplate[];
   onSelectTemplate: (template: StudyPlanTemplate) => void;
   onCreateCustom: () => void;
 }) {
   const quote = useMemo(() => getRandomQuote(), []);
-  
+
   return (
     <div className="space-y-8">
       {/* Hero 引导区域 */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 p-8 md:p-10 text-white"
@@ -572,12 +588,13 @@ function EmptyStateGuide({
               <Sparkles className="w-4 h-4" />
               开启你的备考之旅
             </div>
-            
+
             <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-              制定科学计划<br />
+              制定科学计划
+              <br />
               <span className="text-white/90">高效备战公考</span>
             </h2>
-            
+
             <p className="text-lg text-white/80 mb-6 max-w-xl">
               根据你的目标考试和时间安排，我们为你推荐最适合的学习计划。坚持每天学习，离上岸更近一步！
             </p>
@@ -618,7 +635,7 @@ function EmptyStateGuide({
       </motion.div>
 
       {/* 名言卡片 */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -642,8 +659,8 @@ function EmptyStateGuide({
             <h3 className="text-xl font-bold text-stone-800">热门计划模板</h3>
             <p className="text-stone-500 text-sm mt-1">选择适合你的备考计划，一键开启学习</p>
           </div>
-          <Link 
-            href="#" 
+          <Link
+            href="#"
             className="text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1"
           >
             查看全部
@@ -672,17 +689,37 @@ function EmptyStateGuide({
       </div>
 
       {/* 功能特性 */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {[
-          { icon: Target, title: "智能规划", desc: "根据考试时间自动分配任务", color: "from-blue-400 to-indigo-500" },
-          { icon: TrendingUp, title: "进度追踪", desc: "实时查看学习进度和数据", color: "from-green-400 to-emerald-500" },
-          { icon: Flame, title: "每日任务", desc: "每天自动生成学习清单", color: "from-amber-400 to-orange-500" },
-          { icon: Trophy, title: "成就激励", desc: "完成任务获得成就奖励", color: "from-purple-400 to-pink-500" },
+          {
+            icon: Target,
+            title: "智能规划",
+            desc: "根据考试时间自动分配任务",
+            color: "from-blue-400 to-indigo-500",
+          },
+          {
+            icon: TrendingUp,
+            title: "进度追踪",
+            desc: "实时查看学习进度和数据",
+            color: "from-green-400 to-emerald-500",
+          },
+          {
+            icon: Flame,
+            title: "每日任务",
+            desc: "每天自动生成学习清单",
+            color: "from-amber-400 to-orange-500",
+          },
+          {
+            icon: Trophy,
+            title: "成就激励",
+            desc: "完成任务获得成就奖励",
+            color: "from-purple-400 to-pink-500",
+          },
         ].map((feature, index) => (
           <motion.div
             key={feature.title}
@@ -691,7 +728,9 @@ function EmptyStateGuide({
             transition={{ delay: 0.3 + index * 0.1 }}
             className="bg-white rounded-xl p-5 border border-stone-200/50 hover:shadow-lg transition-shadow"
           >
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-3`}>
+            <div
+              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-3`}
+            >
               <feature.icon className="w-5 h-5" />
             </div>
             <h4 className="font-semibold text-stone-800 mb-1">{feature.title}</h4>
@@ -706,23 +745,23 @@ function EmptyStateGuide({
 // ====================================================================
 // 组件：创建计划对话框
 // ====================================================================
-function CreatePlanModal({ 
-  isOpen, 
-  onClose, 
+function CreatePlanModal({
+  isOpen,
+  onClose,
   templates,
   onSelectTemplate,
-  onCreateCustom 
-}: { 
-  isOpen: boolean; 
+  onCreateCustom,
+}: {
+  isOpen: boolean;
   onClose: () => void;
   templates: StudyPlanTemplate[];
   onSelectTemplate: (template: StudyPlanTemplate) => void;
   onCreateCustom: () => void;
 }) {
   const [selectedExamType, setSelectedExamType] = useState<string | null>(null);
-  
+
   const filteredTemplates = selectedExamType
-    ? templates.filter(t => t.exam_type.includes(selectedExamType))
+    ? templates.filter((t) => t.exam_type.includes(selectedExamType))
     : templates;
 
   if (!isOpen) return null;
@@ -750,8 +789,8 @@ function CreatePlanModal({
                 <h2 className="text-2xl font-bold text-stone-800">创建学习计划</h2>
                 <p className="text-stone-500 mt-1">选择计划模板或自定义创建</p>
               </div>
-              <button 
-                onClick={onClose} 
+              <button
+                onClick={onClose}
                 className="w-10 h-10 rounded-xl bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5 text-stone-600" />
@@ -841,8 +880,8 @@ function CreatePlanModal({
 // 组件：历史计划列表
 // ====================================================================
 function HistoryPlansList({ plans, activePlanId }: { plans: StudyPlan[]; activePlanId?: number }) {
-  const historyPlans = plans.filter(p => p.id !== activePlanId);
-  
+  const historyPlans = plans.filter((p) => p.id !== activePlanId);
+
   if (historyPlans.length === 0) return null;
 
   const getStatusStyle = (status: string) => {
@@ -859,7 +898,7 @@ function HistoryPlansList({ plans, activePlanId }: { plans: StudyPlan[]; activeP
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
@@ -874,7 +913,7 @@ function HistoryPlansList({ plans, activePlanId }: { plans: StudyPlan[]; activeP
           <p className="text-sm text-stone-500">共 {historyPlans.length} 个计划</p>
         </div>
       </div>
-      
+
       <div className="space-y-3">
         {historyPlans.map((plan, index) => (
           <motion.div
@@ -891,12 +930,14 @@ function HistoryPlansList({ plans, activePlanId }: { plans: StudyPlan[]; activeP
               </p>
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg ${getStatusStyle(plan.status)}`}>
+              <span
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg ${getStatusStyle(plan.status)}`}
+              >
                 {getStatusText(plan.status)}
               </span>
               <div className="flex items-center gap-1.5 text-sm text-stone-500">
                 <div className="w-16 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-amber-500 rounded-full"
                     style={{ width: `${plan.progress}%` }}
                   />
@@ -975,7 +1016,7 @@ export default function StudyPlanPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-white">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
@@ -1002,7 +1043,7 @@ export default function StudyPlanPage() {
     <div className="min-h-screen bg-gradient-to-b from-amber-50/30 via-white to-stone-50/50 pb-20 lg:pb-0">
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-5xl">
         {/* 头部 */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 md:mb-8"
@@ -1014,10 +1055,12 @@ export default function StudyPlanPage() {
             <ArrowLeft className="w-4 h-4" />
             返回学习中心
           </Link>
-          
+
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <p className="text-stone-500 mb-1">{greeting}，{user?.nickname || user?.username || '同学'}</p>
+              <p className="text-stone-500 mb-1">
+                {greeting}，{user?.nickname || user?.username || "同学"}
+              </p>
               <h1 className="text-2xl md:text-3xl font-bold text-stone-800 flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
                   <Target className="w-5 h-5" />
@@ -1057,12 +1100,12 @@ export default function StudyPlanPage() {
                   onComplete={handleComplete}
                   onEdit={() => {}}
                 />
-                
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <TodayTasks />
                   <StudyStatsCard />
                 </div>
-                
+
                 <HistoryPlansList plans={plans} activePlanId={activePlan.id} />
               </>
             ) : (

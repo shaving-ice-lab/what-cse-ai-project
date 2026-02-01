@@ -43,19 +43,16 @@ export function useFavorites() {
     }
   }, []);
 
-  const removeFavorite = useCallback(
-    async (favoriteType: FavoriteType, targetId: string) => {
-      try {
-        await favoriteApi.remove(favoriteType, targetId);
-        toast.success("已取消收藏");
-        return true;
-      } catch (error) {
-        toast.error("取消收藏失败");
-        return false;
-      }
-    },
-    []
-  );
+  const removeFavorite = useCallback(async (favoriteType: FavoriteType, targetId: string) => {
+    try {
+      await favoriteApi.remove(favoriteType, targetId);
+      toast.success("已取消收藏");
+      return true;
+    } catch (error) {
+      toast.error("取消收藏失败");
+      return false;
+    }
+  }, []);
 
   const batchRemove = useCallback(async (ids: number[]) => {
     try {
@@ -68,17 +65,14 @@ export function useFavorites() {
     }
   }, []);
 
-  const checkFavorites = useCallback(
-    async (favoriteType: FavoriteType, targetIds: string[]) => {
-      try {
-        const result = await favoriteApi.checkFavorites(favoriteType, targetIds);
-        return result.favorites;
-      } catch (error) {
-        return {};
-      }
-    },
-    []
-  );
+  const checkFavorites = useCallback(async (favoriteType: FavoriteType, targetIds: string[]) => {
+    try {
+      const result = await favoriteApi.checkFavorites(favoriteType, targetIds);
+      return result.favorites;
+    } catch (error) {
+      return {};
+    }
+  }, []);
 
   const exportFavorites = useCallback(async (favoriteType?: FavoriteType) => {
     try {
@@ -134,35 +128,27 @@ export function useFavoriteFolders() {
     }
   }, []);
 
-  const createFolder = useCallback(
-    async (name: string, description?: string, color?: string) => {
-      try {
-        const folder = await favoriteApi.folders.create({
-          name,
-          description,
-          color,
-        });
-        setFolders((prev) => [...prev, folder]);
-        toast.success("收藏夹创建成功");
-        return folder;
-      } catch (error) {
-        toast.error("创建收藏夹失败");
-        throw error;
-      }
-    },
-    []
-  );
+  const createFolder = useCallback(async (name: string, description?: string, color?: string) => {
+    try {
+      const folder = await favoriteApi.folders.create({
+        name,
+        description,
+        color,
+      });
+      setFolders((prev) => [...prev, folder]);
+      toast.success("收藏夹创建成功");
+      return folder;
+    } catch (error) {
+      toast.error("创建收藏夹失败");
+      throw error;
+    }
+  }, []);
 
   const updateFolder = useCallback(
-    async (
-      folderId: number,
-      data: { name?: string; description?: string; color?: string }
-    ) => {
+    async (folderId: number, data: { name?: string; description?: string; color?: string }) => {
       try {
         await favoriteApi.folders.update(folderId, data);
-        setFolders((prev) =>
-          prev.map((f) => (f.id === folderId ? { ...f, ...data } : f))
-        );
+        setFolders((prev) => prev.map((f) => (f.id === folderId ? { ...f, ...data } : f)));
         toast.success("收藏夹更新成功");
         return true;
       } catch (error) {

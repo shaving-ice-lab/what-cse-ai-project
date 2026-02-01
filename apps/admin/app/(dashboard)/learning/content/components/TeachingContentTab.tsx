@@ -127,6 +127,7 @@ type ContentGenerationTask = {
   subjectName?: string;
   status: TaskStatus;
   progress?: number;
+  currentStep?: string;
   message?: string;
   createdAt: string;
   updatedAt?: string;
@@ -145,6 +146,7 @@ type ChapterPreviewState = {
 
 const EMPTY_SUMMARY: CourseTreeSummary = { categories: 0, courses: 0, chapters: 0, pending: 0 };
 const CATEGORY_RENDER_BATCH = 40;
+const CONCURRENCY_OPTIONS = [3, 5, 8, 10];
 
 const sumSummary = (a: CourseTreeSummary, b: CourseTreeSummary): CourseTreeSummary => ({
   categories: a.categories + b.categories,
@@ -508,7 +510,9 @@ const ChapterRow = memo(function ChapterRow({
           <span className={cn("truncate", chapter.has_content && "text-muted-foreground")}>
             {chapter.title}
           </span>
-          {chapter.has_content && <CheckCircle className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />}
+          {chapter.has_content && (
+            <CheckCircle className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+          )}
         </div>
         <div className="flex items-center gap-2">
           {showAction && (
@@ -522,7 +526,11 @@ const ChapterRow = memo(function ChapterRow({
                 onGenerate(chapter.id);
               }}
             >
-              {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+              {generating ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Zap className="h-3 w-3" />
+              )}
               <span className="ml-1">生成</span>
             </Button>
           )}
@@ -568,18 +576,15 @@ const ChapterRow = memo(function ChapterRow({
           <DialogHeader>
             <DialogTitle>确认删除内容</DialogTitle>
             <DialogDescription>
-              确定要删除章节「{chapter.title}」的生成内容吗？此操作将清空该章节的所有 AI 生成内容，章节结构保留。删除后可以重新生成。
+              确定要删除章节「{chapter.title}」的生成内容吗？此操作将清空该章节的所有 AI
+              生成内容，章节结构保留。删除后可以重新生成。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               取消
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-            >
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
               {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               确认删除
             </Button>
@@ -621,9 +626,7 @@ const CourseNode = memo(function CourseNode({
   const hasPending = pendingCount === null ? true : pendingCount > 0;
   const canGenerateCourse = hasPending || !skipExisting;
   const hasChapters =
-    (course.chapters?.length ?? 0) > 0 ||
-    (course.chapter_count ?? 0) > 0 ||
-    course.has_chapters;
+    (course.chapters?.length ?? 0) > 0 || (course.chapter_count ?? 0) > 0 || course.has_chapters;
   const isLoading = loadingCourses.has(course.id);
 
   return (
@@ -850,6 +853,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const [skipExisting, setSkipExisting] = useState(true);
   const [autoImport, setAutoImport] = useState(true);
   const [autoApprove, setAutoApprove] = useState(false);
+  const [maxConcurrency, setMaxConcurrency] = useState(5);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [categoryRenderCounts, setCategoryRenderCounts] = useState<Record<string, number>>({});
   const [loadingCategoryIds, setLoadingCategoryIds] = useState<Set<number>>(new Set());
@@ -864,7 +868,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
 
   // 主 Tab 状态
   const [mainTab, setMainTab] = useState<MainTabValue>("tree");
-  
+
   // 生成任务列表状态
   const [generationTasks, setGenerationTasks] = useState<ContentGenerationTask[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
@@ -882,7 +886,9 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const [testSubjectOverride, setTestSubjectOverride] = useState<Subject | "auto">("auto");
   const [testUseCustomPrompt, setTestUseCustomPrompt] = useState(false);
   const [testSystemPrompt, setTestSystemPrompt] = useState(() => getSystemPrompt());
-  const [testUserPromptTemplate, setTestUserPromptTemplate] = useState(() => getUserPromptTemplate());
+  const [testUserPromptTemplate, setTestUserPromptTemplate] = useState(() =>
+    getUserPromptTemplate()
+  );
   const [testGenerating, setTestGenerating] = useState(false);
   const [testTasks, setTestTasks] = useState<TestGenerationTask[]>([]);
   const testTasksRef = useRef<TestGenerationTask[]>([]);
@@ -893,7 +899,9 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const [contentPreviewData, setContentPreviewData] = useState<any>(null);
   const [contentPreviewRaw, setContentPreviewRaw] = useState<string>("");
   const [contentPreviewTruncated, setContentPreviewTruncated] = useState(false);
-  const [contentPreviewChapter, setContentPreviewChapter] = useState<ChapterPreviewState | null>(null);
+  const [contentPreviewChapter, setContentPreviewChapter] = useState<ChapterPreviewState | null>(
+    null
+  );
 
   const [promptVars, setPromptVars] = useState<PromptVariables>({
     title: "",
@@ -927,9 +935,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   // 展开所有节点
   const handleExpandAll = useCallback(() => {
     if (tree) {
-      const scopedSubjects = filterSubject === "all"
-        ? tree.subjects
-        : tree.subjects.filter((s) => s.subject === filterSubject);
+      const scopedSubjects =
+        filterSubject === "all"
+          ? tree.subjects
+          : tree.subjects.filter((s) => s.subject === filterSubject);
       setExpandedIds(buildAllExpandableIds(scopedSubjects));
       setCategoryRenderCounts((prev) => {
         const next = { ...prev };
@@ -950,7 +959,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const fetchGenerationTasks = useCallback(async () => {
     setLoadingTasks(true);
     try {
-      const result = await contentGeneratorApi.getTasks({ page: 1, page_size: 100, session_only: true });
+      const result = await contentGeneratorApi.getTasks({
+        page: 1,
+        page_size: 100,
+        session_only: true,
+      });
       const tasks: ContentGenerationTask[] = (result.tasks || []).map((task) => ({
         id: task.id,
         taskKey: getTaskKey(task),
@@ -961,6 +974,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         subjectName: task.subject ? getSubjectName(task.subject) : undefined,
         status: task.status,
         progress: task.progress,
+        currentStep: task.current_step,
         message: task.error_message,
         createdAt: task.created_at,
         updatedAt: task.started_at,
@@ -991,11 +1005,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   }, []);
 
   // 更新任务状态
-  const updateTaskStatus = useCallback((taskId: number, updates: Partial<ContentGenerationTask>) => {
-    setGenerationTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
-    );
-  }, []);
+  const updateTaskStatus = useCallback(
+    (taskId: number, updates: Partial<ContentGenerationTask>) => {
+      setGenerationTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
+    },
+    []
+  );
 
   // 轮询正在处理的任务
   useEffect(() => {
@@ -1006,7 +1021,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
 
     const interval = setInterval(async () => {
       try {
-        const result = await contentGeneratorApi.getTasks({ page: 1, page_size: 100, session_only: true });
+        const result = await contentGeneratorApi.getTasks({
+          page: 1,
+          page_size: 100,
+          session_only: true,
+        });
         const tasks: ContentGenerationTask[] = (result.tasks || []).map((task) => ({
           id: task.id,
           taskKey: getTaskKey(task),
@@ -1017,6 +1036,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
           subjectName: task.subject ? getSubjectName(task.subject) : undefined,
           status: task.status,
           progress: task.progress,
+          currentStep: task.current_step,
           message: task.error_message,
           createdAt: task.created_at,
           updatedAt: task.started_at,
@@ -1056,23 +1076,43 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   const generatingTasksList = useMemo(() => {
     return generationTasks
       .filter((t) => ["pending", "processing", "generating"].includes(t.status))
-      .filter((t) => !taskSearchKeyword || t.targetName.toLowerCase().includes(taskSearchKeyword.toLowerCase()));
+      .filter(
+        (t) =>
+          !taskSearchKeyword || t.targetName.toLowerCase().includes(taskSearchKeyword.toLowerCase())
+      );
   }, [generationTasks, taskSearchKeyword]);
+
+  const activeGeneratingCount = useMemo(
+    () => generatingTasksList.filter((t) => t.status !== "pending").length,
+    [generatingTasksList]
+  );
+  const pendingGeneratingCount = useMemo(
+    () => generatingTasksList.filter((t) => t.status === "pending").length,
+    [generatingTasksList]
+  );
 
   // 已完成的任务
   const completedTasksList = useMemo(() => {
     return generationTasks
       .filter((t) => ["completed", "failed"].includes(t.status))
-      .filter((t) => !taskSearchKeyword || t.targetName.toLowerCase().includes(taskSearchKeyword.toLowerCase()));
+      .filter(
+        (t) =>
+          !taskSearchKeyword || t.targetName.toLowerCase().includes(taskSearchKeyword.toLowerCase())
+      );
   }, [generationTasks, taskSearchKeyword]);
 
   // 任务统计
-  const taskStats = useMemo(() => ({
-    total: generationTasks.length,
-    generating: generationTasks.filter((t) => ["pending", "processing", "generating"].includes(t.status)).length,
-    completed: generationTasks.filter((t) => t.status === "completed").length,
-    failed: generationTasks.filter((t) => t.status === "failed").length,
-  }), [generationTasks]);
+  const taskStats = useMemo(
+    () => ({
+      total: generationTasks.length,
+      generating: generationTasks.filter((t) =>
+        ["pending", "processing", "generating"].includes(t.status)
+      ).length,
+      completed: generationTasks.filter((t) => t.status === "completed").length,
+      failed: generationTasks.filter((t) => t.status === "failed").length,
+    }),
+    [generationTasks]
+  );
 
   const chapterOptionMap = useMemo(
     () => new Map(chapterOptions.map((option) => [option.id, option])),
@@ -1093,10 +1133,20 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
   }, []);
 
   useEffect(() => {
-    if ((promptPreviewOpen || testDialogOpen) && chapterOptions.length === 0 && !loadingChapterOptions) {
+    if (
+      (promptPreviewOpen || testDialogOpen) &&
+      chapterOptions.length === 0 &&
+      !loadingChapterOptions
+    ) {
       fetchChapterOptions();
     }
-  }, [promptPreviewOpen, testDialogOpen, chapterOptions.length, loadingChapterOptions, fetchChapterOptions]);
+  }, [
+    promptPreviewOpen,
+    testDialogOpen,
+    chapterOptions.length,
+    loadingChapterOptions,
+    fetchChapterOptions,
+  ]);
 
   const resolveChapterOptionById = useCallback(
     (chapterId: number) => {
@@ -1123,12 +1173,16 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
 
   const summary = useMemo(() => {
     if (!tree) return { ...EMPTY_SUMMARY };
-    const scopedSubjects = filterSubject === "all"
-      ? tree.subjects
-      : tree.subjects.filter((s) => s.subject === filterSubject);
-    return scopedSubjects.reduce((acc, subject) => {
-      return sumSummary(acc, subject.summary ?? EMPTY_SUMMARY);
-    }, { ...EMPTY_SUMMARY });
+    const scopedSubjects =
+      filterSubject === "all"
+        ? tree.subjects
+        : tree.subjects.filter((s) => s.subject === filterSubject);
+    return scopedSubjects.reduce(
+      (acc, subject) => {
+        return sumSummary(acc, subject.summary ?? EMPTY_SUMMARY);
+      },
+      { ...EMPTY_SUMMARY }
+    );
   }, [tree, filterSubject]);
 
   useEffect(() => {
@@ -1338,7 +1392,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         if (!prev) return prev;
         let changed = false;
         const subjects = prev.subjects.map((subject) => {
-          const updatedCategories = updateCategoryNodeById(subject.categories ?? [], categoryId, updater);
+          const updatedCategories = updateCategoryNodeById(
+            subject.categories ?? [],
+            categoryId,
+            updater
+          );
           if (updatedCategories !== subject.categories) {
             changed = true;
             return { ...subject, categories: updatedCategories };
@@ -1357,7 +1415,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         if (!prev) return prev;
         let changed = false;
         const subjects = prev.subjects.map((subject) => {
-          const updatedCategories = updateCourseNodeById(subject.categories ?? [], courseId, updater);
+          const updatedCategories = updateCourseNodeById(
+            subject.categories ?? [],
+            courseId,
+            updater
+          );
           if (updatedCategories !== subject.categories) {
             changed = true;
             return { ...subject, categories: updatedCategories };
@@ -1517,7 +1579,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         auto_import: autoImport,
         auto_approve: autoApprove,
       });
-      
+
       // 添加任务到列表并切换到生成中 Tab
       if (result.task) {
         const option = resolveChapterOptionById(chapterId);
@@ -1533,11 +1595,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
           categoryPath: option?.categoryPath,
           subjectName: option?.subjectName,
           status: result.task.status,
+          currentStep: result.task.current_step,
           createdAt: result.task.created_at,
         });
         setMainTab("generating");
       }
-      
+
       toast.success("生成任务已创建");
       onTaskCreated?.();
       fetchGenerationTasks();
@@ -1561,15 +1624,16 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         auto_import: autoImport,
         auto_approve: autoApprove,
         skip_existing: skipExisting,
+        max_concurrency: maxConcurrency,
       });
-      
+
       if (result.created_tasks > 0) {
         setMainTab("generating");
         toast.success(`已创建 ${result.created_tasks} 个生成任务`);
       } else {
         toast.info("没有需要生成的章节");
       }
-      
+
       onTaskCreated?.();
       fetchGenerationTasks();
     } catch (error: any) {
@@ -1593,15 +1657,16 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         auto_approve: autoApprove,
         skip_existing: skipExisting,
         include_sub_categories: true,
+        max_concurrency: maxConcurrency,
       });
-      
+
       if (result.created_tasks > 0) {
         setMainTab("generating");
         toast.success(`已创建 ${result.created_tasks} 个生成任务`);
       } else {
         toast.info("没有需要生成的章节");
       }
-      
+
       onTaskCreated?.();
       fetchGenerationTasks();
     } catch (error: any) {
@@ -1650,9 +1715,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
     setGeneratingAll(true);
     try {
       const fullTree = await contentGeneratorApi.getCourseTree();
-      const targetSubjects = filterSubject === "all"
-        ? fullTree.subjects
-        : fullTree.subjects.filter((s) => s.subject === filterSubject);
+      const targetSubjects =
+        filterSubject === "all"
+          ? fullTree.subjects
+          : fullTree.subjects.filter((s) => s.subject === filterSubject);
       const chapterIds = targetSubjects.flatMap((subject) =>
         collectChapterIds(subject.categories ?? [], skipExisting)
       );
@@ -1665,15 +1731,16 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         subject: filterSubject !== "all" ? filterSubject : undefined,
         auto_import: autoImport,
         auto_approve: autoApprove,
+        max_concurrency: maxConcurrency,
       });
-      
+
       if (result.created_tasks > 0) {
         setMainTab("generating");
         toast.success(`已创建 ${result.created_tasks} 个生成任务`);
       } else {
         toast.info("没有需要生成的章节");
       }
-      
+
       onTaskCreated?.();
       fetchGenerationTasks();
     } catch (error: any) {
@@ -1760,14 +1827,15 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   <Sparkles className="h-4 w-4 text-violet-500" />
                   教学内容生成
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  为章节生成教学内容
-                </CardDescription>
+                <CardDescription className="text-xs">为章节生成教学内容</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-xs">筛选科目</Label>
-                  <Select value={filterSubject} onValueChange={(v) => setFilterSubject(v as SubjectFilter)}>
+                  <Select
+                    value={filterSubject}
+                    onValueChange={(v) => setFilterSubject(v as SubjectFilter)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -1828,6 +1896,25 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                     </div>
                     <Switch checked={autoApprove} onCheckedChange={setAutoApprove} />
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">并发上限</Label>
+                    <p className="text-[11px] text-muted-foreground">同时生成的任务数量</p>
+                    <Select
+                      value={maxConcurrency.toString()}
+                      onValueChange={(value) => setMaxConcurrency(Number(value))}
+                    >
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONCURRENCY_OPTIONS.map((value) => (
+                          <SelectItem key={value} value={value.toString()}>
+                            {value}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <Button
@@ -1851,16 +1938,22 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   <FlaskConical className="h-4 w-4 text-amber-500" />
                   测试与预览
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  预览 Prompt 和配置测试生成
-                </CardDescription>
+                <CardDescription className="text-xs">预览 Prompt 和配置测试生成</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full" onClick={() => setPromptPreviewOpen(true)}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setPromptPreviewOpen(true)}
+                >
                   <Eye className="h-4 w-4 mr-2" />
                   预览 Prompt
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => setTestDialogOpen(true)}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setTestDialogOpen(true)}
+                >
                   <FlaskConical className="h-4 w-4 mr-2" />
                   测试生成
                 </Button>
@@ -1876,9 +1969,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   <AlertTriangle className="h-4 w-4" />
                   危险操作
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  清空已生成的课堂数据
-                </CardDescription>
+                <CardDescription className="text-xs">清空已生成的课堂数据</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button
@@ -1904,7 +1995,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
       </div>
 
       <Card className="flex-1 min-w-0 flex flex-col overflow-hidden border-0 shadow-lg bg-gradient-to-b from-background to-muted/5">
-        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as MainTabValue)} className="flex-1 flex flex-col">
+        <Tabs
+          value={mainTab}
+          onValueChange={(v) => setMainTab(v as MainTabValue)}
+          className="flex-1 flex flex-col"
+        >
           {/* Tab Header with Stats Bar */}
           <div className="flex-shrink-0 border-b bg-muted/30">
             {/* Stats Summary Bar */}
@@ -1928,24 +2023,22 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   </div>
                 )}
               </div>
-              <div className="text-xs text-muted-foreground">
-                共 {taskStats.total} 个任务
-              </div>
+              <div className="text-xs text-muted-foreground">共 {taskStats.total} 个任务</div>
             </div>
 
             {/* Tab Navigation */}
             <div className="px-4 py-2 flex items-center justify-between">
               <TabsList className="h-8 p-0.5 bg-muted/60 rounded-lg">
-                <TabsTrigger 
-                  value="tree" 
+                <TabsTrigger
+                  value="tree"
                   className="h-7 px-3 text-xs gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
                 >
                   <FolderTree className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">课程内容树</span>
                   <span className="sm:hidden">内容树</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="generating" 
+                <TabsTrigger
+                  value="generating"
                   className="h-7 px-3 text-xs gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
                 >
                   <Activity className="h-3.5 w-3.5" />
@@ -1956,8 +2049,8 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="completed" 
+                <TabsTrigger
+                  value="completed"
                   className="h-7 px-3 text-xs gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
                 >
                   <ListChecks className="h-3.5 w-3.5" />
@@ -1969,7 +2062,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   )}
                 </TabsTrigger>
               </TabsList>
-              
+
               <div className="flex items-center gap-1.5">
                 {mainTab === "tree" && (
                   <>
@@ -1994,11 +2087,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                       <ChevronsDownUp className="h-3.5 w-3.5" />
                     </Button>
                     <div className="w-px h-4 bg-border mx-1" />
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={fetchTree} 
-                      disabled={loadingTree} 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={fetchTree}
+                      disabled={loadingTree}
                       className="h-7 px-2 hover:bg-muted"
                     >
                       <RefreshCw className={cn("h-3.5 w-3.5", loadingTree && "animate-spin")} />
@@ -2006,11 +2099,11 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   </>
                 )}
                 {(mainTab === "generating" || mainTab === "completed") && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={fetchGenerationTasks} 
-                    disabled={loadingTasks} 
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={fetchGenerationTasks}
+                    disabled={loadingTasks}
                     className="h-7 px-2 hover:bg-muted"
                   >
                     <RefreshCw className={cn("h-3.5 w-3.5", loadingTasks && "animate-spin")} />
@@ -2063,7 +2156,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold">{subject.name}</span>
                               {stats.pending > 0 && (
-                                <Badge variant="secondary" className="text-[10px] h-5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] h-5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                >
                                   待生成 {stats.pending}
                                 </Badge>
                               )}
@@ -2102,7 +2198,9 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleLoadMoreCategories(subject.subject, totalCategories)}
+                                  onClick={() =>
+                                    handleLoadMoreCategories(subject.subject, totalCategories)
+                                  }
                                   className="h-7 text-xs text-muted-foreground"
                                 >
                                   加载更多分类（剩余 {remainingCount}）
@@ -2118,7 +2216,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
             </TabsContent>
 
             {/* 生成中任务 Tab */}
-            <TabsContent value="generating" className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden">
+            <TabsContent
+              value="generating"
+              className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden"
+            >
               {/* Search Bar */}
               <div className="px-4 py-2.5 border-b bg-muted/20">
                 <div className="relative">
@@ -2131,7 +2232,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   />
                 </div>
               </div>
-              
+
               <ScrollArea className="flex-1">
                 {loadingTasks && (
                   <div className="flex flex-col items-center gap-3 py-16">
@@ -2145,12 +2246,16 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                       <Activity className="h-10 w-10 text-violet-300 dark:text-violet-700" />
                     </div>
                     <div className="text-center space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">暂无正在生成的任务</p>
-                      <p className="text-xs text-muted-foreground/70">在课程内容树中点击"生成"按钮开始</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        暂无正在生成的任务
+                      </p>
+                      <p className="text-xs text-muted-foreground/70">
+                        在课程内容树中点击"生成"按钮开始
+                      </p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setMainTab("tree")}
                       className="mt-2"
                     >
@@ -2161,81 +2266,111 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                 )}
                 {!loadingTasks && generatingTasksList.length > 0 && (
                   <div className="divide-y divide-border/50">
-                    {generatingTasksList.map((task, index) => (
-                      <div 
-                        key={task.taskKey} 
-                        className="px-4 py-3 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 transition-colors"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div className="flex items-start gap-3">
-                          {/* Status Icon */}
-                          <div className="flex-shrink-0 mt-0.5">
-                            {task.status === "pending" ? (
-                              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                                <Clock className="h-4 w-4 text-gray-400" />
-                              </div>
-                            ) : (
-                              <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center">
-                                <Loader2 className="h-4 w-4 text-violet-600 dark:text-violet-400 animate-spin" />
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-foreground truncate">
-                                {task.targetName}
-                              </span>
-                              <Badge 
-                                variant="outline" 
-                                className={cn(
-                                  "text-[10px] h-5 border-0",
-                                  task.status === "pending" 
-                                    ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" 
-                                    : "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300"
-                                )}
-                              >
-                                {task.status === "pending" ? "等待中" : "生成中"}
-                              </Badge>
+                    {generatingTasksList.map((task, index) => {
+                      const normalizedProgress =
+                        typeof task.progress === "number" && Number.isFinite(task.progress)
+                          ? Math.min(100, Math.max(0, task.progress))
+                          : undefined;
+                      const progressLabel =
+                        normalizedProgress !== undefined
+                          ? `${Math.round(normalizedProgress)}%`
+                          : task.status === "pending"
+                            ? "等待"
+                            : "处理中";
+                      const currentStep = task.currentStep?.trim();
+
+                      return (
+                        <div
+                          key={task.taskKey}
+                          className="px-4 py-3 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 transition-colors"
+                          style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Status Icon */}
+                            <div className="flex-shrink-0 mt-0.5">
+                              {task.status === "pending" ? (
+                                <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                  <Clock className="h-4 w-4 text-gray-400" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center">
+                                  <Loader2 className="h-4 w-4 text-violet-600 dark:text-violet-400 animate-spin" />
+                                </div>
+                              )}
                             </div>
-                            {task.courseName && (
-                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                                {task.courseName}
-                              </p>
-                            )}
-                            
-                            {/* Progress Bar */}
-                            <div className="mt-2 flex items-center gap-3">
-                              <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                <div
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground truncate">
+                                  {task.targetName}
+                                </span>
+                                <Badge
+                                  variant="outline"
                                   className={cn(
-                                    "h-full rounded-full transition-all duration-500",
-                                    task.status === "pending" 
-                                      ? "bg-gray-300 dark:bg-gray-600" 
-                                      : "bg-gradient-to-r from-violet-500 to-purple-500"
+                                    "text-[10px] h-5 border-0",
+                                    task.status === "pending"
+                                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                                      : "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300"
                                   )}
-                                  style={{ width: task.progress !== undefined ? `${task.progress}%` : (task.status === "pending" ? "0%" : "30%") }}
-                                />
+                                >
+                                  {task.status === "pending" ? "等待中" : "生成中"}
+                                </Badge>
                               </div>
-                              <span className="text-[11px] text-muted-foreground tabular-nums">
-                                {task.progress !== undefined ? `${task.progress}%` : (task.status === "pending" ? "等待" : "处理中")}
+                              {task.courseName && (
+                                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                  {task.courseName}
+                                </p>
+                              )}
+
+                              {/* Progress Bar */}
+                              <div className="mt-2 flex items-center gap-3">
+                                <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all duration-500",
+                                      task.status === "pending"
+                                        ? "bg-gray-300 dark:bg-gray-600"
+                                        : "bg-gradient-to-r from-violet-500 to-purple-500"
+                                    )}
+                                    style={{
+                                      width:
+                                        normalizedProgress !== undefined
+                                          ? `${normalizedProgress}%`
+                                          : task.status === "pending"
+                                            ? "0%"
+                                            : "30%",
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[11px] text-muted-foreground tabular-nums">
+                                  {progressLabel}
+                                </span>
+                              </div>
+                              {currentStep ? (
+                                <p className="text-[11px] text-muted-foreground mt-1 truncate">
+                                  当前步骤：{currentStep}
+                                </p>
+                              ) : task.status !== "pending" ? (
+                                <p className="text-[11px] text-muted-foreground mt-1">
+                                  正在生成内容...
+                                </p>
+                              ) : null}
+                            </div>
+
+                            {/* Time */}
+                            <div className="flex-shrink-0 text-right">
+                              <span className="text-[11px] text-muted-foreground">
+                                {new Date(task.createdAt).toLocaleTimeString("zh-CN", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
                               </span>
                             </div>
-                          </div>
-                          
-                          {/* Time */}
-                          <div className="flex-shrink-0 text-right">
-                            <span className="text-[11px] text-muted-foreground">
-                              {new Date(task.createdAt).toLocaleTimeString("zh-CN", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </ScrollArea>
@@ -2244,7 +2379,8 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
               {generatingTasksList.length > 0 && (
                 <div className="flex-shrink-0 px-4 py-2 border-t bg-muted/20 flex items-center justify-between">
                   <div className="text-xs text-muted-foreground">
-                    {generatingTasksList.length} 个任务正在处理
+                    生成中 {activeGeneratingCount} / 并发上限 {maxConcurrency}
+                    {pendingGeneratingCount > 0 ? ` · 等待 ${pendingGeneratingCount}` : ""}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-violet-600">
                     <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
@@ -2255,7 +2391,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
             </TabsContent>
 
             {/* 已完成任务 Tab */}
-            <TabsContent value="completed" className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden">
+            <TabsContent
+              value="completed"
+              className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden"
+            >
               {/* Search Bar */}
               <div className="px-4 py-2.5 border-b bg-muted/20">
                 <div className="relative">
@@ -2268,7 +2407,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   />
                 </div>
               </div>
-              
+
               <ScrollArea className="flex-1">
                 {loadingTasks && (
                   <div className="flex flex-col items-center gap-3 py-16">
@@ -2290,12 +2429,12 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                 {!loadingTasks && completedTasksList.length > 0 && (
                   <div className="divide-y divide-border/50">
                     {completedTasksList.map((task) => (
-                      <div 
-                        key={task.taskKey} 
+                      <div
+                        key={task.taskKey}
                         className={cn(
                           "px-4 py-3 transition-colors",
-                          task.status === "completed" 
-                            ? "hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20" 
+                          task.status === "completed"
+                            ? "hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
                             : "hover:bg-red-50/50 dark:hover:bg-red-950/20"
                         )}
                       >
@@ -2312,22 +2451,26 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                               </div>
                             )}
                           </div>
-                          
+
                           {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className={cn(
-                                "text-sm font-medium truncate",
-                                task.status === "completed" ? "text-foreground" : "text-red-700 dark:text-red-300"
-                              )}>
+                              <span
+                                className={cn(
+                                  "text-sm font-medium truncate",
+                                  task.status === "completed"
+                                    ? "text-foreground"
+                                    : "text-red-700 dark:text-red-300"
+                                )}
+                              >
                                 {task.targetName}
                               </span>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={cn(
                                   "text-[10px] h-5 border-0",
-                                  task.status === "completed" 
-                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" 
+                                  task.status === "completed"
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
                                     : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
                                 )}
                               >
@@ -2335,22 +2478,28 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                               </Badge>
                             </div>
                             {task.message && (
-                              <p className={cn(
-                                "text-xs mt-0.5 truncate",
-                                task.status === "failed" ? "text-red-500" : "text-muted-foreground"
-                              )}>
+                              <p
+                                className={cn(
+                                  "text-xs mt-0.5 truncate",
+                                  task.status === "failed"
+                                    ? "text-red-500"
+                                    : "text-muted-foreground"
+                                )}
+                              >
                                 {task.message}
                               </p>
                             )}
                           </div>
-                          
+
                           {/* Time */}
                           <div className="flex-shrink-0 text-right">
                             <span className="text-[11px] text-muted-foreground">
-                              {task.completedAt ? new Date(task.completedAt).toLocaleTimeString("zh-CN", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }) : "-"}
+                              {task.completedAt
+                                ? new Date(task.completedAt).toLocaleTimeString("zh-CN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "-"}
                             </span>
                           </div>
                         </div>
@@ -2370,7 +2519,9 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                     {taskStats.completed > 0 && (
                       <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-emerald-600 font-medium">{taskStats.completed} 成功</span>
+                        <span className="text-emerald-600 font-medium">
+                          {taskStats.completed} 成功
+                        </span>
                       </div>
                     )}
                     {taskStats.failed > 0 && (
@@ -2439,7 +2590,9 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   <Label>课程名称</Label>
                   <Input
                     value={promptVars.section || ""}
-                    onChange={(e) => setPromptVars((prev) => ({ ...prev, section: e.target.value }))}
+                    onChange={(e) =>
+                      setPromptVars((prev) => ({ ...prev, section: e.target.value }))
+                    }
                     placeholder="课程名称"
                   />
                 </div>
@@ -2447,7 +2600,9 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   <Label>分类路径</Label>
                   <Input
                     value={promptVars.subsection || ""}
-                    onChange={(e) => setPromptVars((prev) => ({ ...prev, subsection: e.target.value }))}
+                    onChange={(e) =>
+                      setPromptVars((prev) => ({ ...prev, subsection: e.target.value }))
+                    }
                     placeholder="分类路径"
                   />
                 </div>
@@ -2546,9 +2701,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>测试内容生成</DialogTitle>
-            <DialogDescription>
-              选择一个章节进行测试，或点击预览按钮查看 Prompt
-            </DialogDescription>
+            <DialogDescription>选择一个章节进行测试，或点击预览按钮查看 Prompt</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -2656,9 +2809,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
             </div>
             <ScrollArea className="max-h-[220px] border rounded-md p-2">
               {testTasks.length === 0 && (
-                <div className="text-xs text-muted-foreground py-4 text-center">
-                  暂无测试任务
-                </div>
+                <div className="text-xs text-muted-foreground py-4 text-center">暂无测试任务</div>
               )}
               <div className="space-y-2">
                 {testTasks.map((task) => (
@@ -2668,9 +2819,7 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{task.chapterTitle}</div>
-                      <div className="text-xs text-muted-foreground">
-                        ?? #{task.taskId}
-                      </div>
+                      <div className="text-xs text-muted-foreground">?? #{task.taskId}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       <TaskStatusBadge status={task.status} />
@@ -2735,7 +2884,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
               <TabsTrigger value="structured">结构化预览</TabsTrigger>
               <TabsTrigger value="raw">原始内容</TabsTrigger>
             </TabsList>
-            <TabsContent value="structured" className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-hidden data-[state=inactive]:hidden">
+            <TabsContent
+              value="structured"
+              className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-hidden data-[state=inactive]:hidden"
+            >
               {selectedTestTask?.isContentTruncated && (
                 <div className="text-xs text-amber-600 flex items-center gap-1 flex-shrink-0">
                   <Clock className="h-3 w-3" />
@@ -2748,7 +2900,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                 </div>
               </div>
             </TabsContent>
-            <TabsContent value="raw" className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-hidden data-[state=inactive]:hidden">
+            <TabsContent
+              value="raw"
+              className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-hidden data-[state=inactive]:hidden"
+            >
               <div className="flex-1 min-h-0 border rounded-lg bg-slate-50 dark:bg-slate-900 overflow-y-auto">
                 <pre className="text-xs whitespace-pre-wrap break-words p-4 font-mono">
                   {selectedTestTask?.rawResult || "暂无原始内容"}
@@ -2819,12 +2974,18 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
           )}
 
           {!contentPreviewLoading && !contentPreviewError && (
-            <Tabs defaultValue="structured" className="flex-1 overflow-hidden flex flex-col min-h-0">
+            <Tabs
+              defaultValue="structured"
+              className="flex-1 overflow-hidden flex flex-col min-h-0"
+            >
               <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
                 <TabsTrigger value="structured">结构化预览</TabsTrigger>
                 <TabsTrigger value="raw">原始内容</TabsTrigger>
               </TabsList>
-              <TabsContent value="structured" className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-auto">
+              <TabsContent
+                value="structured"
+                className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-auto"
+              >
                 {contentPreviewTruncated && (
                   <div className="text-xs text-amber-600 flex items-center gap-1 flex-shrink-0">
                     <Clock className="h-3 w-3" />
@@ -2837,7 +2998,10 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
                   </div>
                 </div>
               </TabsContent>
-              <TabsContent value="raw" className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-auto">
+              <TabsContent
+                value="raw"
+                className="mt-4 flex-1 flex flex-col gap-2 min-h-0 overflow-auto"
+              >
                 <div className="flex-1 border rounded-lg bg-slate-50 dark:bg-slate-900 overflow-auto">
                   <pre className="text-xs whitespace-pre-wrap break-words p-4 font-mono">
                     {contentPreviewRaw || "暂无原始内容"}
@@ -2869,7 +3033,8 @@ export function TeachingContentTab({ onTaskCreated }: TeachingContentTabProps) {
               确认清空所有课堂数据
             </DialogTitle>
             <DialogDescription>
-              此操作将删除所有章节的 AI 生成内容（包括课堂教学内容和模块数据），但会保留章节结构。删除后可以重新生成。
+              此操作将删除所有章节的 AI
+              生成内容（包括课堂教学内容和模块数据），但会保留章节结构。删除后可以重新生成。
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

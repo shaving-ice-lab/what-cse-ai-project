@@ -199,7 +199,9 @@ export interface CreatePlanFromTemplateParams {
   target_exam_date?: string;
 }
 
-export const createPlanFromTemplate = (params: CreatePlanFromTemplateParams): Promise<StudyPlan> => {
+export const createPlanFromTemplate = (
+  params: CreatePlanFromTemplateParams
+): Promise<StudyPlan> => {
   return request.post("/study/plans/from-template", params);
 };
 
@@ -257,7 +259,9 @@ export const deleteStudyPlan = (id: number): Promise<void> => {
 };
 
 // 获取计划模板
-export const getPlanTemplates = (examType?: string): Promise<{ templates: StudyPlanTemplate[] }> => {
+export const getPlanTemplates = (
+  examType?: string
+): Promise<{ templates: StudyPlanTemplate[] }> => {
   return request.get("/study/plans/templates", { params: { exam_type: examType } });
 };
 
@@ -281,8 +285,15 @@ export const completeDailyTask = (taskId: number): Promise<void> => {
 };
 
 // 更新任务进度
-export const updateTaskProgress = (taskId: number, actualTime: number, actualCount: number): Promise<void> => {
-  return request.put(`/study/tasks/${taskId}/progress`, { actual_time: actualTime, actual_count: actualCount });
+export const updateTaskProgress = (
+  taskId: number,
+  actualTime: number,
+  actualCount: number
+): Promise<void> => {
+  return request.put(`/study/tasks/${taskId}/progress`, {
+    actual_time: actualTime,
+    actual_count: actualCount,
+  });
 };
 
 // =====================================================
@@ -339,7 +350,9 @@ export interface GetStudyRecordsResponse {
   page_size: number;
 }
 
-export const getStudyRecords = (params?: GetStudyRecordsParams): Promise<GetStudyRecordsResponse> => {
+export const getStudyRecords = (
+  params?: GetStudyRecordsParams
+): Promise<GetStudyRecordsResponse> => {
   return request.get("/study/time/records", { params });
 };
 
@@ -371,7 +384,9 @@ export interface AddLearningFavoriteParams {
   tags?: string[];
 }
 
-export const addLearningFavorite = (params: AddLearningFavoriteParams): Promise<LearningFavorite> => {
+export const addLearningFavorite = (
+  params: AddLearningFavoriteParams
+): Promise<LearningFavorite> => {
   return request.post("/study/favorites", params);
 };
 
@@ -391,7 +406,9 @@ export interface GetLearningFavoritesResponse {
   stats?: Record<string, number>;
 }
 
-export const getLearningFavorites = (params?: GetLearningFavoritesParams): Promise<GetLearningFavoritesResponse> => {
+export const getLearningFavorites = (
+  params?: GetLearningFavoritesParams
+): Promise<GetLearningFavoritesResponse> => {
   return request.get("/study/favorites", { params });
 };
 
@@ -401,13 +418,24 @@ export const getLearningFavoriteStats = (): Promise<{ stats: Record<string, numb
 };
 
 // 检查是否已收藏
-export const checkLearningFavorite = (contentType: LearningContentType, contentId: number): Promise<{ is_favorite: boolean }> => {
-  return request.get("/study/favorites/check", { params: { content_type: contentType, content_id: contentId } });
+export const checkLearningFavorite = (
+  contentType: LearningContentType,
+  contentId: number
+): Promise<{ is_favorite: boolean }> => {
+  return request.get("/study/favorites/check", {
+    params: { content_type: contentType, content_id: contentId },
+  });
 };
 
 // 批量检查是否已收藏
-export const batchCheckLearningFavorites = (contentType: LearningContentType, contentIds: number[]): Promise<{ favorites: Record<number, boolean> }> => {
-  return request.post("/study/favorites/batch-check", { content_type: contentType, content_ids: contentIds });
+export const batchCheckLearningFavorites = (
+  contentType: LearningContentType,
+  contentIds: number[]
+): Promise<{ favorites: Record<number, boolean> }> => {
+  return request.post("/study/favorites/batch-check", {
+    content_type: contentType,
+    content_ids: contentIds,
+  });
 };
 
 // 取消收藏
@@ -421,7 +449,10 @@ export const updateLearningFavoriteNote = (favoriteId: number, note: string): Pr
 };
 
 // 移动到收藏夹
-export const moveLearningFavoriteToFolder = (favoriteId: number, folderId: number | null): Promise<void> => {
+export const moveLearningFavoriteToFolder = (
+  favoriteId: number,
+  folderId: number | null
+): Promise<void> => {
   return request.put(`/study/favorites/${favoriteId}/folder`, { folder_id: folderId });
 };
 
@@ -437,7 +468,9 @@ export interface CreateLearningFolderParams {
   color?: string;
 }
 
-export const createLearningFolder = (params: CreateLearningFolderParams): Promise<LearningFavoriteFolder> => {
+export const createLearningFolder = (
+  params: CreateLearningFolderParams
+): Promise<LearningFavoriteFolder> => {
   return request.post("/study/folders", params);
 };
 
@@ -454,7 +487,10 @@ export interface UpdateLearningFolderParams {
   color?: string;
 }
 
-export const updateLearningFolder = (folderId: number, params: UpdateLearningFolderParams): Promise<void> => {
+export const updateLearningFolder = (
+  folderId: number,
+  params: UpdateLearningFolderParams
+): Promise<void> => {
   return request.put(`/study/folders/${folderId}`, params);
 };
 
@@ -468,7 +504,9 @@ export const deleteLearningFolder = (folderId: number): Promise<void> => {
 // =====================================================
 
 // 获取知识点掌握情况
-export const getKnowledgeMastery = (categoryId?: number): Promise<{ masteries: KnowledgeMastery[] }> => {
+export const getKnowledgeMastery = (
+  categoryId?: number
+): Promise<{ masteries: KnowledgeMastery[] }> => {
   return request.get("/study/mastery", { params: { category_id: categoryId } });
 };
 
@@ -483,6 +521,12 @@ export const getMasteryStats = (): Promise<MasteryStats> => {
 };
 
 // 更新知识点掌握度
-export const updateKnowledgeMastery = (knowledgePointId: number, isCorrect: boolean): Promise<void> => {
-  return request.post("/study/mastery/update", { knowledge_point_id: knowledgePointId, is_correct: isCorrect });
+export const updateKnowledgeMastery = (
+  knowledgePointId: number,
+  isCorrect: boolean
+): Promise<void> => {
+  return request.post("/study/mastery/update", {
+    knowledge_point_id: knowledgePointId,
+    is_correct: isCorrect,
+  });
 };

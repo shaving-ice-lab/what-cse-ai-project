@@ -1,28 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  BookOpen,
-  Palette,
-  FileQuestion,
-  Activity,
-  RefreshCw,
-  Sparkles,
-} from "lucide-react";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  Button,
-  Badge,
-} from "@what-cse/ui";
+import { BookOpen, Palette, FileQuestion, Activity, RefreshCw, Sparkles } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent, Button, Badge } from "@what-cse/ui";
 import { cn } from "@what-cse/ui";
-import {
-  contentGeneratorApi,
-  ContentTask,
-  ContentStats,
-} from "@/services/content-generator-api";
+import { contentGeneratorApi, ContentTask, ContentStats } from "@/services/content-generator-api";
 
 // Import tab components
 import { TeachingContentTab } from "./components/TeachingContentTab";
@@ -38,7 +20,7 @@ const tabs = [
   { value: "history", label: "任务历史", icon: Activity, description: "查看生成任务记录" },
 ] as const;
 
-type TabValue = typeof tabs[number]["value"];
+type TabValue = (typeof tabs)[number]["value"];
 
 export default function AIGenerationCenterPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("content");
@@ -58,7 +40,9 @@ export default function AIGenerationCenterPage() {
           total_chapters: 0,
           total_knowledge_points: 0,
         })),
-        contentGeneratorApi.getTasks({ page, page_size: 15 }).catch(() => ({ tasks: [], total: 0 })),
+        contentGeneratorApi
+          .getTasks({ page, page_size: 15 })
+          .catch(() => ({ tasks: [], total: 0 })),
       ]);
       setStats(statsRes as ContentStats);
       setTasks((tasksRes as { tasks: ContentTask[]; total: number }).tasks ?? []);
@@ -97,9 +81,7 @@ export default function AIGenerationCenterPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">AI 内容生成中心</h1>
-              <p className="text-sm text-muted-foreground">
-                统一管理所有 AI 生成功能
-              </p>
+              <p className="text-sm text-muted-foreground">统一管理所有 AI 生成功能</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -114,12 +96,7 @@ export default function AIGenerationCenterPage() {
                 {stats?.total_chapters ?? 0} 章节
               </Badge>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchTasks}
-              disabled={loading}
-            >
+            <Button variant="outline" size="sm" onClick={fetchTasks} disabled={loading}>
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
               刷新
             </Button>

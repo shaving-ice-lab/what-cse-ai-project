@@ -2,13 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-  PlayCircle,
-  RotateCcw,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, PlayCircle, RotateCcw } from "lucide-react";
 import { useClassroom } from "./ClassroomContext";
 import { cn } from "@/lib/utils";
 
@@ -128,14 +122,9 @@ export function ClassroomSlideViewer({
               stiffness: 300,
               damping: 30,
             }}
-            className={cn(
-              "absolute inset-0 overflow-y-auto",
-              fontSizeClass
-            )}
+            className={cn("absolute inset-0 overflow-y-auto", fontSizeClass)}
           >
-            <div className="min-h-full p-6 lg:p-8">
-              {children}
-            </div>
+            <div className="min-h-full p-6 lg:p-8">{children}</div>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -164,31 +153,33 @@ export function ClassroomSlideViewer({
             {/* 进度点 */}
             {showProgressDots && (
               <div className="flex items-center gap-1.5">
-                {sections.slice(
-                  Math.max(0, currentSectionIndex - 3),
-                  Math.min(sections.length, currentSectionIndex + 4)
-                ).map((section, idx) => {
-                  const actualIndex = Math.max(0, currentSectionIndex - 3) + idx;
-                  const isActive = actualIndex === currentSectionIndex;
-                  const isCompleted = progress.completedSections.includes(section.id);
+                {sections
+                  .slice(
+                    Math.max(0, currentSectionIndex - 3),
+                    Math.min(sections.length, currentSectionIndex + 4)
+                  )
+                  .map((section, idx) => {
+                    const actualIndex = Math.max(0, currentSectionIndex - 3) + idx;
+                    const isActive = actualIndex === currentSectionIndex;
+                    const isCompleted = progress.completedSections.includes(section.id);
 
-                  return (
-                    <motion.button
-                      key={section.id}
-                      onClick={() => goToSection(actualIndex)}
-                      className={cn(
-                        "rounded-full transition-all",
-                        isActive
-                          ? "w-8 h-2.5 bg-amber-500"
-                          : isCompleted
-                          ? "w-2.5 h-2.5 bg-emerald-400"
-                          : "w-2.5 h-2.5 bg-stone-300 hover:bg-stone-400"
-                      )}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                    />
-                  );
-                })}
+                    return (
+                      <motion.button
+                        key={section.id}
+                        onClick={() => goToSection(actualIndex)}
+                        className={cn(
+                          "rounded-full transition-all",
+                          isActive
+                            ? "w-8 h-2.5 bg-amber-500"
+                            : isCompleted
+                              ? "w-2.5 h-2.5 bg-emerald-400"
+                              : "w-2.5 h-2.5 bg-stone-300 hover:bg-stone-400"
+                        )}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                      />
+                    );
+                  })}
               </div>
             )}
 
@@ -218,20 +209,12 @@ export function ClassroomSlideViewer({
                     : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40"
                 )}
                 whileHover={
-                  currentSectionIndex !== sections.length - 1
-                    ? { x: 4, scale: 1.02 }
-                    : {}
+                  currentSectionIndex !== sections.length - 1 ? { x: 4, scale: 1.02 } : {}
                 }
-                whileTap={
-                  currentSectionIndex !== sections.length - 1
-                    ? { scale: 0.98 }
-                    : {}
-                }
+                whileTap={currentSectionIndex !== sections.length - 1 ? { scale: 0.98 } : {}}
               >
                 <span className="hidden sm:inline">
-                  {currentSectionIndex === sections.length - 1
-                    ? "已完成"
-                    : "下一节"}
+                  {currentSectionIndex === sections.length - 1 ? "已完成" : "下一节"}
                 </span>
                 {currentSectionIndex === sections.length - 1 ? (
                   <CheckCircle className="w-5 h-5" />
@@ -359,11 +342,7 @@ export function ContentCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, type: "spring", stiffness: 200 }}
-      className={cn(
-        "rounded-2xl border p-6 shadow-sm",
-        variantStyles[variant],
-        className
-      )}
+      className={cn("rounded-2xl border p-6 shadow-sm", variantStyles[variant], className)}
     >
       {children}
     </motion.div>
@@ -387,7 +366,7 @@ export function StepReveal({ steps }: StepRevealProps) {
 
   const revealNext = () => {
     if (revealedSteps < steps.length) {
-      setRevealedSteps(prev => prev + 1);
+      setRevealedSteps((prev) => prev + 1);
     }
   };
 

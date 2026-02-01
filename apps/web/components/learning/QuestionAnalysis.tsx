@@ -92,13 +92,7 @@ function ExamPointTag({ point }: { point: string }) {
 }
 
 // 解题步骤卡片
-function SolutionStepCard({
-  step,
-  isLast,
-}: {
-  step: SolutionStep;
-  isLast: boolean;
-}) {
+function SolutionStepCard({ step, isLast }: { step: SolutionStep; isLast: boolean }) {
   return (
     <div className="relative flex gap-4">
       {/* 步骤指示器 */}
@@ -106,9 +100,7 @@ function SolutionStepCard({
         <div
           className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-            step.highlight
-              ? "bg-amber-500 text-white"
-              : "bg-stone-200 text-stone-600"
+            step.highlight ? "bg-amber-500 text-white" : "bg-stone-200 text-stone-600"
           )}
         >
           {step.step}
@@ -119,10 +111,7 @@ function SolutionStepCard({
       {/* 步骤内容 */}
       <div className={cn("flex-1 pb-6", isLast && "pb-0")}>
         <h4
-          className={cn(
-            "font-medium mb-1",
-            step.highlight ? "text-amber-700" : "text-stone-700"
-          )}
+          className={cn("font-medium mb-1", step.highlight ? "text-amber-700" : "text-stone-700")}
         >
           {step.title}
         </h4>
@@ -156,10 +145,7 @@ function OptionAnalysisCard({ analysis }: { analysis: OptionAnalysis }) {
             <XCircle className="w-5 h-5 text-stone-400" />
           )}
           <span
-            className={cn(
-              "font-medium",
-              analysis.isCorrect ? "text-green-700" : "text-stone-700"
-            )}
+            className={cn("font-medium", analysis.isCorrect ? "text-green-700" : "text-stone-700")}
           >
             {analysis.option}. {analysis.content}
           </span>
@@ -170,11 +156,7 @@ function OptionAnalysisCard({ analysis }: { analysis: OptionAnalysis }) {
           <ChevronDown className="w-4 h-4 text-stone-400" />
         )}
       </div>
-      {expanded && (
-        <p className="mt-2 text-sm text-stone-600 pl-7">
-          {analysis.explanation}
-        </p>
-      )}
+      {expanded && <p className="mt-2 text-sm text-stone-600 pl-7">{analysis.explanation}</p>}
     </div>
   );
 }
@@ -208,24 +190,15 @@ function TipCard({ tip }: { tip: SolutionTip }) {
   return (
     <div className="p-4 bg-white rounded-xl border border-stone-200">
       <div className="flex items-center gap-2 mb-2">
-        <div
-          className={cn(
-            "w-7 h-7 rounded-lg flex items-center justify-center",
-            config.bgColor
-          )}
-        >
+        <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", config.bgColor)}>
           <Icon className={cn("w-4 h-4", config.color)} />
         </div>
-        <span className={cn("text-sm font-medium", config.color)}>
-          {config.label}
-        </span>
+        <span className={cn("text-sm font-medium", config.color)}>{config.label}</span>
       </div>
       <h4 className="font-medium text-stone-800 mb-1">{tip.title}</h4>
       <p className="text-sm text-stone-600">{tip.content}</p>
       {tip.applicability && (
-        <p className="text-xs text-stone-400 mt-2">
-          适用场景：{tip.applicability}
-        </p>
+        <p className="text-xs text-stone-400 mt-2">适用场景：{tip.applicability}</p>
       )}
     </div>
   );
@@ -258,9 +231,7 @@ function KnowledgeCard({
         <Link2 className="w-4 h-4 text-stone-400" />
       </div>
       {knowledge.description && (
-        <p className="text-xs text-stone-500 line-clamp-2">
-          {knowledge.description}
-        </p>
+        <p className="text-xs text-stone-500 line-clamp-2">{knowledge.description}</p>
       )}
     </button>
   );
@@ -310,14 +281,12 @@ export function QuestionAnalysis({
           {
             step: 1,
             title: "审题提取关键信息",
-            content:
-              "从题目中提取出甲乙两人的速度、出发时间、行走方向等关键信息。",
+            content: "从题目中提取出甲乙两人的速度、出发时间、行走方向等关键信息。",
           },
           {
             step: 2,
             title: "建立数量关系",
-            content:
-              "根据「路程=速度×时间」建立方程，设未知量为相遇时间 t。",
+            content: "根据「路程=速度×时间」建立方程，设未知量为相遇时间 t。",
             highlight: true,
           },
           {
@@ -342,8 +311,7 @@ export function QuestionAnalysis({
         option: "B",
         content: "2.5小时",
         isCorrect: true,
-        explanation:
-          "正确计算了两人的相遇时间，考虑了出发时间差和速度差。",
+        explanation: "正确计算了两人的相遇时间，考虑了出发时间差和速度差。",
       },
       {
         option: "C",
@@ -364,8 +332,7 @@ export function QuestionAnalysis({
           {
             type: "quick",
             title: "速度和法",
-            content:
-              "相遇问题直接用「总路程÷速度和」计算，无需设未知数。",
+            content: "相遇问题直接用「总路程÷速度和」计算，无需设未知数。",
             applicability: "同时出发的相遇问题",
           },
           {
@@ -420,9 +387,7 @@ export function QuestionAnalysis({
               <CheckCircle2 className="w-6 h-6 text-green-500" />
               <div>
                 <p className="font-medium text-green-700">回答正确！</p>
-                <p className="text-sm text-green-600">
-                  你的答案：{userAnswer}
-                </p>
+                <p className="text-sm text-green-600">你的答案：{userAnswer}</p>
               </div>
             </>
           ) : (
@@ -481,9 +446,7 @@ export function QuestionAnalysis({
             {/* 关键信息提取 */}
             {displayData.keyInfo && displayData.keyInfo.length > 0 && (
               <div className="p-3 bg-amber-50 rounded-lg">
-                <p className="text-sm font-medium text-amber-700 mb-2">
-                  关键信息提取：
-                </p>
+                <p className="text-sm font-medium text-amber-700 mb-2">关键信息提取：</p>
                 <div className="flex flex-wrap gap-2">
                   {displayData.keyInfo.map((info, idx) => (
                     <span
@@ -511,20 +474,16 @@ export function QuestionAnalysis({
             )}
 
             {/* 选项分析 */}
-            {displayData.optionAnalysis &&
-              displayData.optionAnalysis.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-stone-700 mb-3">选项逐一分析</h4>
-                  <div className="space-y-2">
-                    {displayData.optionAnalysis.map((analysis) => (
-                      <OptionAnalysisCard
-                        key={analysis.option}
-                        analysis={analysis}
-                      />
-                    ))}
-                  </div>
+            {displayData.optionAnalysis && displayData.optionAnalysis.length > 0 && (
+              <div>
+                <h4 className="font-medium text-stone-700 mb-3">选项逐一分析</h4>
+                <div className="space-y-2">
+                  {displayData.optionAnalysis.map((analysis) => (
+                    <OptionAnalysisCard key={analysis.option} analysis={analysis} />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -542,9 +501,7 @@ export function QuestionAnalysis({
               </div>
               <div className="text-left">
                 <h3 className="font-semibold text-stone-800">AI 解题技巧</h3>
-                <p className="text-xs text-stone-500">
-                  {displayData.tips.length} 个技巧
-                </p>
+                <p className="text-xs text-stone-500">{displayData.tips.length} 个技巧</p>
               </div>
             </div>
             {activeSection === "tips" ? (
@@ -589,48 +546,46 @@ export function QuestionAnalysis({
         {activeSection === "knowledge" && (
           <div className="p-4 pt-0 space-y-4">
             {/* 关联知识点 */}
-            {displayData.relatedKnowledge &&
-              displayData.relatedKnowledge.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-stone-700 mb-3 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-stone-500" />
-                    关联知识点
-                  </h4>
-                  <div className="grid md:grid-cols-2 gap-2">
-                    {displayData.relatedKnowledge.map((knowledge) => (
-                      <KnowledgeCard
-                        key={knowledge.id}
-                        knowledge={knowledge}
-                        onClick={() => onKnowledgeClick?.(knowledge.id)}
-                      />
-                    ))}
-                  </div>
+            {displayData.relatedKnowledge && displayData.relatedKnowledge.length > 0 && (
+              <div>
+                <h4 className="font-medium text-stone-700 mb-3 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-stone-500" />
+                  关联知识点
+                </h4>
+                <div className="grid md:grid-cols-2 gap-2">
+                  {displayData.relatedKnowledge.map((knowledge) => (
+                    <KnowledgeCard
+                      key={knowledge.id}
+                      knowledge={knowledge}
+                      onClick={() => onKnowledgeClick?.(knowledge.id)}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
             {/* 易混淆点 */}
-            {displayData.confusionPoints &&
-              displayData.confusionPoints.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-stone-700 mb-3 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                    易混淆点辨析
-                  </h4>
-                  <div className="space-y-2">
-                    {displayData.confusionPoints.map((point, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700 flex items-start gap-2"
-                      >
-                        <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center flex-shrink-0">
-                          {idx + 1}
-                        </span>
-                        {point}
-                      </div>
-                    ))}
-                  </div>
+            {displayData.confusionPoints && displayData.confusionPoints.length > 0 && (
+              <div>
+                <h4 className="font-medium text-stone-700 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  易混淆点辨析
+                </h4>
+                <div className="space-y-2">
+                  {displayData.confusionPoints.map((point, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700 flex items-start gap-2"
+                    >
+                      <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center flex-shrink-0">
+                        {idx + 1}
+                      </span>
+                      {point}
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
           </div>
         )}
       </div>

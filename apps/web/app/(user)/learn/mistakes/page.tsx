@@ -54,7 +54,13 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 // 统计卡片组件
-function StatCard({ icon: Icon, label, value, color, subValue }: {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  color,
+  subValue,
+}: {
   icon: React.ElementType;
   label: string;
   value: number;
@@ -76,7 +82,12 @@ function StatCard({ icon: Icon, label, value, color, subValue }: {
 }
 
 // 导出格式选项
-const EXPORT_FORMATS: { value: ExportFormat; label: string; icon: React.ElementType; description: string }[] = [
+const EXPORT_FORMATS: {
+  value: ExportFormat;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+}[] = [
   { value: "csv", label: "CSV 表格", icon: FileSpreadsheet, description: "适合用 Excel 打开分析" },
   { value: "markdown", label: "Markdown", icon: FileText, description: "适合笔记软件导入" },
   { value: "html", label: "HTML 网页", icon: Globe, description: "可打印的精美页面" },
@@ -92,7 +103,10 @@ function ExportModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onExport: (format: ExportFormat, options: { includeNote: boolean; includeStats: boolean }) => void;
+  onExport: (
+    format: ExportFormat,
+    options: { includeNote: boolean; includeStats: boolean }
+  ) => void;
   stats: WrongQuestionStats | null;
 }) {
   const [format, setFormat] = useState<ExportFormat>("html");
@@ -129,9 +143,7 @@ function ExportModal({
               <X className="w-5 h-5 text-stone-500" />
             </button>
           </div>
-          <p className="text-sm text-stone-500 mt-1">
-            将错题导出到本地，方便复习打印
-          </p>
+          <p className="text-sm text-stone-500 mt-1">将错题导出到本地，方便复习打印</p>
         </div>
 
         {/* Content */}
@@ -152,8 +164,12 @@ function ExportModal({
                         : "border-stone-200 hover:border-amber-300"
                     }`}
                   >
-                    <Icon className={`w-6 h-6 mb-2 ${format === f.value ? "text-amber-600" : "text-stone-400"}`} />
-                    <div className={`font-medium ${format === f.value ? "text-amber-700" : "text-stone-700"}`}>
+                    <Icon
+                      className={`w-6 h-6 mb-2 ${format === f.value ? "text-amber-600" : "text-stone-400"}`}
+                    />
+                    <div
+                      className={`font-medium ${format === f.value ? "text-amber-700" : "text-stone-700"}`}
+                    >
                       {f.label}
                     </div>
                     <div className="text-xs text-stone-500 mt-1">{f.description}</div>
@@ -192,7 +208,8 @@ function ExportModal({
           {stats && (
             <div className="p-4 bg-stone-50 rounded-xl">
               <div className="text-sm text-stone-600">
-                即将导出 <span className="font-bold text-amber-600">{stats.active_count}</span> 道待复习错题
+                即将导出 <span className="font-bold text-amber-600">{stats.active_count}</span>{" "}
+                道待复习错题
               </div>
               <div className="text-xs text-stone-400 mt-1">
                 已掌握 {stats.mastered_count} 道 | 总计 {stats.total_count} 道
@@ -260,7 +277,9 @@ function WrongQuestionCard({
       {/* Header */}
       <div className="p-4 border-b border-stone-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`px-2 py-1 rounded-lg text-xs font-medium ${statusLabels[wrong.status]?.color || "bg-stone-100"}`}>
+          <div
+            className={`px-2 py-1 rounded-lg text-xs font-medium ${statusLabels[wrong.status]?.color || "bg-stone-100"}`}
+          >
             {statusLabels[wrong.status]?.label || wrong.status}
           </div>
           {wrong.category_name && (
@@ -568,7 +587,10 @@ export default function MistakesPage() {
     }
   };
 
-  const handleExport = async (format: ExportFormat, options: { includeNote: boolean; includeStats: boolean }) => {
+  const handleExport = async (
+    format: ExportFormat,
+    options: { includeNote: boolean; includeStats: boolean }
+  ) => {
     try {
       await exportWrongQuestions({
         format,
@@ -807,9 +829,7 @@ export default function MistakesPage() {
               {/* Batch Operations */}
               {selectedIds.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-stone-100 flex items-center gap-4">
-                  <span className="text-sm text-stone-500">
-                    已选择 {selectedIds.length} 道题
-                  </span>
+                  <span className="text-sm text-stone-500">已选择 {selectedIds.length} 道题</span>
                   <button
                     onClick={handleBatchMastered}
                     className="px-3 py-1.5 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-1"
@@ -878,9 +898,7 @@ export default function MistakesPage() {
                 {total > params.page_size! && (
                   <div className="flex items-center justify-center gap-2 mt-6">
                     <button
-                      onClick={() =>
-                        setParams((prev) => ({ ...prev, page: (prev.page || 1) - 1 }))
-                      }
+                      onClick={() => setParams((prev) => ({ ...prev, page: (prev.page || 1) - 1 }))}
                       disabled={params.page === 1}
                       className="px-4 py-2 border border-stone-200 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50"
                     >
@@ -890,9 +908,7 @@ export default function MistakesPage() {
                       {params.page} / {Math.ceil(total / params.page_size!)}
                     </span>
                     <button
-                      onClick={() =>
-                        setParams((prev) => ({ ...prev, page: (prev.page || 1) + 1 }))
-                      }
+                      onClick={() => setParams((prev) => ({ ...prev, page: (prev.page || 1) + 1 }))}
                       disabled={params.page! >= Math.ceil(total / params.page_size!)}
                       className="px-4 py-2 border border-stone-200 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50"
                     >
@@ -905,9 +921,7 @@ export default function MistakesPage() {
               <div className="text-center py-16">
                 <BookOpen className="w-16 h-16 mx-auto text-stone-300 mb-4" />
                 <h3 className="text-lg font-medium text-stone-600 mb-2">暂无错题</h3>
-                <p className="text-stone-400 mb-6">
-                  去做题吧，做错的题目会自动加入错题本
-                </p>
+                <p className="text-stone-400 mb-6">去做题吧，做错的题目会自动加入错题本</p>
                 <Link
                   href="/learn/practice"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors"

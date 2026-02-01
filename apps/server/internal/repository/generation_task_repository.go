@@ -101,6 +101,17 @@ func (r *GenerationTaskRepository) UpdateStatus(id uint, status model.Generation
 	return r.db.Model(&model.GenerationTask{}).Where("id = ?", id).Updates(updates).Error
 }
 
+// UpdateProgress 更新任务进度与当前步骤
+func (r *GenerationTaskRepository) UpdateProgress(id uint, progress float64, currentStep string) error {
+	updates := map[string]interface{}{
+		"progress": progress,
+	}
+	if currentStep != "" {
+		updates["current_step"] = currentStep
+	}
+	return r.db.Model(&model.GenerationTask{}).Where("id = ?", id).Updates(updates).Error
+}
+
 // UpdateResult 更新任务结果
 func (r *GenerationTaskRepository) UpdateResult(ctx context.Context, id uint, result string, durationMs int) error {
 	now := time.Now()
@@ -109,6 +120,8 @@ func (r *GenerationTaskRepository) UpdateResult(ctx context.Context, id uint, re
 		"result":       result,
 		"duration_ms":  durationMs,
 		"completed_at": &now,
+		"progress":     100,
+		"current_step": "已完成",
 	}).Error
 }
 

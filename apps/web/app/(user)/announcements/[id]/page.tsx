@@ -42,7 +42,8 @@ const mockAnnouncement: AnnouncementDetail = {
   views: 128560,
   status: 1,
   created_at: "2024-10-15",
-  summary: "根据公务员法和《公务员录用规定》等法律法规，国家公务员局将组织实施中央机关及其直属机构2025年度考试录用一级主任科员及以下和其他相当职级层次公务员工作。本次招考共有3962个职位，计划招录39561人。",
+  summary:
+    "根据公务员法和《公务员录用规定》等法律法规，国家公务员局将组织实施中央机关及其直属机构2025年度考试录用一级主任科员及以下和其他相当职级层次公务员工作。本次招考共有3962个职位，计划招录39561人。",
   content: `
     <h2>一、报考条件</h2>
     <p>（一）具有中华人民共和国国籍；</p>
@@ -77,10 +78,30 @@ const mockAnnouncement: AnnouncementDetail = {
     { id: 3, name: "专业分类目录.pdf", url: "#", type: "pdf", size: 512000 },
   ],
   timeline: [
-    { date: "10月15日-10月24日", title: "网上报名", description: "考生需完成注册和职位报名", status: "completed" },
-    { date: "10月25日-11月3日", title: "资格审查", description: "招录机关进行资格审查", status: "active" },
-    { date: "11月4日-11月9日", title: "报名确认", description: "通过审查的考生完成报名确认", status: "pending" },
-    { date: "11月25日", title: "打印准考证", description: "登录报名系统打印准考证", status: "pending" },
+    {
+      date: "10月15日-10月24日",
+      title: "网上报名",
+      description: "考生需完成注册和职位报名",
+      status: "completed",
+    },
+    {
+      date: "10月25日-11月3日",
+      title: "资格审查",
+      description: "招录机关进行资格审查",
+      status: "active",
+    },
+    {
+      date: "11月4日-11月9日",
+      title: "报名确认",
+      description: "通过审查的考生完成报名确认",
+      status: "pending",
+    },
+    {
+      date: "11月25日",
+      title: "打印准考证",
+      description: "登录报名系统打印准考证",
+      status: "pending",
+    },
     { date: "12月1日", title: "笔试", description: "公共科目笔试", status: "pending" },
     { date: "待定", title: "面试", description: "各招录机关组织实施", status: "pending" },
   ],
@@ -88,12 +109,60 @@ const mockAnnouncement: AnnouncementDetail = {
 
 // 模拟职位数据
 const mockPositions: AnnouncementPosition[] = [
-  { id: 1, position_name: "综合管理岗", department_name: "国家税务总局", recruit_count: 5, education: "本科", major: "法学类", work_location: "北京" },
-  { id: 2, position_name: "信息技术岗", department_name: "海关总署", recruit_count: 3, education: "本科", major: "计算机类", work_location: "北京" },
-  { id: 3, position_name: "财务管理岗", department_name: "财政部", recruit_count: 2, education: "硕士", major: "会计学", work_location: "北京" },
-  { id: 4, position_name: "行政执法岗", department_name: "国家税务总局广东省税务局", recruit_count: 10, education: "本科", major: "不限", work_location: "广州" },
-  { id: 5, position_name: "综合文秘岗", department_name: "中央办公厅", recruit_count: 1, education: "硕士", major: "中文类", work_location: "北京" },
-  { id: 6, position_name: "法律顾问岗", department_name: "司法部", recruit_count: 2, education: "本科", major: "法学", work_location: "北京" },
+  {
+    id: 1,
+    position_name: "综合管理岗",
+    department_name: "国家税务总局",
+    recruit_count: 5,
+    education: "本科",
+    major: "法学类",
+    work_location: "北京",
+  },
+  {
+    id: 2,
+    position_name: "信息技术岗",
+    department_name: "海关总署",
+    recruit_count: 3,
+    education: "本科",
+    major: "计算机类",
+    work_location: "北京",
+  },
+  {
+    id: 3,
+    position_name: "财务管理岗",
+    department_name: "财政部",
+    recruit_count: 2,
+    education: "硕士",
+    major: "会计学",
+    work_location: "北京",
+  },
+  {
+    id: 4,
+    position_name: "行政执法岗",
+    department_name: "国家税务总局广东省税务局",
+    recruit_count: 10,
+    education: "本科",
+    major: "不限",
+    work_location: "广州",
+  },
+  {
+    id: 5,
+    position_name: "综合文秘岗",
+    department_name: "中央办公厅",
+    recruit_count: 1,
+    education: "硕士",
+    major: "中文类",
+    work_location: "北京",
+  },
+  {
+    id: 6,
+    position_name: "法律顾问岗",
+    department_name: "司法部",
+    recruit_count: 2,
+    education: "本科",
+    major: "法学",
+    work_location: "北京",
+  },
 ];
 
 export default function AnnouncementDetailPage() {
@@ -126,9 +195,9 @@ export default function AnnouncementDetailPage() {
     const keyword = searchKeyword.toLowerCase();
     return (
       p.position_name.toLowerCase().includes(keyword) ||
-      (p.department_name?.toLowerCase().includes(keyword)) ||
-      (p.work_location?.toLowerCase().includes(keyword)) ||
-      (p.major?.toLowerCase().includes(keyword))
+      p.department_name?.toLowerCase().includes(keyword) ||
+      p.work_location?.toLowerCase().includes(keyword) ||
+      p.major?.toLowerCase().includes(keyword)
     );
   });
 
@@ -367,16 +436,16 @@ export default function AnnouncementDetailPage() {
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <div className="text-lg font-bold text-amber-600">{position.recruit_count}</div>
+                          <div className="text-lg font-bold text-amber-600">
+                            {position.recruit_count}
+                          </div>
                           <div className="text-xs text-stone-500">招录人数</div>
                         </div>
                       </div>
                     </Link>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-stone-500">
-                    没有找到匹配的职位
-                  </div>
+                  <div className="p-8 text-center text-stone-500">没有找到匹配的职位</div>
                 )}
               </div>
 
@@ -414,13 +483,11 @@ export default function AnnouncementDetailPage() {
                           item.status === "completed"
                             ? "bg-emerald-500 border-emerald-500"
                             : item.status === "active"
-                            ? "bg-amber-500 border-amber-500 animate-pulse"
-                            : "bg-white border-stone-300"
+                              ? "bg-amber-500 border-amber-500 animate-pulse"
+                              : "bg-white border-stone-300"
                         }`}
                       >
-                        {item.status === "completed" && (
-                          <Check className="w-3 h-3 text-white" />
-                        )}
+                        {item.status === "completed" && <Check className="w-3 h-3 text-white" />}
                       </div>
                       <div className="pt-0">
                         <p
@@ -428,8 +495,8 @@ export default function AnnouncementDetailPage() {
                             item.status === "completed"
                               ? "text-emerald-700"
                               : item.status === "active"
-                              ? "text-amber-700"
-                              : "text-stone-800"
+                                ? "text-amber-700"
+                                : "text-stone-800"
                           }`}
                         >
                           {item.title}
@@ -483,23 +550,33 @@ export default function AnnouncementDetailPage() {
               </h3>
               <ul className="space-y-3 text-sm text-blue-700">
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">1</span>
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">
+                    1
+                  </span>
                   <span>仔细阅读公告和职位表，选择符合条件的职位</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">2</span>
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">
+                    2
+                  </span>
                   <span>在报名时间内登录官方网站进行注册和报名</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">3</span>
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">
+                    3
+                  </span>
                   <span>上传符合要求的证件照片</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">4</span>
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">
+                    4
+                  </span>
                   <span>等待资格审查通过后完成报名确认和缴费</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">5</span>
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-medium">
+                    5
+                  </span>
                   <span>按时打印准考证并参加考试</span>
                 </li>
               </ul>

@@ -33,10 +33,7 @@ interface ClassroomToolbarProps {
   onDownload?: () => void;
 }
 
-export function ClassroomToolbar({
-  onShare,
-  onDownload,
-}: ClassroomToolbarProps) {
+export function ClassroomToolbar({ onShare, onDownload }: ClassroomToolbarProps) {
   const {
     currentSection,
     progress,
@@ -54,9 +51,7 @@ export function ClassroomToolbar({
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
 
-  const isBookmarked = currentSection
-    ? progress.bookmarks.includes(currentSection.id)
-    : false;
+  const isBookmarked = currentSection ? progress.bookmarks.includes(currentSection.id) : false;
 
   const fontSizeLabels = {
     small: "小",
@@ -83,11 +78,7 @@ export function ClassroomToolbar({
       <div className="w-px h-6 bg-stone-200 mx-1" />
 
       {/* 笔记 */}
-      <ToolbarButton
-        onClick={toggleNotes}
-        tooltip="笔记"
-        active={showNotes}
-      >
+      <ToolbarButton onClick={toggleNotes} tooltip="笔记" active={showNotes}>
         <StickyNote className="w-4.5 h-4.5" />
       </ToolbarButton>
 
@@ -146,9 +137,7 @@ export function ClassroomToolbar({
                       <Type className="w-4 h-4" />
                       字体大小
                     </span>
-                    <span className="text-xs text-stone-400">
-                      {fontSizeLabels[fontSize]}
-                    </span>
+                    <span className="text-xs text-stone-400">{fontSizeLabels[fontSize]}</span>
                   </div>
                   <div className="flex gap-2">
                     {(["small", "medium", "large"] as const).map((size) => (
@@ -212,22 +201,13 @@ export function ClassroomToolbar({
       </div>
 
       {/* 全屏 */}
-      <ToolbarButton
-        onClick={toggleFullscreen}
-        tooltip={isFullscreen ? "退出全屏" : "全屏模式"}
-      >
-        {isFullscreen ? (
-          <Minimize className="w-4.5 h-4.5" />
-        ) : (
-          <Maximize className="w-4.5 h-4.5" />
-        )}
+      <ToolbarButton onClick={toggleFullscreen} tooltip={isFullscreen ? "退出全屏" : "全屏模式"}>
+        {isFullscreen ? <Minimize className="w-4.5 h-4.5" /> : <Maximize className="w-4.5 h-4.5" />}
       </ToolbarButton>
 
       {/* 快捷键帮助弹窗 */}
       <AnimatePresence>
-        {showShortcuts && (
-          <ShortcutsModal onClose={() => setShowShortcuts(false)} />
-        )}
+        {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
       </AnimatePresence>
     </div>
   );
@@ -245,13 +225,7 @@ interface ToolbarButtonProps {
   disabled?: boolean;
 }
 
-function ToolbarButton({
-  children,
-  onClick,
-  tooltip,
-  active,
-  disabled,
-}: ToolbarButtonProps) {
+function ToolbarButton({ children, onClick, tooltip, active, disabled }: ToolbarButtonProps) {
   return (
     <motion.button
       onClick={onClick}
@@ -261,8 +235,8 @@ function ToolbarButton({
         active
           ? "bg-amber-100 text-amber-700"
           : disabled
-          ? "text-stone-300 cursor-not-allowed"
-          : "text-stone-500 hover:bg-stone-100 hover:text-stone-700"
+            ? "text-stone-300 cursor-not-allowed"
+            : "text-stone-500 hover:bg-stone-100 hover:text-stone-700"
       )}
       whileHover={!disabled ? { scale: 1.05 } : {}}
       whileTap={!disabled ? { scale: 0.95 } : {}}
@@ -331,9 +305,7 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
                 key={idx}
                 className="flex items-center justify-between py-2 px-3 bg-stone-50 rounded-lg"
               >
-                <span className="text-sm text-stone-600">
-                  {shortcut.description}
-                </span>
+                <span className="text-sm text-stone-600">{shortcut.description}</span>
                 <div className="flex items-center gap-1">
                   {shortcut.keys.map((key, keyIdx) => (
                     <React.Fragment key={keyIdx}>
@@ -352,7 +324,11 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
 
           <div className="p-4 border-t border-stone-200 bg-stone-50">
             <p className="text-xs text-stone-500 text-center">
-              按 <kbd className="px-1.5 py-0.5 bg-white border border-stone-300 rounded text-xs">Esc</kbd> 关闭此窗口
+              按{" "}
+              <kbd className="px-1.5 py-0.5 bg-white border border-stone-300 rounded text-xs">
+                Esc
+              </kbd>{" "}
+              关闭此窗口
             </p>
           </div>
         </motion.div>

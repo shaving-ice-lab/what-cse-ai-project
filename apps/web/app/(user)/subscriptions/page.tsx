@@ -121,10 +121,7 @@ export default function SubscriptionsPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <Link
-            href="/favorites"
-            className="p-2 rounded-lg hover:bg-stone-100 transition-colors"
-          >
+          <Link href="/favorites" className="p-2 rounded-lg hover:bg-stone-100 transition-colors">
             <ArrowLeft className="w-5 h-5 text-stone-600" />
           </Link>
           <div>
@@ -132,9 +129,7 @@ export default function SubscriptionsPage() {
               <Bell className="w-8 h-8 text-amber-500" />
               订阅管理
             </h1>
-            <p className="text-stone-500 mt-1">
-              管理您的职位订阅，第一时间获取新职位通知
-            </p>
+            <p className="text-stone-500 mt-1">管理您的职位订阅，第一时间获取新职位通知</p>
           </div>
         </div>
         <button
@@ -186,9 +181,7 @@ export default function SubscriptionsPage() {
             <div
               key={subscription.id}
               className={`bg-white rounded-2xl border shadow-card transition-all duration-300 overflow-hidden animate-fade-in ${
-                subscription.is_enabled
-                  ? "border-stone-200/50"
-                  : "border-stone-200/50 opacity-60"
+                subscription.is_enabled ? "border-stone-200/50" : "border-stone-200/50 opacity-60"
               }`}
               style={{ animationDelay: `${index * 50}ms` }}
             >
@@ -215,7 +208,9 @@ export default function SubscriptionsPage() {
 
                     {/* Type and Value */}
                     <p className="text-sm text-stone-500 mb-3">
-                      {types.find((t) => t.value === subscription.subscribe_type)?.label || subscription.subscribe_type}：
+                      {types.find((t) => t.value === subscription.subscribe_type)?.label ||
+                        subscription.subscribe_type}
+                      ：
                       <span className="text-stone-700 font-medium">
                         {subscription.subscribe_value}
                       </span>
@@ -281,21 +276,23 @@ export default function SubscriptionsPage() {
             </div>
           ))}
         </div>
-      ) : !loading && (
-        <div className="text-center py-16 bg-white rounded-2xl border border-stone-200/50 shadow-card">
-          <Bell className="w-16 h-16 mx-auto text-stone-200 mb-4" />
-          <p className="text-stone-500 mb-2">暂无订阅</p>
-          <p className="text-stone-400 text-sm mb-4">
-            添加订阅后，当有新的职位或公告发布时，您将收到通知
-          </p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-amber-md"
-          >
-            <Plus className="w-5 h-5" />
-            添加第一个订阅
-          </button>
-        </div>
+      ) : (
+        !loading && (
+          <div className="text-center py-16 bg-white rounded-2xl border border-stone-200/50 shadow-card">
+            <Bell className="w-16 h-16 mx-auto text-stone-200 mb-4" />
+            <p className="text-stone-500 mb-2">暂无订阅</p>
+            <p className="text-stone-400 text-sm mb-4">
+              添加订阅后，当有新的职位或公告发布时，您将收到通知
+            </p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-amber-md"
+            >
+              <Plus className="w-5 h-5" />
+              添加第一个订阅
+            </button>
+          </div>
+        )
       )}
 
       {/* Add Subscription Modal */}
@@ -317,9 +314,7 @@ export default function SubscriptionsPage() {
             <div className="p-4 space-y-4">
               {/* Subscribe Type */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  订阅类型
-                </label>
+                <label className="block text-sm font-medium text-stone-700 mb-2">订阅类型</label>
                 <div className="grid grid-cols-2 gap-2">
                   {types.map((type) => (
                     <button
@@ -337,16 +332,10 @@ export default function SubscriptionsPage() {
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">
-                          {typeIcons[type.value] || "📌"}
-                        </span>
+                        <span className="text-lg">{typeIcons[type.value] || "📌"}</span>
                         <div>
-                          <div className="font-medium text-stone-800">
-                            {type.label}
-                          </div>
-                          <div className="text-xs text-stone-500">
-                            {type.description}
-                          </div>
+                          <div className="font-medium text-stone-800">{type.label}</div>
+                          <div className="text-xs text-stone-500">{type.description}</div>
                         </div>
                       </div>
                     </button>
@@ -356,9 +345,7 @@ export default function SubscriptionsPage() {
 
               {/* Subscribe Value */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  订阅值
-                </label>
+                <label className="block text-sm font-medium text-stone-700 mb-2">订阅值</label>
                 <input
                   type="text"
                   value={formData.subscribe_value}
@@ -372,8 +359,8 @@ export default function SubscriptionsPage() {
                     formData.subscribe_type === "province"
                       ? "例如：北京、广东"
                       : formData.subscribe_type === "keyword"
-                      ? "例如：计算机、财务"
-                      : "请输入订阅值"
+                        ? "例如：计算机、财务"
+                        : "请输入订阅值"
                   }
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                 />
@@ -381,9 +368,7 @@ export default function SubscriptionsPage() {
 
               {/* Subscribe Name */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  显示名称
-                </label>
+                <label className="block text-sm font-medium text-stone-700 mb-2">显示名称</label>
                 <input
                   type="text"
                   value={formData.subscribe_name}
@@ -400,15 +385,11 @@ export default function SubscriptionsPage() {
 
               {/* Notify Channels */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  通知渠道
-                </label>
+                <label className="block text-sm font-medium text-stone-700 mb-2">通知渠道</label>
                 <div className="flex flex-wrap gap-2">
                   {channels.map((channel) => {
                     const Icon = channelIcons[channel.value] || Bell;
-                    const isSelected = formData.notify_channels?.includes(
-                      channel.value
-                    );
+                    const isSelected = formData.notify_channels?.includes(channel.value);
                     return (
                       <button
                         key={channel.value}
@@ -431,9 +412,7 @@ export default function SubscriptionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium text-stone-800">新公告通知</div>
-                  <div className="text-xs text-stone-500">
-                    有新公告时发送通知
-                  </div>
+                  <div className="text-xs text-stone-500">有新公告时发送通知</div>
                 </div>
                 <button
                   onClick={() =>

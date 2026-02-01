@@ -19,10 +19,7 @@ export type CalendarEventStatus = "pending" | "notified" | "completed" | "cancel
 export type CalendarEventSource = "auto" | "manual";
 
 // Event Type Metadata
-export const EVENT_TYPE_CONFIG: Record<
-  CalendarEventType,
-  { name: string; color: string }
-> = {
+export const EVENT_TYPE_CONFIG: Record<CalendarEventType, { name: string; color: string }> = {
   announcement: { name: "公告发布", color: "#8b5cf6" },
   registration_start: { name: "报名开始", color: "#22c55e" },
   registration_end: { name: "报名截止", color: "#ef4444" },

@@ -252,16 +252,19 @@ http://localhost:3000
 - **数据库连接串示例**
   - 调整环境变量DB为您的数据库连接字符串。
   - SQLite 连接示例:
+
   ```
   sqlite:///data/db.db
   ```
 
   - PostgreSQL 连接示例:
+
   ```
   postgresql://<username>:<password>@<host>/<database>
   ```
 
   - MySQL 连接示例:
+
   ```
   mysql+pymysql://<username>:<password>@<host>/<database>?charset=utf8mb4
   ```

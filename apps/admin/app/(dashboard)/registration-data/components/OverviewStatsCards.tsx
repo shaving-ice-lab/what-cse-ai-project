@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Users,
-  UserCheck,
-  TrendingUp,
-  AlertCircle,
-  TrendingDown,
-  Award,
-} from "lucide-react";
+import { Users, UserCheck, TrendingUp, AlertCircle, TrendingDown, Award } from "lucide-react";
 import { Card, CardContent, Skeleton } from "@what-cse/ui";
 import type { RegistrationOverview } from "@/types/registration-data";
 
@@ -91,16 +84,10 @@ export function OverviewStatsCards({ data, loading }: OverviewStatsCardsProps) {
               ) : (
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold mt-1">
-                      {stat.format(stat.value)}
-                    </p>
+                    <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                    <p className="text-2xl font-bold mt-1">{stat.format(stat.value)}</p>
                     {stat.description && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {stat.description}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
                     )}
                   </div>
                   <div className={`p-2 rounded-lg ${stat.bgColor}`}>

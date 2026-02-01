@@ -19,7 +19,12 @@ import {
   Loader2,
   UserCircle,
 } from "lucide-react";
-import { useMatchResults, usePerformMatch, getMatchScoreColor, getMatchScoreLabel } from "@/hooks/useMatch";
+import {
+  useMatchResults,
+  usePerformMatch,
+  getMatchScoreColor,
+  getMatchScoreLabel,
+} from "@/hooks/useMatch";
 import type { MatchResult as ApiMatchResult, MatchParams } from "@/services/api/match";
 
 // Score Ring Component
@@ -71,10 +76,7 @@ function ScoreRing({
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span
-          className="text-xl font-display font-bold"
-          style={{ color: colors.stroke }}
-        >
+        <span className="text-xl font-display font-bold" style={{ color: colors.stroke }}>
           {score}%
         </span>
       </div>
@@ -212,7 +214,9 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">符合条件</p>
-              <p className="text-2xl font-display font-bold text-stone-800">{stats?.eligible_positions || 0}</p>
+              <p className="text-2xl font-display font-bold text-stone-800">
+                {stats?.eligible_positions || 0}
+              </p>
             </div>
           </div>
         </div>
@@ -223,7 +227,9 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">高度匹配</p>
-              <p className="text-2xl font-display font-bold text-emerald-600">{stats?.high_match_count || 0}</p>
+              <p className="text-2xl font-display font-bold text-emerald-600">
+                {stats?.high_match_count || 0}
+              </p>
             </div>
           </div>
         </div>
@@ -234,7 +240,9 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">中度匹配</p>
-              <p className="text-2xl font-display font-bold text-amber-600">{stats?.medium_match_count || 0}</p>
+              <p className="text-2xl font-display font-bold text-amber-600">
+                {stats?.medium_match_count || 0}
+              </p>
             </div>
           </div>
         </div>
@@ -245,7 +253,9 @@ export default function MatchPage() {
             </div>
             <div>
               <p className="text-sm text-stone-500">平均匹配度</p>
-              <p className="text-2xl font-display font-bold text-violet-600">{Math.round(stats?.average_score || 0)}%</p>
+              <p className="text-2xl font-display font-bold text-violet-600">
+                {Math.round(stats?.average_score || 0)}%
+              </p>
             </div>
           </div>
         </div>
@@ -385,8 +395,12 @@ export default function MatchPage() {
                 {/* Score Display */}
                 <div className="text-center py-6 border-b border-stone-100">
                   <ScoreRing score={selectedResult.match_score} size={100} strokeWidth={10} />
-                  <p className="text-stone-600 mt-3 font-medium">{selectedResult.position.position_name}</p>
-                  <p className="text-sm text-stone-500">{selectedResult.position.department_name}</p>
+                  <p className="text-stone-600 mt-3 font-medium">
+                    {selectedResult.position.position_name}
+                  </p>
+                  <p className="text-sm text-stone-500">
+                    {selectedResult.position.department_name}
+                  </p>
                   <div className="flex justify-center gap-1 mt-2">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <span
@@ -415,12 +429,12 @@ export default function MatchPage() {
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-medium text-stone-700">{detail.condition}</p>
                             {detail.is_hard_match && (
-                              <span className="px-1.5 py-0.5 text-[10px] bg-red-100 text-red-600 rounded">硬性</span>
+                              <span className="px-1.5 py-0.5 text-[10px] bg-red-100 text-red-600 rounded">
+                                硬性
+                              </span>
                             )}
                           </div>
-                          <p className="text-xs text-stone-500 mt-1">
-                            要求: {detail.required}
-                          </p>
+                          <p className="text-xs text-stone-500 mt-1">要求: {detail.required}</p>
                           <p className="text-xs text-stone-500">您: {detail.user_value}</p>
                           <div className="mt-2 flex items-center gap-2">
                             <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
@@ -429,7 +443,9 @@ export default function MatchPage() {
                                 style={{ width: `${(detail.score / detail.max_score) * 100}%` }}
                               />
                             </div>
-                            <span className="text-xs text-stone-500">{detail.score}/{detail.max_score}</span>
+                            <span className="text-xs text-stone-500">
+                              {detail.score}/{detail.max_score}
+                            </span>
                           </div>
                         </div>
                         <div

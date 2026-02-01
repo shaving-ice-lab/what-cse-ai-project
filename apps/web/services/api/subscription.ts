@@ -66,10 +66,7 @@ export interface NotifyChannelOption {
 
 export const subscriptionApi = {
   // 获取订阅列表
-  list: (
-    page?: number,
-    pageSize?: number
-  ): Promise<SubscriptionListResponse> =>
+  list: (page?: number, pageSize?: number): Promise<SubscriptionListResponse> =>
     request.get("/subscriptions", { params: { page, page_size: pageSize } }),
 
   // 创建订阅
@@ -81,12 +78,10 @@ export const subscriptionApi = {
     request.put(`/subscriptions/${id}`, data),
 
   // 切换订阅状态
-  toggle: (id: number): Promise<void> =>
-    request.put(`/subscriptions/${id}/toggle`),
+  toggle: (id: number): Promise<void> => request.put(`/subscriptions/${id}/toggle`),
 
   // 删除订阅
-  delete: (id: number): Promise<void> =>
-    request.delete(`/subscriptions/${id}`),
+  delete: (id: number): Promise<void> => request.delete(`/subscriptions/${id}`),
 
   // 获取订阅类型选项
   getTypes: (): Promise<{

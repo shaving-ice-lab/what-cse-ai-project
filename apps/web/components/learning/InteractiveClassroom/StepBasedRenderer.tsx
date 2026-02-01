@@ -21,9 +21,13 @@ import {
   ChevronRight,
   Play,
   Lock,
+  BookMarked,
+  Zap,
+  Star,
 } from "lucide-react";
 import { LessonContent } from "../LessonContentRenderer";
 import { MermaidRenderer } from "../MermaidRenderer";
+import { QuickNotesCard } from "../QuickNotesCard";
 import { cn } from "@/lib/utils";
 
 // =====================================================
@@ -45,16 +49,16 @@ const STEP_CONFIG = [
   {
     id: 1,
     title: "知识导入",
-    subtitle: "了解考情与目标",
-    sections: ["exam_analysis", "introduction", "goals"],
+    subtitle: "考情与框架速览",
+    sections: ["exam_analysis", "introduction", "goals", "mind_map"],
     icon: BookOpen,
     color: "emerald",
   },
   {
     id: 2,
     title: "核心学习",
-    subtitle: "掌握概念与方法",
-    sections: ["concepts", "methods", "formulas"],
+    subtitle: "概念方法与词汇拓展",
+    sections: ["concepts", "methods", "formulas", "vocabulary", "extension", "lesson_sections"],
     icon: Brain,
     color: "purple",
   },
@@ -69,12 +73,43 @@ const STEP_CONFIG = [
   {
     id: 4,
     title: "总结提升",
-    subtitle: "避坑与巩固",
-    sections: ["mistakes", "summary"],
+    subtitle: "避坑与临考收束",
+    sections: ["mistakes", "summary", "strategies", "notes", "homework"],
     icon: CheckCircle,
     color: "amber",
   },
 ];
+
+const SECTION_TYPE_META: Record<string, { label: string; className: string }> = {
+  intro: {
+    label: "导入",
+    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  theory: {
+    label: "理论",
+    className: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+  method: {
+    label: "方法",
+    className: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  },
+  example: {
+    label: "例题",
+    className: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  warning: {
+    label: "警示",
+    className: "bg-rose-50 text-rose-700 border-rose-200",
+  },
+  drill: {
+    label: "演练",
+    className: "bg-violet-50 text-violet-700 border-violet-200",
+  },
+  summary: {
+    label: "总结",
+    className: "bg-slate-50 text-slate-700 border-slate-200",
+  },
+};
 
 // =====================================================
 // 简洁的章节卡片组件
@@ -88,13 +123,7 @@ interface SectionCardProps {
   defaultExpanded?: boolean;
 }
 
-function SectionCard({
-  icon,
-  iconBg,
-  title,
-  children,
-  defaultExpanded = true,
-}: SectionCardProps) {
+function SectionCard({ icon, iconBg, title, children, defaultExpanded = true }: SectionCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -104,13 +133,8 @@ function SectionCard({
         className="w-full flex items-center gap-4 p-5 hover:bg-stone-50 transition-colors"
       >
         <div className={cn("p-2.5 rounded-xl text-white", iconBg)}>{icon}</div>
-        <h2 className="flex-1 text-lg font-bold text-stone-800 text-left">
-          {title}
-        </h2>
-        <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <h2 className="flex-1 text-lg font-bold text-stone-800 text-left">{title}</h2>
+        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="w-5 h-5 text-stone-400" />
         </motion.div>
       </button>
@@ -151,9 +175,7 @@ function Quiz({ questions, onComplete }: QuizProps) {
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
 
   const allAnswered = questions.every((_, idx) => revealed[idx]);
-  const correctCount = questions.filter(
-    (q, idx) => answers[idx] === q.answer
-  ).length;
+  const correctCount = questions.filter((q, idx) => answers[idx] === q.answer).length;
 
   useEffect(() => {
     if (allAnswered && onComplete) {
@@ -231,10 +253,10 @@ function Quiz({ questions, onComplete }: QuizProps) {
                         isRevealed && isCorrectOpt
                           ? "bg-emerald-500 text-white"
                           : isRevealed && isThis
-                          ? "bg-red-500 text-white"
-                          : isThis
-                          ? "bg-violet-500 text-white"
-                          : "bg-stone-200 text-stone-600"
+                            ? "bg-red-500 text-white"
+                            : isThis
+                              ? "bg-violet-500 text-white"
+                              : "bg-stone-200 text-stone-600"
                       )}
                     >
                       {letter}
@@ -280,9 +302,7 @@ function Quiz({ questions, onComplete }: QuizProps) {
                   >
                     {isCorrect ? "✓ 回答正确！" : `✗ 正确答案是 ${q.answer}`}
                   </p>
-                  {q.analysis && (
-                    <p className="text-stone-600 mt-2">{stripQuotes(q.analysis)}</p>
-                  )}
+                  {q.analysis && <p className="text-stone-600 mt-2">{stripQuotes(q.analysis)}</p>}
                 </div>
               )}
             </div>
@@ -318,7 +338,7 @@ export function StepBasedRenderer({
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [practiceCompleted, setPracticeCompleted] = useState(false);
 
-  const { exam_analysis, lesson_content, practice_problems } = content;
+  const { exam_analysis, lesson_content, lesson_sections, practice_problems, homework } = content;
 
   // 检查步骤内容是否存在
   const stepHasContent = useMemo(() => {
@@ -326,15 +346,24 @@ export function StepBasedRenderer({
       1:
         !!exam_analysis ||
         !!lesson_content?.introduction ||
-        (lesson_content?.learning_goals?.length ?? 0) > 0,
+        (lesson_content?.learning_goals?.length ?? 0) > 0 ||
+        (lesson_content?.prerequisites?.length ?? 0) > 0 ||
+        !!lesson_content?.mind_map_mermaid,
       2:
         (lesson_content?.core_concepts?.length ?? 0) > 0 ||
         (lesson_content?.method_steps?.length ?? 0) > 0 ||
-        (lesson_content?.formulas?.length ?? 0) > 0,
+        (lesson_content?.formulas?.length ?? 0) > 0 ||
+        (lesson_content?.memory_tips?.length ?? 0) > 0 ||
+        !!lesson_content?.vocabulary_accumulation ||
+        !!lesson_content?.extension_knowledge ||
+        (lesson_sections?.length ?? 0) > 0,
       3: (practice_problems?.length ?? 0) > 0,
       4:
         (lesson_content?.common_mistakes?.length ?? 0) > 0 ||
-        (lesson_content?.summary_points?.length ?? 0) > 0,
+        (lesson_content?.summary_points?.length ?? 0) > 0 ||
+        (lesson_content?.exam_strategies?.length ?? 0) > 0 ||
+        !!lesson_content?.quick_notes ||
+        !!homework,
     };
   }, [content]);
 
@@ -397,9 +426,7 @@ export function StepBasedRenderer({
   };
 
   if (!content) {
-    return (
-      <div className="text-center py-12 text-stone-500">暂无课程内容</div>
-    );
+    return <div className="text-center py-12 text-stone-500">暂无课程内容</div>;
   }
 
   return (
@@ -428,10 +455,10 @@ export function StepBasedRenderer({
                       currentStep === 1
                         ? "#10b981"
                         : currentStep === 2
-                        ? "#8b5cf6"
-                        : currentStep === 3
-                        ? "#7c3aed"
-                        : "#f59e0b",
+                          ? "#8b5cf6"
+                          : currentStep === 3
+                            ? "#7c3aed"
+                            : "#f59e0b",
                   }}
                 >
                   {React.createElement(STEP_CONFIG[currentStep - 1].icon, {
@@ -442,9 +469,7 @@ export function StepBasedRenderer({
                   <h1 className="text-xl font-bold text-stone-800">
                     第 {currentStep} 步：{STEP_CONFIG[currentStep - 1].title}
                   </h1>
-                  <p className="text-sm text-stone-500">
-                    {STEP_CONFIG[currentStep - 1].subtitle}
-                  </p>
+                  <p className="text-sm text-stone-500">{STEP_CONFIG[currentStep - 1].subtitle}</p>
                 </div>
               </div>
 
@@ -460,14 +485,11 @@ export function StepBasedRenderer({
                       <p className="text-stone-700 leading-relaxed mb-4">
                         {stripQuotes(exam_analysis.description)}
                       </p>
-                      {(exam_analysis.score_weight ||
-                        exam_analysis.difficulty_trend) && (
+                      {(exam_analysis.score_weight || exam_analysis.difficulty_trend) && (
                         <div className="grid sm:grid-cols-2 gap-3">
                           {exam_analysis.score_weight && (
                             <div className="p-3 bg-blue-50 rounded-lg">
-                              <span className="text-xs text-blue-600 font-medium">
-                                分值占比
-                              </span>
+                              <span className="text-xs text-blue-600 font-medium">分值占比</span>
                               <p className="text-sm text-stone-700 mt-1">
                                 {stripQuotes(exam_analysis.score_weight)}
                               </p>
@@ -475,9 +497,7 @@ export function StepBasedRenderer({
                           )}
                           {exam_analysis.difficulty_trend && (
                             <div className="p-3 bg-blue-50 rounded-lg">
-                              <span className="text-xs text-blue-600 font-medium">
-                                难度趋势
-                              </span>
+                              <span className="text-xs text-blue-600 font-medium">难度趋势</span>
                               <p className="text-sm text-stone-700 mt-1">
                                 {stripQuotes(exam_analysis.difficulty_trend)}
                               </p>
@@ -500,28 +520,77 @@ export function StepBasedRenderer({
                     </SectionCard>
                   )}
 
-                  {lesson_content?.learning_goals &&
-                    lesson_content.learning_goals.length > 0 && (
-                      <SectionCard
-                        icon={<Target className="w-5 h-5" />}
-                        iconBg="bg-amber-500"
-                        title="学习目标"
-                      >
-                        <ul className="space-y-3">
-                          {lesson_content.learning_goals.map((goal, idx) => (
-                            <li key={idx} className="flex items-start gap-3">
-                              <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                              <span className="text-stone-700">{stripQuotes(goal)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </SectionCard>
-                    )}
+                  {lesson_content?.learning_goals && lesson_content.learning_goals.length > 0 && (
+                    <SectionCard
+                      icon={<Target className="w-5 h-5" />}
+                      iconBg="bg-amber-500"
+                      title="学习目标"
+                    >
+                      <ul className="space-y-3">
+                        {lesson_content.learning_goals.map((goal, idx) => (
+                          <li key={idx} className="flex items-start gap-3">
+                            <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-stone-700">{stripQuotes(goal)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </SectionCard>
+                  )}
+
+                  {lesson_content?.prerequisites && lesson_content.prerequisites.length > 0 && (
+                    <SectionCard
+                      icon={<ArrowUp className="w-5 h-5" />}
+                      iconBg="bg-slate-700"
+                      title="前置知识"
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {lesson_content.prerequisites.map((item, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 rounded-full border border-slate-200 bg-slate-50 text-sm text-slate-700"
+                          >
+                            {stripQuotes(item)}
+                          </span>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
+
+                  {lesson_content?.mind_map_mermaid && (
+                    <SectionCard
+                      icon={<Sparkles className="w-5 h-5" />}
+                      iconBg="bg-slate-700"
+                      title="知识导图"
+                    >
+                      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-stone-50">
+                        <div className="relative p-4">
+                          <MermaidRenderer
+                            code={lesson_content.mind_map_mermaid}
+                            title="知识结构图"
+                            allowFullscreen
+                            allowDownload
+                            className="bg-transparent border-0 shadow-none [&_svg]:max-w-full"
+                            themeVariables={{
+                              primaryColor: "#f1f5f9",
+                              primaryTextColor: "#0f172a",
+                              primaryBorderColor: "#94a3b8",
+                              lineColor: "#cbd5e1",
+                              secondaryColor: "#f8fafc",
+                              tertiaryColor: "#e2e8f0",
+                              background: "#ffffff",
+                              mainBkg: "#f8fafc",
+                              secondBkg: "#f1f5f9",
+                              fontFamily: '"Noto Serif SC", "STSong", "Songti SC", serif',
+                              fontSize: "14px",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </SectionCard>
+                  )}
 
                   {!stepHasContent[1] && (
-                    <div className="text-center py-12 text-stone-400">
-                      本步骤暂无内容
-                    </div>
+                    <div className="text-center py-12 text-stone-400">本步骤暂无内容</div>
                   )}
                 </>
               )}
@@ -529,108 +598,298 @@ export function StepBasedRenderer({
               {/* 步骤 2：核心学习 */}
               {currentStep === 2 && (
                 <>
-                  {lesson_content?.core_concepts &&
-                    lesson_content.core_concepts.length > 0 && (
-                      <SectionCard
-                        icon={<Lightbulb className="w-5 h-5" />}
-                        iconBg="bg-purple-500"
-                        title={`核心概念 (${lesson_content.core_concepts.length})`}
-                      >
-                        <div className="space-y-4">
-                          {lesson_content.core_concepts.map((concept, idx) => (
-                            <div key={idx} className="p-4 bg-purple-50 rounded-xl">
-                              <h4 className="font-semibold text-purple-800 mb-2">
-                                {stripQuotes(concept.name)}
+                  {lesson_content?.core_concepts && lesson_content.core_concepts.length > 0 && (
+                    <SectionCard
+                      icon={<Lightbulb className="w-5 h-5" />}
+                      iconBg="bg-purple-500"
+                      title={`核心概念 (${lesson_content.core_concepts.length})`}
+                    >
+                      <div className="space-y-4">
+                        {lesson_content.core_concepts.map((concept, idx) => (
+                          <div key={idx} className="p-4 bg-purple-50 rounded-xl">
+                            <h4 className="font-semibold text-purple-800 mb-2">
+                              {stripQuotes(concept.name)}
+                            </h4>
+                            {concept.definition && (
+                              <p className="text-sm text-stone-600 mb-2">
+                                {stripQuotes(concept.definition)}
+                              </p>
+                            )}
+                            {concept.detailed_explanation && (
+                              <p className="text-stone-700 leading-relaxed">
+                                {stripQuotes(concept.detailed_explanation)}
+                              </p>
+                            )}
+                            {concept.example && (
+                              <div className="mt-3 p-3 bg-white rounded-lg text-sm">
+                                <span className="text-purple-600 font-medium">示例：</span>
+                                <span className="text-stone-600 ml-1">
+                                  {stripQuotes(concept.example)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
+
+                  {lesson_content?.method_steps && lesson_content.method_steps.length > 0 && (
+                    <SectionCard
+                      icon={<ListOrdered className="w-5 h-5" />}
+                      iconBg="bg-cyan-500"
+                      title="方法步骤"
+                    >
+                      <div className="space-y-4">
+                        {lesson_content.method_steps.map((step, idx) => (
+                          <div key={idx} className="flex gap-4">
+                            <div className="flex-shrink-0 w-10 h-10 bg-cyan-500 text-white rounded-full flex items-center justify-center font-bold">
+                              {step.step || idx + 1}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-stone-800 mb-1">
+                                {stripQuotes(step.title)}
                               </h4>
-                              {concept.definition && (
-                                <p className="text-sm text-stone-600 mb-2">
-                                  {stripQuotes(concept.definition)}
-                                </p>
-                              )}
-                              {concept.detailed_explanation && (
-                                <p className="text-stone-700 leading-relaxed">
-                                  {stripQuotes(concept.detailed_explanation)}
-                                </p>
-                              )}
-                              {concept.example && (
-                                <div className="mt-3 p-3 bg-white rounded-lg text-sm">
-                                  <span className="text-purple-600 font-medium">
-                                    示例：
-                                  </span>
-                                  <span className="text-stone-600 ml-1">
-                                    {stripQuotes(concept.example)}
-                                  </span>
+                              <p className="text-stone-600 leading-relaxed">
+                                {stripQuotes(step.content)}
+                              </p>
+                              {step.tips && (
+                                <div className="mt-2 p-3 bg-cyan-50 rounded-lg text-sm text-cyan-700">
+                                  💡 {stripQuotes(step.tips)}
                                 </div>
                               )}
                             </div>
-                          ))}
-                        </div>
-                      </SectionCard>
-                    )}
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
 
-                  {lesson_content?.method_steps &&
-                    lesson_content.method_steps.length > 0 && (
-                      <SectionCard
-                        icon={<ListOrdered className="w-5 h-5" />}
-                        iconBg="bg-cyan-500"
-                        title="方法步骤"
-                      >
-                        <div className="space-y-4">
-                          {lesson_content.method_steps.map((step, idx) => (
-                            <div key={idx} className="flex gap-4">
-                              <div className="flex-shrink-0 w-10 h-10 bg-cyan-500 text-white rounded-full flex items-center justify-center font-bold">
-                                {step.step || idx + 1}
+                  {lesson_content?.formulas && lesson_content.formulas.length > 0 && (
+                    <SectionCard
+                      icon={<Brain className="w-5 h-5" />}
+                      iconBg="bg-amber-500"
+                      title="记忆口诀"
+                    >
+                      <div className="space-y-4">
+                        {lesson_content.formulas.map((formula, idx) => (
+                          <div key={idx} className="p-4 bg-amber-50 rounded-xl">
+                            <h4 className="font-semibold text-amber-800 mb-2">
+                              {stripQuotes(formula.name)}
+                            </h4>
+                            <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-400 text-white rounded-lg text-center text-lg font-bold">
+                              {stripQuotes(formula.content)}
+                            </div>
+                            {formula.detailed_explanation && (
+                              <p className="text-sm text-stone-600 mt-3">
+                                {stripQuotes(formula.detailed_explanation)}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
+
+                  {lesson_content?.memory_tips && lesson_content.memory_tips.length > 0 && (
+                    <SectionCard
+                      icon={<Zap className="w-5 h-5" />}
+                      iconBg="bg-sky-500"
+                      title={`记忆技巧 (${lesson_content.memory_tips.length})`}
+                    >
+                      <div className="space-y-4">
+                        {lesson_content.memory_tips.map((tip, idx) => (
+                          <div key={idx} className="p-4 bg-sky-50 rounded-xl border border-sky-100">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center text-xs font-bold">
+                                {idx + 1}
+                              </span>
+                              <h4 className="font-semibold text-sky-800">{stripQuotes(tip.tip)}</h4>
+                            </div>
+                            <p className="text-stone-700 leading-relaxed">
+                              {stripQuotes(tip.content)}
+                            </p>
+                            {tip.example && (
+                              <div className="mt-3 p-3 bg-white rounded-lg text-sm text-stone-600">
+                                <span className="text-sky-600 font-medium">示例：</span>{" "}
+                                {stripQuotes(tip.example)}
                               </div>
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-stone-800 mb-1">
-                                  {stripQuotes(step.title)}
-                                </h4>
-                                <p className="text-stone-600 leading-relaxed">
-                                  {stripQuotes(step.content)}
-                                </p>
-                                {step.tips && (
-                                  <div className="mt-2 p-3 bg-cyan-50 rounded-lg text-sm text-cyan-700">
-                                    💡 {stripQuotes(step.tips)}
+                            )}
+                            {tip.word_pairs && tip.word_pairs.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {tip.word_pairs.map((pair, i) => (
+                                  <span
+                                    key={i}
+                                    className="px-2.5 py-1 rounded-full bg-white border border-sky-100 text-xs text-sky-700"
+                                  >
+                                    {stripQuotes(pair)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
+
+                  {lesson_content?.vocabulary_accumulation && (
+                    <SectionCard
+                      icon={<Star className="w-5 h-5" />}
+                      iconBg="bg-rose-500"
+                      title="高频词汇"
+                    >
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
+                          <div className="text-xs font-semibold text-rose-700 mb-2">必会</div>
+                          <div className="flex flex-wrap gap-2">
+                            {(lesson_content.vocabulary_accumulation.must_know || []).map(
+                              (word, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2.5 py-1 rounded-full bg-white border border-rose-200 text-xs text-rose-700"
+                                >
+                                  {stripQuotes(word)}
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-3">
+                          <div className="text-xs font-semibold text-amber-700 mb-2">常考</div>
+                          <div className="flex flex-wrap gap-2">
+                            {(lesson_content.vocabulary_accumulation.should_know || []).map(
+                              (word, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2.5 py-1 rounded-full bg-white border border-amber-200 text-xs text-amber-700"
+                                >
+                                  {stripQuotes(word)}
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+                          <div className="text-xs font-semibold text-emerald-700 mb-2">拓展</div>
+                          <div className="flex flex-wrap gap-2">
+                            {(lesson_content.vocabulary_accumulation.nice_to_know || []).map(
+                              (word, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-xs text-emerald-700"
+                                >
+                                  {stripQuotes(word)}
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </SectionCard>
+                  )}
+
+                  {lesson_content?.extension_knowledge && (
+                    <SectionCard
+                      icon={<BookMarked className="w-5 h-5" />}
+                      iconBg="bg-indigo-500"
+                      title="拓展知识"
+                    >
+                      <div className="p-4 bg-indigo-50/60 rounded-xl border border-indigo-100 text-stone-700 leading-relaxed whitespace-pre-line">
+                        {stripQuotes(lesson_content.extension_knowledge)}
+                      </div>
+                    </SectionCard>
+                  )}
+
+                  {lesson_sections && lesson_sections.length > 0 && (
+                    <SectionCard
+                      icon={<BookOpen className="w-5 h-5" />}
+                      iconBg="bg-stone-900"
+                      title={`课程章节拆解 (${lesson_sections.length})`}
+                    >
+                      <div className="space-y-4">
+                        {lesson_sections.map((section: any, idx: number) => {
+                          const typeKey = String(section.section_type || "");
+                          const meta = SECTION_TYPE_META[typeKey] || {
+                            label: "章节",
+                            className: "bg-stone-50 text-stone-700 border-stone-200",
+                          };
+                          const order = section.order || idx + 1;
+                          return (
+                            <div
+                              key={`${order}-${idx}`}
+                              className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-stone-900 text-white flex items-center justify-center font-bold text-sm">
+                                  {order}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <h4 className="font-semibold text-stone-800">
+                                      {stripQuotes(section.title || `章节 ${order}`)}
+                                    </h4>
+                                    <span
+                                      className={cn(
+                                        "px-2.5 py-0.5 rounded-full border text-[10px] tracking-wide",
+                                        meta.className
+                                      )}
+                                    >
+                                      {meta.label}
+                                    </span>
+                                    {section.duration && (
+                                      <span className="text-xs text-stone-500">
+                                        {stripQuotes(section.duration)}
+                                      </span>
+                                    )}
                                   </div>
-                                )}
+                                  {section.content && (
+                                    <p className="mt-2 text-sm text-stone-700 leading-relaxed whitespace-pre-line">
+                                      {stripQuotes(section.content)}
+                                    </p>
+                                  )}
+                                  {Array.isArray(section.key_points) &&
+                                    section.key_points.length > 0 && (
+                                      <div className="mt-3 flex flex-wrap gap-2">
+                                        {section.key_points.map((point: string, pidx: number) => (
+                                          <span
+                                            key={pidx}
+                                            className="px-2.5 py-1 rounded-full bg-stone-50 border border-stone-200 text-xs text-stone-600"
+                                          >
+                                            {stripQuotes(point)}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  {Array.isArray(section.key_takeaways) &&
+                                    section.key_takeaways.length > 0 && (
+                                      <div className="mt-3 space-y-1">
+                                        <div className="text-xs font-semibold text-stone-500">
+                                          要点总结
+                                        </div>
+                                        <ul className="space-y-1 text-sm text-stone-700">
+                                          {section.key_takeaways.map(
+                                            (item: string, kidx: number) => (
+                                              <li key={kidx} className="flex items-start gap-2">
+                                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-stone-400" />
+                                                <span>{stripQuotes(item)}</span>
+                                              </li>
+                                            )
+                                          )}
+                                        </ul>
+                                      </div>
+                                    )}
+                                </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </SectionCard>
-                    )}
-
-                  {lesson_content?.formulas &&
-                    lesson_content.formulas.length > 0 && (
-                      <SectionCard
-                        icon={<Brain className="w-5 h-5" />}
-                        iconBg="bg-amber-500"
-                        title="记忆口诀"
-                      >
-                        <div className="space-y-4">
-                          {lesson_content.formulas.map((formula, idx) => (
-                            <div key={idx} className="p-4 bg-amber-50 rounded-xl">
-                              <h4 className="font-semibold text-amber-800 mb-2">
-                                {stripQuotes(formula.name)}
-                              </h4>
-                              <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-400 text-white rounded-lg text-center text-lg font-bold">
-                                {stripQuotes(formula.content)}
-                              </div>
-                              {formula.detailed_explanation && (
-                                <p className="text-sm text-stone-600 mt-3">
-                                  {stripQuotes(formula.detailed_explanation)}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </SectionCard>
-                    )}
+                          );
+                        })}
+                      </div>
+                    </SectionCard>
+                  )}
 
                   {!stepHasContent[2] && (
-                    <div className="text-center py-12 text-stone-400">
-                      本步骤暂无内容
-                    </div>
+                    <div className="text-center py-12 text-stone-400">本步骤暂无内容</div>
                   )}
                 </>
               )}
@@ -677,86 +936,160 @@ export function StepBasedRenderer({
               {/* 步骤 4：总结提升 */}
               {currentStep === 4 && (
                 <>
-                  {lesson_content?.common_mistakes &&
-                    lesson_content.common_mistakes.length > 0 && (
-                      <SectionCard
-                        icon={<AlertTriangle className="w-5 h-5" />}
-                        iconBg="bg-red-500"
-                        title={`易错陷阱 (${lesson_content.common_mistakes.length})`}
-                      >
-                        <div className="space-y-4">
-                          {lesson_content.common_mistakes.map((mistake, idx) => (
-                            <div
-                              key={idx}
-                              className="p-4 bg-white border border-red-100 rounded-xl"
-                            >
-                              <h4 className="font-semibold text-red-700 mb-3">
-                                {stripQuotes(mistake.mistake)}
-                              </h4>
-                              <div className="grid gap-3">
-                                <div className="p-3 bg-red-50 rounded-lg">
-                                  <span className="text-xs text-red-600 font-medium flex items-center gap-1">
-                                    <XCircle className="w-4 h-4" /> 错误原因
-                                  </span>
-                                  <p className="text-sm text-stone-700 mt-1">
-                                    {stripQuotes(mistake.reason)}
-                                  </p>
-                                </div>
-                                <div className="p-3 bg-emerald-50 rounded-lg">
-                                  <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                                    <CheckCircle className="w-4 h-4" /> 正确做法
-                                  </span>
-                                  <p className="text-sm text-stone-700 mt-1">
-                                    {stripQuotes(mistake.correction)}
-                                  </p>
-                                </div>
+                  {lesson_content?.common_mistakes && lesson_content.common_mistakes.length > 0 && (
+                    <SectionCard
+                      icon={<AlertTriangle className="w-5 h-5" />}
+                      iconBg="bg-red-500"
+                      title={`易错陷阱 (${lesson_content.common_mistakes.length})`}
+                    >
+                      <div className="space-y-4">
+                        {lesson_content.common_mistakes.map((mistake, idx) => (
+                          <div key={idx} className="p-4 bg-white border border-red-100 rounded-xl">
+                            <h4 className="font-semibold text-red-700 mb-3">
+                              {stripQuotes(mistake.mistake)}
+                            </h4>
+                            <div className="grid gap-3">
+                              <div className="p-3 bg-red-50 rounded-lg">
+                                <span className="text-xs text-red-600 font-medium flex items-center gap-1">
+                                  <XCircle className="w-4 h-4" /> 错误原因
+                                </span>
+                                <p className="text-sm text-stone-700 mt-1">
+                                  {stripQuotes(mistake.reason)}
+                                </p>
+                              </div>
+                              <div className="p-3 bg-emerald-50 rounded-lg">
+                                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                                  <CheckCircle className="w-4 h-4" /> 正确做法
+                                </span>
+                                <p className="text-sm text-stone-700 mt-1">
+                                  {stripQuotes(mistake.correction)}
+                                </p>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </SectionCard>
-                    )}
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
 
-                  {lesson_content?.summary_points &&
-                    lesson_content.summary_points.length > 0 && (
-                      <SectionCard
-                        icon={<CheckCircle className="w-5 h-5" />}
-                        iconBg="bg-emerald-500"
-                        title="课程总结"
-                      >
-                        <ul className="space-y-3">
-                          {lesson_content.summary_points.map((point, idx) => (
-                            <li key={idx} className="flex items-start gap-3">
-                              <span className="flex-shrink-0 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  {lesson_content?.summary_points && lesson_content.summary_points.length > 0 && (
+                    <SectionCard
+                      icon={<CheckCircle className="w-5 h-5" />}
+                      iconBg="bg-emerald-500"
+                      title="课程总结"
+                    >
+                      <ul className="space-y-3">
+                        {lesson_content.summary_points.map((point, idx) => (
+                          <li key={idx} className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                              {idx + 1}
+                            </span>
+                            <span className="text-stone-700">{stripQuotes(point)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </SectionCard>
+                  )}
+
+                  {lesson_content?.exam_strategies && lesson_content.exam_strategies.length > 0 && (
+                    <SectionCard
+                      icon={<Target className="w-5 h-5" />}
+                      iconBg="bg-indigo-500"
+                      title="应试策略"
+                    >
+                      <div className="space-y-3">
+                        {lesson_content.exam_strategies.map((strategy, idx) => (
+                          <div
+                            key={idx}
+                            className="p-4 bg-indigo-50 rounded-xl border border-indigo-100"
+                          >
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
                                 {idx + 1}
                               </span>
-                              <span className="text-stone-700">{stripQuotes(point)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </SectionCard>
-                    )}
+                              <h4 className="font-semibold text-indigo-800">
+                                {stripQuotes(strategy.strategy)}
+                              </h4>
+                            </div>
+                            <p className="text-stone-700 leading-relaxed">
+                              {stripQuotes(strategy.content)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  )}
 
-                  {lesson_content?.mind_map_mermaid && (
+                  {lesson_content?.quick_notes && (
+                    <div className="rounded-2xl overflow-hidden">
+                      <QuickNotesCard data={lesson_content.quick_notes} />
+                    </div>
+                  )}
+
+                  {homework && (
                     <SectionCard
-                      icon={<Sparkles className="w-5 h-5" />}
-                      iconBg="bg-teal-500"
-                      title="思维导图"
-                      defaultExpanded={false}
+                      icon={<ClipboardList className="w-5 h-5" />}
+                      iconBg="bg-amber-500"
+                      title="课后作业"
                     >
-                      <MermaidRenderer
-                        code={lesson_content.mind_map_mermaid}
-                        title="知识结构图"
-                        allowFullscreen={true}
-                        allowDownload={true}
-                      />
+                      <div className="grid gap-4">
+                        {homework.required && homework.required.length > 0 && (
+                          <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                            <div className="text-xs font-semibold text-amber-700 mb-2">
+                              必做作业
+                            </div>
+                            <ul className="space-y-2">
+                              {homework.required.map((item, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                  <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold">
+                                    {idx + 1}
+                                  </span>
+                                  <span className="text-stone-700">{stripQuotes(item)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {homework.optional && homework.optional.length > 0 && (
+                          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <div className="text-xs font-semibold text-slate-700 mb-2">
+                              选做作业
+                            </div>
+                            <ul className="space-y-2">
+                              {homework.optional.map((item, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                  <span className="w-6 h-6 rounded-full bg-slate-600 text-white flex items-center justify-center text-xs font-bold">
+                                    {idx + 1}
+                                  </span>
+                                  <span className="text-stone-700">{stripQuotes(item)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {homework.thinking_questions && homework.thinking_questions.length > 0 && (
+                          <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                            <div className="text-xs font-semibold text-emerald-700 mb-2">
+                              思考题
+                            </div>
+                            <ul className="space-y-2">
+                              {homework.thinking_questions.map((item, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold">
+                                    {idx + 1}
+                                  </span>
+                                  <span className="text-stone-700">{stripQuotes(item)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     </SectionCard>
                   )}
 
                   {!stepHasContent[4] && (
-                    <div className="text-center py-12 text-stone-400">
-                      本步骤暂无内容
-                    </div>
+                    <div className="text-center py-12 text-stone-400">本步骤暂无内容</div>
                   )}
 
                   {/* 完成提示 */}
@@ -764,12 +1097,8 @@ export function StepBasedRenderer({
                     <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200">
                       <GraduationCap className="w-7 h-7 text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-amber-800 mb-2">
-                      恭喜完成本节学习！
-                    </h3>
-                    <p className="text-sm text-amber-600">
-                      你已完成所有学习步骤，继续加油！
-                    </p>
+                    <h3 className="text-lg font-bold text-amber-800 mb-2">恭喜完成本节学习！</h3>
+                    <p className="text-sm text-amber-600">你已完成所有学习步骤，继续加油！</p>
                   </div>
                 </>
               )}
@@ -817,7 +1146,7 @@ export function StepBasedRenderer({
                         )}
                       />
                     )}
-                    
+
                     {/* 步骤项 */}
                     <button
                       onClick={() => {
@@ -835,8 +1164,8 @@ export function StepBasedRenderer({
                           isCurrent
                             ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md shadow-amber-200 scale-110"
                             : isCompleted
-                            ? "bg-emerald-500 text-white"
-                            : "bg-stone-200 text-stone-400"
+                              ? "bg-emerald-500 text-white"
+                              : "bg-stone-200 text-stone-400"
                         )}
                       >
                         {isCompleted && !isCurrent ? (
@@ -854,8 +1183,8 @@ export function StepBasedRenderer({
                             isCurrent
                               ? "text-amber-700"
                               : isCompleted
-                              ? "text-emerald-600"
-                              : "text-stone-400"
+                                ? "text-emerald-600"
+                                : "text-stone-400"
                           )}
                         >
                           {step.title}
@@ -880,17 +1209,13 @@ export function StepBasedRenderer({
               !canGoNext()
                 ? "bg-stone-200 text-stone-400 cursor-not-allowed"
                 : currentStep === 4 && !hasNextChapter
-                ? "bg-emerald-500 text-white"
-                : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 hover:shadow-xl hover:shadow-amber-300 active:scale-95"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200 hover:shadow-xl hover:shadow-amber-300 active:scale-95"
             )}
           >
             <span className="hidden lg:inline">{getNextButtonText()}</span>
             <span className="lg:hidden">
-              {currentStep === 4
-                ? hasNextChapter
-                  ? "下一节"
-                  : "完成"
-                : "下一步"}
+              {currentStep === 4 ? (hasNextChapter ? "下一节" : "完成") : "下一步"}
             </span>
             <ChevronRight className="w-5 h-5" />
           </button>

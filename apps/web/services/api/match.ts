@@ -148,8 +148,7 @@ export const matchApi = {
     request.get("/match/positions", { params }),
 
   // 智能匹配（POST）
-  postMatch: (params: MatchParams): Promise<MatchResponse> =>
-    request.post("/match", params),
+  postMatch: (params: MatchParams): Promise<MatchResponse> => request.post("/match", params),
 
   // 匹配预览
   getPreview: (limit?: number): Promise<MatchResponse> =>
@@ -160,16 +159,13 @@ export const matchApi = {
     request.get(`/positions/${positionId}/match`),
 
   // 获取匹配统计
-  getStats: (): Promise<MatchDimensionStats> =>
-    request.get("/match/stats"),
+  getStats: (): Promise<MatchDimensionStats> => request.get("/match/stats"),
 
   // 获取匹配报告
-  getReport: (): Promise<MatchReport> => 
-    request.get("/match/report"),
+  getReport: (): Promise<MatchReport> => request.get("/match/report"),
 
   // 获取当前权重配置
-  getWeights: (): Promise<MatchWeights> =>
-    request.get("/match/weights"),
+  getWeights: (): Promise<MatchWeights> => request.get("/match/weights"),
 
   // 更新权重配置
   updateWeights: (weights: MatchWeights): Promise<{ message: string; weights: MatchWeights }> =>

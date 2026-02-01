@@ -391,83 +391,75 @@ export interface RecordQuestionRequest {
 
 export const learningApi = {
   // =============== 学习报告 ===============
-  
+
   // 获取今日学习报告
-  getDailyReport: () =>
-    request.get<DailyLearningReport>("/api/v1/learning/reports/daily"),
-  
+  getDailyReport: () => request.get<DailyLearningReport>("/api/v1/learning/reports/daily"),
+
   // 获取指定日期学习报告
   getDailyReportByDate: (date: string) =>
     request.get<DailyLearningReport>(`/api/v1/learning/reports/daily/${date}`),
-  
+
   // 获取本周学习报告
-  getWeeklyReport: () =>
-    request.get<WeeklyLearningReport>("/api/v1/learning/reports/weekly"),
-  
+  getWeeklyReport: () => request.get<WeeklyLearningReport>("/api/v1/learning/reports/weekly"),
+
   // 获取指定周学习报告
   getWeeklyReportByDate: (weekStart: string) =>
     request.get<WeeklyLearningReport>(`/api/v1/learning/reports/weekly/${weekStart}`),
-  
+
   // 获取能力分析报告
-  getAbilityReport: () =>
-    request.get<AbilityReport>("/api/v1/learning/reports/ability"),
-  
+  getAbilityReport: () => request.get<AbilityReport>("/api/v1/learning/reports/ability"),
+
   // 获取AI增强版能力分析报告
-  getAIAbilityReport: () =>
-    request.get<AIAbilityReport>("/api/v1/learning/reports/ability/ai"),
+  getAIAbilityReport: () => request.get<AIAbilityReport>("/api/v1/learning/reports/ability/ai"),
 
   // =============== 学习统计 ===============
-  
+
   // 获取学习概览
-  getOverview: () =>
-    request.get<LearningOverview>("/api/v1/learning/stats/overview"),
-  
+  getOverview: () => request.get<LearningOverview>("/api/v1/learning/stats/overview"),
+
   // 获取学习统计
-  getStats: () =>
-    request.get<LearningOverview>("/api/v1/learning/stats"),
+  getStats: () => request.get<LearningOverview>("/api/v1/learning/stats"),
 
   // =============== 学习目标 ===============
-  
+
   // 获取学习目标
-  getGoal: () =>
-    request.get<LearningGoal>("/api/v1/learning/goals"),
-  
+  getGoal: () => request.get<LearningGoal>("/api/v1/learning/goals"),
+
   // 更新学习目标
   updateGoal: (data: UpdateGoalRequest) =>
     request.put<{ message: string }>("/api/v1/learning/goals", data),
 
   // =============== 排行榜 ===============
-  
+
   // 获取每日排行榜
   getDailyLeaderboard: (metric: "study_time" | "question_count") =>
     request.get<LeaderboardResponse>(`/api/v1/learning/leaderboards/daily/${metric}`),
-  
+
   // 获取每周排行榜
   getWeeklyLeaderboard: (metric: "study_time" | "question_count") =>
     request.get<LeaderboardResponse>(`/api/v1/learning/leaderboards/weekly/${metric}`),
-  
+
   // 获取连续打卡排行榜
   getConsecutiveLeaderboard: () =>
     request.get<LeaderboardResponse>("/api/v1/learning/leaderboards/consecutive"),
-  
+
   // 获取我的排名
   getMyRank: (type?: "daily" | "weekly", metric?: "study_time" | "question_count") =>
     request.get<LeaderboardEntry>("/api/v1/learning/leaderboards/my-rank", {
-      params: { type, metric }
+      params: { type, metric },
     }),
 
   // =============== 成就 ===============
-  
+
   // 获取我的成就
-  getAchievements: () =>
-    request.get<LearningAchievement[]>("/api/v1/learning/achievements"),
+  getAchievements: () => request.get<LearningAchievement[]>("/api/v1/learning/achievements"),
 
   // =============== 学习记录 ===============
-  
+
   // 记录学习
   recordStudy: (data: RecordStudyRequest) =>
     request.post<{ message: string }>("/api/v1/learning/record/study", data),
-  
+
   // 记录做题
   recordQuestion: (data: RecordQuestionRequest) =>
     request.post<{ message: string }>("/api/v1/learning/record/question", data),

@@ -18,7 +18,15 @@ const apiRequest = async <T>(url: string, options?: RequestInit): Promise<T> => 
 // =====================================================
 
 export type TaskStatus = "pending" | "processing" | "generating" | "completed" | "failed";
-export type TaskType = "category" | "course" | "chapter" | "knowledge" | "bulk" | "template" | "ai_generate" | "import";
+export type TaskType =
+  | "category"
+  | "course"
+  | "chapter"
+  | "knowledge"
+  | "bulk"
+  | "template"
+  | "ai_generate"
+  | "import";
 
 export interface ContentTask {
   id: number;
@@ -32,6 +40,7 @@ export interface ContentTask {
   success_items: number;
   failed_items: number;
   error_message?: string;
+  current_step?: string;
   progress: number;
   started_at?: string;
   completed_at?: string;
@@ -75,13 +84,19 @@ export interface SubjectStructure {
 }
 
 // Subject definitions
-export type Subject = 'xingce' | 'shenlun' | 'mianshi' | 'gongji';
+export type Subject = "xingce" | "shenlun" | "mianshi" | "gongji";
 
-export const SUBJECTS: { value: Subject; label: string; icon: string; hours: number; modules: number }[] = [
-  { value: 'xingce', label: '行测', icon: '🧮', hours: 280, modules: 5 },
-  { value: 'shenlun', label: '申论', icon: '📝', hours: 120, modules: 6 },
-  { value: 'mianshi', label: '面试', icon: '🎤', hours: 100, modules: 8 },
-  { value: 'gongji', label: '公基', icon: '📚', hours: 80, modules: 4 },
+export const SUBJECTS: {
+  value: Subject;
+  label: string;
+  icon: string;
+  hours: number;
+  modules: number;
+}[] = [
+  { value: "xingce", label: "行测", icon: "🧮", hours: 280, modules: 5 },
+  { value: "shenlun", label: "申论", icon: "📝", hours: 120, modules: 6 },
+  { value: "mianshi", label: "面试", icon: "🎤", hours: 100, modules: 8 },
+  { value: "gongji", label: "公基", icon: "📚", hours: 80, modules: 4 },
 ];
 
 // Batch create request types
@@ -150,7 +165,11 @@ export interface BatchCreateKnowledgeRequest {
 
 // AI content generation types
 export interface AIGenerateRequest {
-  generate_type: "question_analysis" | "knowledge_summary" | "similar_questions" | "material_classify";
+  generate_type:
+    | "question_analysis"
+    | "knowledge_summary"
+    | "similar_questions"
+    | "material_classify";
   prompt?: string; // Custom prompt template (optional, will use default if not provided)
   target_ids?: number[];
   target_data?: Record<string, string>; // 目标数据（如题目内容、知识点信息等）
@@ -247,6 +266,7 @@ export interface BatchGenerateChapterLessonsRequest {
   subject?: string;
   auto_approve?: boolean;
   auto_import?: boolean;
+  max_concurrency?: number;
   // 从前端传入的 prompt（可选，如果不传则使用后端默认）
   system_prompt?: string;
   user_prompt_template?: string;
@@ -278,6 +298,7 @@ export interface GenerateCourseLessonsRequest {
   auto_approve?: boolean;
   auto_import?: boolean;
   skip_existing?: boolean;
+  max_concurrency?: number;
   // 从前端传入的 prompt（可选）
   system_prompt?: string;
   user_prompt_template?: string;
@@ -290,6 +311,7 @@ export interface GenerateCategoryLessonsRequest {
   auto_import?: boolean;
   skip_existing?: boolean;
   include_sub_categories?: boolean;
+  max_concurrency?: number;
   // 从前端传入的 prompt（可选）
   system_prompt?: string;
   user_prompt_template?: string;
@@ -308,7 +330,12 @@ export interface QualityCheckResult {
 }
 
 // Generated content types (for listing already generated content)
-export type AIContentType = "chapter_lesson" | "question_analysis" | "knowledge_summary" | "course_preview" | "material_content";
+export type AIContentType =
+  | "chapter_lesson"
+  | "question_analysis"
+  | "knowledge_summary"
+  | "course_preview"
+  | "material_content";
 export type AIContentStatus = "pending" | "approved" | "rejected" | "imported";
 export type AIRelatedType = "chapter" | "question" | "knowledge_point" | "course" | "material";
 
@@ -359,7 +386,12 @@ export const contentGeneratorApi = {
   },
 
   // Tasks
-  getTasks: async (params?: { page?: number; page_size?: number; status?: TaskStatus; session_only?: boolean }): Promise<{
+  getTasks: async (params?: {
+    page?: number;
+    page_size?: number;
+    status?: TaskStatus;
+    session_only?: boolean;
+  }): Promise<{
     tasks: ContentTask[];
     total: number;
   }> => {
@@ -368,7 +400,7 @@ export const contentGeneratorApi = {
     if (params?.page_size) query.set("page_size", params.page_size.toString());
     if (params?.status) query.set("status", params.status);
     if (params?.session_only) query.set("session_only", "1");
-    
+
     return apiRequest<{ tasks: ContentTask[]; total: number }>(
       `/admin/generator/tasks?${query.toString()}`
     );
@@ -436,14 +468,19 @@ export const contentGeneratorApi = {
     topic?: string;
     count: number;
   }): Promise<{ items: BatchCreateKnowledgeItem[]; count: number }> => {
-    return apiRequest<{ items: BatchCreateKnowledgeItem[]; count: number }>("/admin/generator/ai/knowledge-points", {
-      method: "POST",
-      body: JSON.stringify(req),
-    });
+    return apiRequest<{ items: BatchCreateKnowledgeItem[]; count: number }>(
+      "/admin/generator/ai/knowledge-points",
+      {
+        method: "POST",
+        body: JSON.stringify(req),
+      }
+    );
   },
 
   // Templates
-  getTemplates: async (subject?: string): Promise<{ templates: CourseTemplate[]; total: number }> => {
+  getTemplates: async (
+    subject?: string
+  ): Promise<{ templates: CourseTemplate[]; total: number }> => {
     const query = subject ? `?subject=${subject}` : "";
     return apiRequest<{ templates: CourseTemplate[]; total: number }>(
       `/admin/generator/templates${query}`
@@ -454,14 +491,19 @@ export const contentGeneratorApi = {
     return apiRequest<CourseTemplate>(`/admin/generator/templates/${id}`);
   },
 
-  createTemplate: async (template: Partial<CourseTemplate> & { structure: string }): Promise<CourseTemplate> => {
+  createTemplate: async (
+    template: Partial<CourseTemplate> & { structure: string }
+  ): Promise<CourseTemplate> => {
     return apiRequest<CourseTemplate>("/admin/generator/templates", {
       method: "POST",
       body: JSON.stringify(template),
     });
   },
 
-  updateTemplate: async (id: number, template: Partial<CourseTemplate>): Promise<CourseTemplate> => {
+  updateTemplate: async (
+    id: number,
+    template: Partial<CourseTemplate>
+  ): Promise<CourseTemplate> => {
     return apiRequest<CourseTemplate>(`/admin/generator/templates/${id}`, {
       method: "PUT",
       body: JSON.stringify(template),
@@ -475,7 +517,10 @@ export const contentGeneratorApi = {
   },
 
   // Generate from template
-  generateFromTemplate: async (templateId: number, options?: { subject?: string; exam_type?: string }): Promise<ContentTask> => {
+  generateFromTemplate: async (
+    templateId: number,
+    options?: { subject?: string; exam_type?: string }
+  ): Promise<ContentTask> => {
     return apiRequest<ContentTask>("/admin/generator/from-template", {
       method: "POST",
       body: JSON.stringify({ template_id: templateId, ...options }),
@@ -516,35 +561,43 @@ export const contentGeneratorApi = {
   },
 
   // Batch generate chapter lessons (by chapter IDs)
-  batchGenerateChapterLessons: async (req: BatchGenerateChapterLessonsRequest): Promise<BatchGenerateResult> => {
-    return apiRequest<BatchGenerateResult>(
-      "/admin/generator/generate/chapter-lessons-batch",
-      { method: "POST", body: JSON.stringify(req) }
-    );
+  batchGenerateChapterLessons: async (
+    req: BatchGenerateChapterLessonsRequest
+  ): Promise<BatchGenerateResult> => {
+    return apiRequest<BatchGenerateResult>("/admin/generator/generate/chapter-lessons-batch", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
   },
 
   // Single chapter lesson (ai-content V2)
-  generateChapterLesson: async (req: GenerateChapterLessonRequest): Promise<{ task: ContentTask }> => {
-    return apiRequest<{ task: ContentTask }>(
-      "/admin/ai-content/generate/chapter-lesson",
-      { method: "POST", body: JSON.stringify(req) }
-    );
+  generateChapterLesson: async (
+    req: GenerateChapterLessonRequest
+  ): Promise<{ task: ContentTask }> => {
+    return apiRequest<{ task: ContentTask }>("/admin/ai-content/generate/chapter-lesson", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
   },
 
   // Course lessons batch (ai-content V2)
-  generateCourseLessons: async (req: GenerateCourseLessonsRequest): Promise<BatchGenerateResult> => {
-    return apiRequest<BatchGenerateResult>(
-      "/admin/ai-content/generate/course-lessons",
-      { method: "POST", body: JSON.stringify(req) }
-    );
+  generateCourseLessons: async (
+    req: GenerateCourseLessonsRequest
+  ): Promise<BatchGenerateResult> => {
+    return apiRequest<BatchGenerateResult>("/admin/ai-content/generate/course-lessons", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
   },
 
   // Category lessons batch (ai-content V2)
-  generateCategoryLessons: async (req: GenerateCategoryLessonsRequest): Promise<BatchGenerateResult> => {
-    return apiRequest<BatchGenerateResult>(
-      "/admin/ai-content/generate/category-lessons",
-      { method: "POST", body: JSON.stringify(req) }
-    );
+  generateCategoryLessons: async (
+    req: GenerateCategoryLessonsRequest
+  ): Promise<BatchGenerateResult> => {
+    return apiRequest<BatchGenerateResult>("/admin/ai-content/generate/category-lessons", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
   },
 
   // Enrich category description with AI
@@ -578,8 +631,8 @@ export const contentGeneratorApi = {
     });
   },
 
-  getQualityResults: async (params?: { 
-    page?: number; 
+  getQualityResults: async (params?: {
+    page?: number;
     page_size?: number;
     check_type?: string;
     severity?: string;
@@ -589,16 +642,22 @@ export const contentGeneratorApi = {
     if (params?.page_size) query.set("page_size", params.page_size.toString());
     if (params?.check_type) query.set("check_type", params.check_type);
     if (params?.severity) query.set("severity", params.severity);
-    
+
     return apiRequest<{ results: QualityCheckResult[]; total: number }>(
       `/admin/generator/quality/results?${query.toString()}`
     );
   },
 
   // Coverage statistics
-  getCoverageStats: async (subject?: string): Promise<{
+  getCoverageStats: async (
+    subject?: string
+  ): Promise<{
     course_coverage: { category: string; count: number; total_duration: number }[];
-    question_coverage: { category: string; count: number; by_difficulty: { [key: string]: number } }[];
+    question_coverage: {
+      category: string;
+      count: number;
+      by_difficulty: { [key: string]: number };
+    }[];
     knowledge_coverage: { category: string; total: number; with_content: number }[];
     material_coverage: { type: string; count: number }[];
   }> => {
@@ -606,7 +665,7 @@ export const contentGeneratorApi = {
     return apiRequest<any>(`/admin/generator/stats/coverage${query}`);
   },
 
-  // Quality statistics  
+  // Quality statistics
   getQualityStats: async (): Promise<{
     question_quality: {
       total: number;
@@ -645,9 +704,12 @@ export const contentGeneratorApi = {
 
   // Clear all chapter contents (delete all generated classroom data)
   clearAllChapterContents: async (): Promise<{ message: string; affected: number }> => {
-    return apiRequest<{ message: string; affected: number }>("/admin/courses/chapters/all/content", {
-      method: "DELETE",
-    });
+    return apiRequest<{ message: string; affected: number }>(
+      "/admin/courses/chapters/all/content",
+      {
+        method: "DELETE",
+      }
+    );
   },
 
   // Get generation task by ID (uses ai-content endpoint for LLM generation tasks)
@@ -681,7 +743,7 @@ export const contentGeneratorApi = {
     if (params?.status) query.set("status", params.status);
     if (params?.page) query.set("page", params.page.toString());
     if (params?.page_size) query.set("page_size", params.page_size.toString());
-    
+
     return apiRequest<GeneratedContentListResponse>(
       `/admin/ai-content/contents?${query.toString()}`
     );

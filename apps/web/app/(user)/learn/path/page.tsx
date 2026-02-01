@@ -29,7 +29,12 @@ import { cn } from "@/lib/utils";
 import { toast } from "@what-cse/ui";
 import { useAILearningPath } from "@/hooks/useAILearningPath";
 import { useAuthStore } from "@/stores/authStore";
-import type { LearningPath, ProgressSummary, DailyTask, LearningPhase } from "@/services/api/ai-learning";
+import type {
+  LearningPath,
+  ProgressSummary,
+  DailyTask,
+  LearningPhase,
+} from "@/services/api/ai-learning";
 
 // =====================================================
 // 主组件
@@ -124,10 +129,7 @@ export default function LearningPathPage() {
         <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link
-                href="/learn"
-                className="p-2 rounded-lg hover:bg-stone-100 transition-colors"
-              >
+              <Link href="/learn" className="p-2 rounded-lg hover:bg-stone-100 transition-colors">
                 <ArrowLeft className="w-5 h-5 text-stone-600" />
               </Link>
               <div>
@@ -197,7 +199,9 @@ export default function LearningPathPage() {
               <p className="text-xs text-amber-100">剩余天数</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold">{progress.today_completed}/{progress.today_total}</p>
+              <p className="text-2xl font-bold">
+                {progress.today_completed}/{progress.today_total}
+              </p>
               <p className="text-xs text-amber-100">今日任务</p>
             </div>
             <div className="text-center">
@@ -207,10 +211,12 @@ export default function LearningPathPage() {
           </div>
 
           {/* 状态提示 */}
-          <div className={cn(
-            "mt-4 p-3 rounded-xl flex items-center gap-2 text-sm",
-            progress.is_on_track ? "bg-emerald-500/20" : "bg-red-500/20"
-          )}>
+          <div
+            className={cn(
+              "mt-4 p-3 rounded-xl flex items-center gap-2 text-sm",
+              progress.is_on_track ? "bg-emerald-500/20" : "bg-red-500/20"
+            )}
+          >
             {progress.is_on_track ? (
               <CheckCircle2 className="w-5 h-5" />
             ) : (
@@ -238,7 +244,11 @@ export default function LearningPathPage() {
                       <div
                         className="h-full bg-amber-500 transition-all"
                         style={{
-                          width: phase.is_completed ? "100%" : phase.is_current ? `${phase.progress}%` : "0%",
+                          width: phase.is_completed
+                            ? "100%"
+                            : phase.is_current
+                              ? `${phase.progress}%`
+                              : "0%",
                         }}
                       />
                     </div>
@@ -252,8 +262,8 @@ export default function LearningPathPage() {
                       phase.is_completed
                         ? "bg-emerald-500 text-white"
                         : phase.is_current
-                        ? "bg-amber-500 text-white ring-4 ring-amber-100"
-                        : "bg-stone-200 text-stone-500"
+                          ? "bg-amber-500 text-white ring-4 ring-amber-100"
+                          : "bg-stone-200 text-stone-500"
                     )}
                   >
                     {phase.is_completed ? (
@@ -267,9 +277,7 @@ export default function LearningPathPage() {
                   <p
                     className={cn(
                       "text-center text-xs mt-2 transition-colors",
-                      activePhaseIndex === index
-                        ? "text-amber-600 font-medium"
-                        : "text-stone-500"
+                      activePhaseIndex === index ? "text-amber-600 font-medium" : "text-stone-500"
                     )}
                   >
                     {phase.name}
@@ -283,11 +291,10 @@ export default function LearningPathPage() {
           <div className="p-4 bg-stone-50 rounded-xl">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h4 className="font-bold text-stone-800">
-                  {path.phases[activePhaseIndex].name}
-                </h4>
+                <h4 className="font-bold text-stone-800">{path.phases[activePhaseIndex].name}</h4>
                 <p className="text-sm text-stone-500">
-                  第{path.phases[activePhaseIndex].start_day}天 - 第{path.phases[activePhaseIndex].end_day}天
+                  第{path.phases[activePhaseIndex].start_day}天 - 第
+                  {path.phases[activePhaseIndex].end_day}天
                 </p>
               </div>
               <span
@@ -296,15 +303,15 @@ export default function LearningPathPage() {
                   path.phases[activePhaseIndex].is_current
                     ? "bg-amber-100 text-amber-700"
                     : path.phases[activePhaseIndex].is_completed
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-stone-200 text-stone-600"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-stone-200 text-stone-600"
                 )}
               >
                 {path.phases[activePhaseIndex].is_current
                   ? "进行中"
                   : path.phases[activePhaseIndex].is_completed
-                  ? "已完成"
-                  : "待开始"}
+                    ? "已完成"
+                    : "待开始"}
               </span>
             </div>
 
@@ -358,7 +365,8 @@ export default function LearningPathPage() {
               今日任务
             </h3>
             <span className="text-sm text-stone-500">
-              {path.daily_tasks.filter(t => t.is_completed).length}/{path.daily_tasks.length} 已完成
+              {path.daily_tasks.filter((t) => t.is_completed).length}/{path.daily_tasks.length}{" "}
+              已完成
             </span>
           </div>
 
@@ -412,13 +420,7 @@ export default function LearningPathPage() {
 // 每日任务卡片
 // =====================================================
 
-function DailyTaskCard({
-  task,
-  onComplete,
-}: {
-  task: DailyTask;
-  onComplete: () => void;
-}) {
+function DailyTaskCard({ task, onComplete }: { task: DailyTask; onComplete: () => void }) {
   const typeConfig = {
     course: {
       icon: BookOpen,

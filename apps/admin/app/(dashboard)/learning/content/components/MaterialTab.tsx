@@ -64,17 +64,33 @@ const typeIcons: Record<MaterialType, React.ReactNode> = {
 
 // 热点主题列表
 const hotTopicThemes = [
-  "乡村振兴", "生态文明", "科技创新", "社会治理", "民生保障",
-  "文化建设", "依法治国", "共同富裕", "数字经济", "绿色发展",
-  "高质量发展", "新质生产力", "教育公平", "医疗健康", "养老服务",
-  "就业创业", "粮食安全", "能源安全", "国家安全", "对外开放",
+  "乡村振兴",
+  "生态文明",
+  "科技创新",
+  "社会治理",
+  "民生保障",
+  "文化建设",
+  "依法治国",
+  "共同富裕",
+  "数字经济",
+  "绿色发展",
+  "高质量发展",
+  "新质生产力",
+  "教育公平",
+  "医疗健康",
+  "养老服务",
+  "就业创业",
+  "粮食安全",
+  "能源安全",
+  "国家安全",
+  "对外开放",
 ];
 
 export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
   // States
   const [categories, setCategories] = useState<MaterialCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  
+
   // AI Generation states
   const [aiType, setAiType] = useState<MaterialType>("quote");
   const [aiTheme, setAiTheme] = useState("");
@@ -104,7 +120,10 @@ export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
   }, [fetchCategories]);
 
   // Flatten categories
-  const flattenCategories = (cats: MaterialCategory[], level = 0): { category: MaterialCategory; level: number }[] => {
+  const flattenCategories = (
+    cats: MaterialCategory[],
+    level = 0
+  ): { category: MaterialCategory; level: number }[] => {
     let result: { category: MaterialCategory; level: number }[] = [];
     for (const cat of cats) {
       result.push({ category: cat, level });
@@ -179,9 +198,7 @@ export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
               <Palette className="h-4 w-4 text-pink-500" />
               AI 生成素材
             </CardTitle>
-            <CardDescription className="text-xs">
-              使用 AI 快速生成学习素材
-            </CardDescription>
+            <CardDescription className="text-xs">使用 AI 快速生成学习素材</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Type */}
@@ -276,11 +293,7 @@ export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
         {/* Actions */}
         <Card>
           <CardContent className="pt-4 space-y-3">
-            <Button
-              className="w-full"
-              onClick={handleAIGenerate}
-              disabled={aiGenerating}
-            >
+            <Button className="w-full" onClick={handleAIGenerate} disabled={aiGenerating}>
               {aiGenerating ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
@@ -290,11 +303,7 @@ export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
             </Button>
 
             {aiResult && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={resetForm}
-              >
+              <Button variant="outline" className="w-full" onClick={resetForm}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 重新生成
               </Button>
@@ -305,7 +314,9 @@ export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
         {/* Info */}
         <div className="text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
           <p className="font-medium mb-1">提示</p>
-          <p>支持生成名言警句、案例、优美语句、热点话题等多种素材类型，可用于申论写作和面试答题。</p>
+          <p>
+            支持生成名言警句、案例、优美语句、热点话题等多种素材类型，可用于申论写作和面试答题。
+          </p>
         </div>
       </div>
 
@@ -317,8 +328,7 @@ export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
             生成结果
             {aiResult && (
               <Badge variant="secondary" className="ml-2">
-                生成 {aiResult.generated} 条
-                {aiResult.saved > 0 && `，已保存 ${aiResult.saved} 条`}
+                生成 {aiResult.generated} 条{aiResult.saved > 0 && `，已保存 ${aiResult.saved} 条`}
               </Badge>
             )}
           </CardTitle>
@@ -352,9 +362,7 @@ export function MaterialTab({ onTaskCreated }: MaterialTabProps) {
                             </div>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {m.content}
-                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{m.content}</p>
                         {(m.source || m.author) && (
                           <p className="text-xs text-muted-foreground mt-2">
                             {m.source && `来源: ${m.source}`}

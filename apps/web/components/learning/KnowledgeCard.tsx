@@ -85,10 +85,7 @@ function DifficultyStars({ level }: { level: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <div
           key={star}
-          className={cn(
-            "w-2 h-2 rounded-full",
-            star <= level ? "bg-amber-400" : "bg-stone-200"
-          )}
+          className={cn("w-2 h-2 rounded-full", star <= level ? "bg-amber-400" : "bg-stone-200")}
         />
       ))}
     </div>
@@ -135,10 +132,7 @@ export function KnowledgeCard({
 
   return (
     <div
-      className={cn(
-        "relative w-full max-w-md mx-auto perspective-1000",
-        className
-      )}
+      className={cn("relative w-full max-w-md mx-auto perspective-1000", className)}
       style={{ perspective: "1000px" }}
     >
       <div
@@ -189,27 +183,19 @@ export function KnowledgeCard({
                     : "text-stone-400 hover:text-red-400 hover:bg-red-50"
                 )}
               >
-                <Heart
-                  className={cn("w-5 h-5", isFavorited && "fill-current")}
-                />
+                <Heart className={cn("w-5 h-5", isFavorited && "fill-current")} />
               </button>
             </div>
 
             {/* 分类 */}
-            {data.category && (
-              <p className="text-xs text-stone-500 mb-2">{data.category}</p>
-            )}
+            {data.category && <p className="text-xs text-stone-500 mb-2">{data.category}</p>}
 
             {/* 标题 */}
-            <h3 className="text-xl font-bold text-stone-800 mb-4">
-              {data.title}
-            </h3>
+            <h3 className="text-xl font-bold text-stone-800 mb-4">{data.title}</h3>
 
             {/* 摘要 */}
             {data.summary && (
-              <p className="text-sm text-stone-600 mb-4 line-clamp-2">
-                {data.summary}
-              </p>
+              <p className="text-sm text-stone-600 mb-4 line-clamp-2">{data.summary}</p>
             )}
 
             {/* 关键词 */}
@@ -290,10 +276,7 @@ export function KnowledgeCard({
                   </h4>
                   <ul className="space-y-1">
                     {data.tips.map((tip, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-sm text-stone-600"
-                      >
+                      <li key={index} className="flex items-start gap-2 text-sm text-stone-600">
                         <span className="text-amber-500">•</span>
                         {tip}
                       </li>
@@ -341,9 +324,7 @@ export function KnowledgeCard({
         {/* 掌握度选择 */}
         <div className="flex items-center gap-1">
           <span className="text-xs text-stone-500 mr-2">掌握度:</span>
-          {(
-            ["unfamiliar", "learning", "mastered"] as MasteryLevel[]
-          ).map((level) => {
+          {(["unfamiliar", "learning", "mastered"] as MasteryLevel[]).map((level) => {
             const config = MASTERY_CONFIG[level];
             const Icon = config.icon;
             return (
@@ -399,27 +380,24 @@ interface KnowledgeCardDeckProps {
   className?: string;
 }
 
-export function KnowledgeCardDeck({
-  cards,
-  onComplete,
-  className,
-}: KnowledgeCardDeckProps) {
+export function KnowledgeCardDeck({ cards, onComplete, className }: KnowledgeCardDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [masteryLevels, setMasteryLevels] = useState<Map<string, MasteryLevel>>(
-    new Map()
-  );
+  const [masteryLevels, setMasteryLevels] = useState<Map<string, MasteryLevel>>(new Map());
   const [showFront, setShowFront] = useState(true);
 
   const currentCard = cards[currentIndex];
   const progress = ((currentIndex + 1) / cards.length) * 100;
 
-  const handleMasteryChange = useCallback((level: MasteryLevel) => {
-    setMasteryLevels((prev) => {
-      const next = new Map(prev);
-      next.set(currentCard.id, level);
-      return next;
-    });
-  }, [currentCard?.id]);
+  const handleMasteryChange = useCallback(
+    (level: MasteryLevel) => {
+      setMasteryLevels((prev) => {
+        const next = new Map(prev);
+        next.set(currentCard.id, level);
+        return next;
+      });
+    },
+    [currentCard?.id]
+  );
 
   const handleNext = useCallback(() => {
     if (currentIndex < cards.length - 1) {

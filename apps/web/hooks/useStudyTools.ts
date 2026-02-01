@@ -73,71 +73,83 @@ export function useStudyPlan() {
   }, []);
 
   // 从模板创建计划
-  const createFromTemplate = useCallback(async (params: studyToolsApi.CreatePlanFromTemplateParams) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const plan = await studyToolsApi.createPlanFromTemplate(params);
-      setActivePlan(plan);
-      return plan;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "创建计划失败");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const createFromTemplate = useCallback(
+    async (params: studyToolsApi.CreatePlanFromTemplateParams) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const plan = await studyToolsApi.createPlanFromTemplate(params);
+        setActivePlan(plan);
+        return plan;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "创建计划失败");
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // 更新计划
-  const updatePlan = useCallback(async (id: number, params: studyToolsApi.UpdateStudyPlanParams) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await studyToolsApi.updateStudyPlan(id, params);
-      await fetchActivePlan();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "更新计划失败");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchActivePlan]);
+  const updatePlan = useCallback(
+    async (id: number, params: studyToolsApi.UpdateStudyPlanParams) => {
+      setLoading(true);
+      setError(null);
+      try {
+        await studyToolsApi.updateStudyPlan(id, params);
+        await fetchActivePlan();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "更新计划失败");
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchActivePlan]
+  );
 
   // 更新计划状态
-  const updateStatus = useCallback(async (id: number, status: studyToolsApi.StudyPlanStatus) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await studyToolsApi.updatePlanStatus(id, status);
-      if (status === "completed" || status === "abandoned") {
-        setActivePlan(null);
+  const updateStatus = useCallback(
+    async (id: number, status: studyToolsApi.StudyPlanStatus) => {
+      setLoading(true);
+      setError(null);
+      try {
+        await studyToolsApi.updatePlanStatus(id, status);
+        if (status === "completed" || status === "abandoned") {
+          setActivePlan(null);
+        }
+        await fetchActivePlan();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "更新状态失败");
+        throw err;
+      } finally {
+        setLoading(false);
       }
-      await fetchActivePlan();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "更新状态失败");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchActivePlan]);
+    },
+    [fetchActivePlan]
+  );
 
   // 删除计划
-  const deletePlan = useCallback(async (id: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await studyToolsApi.deleteStudyPlan(id);
-      if (activePlan?.id === id) {
-        setActivePlan(null);
+  const deletePlan = useCallback(
+    async (id: number) => {
+      setLoading(true);
+      setError(null);
+      try {
+        await studyToolsApi.deleteStudyPlan(id);
+        if (activePlan?.id === id) {
+          setActivePlan(null);
+        }
+        setPlans((prev) => prev.filter((p) => p.id !== id));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "删除计划失败");
+        throw err;
+      } finally {
+        setLoading(false);
       }
-      setPlans(prev => prev.filter(p => p.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "删除计划失败");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [activePlan]);
+    },
+    [activePlan]
+  );
 
   return {
     loading,
@@ -196,9 +208,11 @@ export function useDailyTasks() {
   const completeTask = useCallback(async (taskId: number) => {
     try {
       await studyToolsApi.completeDailyTask(taskId);
-      setTasks(prev => prev.map(t => 
-        t.id === taskId ? { ...t, is_completed: true, completed_at: new Date().toISOString() } : t
-      ));
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, is_completed: true, completed_at: new Date().toISOString() } : t
+        )
+      );
     } catch (err) {
       console.error("Failed to complete task:", err);
       throw err;
@@ -206,17 +220,22 @@ export function useDailyTasks() {
   }, []);
 
   // 更新任务进度
-  const updateProgress = useCallback(async (taskId: number, actualTime: number, actualCount: number) => {
-    try {
-      await studyToolsApi.updateTaskProgress(taskId, actualTime, actualCount);
-      setTasks(prev => prev.map(t => 
-        t.id === taskId ? { ...t, actual_time: actualTime, actual_count: actualCount } : t
-      ));
-    } catch (err) {
-      console.error("Failed to update progress:", err);
-      throw err;
-    }
-  }, []);
+  const updateProgress = useCallback(
+    async (taskId: number, actualTime: number, actualCount: number) => {
+      try {
+        await studyToolsApi.updateTaskProgress(taskId, actualTime, actualCount);
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, actual_time: actualTime, actual_count: actualCount } : t
+          )
+        );
+      } catch (err) {
+        console.error("Failed to update progress:", err);
+        throw err;
+      }
+    },
+    []
+  );
 
   return {
     loading,
@@ -424,7 +443,7 @@ export function useLearningFavorites() {
     setLoading(true);
     try {
       const favorite = await studyToolsApi.addLearningFavorite(params);
-      setFavorites(prev => [favorite, ...prev]);
+      setFavorites((prev) => [favorite, ...prev]);
       return favorite;
     } catch (err) {
       console.error("Failed to add favorite:", err);
@@ -439,7 +458,7 @@ export function useLearningFavorites() {
     setLoading(true);
     try {
       await studyToolsApi.removeLearningFavorite(favoriteId);
-      setFavorites(prev => prev.filter(f => f.id !== favoriteId));
+      setFavorites((prev) => prev.filter((f) => f.id !== favoriteId));
     } catch (err) {
       console.error("Failed to remove favorite:", err);
       throw err;
@@ -449,22 +468,25 @@ export function useLearningFavorites() {
   }, []);
 
   // 检查是否已收藏
-  const checkFavorite = useCallback(async (contentType: studyToolsApi.LearningContentType, contentId: number) => {
-    try {
-      const result = await studyToolsApi.checkLearningFavorite(contentType, contentId);
-      return result.is_favorite;
-    } catch (err) {
-      console.error("Failed to check favorite:", err);
-      return false;
-    }
-  }, []);
+  const checkFavorite = useCallback(
+    async (contentType: studyToolsApi.LearningContentType, contentId: number) => {
+      try {
+        const result = await studyToolsApi.checkLearningFavorite(contentType, contentId);
+        return result.is_favorite;
+      } catch (err) {
+        console.error("Failed to check favorite:", err);
+        return false;
+      }
+    },
+    []
+  );
 
   // 创建收藏夹
   const createFolder = useCallback(async (params: studyToolsApi.CreateLearningFolderParams) => {
     setLoading(true);
     try {
       const folder = await studyToolsApi.createLearningFolder(params);
-      setFolders(prev => [...prev, folder]);
+      setFolders((prev) => [...prev, folder]);
       return folder;
     } catch (err) {
       console.error("Failed to create folder:", err);
@@ -479,7 +501,7 @@ export function useLearningFavorites() {
     setLoading(true);
     try {
       await studyToolsApi.deleteLearningFolder(folderId);
-      setFolders(prev => prev.filter(f => f.id !== folderId));
+      setFolders((prev) => prev.filter((f) => f.id !== folderId));
     } catch (err) {
       console.error("Failed to delete folder:", err);
       throw err;
@@ -492,9 +514,9 @@ export function useLearningFavorites() {
   const moveToFolder = useCallback(async (favoriteId: number, folderId: number | null) => {
     try {
       await studyToolsApi.moveLearningFavoriteToFolder(favoriteId, folderId);
-      setFavorites(prev => prev.map(f => 
-        f.id === favoriteId ? { ...f, folder_id: folderId || undefined } : f
-      ));
+      setFavorites((prev) =>
+        prev.map((f) => (f.id === favoriteId ? { ...f, folder_id: folderId || undefined } : f))
+      );
     } catch (err) {
       console.error("Failed to move to folder:", err);
       throw err;

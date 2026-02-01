@@ -51,11 +51,7 @@ import { positionApi } from "@/services/position-api";
 import type { PositionDetail, PositionBrief } from "@/types/position";
 import { PositionStatus, PositionStatusNames, PositionStatusColors } from "@/types/position";
 
-export default function PositionDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function PositionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [position, setPosition] = useState<PositionDetail | null>(null);
@@ -137,7 +133,8 @@ export default function PositionDetailPage({
   // 状态徽章
   const getStatusBadge = (status: number) => {
     const name = PositionStatusNames[status as PositionStatus] || "未知";
-    const colorClass = PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
+    const colorClass =
+      PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
     return (
       <Badge variant="secondary" className={colorClass}>
         {name}
@@ -322,8 +319,8 @@ export default function PositionDetailPage({
                   daysLeft !== null && daysLeft <= 3
                     ? "bg-red-100"
                     : daysLeft !== null && daysLeft <= 7
-                    ? "bg-amber-100"
-                    : "bg-gray-100"
+                      ? "bg-amber-100"
+                      : "bg-gray-100"
                 }`}
               >
                 <Clock
@@ -331,8 +328,8 @@ export default function PositionDetailPage({
                     daysLeft !== null && daysLeft <= 3
                       ? "text-red-600"
                       : daysLeft !== null && daysLeft <= 7
-                      ? "text-amber-600"
-                      : "text-gray-600"
+                        ? "text-amber-600"
+                        : "text-gray-600"
                   }`}
                 />
               </div>
@@ -347,10 +344,10 @@ export default function PositionDetailPage({
                           daysLeft <= 0
                             ? "text-red-600"
                             : daysLeft <= 3
-                            ? "text-red-500"
-                            : daysLeft <= 7
-                            ? "text-amber-500"
-                            : "text-muted-foreground"
+                              ? "text-red-500"
+                              : daysLeft <= 7
+                                ? "text-amber-500"
+                                : "text-muted-foreground"
                         }`}
                       >
                         {daysLeft <= 0 ? "已截止" : `还剩 ${daysLeft} 天`}
@@ -391,9 +388,7 @@ export default function PositionDetailPage({
                 {position.department_level && (
                   <Badge variant="outline">{position.department_level}</Badge>
                 )}
-                {position.exam_type && (
-                  <Badge variant="outline">{position.exam_type}</Badge>
-                )}
+                {position.exam_type && <Badge variant="outline">{position.exam_type}</Badge>}
               </div>
 
               <Separator />
@@ -534,9 +529,7 @@ export default function PositionDetailPage({
                   <>
                     <div className="md:col-span-2">
                       <h4 className="font-medium mb-2">备注</h4>
-                      <p className="text-muted-foreground whitespace-pre-wrap">
-                        {position.remark}
-                      </p>
+                      <p className="text-muted-foreground whitespace-pre-wrap">{position.remark}</p>
                     </div>
                   </>
                 )}
@@ -601,11 +594,7 @@ export default function PositionDetailPage({
                     </div>
                     {announcement.source_url && (
                       <Button variant="ghost" size="sm" asChild className="shrink-0 ml-2">
-                        <a
-                          href={announcement.source_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                        <a href={announcement.source_url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </Button>

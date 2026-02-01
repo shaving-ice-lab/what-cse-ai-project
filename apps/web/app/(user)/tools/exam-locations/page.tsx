@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  MapPin, 
+import {
+  MapPin,
   Search,
   Phone,
   Navigation,
@@ -11,7 +11,7 @@ import {
   Loader2,
   Info,
   ExternalLink,
-  Map
+  Map,
 } from "lucide-react";
 import { toolsApi, ExamLocation, ExamLocationQueryParams } from "@/services/api";
 
@@ -115,7 +115,9 @@ export default function ExamLocationsPage() {
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
         <div className="container mx-auto px-4 lg:px-6 py-8">
           <div className="flex items-center gap-2 text-blue-200 text-sm mb-2">
-            <a href="/tools" className="hover:text-white">考试工具箱</a>
+            <a href="/tools" className="hover:text-white">
+              考试工具箱
+            </a>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white">考点查询</span>
           </div>
@@ -146,7 +148,9 @@ export default function ExamLocationsPage() {
                 >
                   <option value="">全部省份</option>
                   {provinces.map((province) => (
-                    <option key={province} value={province}>{province}</option>
+                    <option key={province} value={province}>
+                      {province}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -162,7 +166,9 @@ export default function ExamLocationsPage() {
                 >
                   <option value="">全部城市</option>
                   {cities.map((city) => (
-                    <option key={city} value={city}>{city}</option>
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -176,7 +182,9 @@ export default function ExamLocationsPage() {
                   className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 >
                   {examTypes.map((type) => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -294,7 +302,9 @@ export default function ExamLocationsPage() {
               {filters.page} / {totalPages}
             </span>
             <button
-              onClick={() => handleFilterChange("page", Math.min(totalPages, (filters.page || 1) + 1))}
+              onClick={() =>
+                handleFilterChange("page", Math.min(totalPages, (filters.page || 1) + 1))
+              }
               disabled={filters.page === totalPages}
               className="px-4 py-2 text-sm rounded-lg border border-stone-200 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -306,8 +316,14 @@ export default function ExamLocationsPage() {
 
       {/* Location Detail Modal */}
       {selectedLocation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedLocation(null)}>
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setSelectedLocation(null)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -320,7 +336,8 @@ export default function ExamLocationsPage() {
                       {selectedLocation.exam_type || "综合"}
                     </span>
                     <span className="text-sm text-stone-500">
-                      {selectedLocation.province} {selectedLocation.city} {selectedLocation.district}
+                      {selectedLocation.province} {selectedLocation.city}{" "}
+                      {selectedLocation.district}
                     </span>
                   </div>
                 </div>
@@ -343,7 +360,10 @@ export default function ExamLocationsPage() {
                       <Phone className="w-4 h-4" />
                       联系电话
                     </div>
-                    <a href={`tel:${selectedLocation.contact_phone}`} className="text-sm text-blue-600">
+                    <a
+                      href={`tel:${selectedLocation.contact_phone}`}
+                      className="text-sm text-blue-600"
+                    >
                       {selectedLocation.contact_phone}
                     </a>
                   </div>
@@ -375,7 +395,9 @@ export default function ExamLocationsPage() {
                 {selectedLocation.capacity && selectedLocation.capacity > 0 && (
                   <div className="flex items-center justify-between p-4 bg-stone-50 rounded-xl">
                     <span className="text-sm text-stone-700">可容纳人数</span>
-                    <span className="text-sm font-semibold text-stone-900">{selectedLocation.capacity} 人</span>
+                    <span className="text-sm font-semibold text-stone-900">
+                      {selectedLocation.capacity} 人
+                    </span>
                   </div>
                 )}
               </div>

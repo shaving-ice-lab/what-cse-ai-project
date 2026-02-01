@@ -18,18 +18,27 @@ import {
   CheckCircle,
   Map,
 } from "lucide-react";
-import {
-  ClassroomProvider,
-  useClassroom,
-  Section,
-  SectionType,
-} from "./ClassroomContext";
+import { ClassroomProvider, useClassroom, Section, SectionType } from "./ClassroomContext";
 import { ClassroomSidebar } from "./ClassroomSidebar";
 import { ClassroomToolbar } from "./ClassroomToolbar";
-import { ClassroomSlideViewer, SectionHeader, ContentCard, StepReveal } from "./ClassroomSlideViewer";
+import {
+  ClassroomSlideViewer,
+  SectionHeader,
+  ContentCard,
+  StepReveal,
+} from "./ClassroomSlideViewer";
 import { ConceptCardGrid, ProgressiveReveal, FormulaCard, MistakeCard } from "./InteractiveCards";
 import { InteractiveQuiz, QuickCheck } from "./InteractiveQuiz";
-import { LessonContent, ExamAnalysis, CoreConcept, MethodStep, Formula, CommonMistake, PracticeProblem, Homework } from "../LessonContentRenderer";
+import {
+  LessonContent,
+  ExamAnalysis,
+  CoreConcept,
+  MethodStep,
+  Formula,
+  CommonMistake,
+  PracticeProblem,
+  Homework,
+} from "../LessonContentRenderer";
 import { MermaidRenderer } from "../MermaidRenderer";
 import { QuickNotesCard } from "../QuickNotesCard";
 import { cn } from "@/lib/utils";
@@ -94,9 +103,7 @@ function SectionContent({ content }: SectionContentProps) {
   // 根据当前章节类型渲染不同内容
   switch (currentSection.type) {
     case "exam_analysis":
-      return exam_analysis ? (
-        <ExamAnalysisSection data={exam_analysis} />
-      ) : null;
+      return exam_analysis ? <ExamAnalysisSection data={exam_analysis} /> : null;
 
     case "introduction":
       return lesson_content?.introduction ? (
@@ -144,9 +151,7 @@ function SectionContent({ content }: SectionContentProps) {
       ) : null;
 
     case "practice":
-      return practice_problems ? (
-        <PracticeSection problems={practice_problems} />
-      ) : null;
+      return practice_problems ? <PracticeSection problems={practice_problems} /> : null;
 
     case "vocabulary":
       return lesson_content?.vocabulary_accumulation ? (
@@ -174,16 +179,10 @@ function SectionContent({ content }: SectionContentProps) {
       ) : null;
 
     case "homework":
-      return homework ? (
-        <HomeworkSection homework={homework} />
-      ) : null;
+      return homework ? <HomeworkSection homework={homework} /> : null;
 
     default:
-      return (
-        <div className="text-center py-12 text-stone-500">
-          该章节内容正在准备中...
-        </div>
-      );
+      return <div className="text-center py-12 text-stone-500">该章节内容正在准备中...</div>;
   }
 }
 
@@ -223,9 +222,7 @@ function ExamAnalysisSection({ data }: { data: ExamAnalysis }) {
         <p className="text-stone-700 leading-relaxed text-lg">{data.description}</p>
       </ContentCard>
 
-      {items.length > 0 && (
-        <ProgressiveReveal items={items} title="考情要点" />
-      )}
+      {items.length > 0 && <ProgressiveReveal items={items} title="考情要点" />}
     </div>
   );
 }
@@ -241,9 +238,7 @@ function IntroductionSection({ introduction }: { introduction: string }) {
 
       <ContentCard>
         <div className="prose prose-stone prose-lg max-w-none">
-          <p className="text-stone-700 leading-relaxed whitespace-pre-line">
-            {introduction}
-          </p>
+          <p className="text-stone-700 leading-relaxed whitespace-pre-line">{introduction}</p>
         </div>
       </ContentCard>
     </div>
@@ -323,7 +318,7 @@ function CoreConceptsSection({ concepts }: { concepts: CoreConcept[] }) {
 }
 
 function MethodStepsSection({ steps }: { steps: MethodStep[] }) {
-  const formattedSteps = steps.map(step => ({
+  const formattedSteps = steps.map((step) => ({
     title: step.title,
     content: step.content,
     tips: step.tips,
@@ -499,11 +494,7 @@ function PracticeSection({ problems }: { problems: PracticeProblem[] }) {
         badgeColor="bg-violet-100 text-violet-700"
       />
 
-      <InteractiveQuiz
-        questions={formattedProblems}
-        title="随堂练习"
-        showTimer={true}
-      />
+      <InteractiveQuiz questions={formattedProblems} title="随堂练习" showTimer={true} />
     </div>
   );
 }
@@ -591,17 +582,11 @@ function VocabularySection({ vocabulary }: { vocabulary: any }) {
 function ExtensionSection({ content }: { content: string }) {
   return (
     <div className="max-w-3xl mx-auto">
-      <SectionHeader
-        icon={sectionIcons.extension}
-        title="拓展知识"
-        subtitle="深入了解相关知识点"
-      />
+      <SectionHeader icon={sectionIcons.extension} title="拓展知识" subtitle="深入了解相关知识点" />
 
       <ContentCard>
         <div className="prose prose-stone max-w-none">
-          <p className="text-stone-700 leading-relaxed whitespace-pre-line">
-            {content}
-          </p>
+          <p className="text-stone-700 leading-relaxed whitespace-pre-line">{content}</p>
         </div>
       </ContentCard>
     </div>
@@ -644,11 +629,7 @@ function SummarySection({ points }: { points: string[] }) {
 function MindMapSection({ mermaidCode }: { mermaidCode: string }) {
   return (
     <div className="max-w-4xl mx-auto">
-      <SectionHeader
-        icon={sectionIcons.mind_map}
-        title="思维导图"
-        subtitle="可视化知识结构"
-      />
+      <SectionHeader icon={sectionIcons.mind_map} title="思维导图" subtitle="可视化知识结构" />
 
       <ContentCard>
         <MermaidRenderer
@@ -665,11 +646,7 @@ function MindMapSection({ mermaidCode }: { mermaidCode: string }) {
 function QuickNotesSection({ data }: { data: any }) {
   return (
     <div className="max-w-3xl mx-auto">
-      <SectionHeader
-        icon={sectionIcons.quick_notes}
-        title="考前速记"
-        subtitle="快速复习核心内容"
-      />
+      <SectionHeader icon={sectionIcons.quick_notes} title="考前速记" subtitle="快速复习核心内容" />
 
       <QuickNotesCard
         data={data}
@@ -683,11 +660,7 @@ function QuickNotesSection({ data }: { data: any }) {
 function HomeworkSection({ homework }: { homework: Homework }) {
   return (
     <div className="max-w-3xl mx-auto">
-      <SectionHeader
-        icon={sectionIcons.homework}
-        title="课后作业"
-        subtitle="巩固练习，加深理解"
-      />
+      <SectionHeader icon={sectionIcons.homework} title="课后作业" subtitle="巩固练习，加深理解" />
 
       <ContentCard>
         <div className="space-y-6">
@@ -808,11 +781,21 @@ export function InteractiveContentRenderer({
     }
 
     if (lesson_content?.common_mistakes && lesson_content.common_mistakes.length > 0) {
-      result.push({ id: "common_mistakes", title: "易错陷阱", type: "common_mistakes", duration: 4 });
+      result.push({
+        id: "common_mistakes",
+        title: "易错陷阱",
+        type: "common_mistakes",
+        duration: 4,
+      });
     }
 
     if (lesson_content?.exam_strategies && lesson_content.exam_strategies.length > 0) {
-      result.push({ id: "exam_strategies", title: "答题策略", type: "exam_strategies", duration: 3 });
+      result.push({
+        id: "exam_strategies",
+        title: "答题策略",
+        type: "exam_strategies",
+        duration: 3,
+      });
     }
 
     if (practice_problems && practice_problems.length > 0) {
@@ -850,11 +833,7 @@ export function InteractiveContentRenderer({
     <ClassroomProvider initialSections={sections} onProgressUpdate={onProgressUpdate}>
       <div className="h-screen flex bg-stone-100 overflow-hidden">
         {/* 侧边栏 */}
-        <ClassroomSidebar
-          courseTitle={courseTitle}
-          chapterTitle={chapterTitle}
-          onBack={onBack}
-        />
+        <ClassroomSidebar courseTitle={courseTitle} chapterTitle={chapterTitle} onBack={onBack} />
 
         {/* 主内容区 */}
         <main className="flex-1 flex flex-col min-w-0">

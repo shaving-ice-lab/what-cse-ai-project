@@ -248,11 +248,16 @@ function QuestionTypeTable({ data }: { data: QuestionTypeScore[] }) {
               <td className="text-center py-2 px-3 text-stone-500">{item.total_count}</td>
               <td className="text-center py-2 px-3 text-stone-500">{item.correct_count}</td>
               <td className="text-center py-2 px-3">
-                <span className={cn(
-                  "font-medium",
-                  item.correct_rate >= 0.8 ? "text-green-600" :
-                  item.correct_rate >= 0.6 ? "text-amber-600" : "text-red-600"
-                )}>
+                <span
+                  className={cn(
+                    "font-medium",
+                    item.correct_rate >= 0.8
+                      ? "text-green-600"
+                      : item.correct_rate >= 0.6
+                        ? "text-amber-600"
+                        : "text-red-600"
+                  )}
+                >
                   {formatPercent(item.correct_rate)}
                 </span>
               </td>
@@ -268,19 +273,22 @@ function QuestionTypeTable({ data }: { data: QuestionTypeScore[] }) {
 // 知识点分析卡片
 function KnowledgePointCard({ point }: { point: KnowledgePointScore }) {
   return (
-    <div className={cn(
-      "flex items-center justify-between p-3 rounded-xl",
-      point.is_weak ? "bg-red-50" : "bg-green-50"
-    )}>
+    <div
+      className={cn(
+        "flex items-center justify-between p-3 rounded-xl",
+        point.is_weak ? "bg-red-50" : "bg-green-50"
+      )}
+    >
       <div>
         <div className="font-medium text-stone-700">{point.point_name}</div>
-        <div className="text-xs text-stone-500">{point.correct_count}/{point.total_count}题</div>
+        <div className="text-xs text-stone-500">
+          {point.correct_count}/{point.total_count}题
+        </div>
       </div>
       <div className="flex items-center gap-2">
-        <span className={cn(
-          "text-sm font-semibold",
-          point.is_weak ? "text-red-600" : "text-green-600"
-        )}>
+        <span
+          className={cn("text-sm font-semibold", point.is_weak ? "text-red-600" : "text-green-600")}
+        >
           {formatPercent(point.correct_rate)}
         </span>
         {point.is_weak ? (
@@ -297,7 +305,7 @@ function KnowledgePointCard({ point }: { point: KnowledgePointScore }) {
 function TimeDistributionChart({ data }: { data: TimeAnalysis }) {
   if (!data || !data.time_distribution || data.time_distribution.length === 0) return null;
 
-  const maxTime = Math.max(...data.time_distribution.map(d => d.time));
+  const maxTime = Math.max(...data.time_distribution.map((d) => d.time));
 
   return (
     <div className="space-y-4">
@@ -372,15 +380,20 @@ function ImprovementPlanCard({ plan, index }: { plan: ImprovementPlan; index: nu
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center font-bold",
-              priorityColors[plan.priority as keyof typeof priorityColors] || "bg-stone-100 text-stone-600"
-            )}>
+            <div
+              className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center font-bold",
+                priorityColors[plan.priority as keyof typeof priorityColors] ||
+                  "bg-stone-100 text-stone-600"
+              )}
+            >
               {index + 1}
             </div>
             <div>
               <h4 className="font-medium text-stone-800">{plan.area}</h4>
-              <p className="text-xs text-stone-500">{plan.current_level} → {plan.target_level}</p>
+              <p className="text-xs text-stone-500">
+                {plan.current_level} → {plan.target_level}
+              </p>
             </div>
           </div>
           <span className="text-xs text-stone-400">{plan.duration}</span>
@@ -403,7 +416,7 @@ export default function ExamReportPage() {
   const router = useRouter();
   const examId = Number(params.id);
   const { isAuthenticated } = useAuthStore();
-  
+
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ExamReport | null>(null);
   const [aiAnalysis, setAIAnalysis] = useState<AIAnalysis | null>(null);
@@ -412,7 +425,7 @@ export default function ExamReportPage() {
   useEffect(() => {
     if (isAuthenticated && examId) {
       setLoading(true);
-      
+
       // 模拟API调用
       setTimeout(() => {
         // 模拟考试报告数据
@@ -432,28 +445,177 @@ export default function ExamReportPage() {
           rank: 1256,
           total_participants: 8934,
           subject_scores: [
-            { subject: "yanyu", subject_name: "言语理解", total_score: 32, user_score: 25.6, correct_count: 32, total_count: 40, correct_rate: 0.8, avg_time: 48 },
-            { subject: "shuliang", subject_name: "数量关系", total_score: 12, user_score: 7.2, correct_count: 9, total_count: 15, correct_rate: 0.6, avg_time: 85 },
-            { subject: "panduan", subject_name: "判断推理", total_score: 28, user_score: 22.4, correct_count: 32, total_count: 40, correct_rate: 0.8, avg_time: 52 },
-            { subject: "ziliao", subject_name: "资料分析", total_score: 16, user_score: 11.2, correct_count: 14, total_count: 20, correct_rate: 0.7, avg_time: 95 },
-            { subject: "changshi", subject_name: "常识判断", total_score: 12, user_score: 6.1, correct_count: 7, total_count: 15, correct_rate: 0.47, avg_time: 25 },
+            {
+              subject: "yanyu",
+              subject_name: "言语理解",
+              total_score: 32,
+              user_score: 25.6,
+              correct_count: 32,
+              total_count: 40,
+              correct_rate: 0.8,
+              avg_time: 48,
+            },
+            {
+              subject: "shuliang",
+              subject_name: "数量关系",
+              total_score: 12,
+              user_score: 7.2,
+              correct_count: 9,
+              total_count: 15,
+              correct_rate: 0.6,
+              avg_time: 85,
+            },
+            {
+              subject: "panduan",
+              subject_name: "判断推理",
+              total_score: 28,
+              user_score: 22.4,
+              correct_count: 32,
+              total_count: 40,
+              correct_rate: 0.8,
+              avg_time: 52,
+            },
+            {
+              subject: "ziliao",
+              subject_name: "资料分析",
+              total_score: 16,
+              user_score: 11.2,
+              correct_count: 14,
+              total_count: 20,
+              correct_rate: 0.7,
+              avg_time: 95,
+            },
+            {
+              subject: "changshi",
+              subject_name: "常识判断",
+              total_score: 12,
+              user_score: 6.1,
+              correct_count: 7,
+              total_count: 15,
+              correct_rate: 0.47,
+              avg_time: 25,
+            },
           ],
           question_type_scores: [
-            { type: "single", type_name: "单选题", total_count: 120, correct_count: 89, correct_rate: 0.74, avg_time: 52, score_rate: 0.74 },
-            { type: "multiple", type_name: "多选题", total_count: 5, correct_count: 3, correct_rate: 0.6, avg_time: 78, score_rate: 0.6 },
-            { type: "judge", type_name: "判断题", total_count: 5, correct_count: 2, correct_rate: 0.4, avg_time: 35, score_rate: 0.4 },
+            {
+              type: "single",
+              type_name: "单选题",
+              total_count: 120,
+              correct_count: 89,
+              correct_rate: 0.74,
+              avg_time: 52,
+              score_rate: 0.74,
+            },
+            {
+              type: "multiple",
+              type_name: "多选题",
+              total_count: 5,
+              correct_count: 3,
+              correct_rate: 0.6,
+              avg_time: 78,
+              score_rate: 0.6,
+            },
+            {
+              type: "judge",
+              type_name: "判断题",
+              total_count: 5,
+              correct_count: 2,
+              correct_rate: 0.4,
+              avg_time: 35,
+              score_rate: 0.4,
+            },
           ],
           knowledge_point_scores: [
-            { point_id: 1, point_name: "逻辑填空", subject: "yanyu", total_count: 20, correct_count: 16, correct_rate: 0.8, is_weak: false },
-            { point_id: 2, point_name: "片段阅读", subject: "yanyu", total_count: 20, correct_count: 16, correct_rate: 0.8, is_weak: false },
-            { point_id: 3, point_name: "数学运算", subject: "shuliang", total_count: 10, correct_count: 5, correct_rate: 0.5, is_weak: true },
-            { point_id: 4, point_name: "数字推理", subject: "shuliang", total_count: 5, correct_count: 4, correct_rate: 0.8, is_weak: false },
-            { point_id: 5, point_name: "图形推理", subject: "panduan", total_count: 10, correct_count: 9, correct_rate: 0.9, is_weak: false },
-            { point_id: 6, point_name: "逻辑判断", subject: "panduan", total_count: 10, correct_count: 7, correct_rate: 0.7, is_weak: false },
-            { point_id: 7, point_name: "增长问题", subject: "ziliao", total_count: 8, correct_count: 5, correct_rate: 0.625, is_weak: true },
-            { point_id: 8, point_name: "比重问题", subject: "ziliao", total_count: 6, correct_count: 5, correct_rate: 0.83, is_weak: false },
-            { point_id: 9, point_name: "法律常识", subject: "changshi", total_count: 5, correct_count: 2, correct_rate: 0.4, is_weak: true },
-            { point_id: 10, point_name: "时政常识", subject: "changshi", total_count: 5, correct_count: 3, correct_rate: 0.6, is_weak: true },
+            {
+              point_id: 1,
+              point_name: "逻辑填空",
+              subject: "yanyu",
+              total_count: 20,
+              correct_count: 16,
+              correct_rate: 0.8,
+              is_weak: false,
+            },
+            {
+              point_id: 2,
+              point_name: "片段阅读",
+              subject: "yanyu",
+              total_count: 20,
+              correct_count: 16,
+              correct_rate: 0.8,
+              is_weak: false,
+            },
+            {
+              point_id: 3,
+              point_name: "数学运算",
+              subject: "shuliang",
+              total_count: 10,
+              correct_count: 5,
+              correct_rate: 0.5,
+              is_weak: true,
+            },
+            {
+              point_id: 4,
+              point_name: "数字推理",
+              subject: "shuliang",
+              total_count: 5,
+              correct_count: 4,
+              correct_rate: 0.8,
+              is_weak: false,
+            },
+            {
+              point_id: 5,
+              point_name: "图形推理",
+              subject: "panduan",
+              total_count: 10,
+              correct_count: 9,
+              correct_rate: 0.9,
+              is_weak: false,
+            },
+            {
+              point_id: 6,
+              point_name: "逻辑判断",
+              subject: "panduan",
+              total_count: 10,
+              correct_count: 7,
+              correct_rate: 0.7,
+              is_weak: false,
+            },
+            {
+              point_id: 7,
+              point_name: "增长问题",
+              subject: "ziliao",
+              total_count: 8,
+              correct_count: 5,
+              correct_rate: 0.625,
+              is_weak: true,
+            },
+            {
+              point_id: 8,
+              point_name: "比重问题",
+              subject: "ziliao",
+              total_count: 6,
+              correct_count: 5,
+              correct_rate: 0.83,
+              is_weak: false,
+            },
+            {
+              point_id: 9,
+              point_name: "法律常识",
+              subject: "changshi",
+              total_count: 5,
+              correct_count: 2,
+              correct_rate: 0.4,
+              is_weak: true,
+            },
+            {
+              point_id: 10,
+              point_name: "时政常识",
+              subject: "changshi",
+              total_count: 5,
+              correct_count: 3,
+              correct_rate: 0.6,
+              is_weak: true,
+            },
           ],
           time_analysis: {
             total_time: 6840,
@@ -469,16 +631,48 @@ export default function ExamReportPage() {
             rush_questions: 8,
           },
           wrong_questions: [
-            { id: 1, question_number: 15, subject: "yanyu", type: "逻辑填空", knowledge_point: "词语辨析", user_answer: "B", correct_answer: "C", time_used: 65, error_type: "语境理解错误" },
-            { id: 2, question_number: 48, subject: "shuliang", type: "数学运算", knowledge_point: "工程问题", user_answer: "A", correct_answer: "D", time_used: 120, error_type: "计算错误" },
-            { id: 3, question_number: 76, subject: "panduan", type: "逻辑判断", knowledge_point: "加强削弱", user_answer: "C", correct_answer: "B", time_used: 85, error_type: "逻辑分析错误" },
+            {
+              id: 1,
+              question_number: 15,
+              subject: "yanyu",
+              type: "逻辑填空",
+              knowledge_point: "词语辨析",
+              user_answer: "B",
+              correct_answer: "C",
+              time_used: 65,
+              error_type: "语境理解错误",
+            },
+            {
+              id: 2,
+              question_number: 48,
+              subject: "shuliang",
+              type: "数学运算",
+              knowledge_point: "工程问题",
+              user_answer: "A",
+              correct_answer: "D",
+              time_used: 120,
+              error_type: "计算错误",
+            },
+            {
+              id: 3,
+              question_number: 76,
+              subject: "panduan",
+              type: "逻辑判断",
+              knowledge_point: "加强削弱",
+              user_answer: "C",
+              correct_answer: "B",
+              time_used: 85,
+              error_type: "逻辑分析错误",
+            },
           ],
         });
 
         // 模拟AI分析
         setAIAnalysis({
-          summary: "本次模拟考试总分72.5分，超过了86%的考生。整体表现中等偏上，言语理解和判断推理是主要得分点，但数量关系和常识判断存在明显短板，需要重点加强。",
-          score_evaluation: "以140分为目标，当前得分与目标差距约32.5分。按照目前的学习节奏，预计需要4-6周的系统复习才能达成目标。",
+          summary:
+            "本次模拟考试总分72.5分，超过了86%的考生。整体表现中等偏上，言语理解和判断推理是主要得分点，但数量关系和常识判断存在明显短板，需要重点加强。",
+          score_evaluation:
+            "以140分为目标，当前得分与目标差距约32.5分。按照目前的学习节奏，预计需要4-6周的系统复习才能达成目标。",
           strengths: [
             "言语理解能力扎实，正确率达到80%，尤其是片段阅读表现出色",
             "判断推理思维清晰，图形推理正确率高达90%",
@@ -602,9 +796,13 @@ export default function ExamReportPage() {
           </button>
           <div>
             <div className="flex items-center gap-2 text-sm text-stone-500 mb-1">
-              <Link href="/learn" className="hover:text-amber-600">学习中心</Link>
+              <Link href="/learn" className="hover:text-amber-600">
+                学习中心
+              </Link>
               <span>/</span>
-              <Link href="/learn/report/ability" className="hover:text-amber-600">学习报告</Link>
+              <Link href="/learn/report/ability" className="hover:text-amber-600">
+                学习报告
+              </Link>
               <span>/</span>
               <span>考试分析</span>
             </div>
@@ -635,7 +833,9 @@ export default function ExamReportPage() {
                       </span>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-white/20 rounded-lg text-sm">{report.exam_type}</span>
+                  <span className="px-3 py-1 bg-white/20 rounded-lg text-sm">
+                    {report.exam_type}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -644,17 +844,24 @@ export default function ExamReportPage() {
                     <div className="text-sm text-white/80">总得分（满分{report.total_score}）</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-4xl font-bold">{formatPercent(report.correct_count / report.total_questions)}</div>
+                    <div className="text-4xl font-bold">
+                      {formatPercent(report.correct_count / report.total_questions)}
+                    </div>
                     <div className="text-sm text-white/80">正确率</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-4xl font-bold">{report.correct_count}<span className="text-lg">/{report.total_questions}</span></div>
+                    <div className="text-4xl font-bold">
+                      {report.correct_count}
+                      <span className="text-lg">/{report.total_questions}</span>
+                    </div>
                     <div className="text-sm text-white/80">答对题数</div>
                   </div>
                   {report.rank && (
                     <div className="text-center">
                       <div className="text-4xl font-bold">{report.rank}</div>
-                      <div className="text-sm text-white/80">排名（共{report.total_participants}人）</div>
+                      <div className="text-sm text-white/80">
+                        排名（共{report.total_participants}人）
+                      </div>
                     </div>
                   )}
                 </div>
@@ -731,9 +938,12 @@ export default function ExamReportPage() {
                     强项知识点
                   </h3>
                   <div className="space-y-2">
-                    {report.knowledge_point_scores.filter(p => !p.is_weak).slice(0, 5).map((point, idx) => (
-                      <KnowledgePointCard key={idx} point={point} />
-                    ))}
+                    {report.knowledge_point_scores
+                      .filter((p) => !p.is_weak)
+                      .slice(0, 5)
+                      .map((point, idx) => (
+                        <KnowledgePointCard key={idx} point={point} />
+                      ))}
                   </div>
                 </div>
                 {/* 薄弱 */}
@@ -743,9 +953,12 @@ export default function ExamReportPage() {
                     薄弱知识点
                   </h3>
                   <div className="space-y-2">
-                    {report.knowledge_point_scores.filter(p => p.is_weak).slice(0, 5).map((point, idx) => (
-                      <KnowledgePointCard key={idx} point={point} />
-                    ))}
+                    {report.knowledge_point_scores
+                      .filter((p) => p.is_weak)
+                      .slice(0, 5)
+                      .map((point, idx) => (
+                        <KnowledgePointCard key={idx} point={point} />
+                      ))}
                   </div>
                 </div>
               </div>

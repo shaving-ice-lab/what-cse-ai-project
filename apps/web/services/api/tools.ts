@@ -173,12 +173,10 @@ export const toolsApi = {
       request.get("/tools/locations", { params }),
 
     // 获取考点详情
-    detail: (id: number): Promise<ExamLocation> =>
-      request.get(`/tools/locations/${id}`),
+    detail: (id: number): Promise<ExamLocation> => request.get(`/tools/locations/${id}`),
 
     // 获取省份列表
-    getProvinces: (): Promise<string[]> =>
-      request.get("/tools/locations/provinces"),
+    getProvinces: (): Promise<string[]> => request.get("/tools/locations/provinces"),
 
     // 获取城市列表
     getCities: (province: string): Promise<string[]> =>
@@ -200,8 +198,7 @@ export const toolsApi = {
       request.post("/tools/estimate", data),
 
     // 获取用户估分历史
-    getHistory: (): Promise<ScoreEstimate[]> =>
-      request.get("/tools/estimate/history"),
+    getHistory: (): Promise<ScoreEstimate[]> => request.get("/tools/estimate/history"),
 
     // 更新实际分数
     updateActualScore: (id: number, actualScore: number): Promise<void> =>
@@ -211,39 +208,54 @@ export const toolsApi = {
   // 成绩晒分
   scores: {
     // 创建晒分
-    create: (data: ScoreShareRequest): Promise<ScoreShare> =>
-      request.post("/tools/scores", data),
+    create: (data: ScoreShareRequest): Promise<ScoreShare> => request.post("/tools/scores", data),
 
     // 获取晒分列表
     list: (params?: ScoreShareQueryParams): Promise<ScoreShareListResponse> =>
       request.get("/tools/scores", { params }),
 
     // 获取晒分详情
-    detail: (id: number): Promise<ScoreShare> =>
-      request.get(`/tools/scores/${id}`),
+    detail: (id: number): Promise<ScoreShare> => request.get(`/tools/scores/${id}`),
 
     // 获取用户的晒分
-    getMy: (): Promise<ScoreShare[]> =>
-      request.get("/tools/scores/my"),
+    getMy: (): Promise<ScoreShare[]> => request.get("/tools/scores/my"),
 
     // 点赞晒分
-    like: (id: number): Promise<void> =>
-      request.post(`/tools/scores/${id}/like`),
+    like: (id: number): Promise<void> => request.post(`/tools/scores/${id}/like`),
 
     // 获取分数统计
-    getStatistics: (examType?: string, examYear?: number, examProvince?: string): Promise<ScoreStatistics> =>
-      request.get("/tools/scores/statistics", { params: { exam_type: examType, exam_year: examYear, exam_province: examProvince } }),
+    getStatistics: (
+      examType?: string,
+      examYear?: number,
+      examProvince?: string
+    ): Promise<ScoreStatistics> =>
+      request.get("/tools/scores/statistics", {
+        params: { exam_type: examType, exam_year: examYear, exam_province: examProvince },
+      }),
 
     // 获取排行榜
-    getRanking: (examType?: string, examYear?: number, examProvince?: string, page?: number, pageSize?: number): Promise<ScoreRankingResponse> =>
-      request.get("/tools/scores/ranking", { params: { exam_type: examType, exam_year: examYear, exam_province: examProvince, page, page_size: pageSize } }),
+    getRanking: (
+      examType?: string,
+      examYear?: number,
+      examProvince?: string,
+      page?: number,
+      pageSize?: number
+    ): Promise<ScoreRankingResponse> =>
+      request.get("/tools/scores/ranking", {
+        params: {
+          exam_type: examType,
+          exam_year: examYear,
+          exam_province: examProvince,
+          page,
+          page_size: pageSize,
+        },
+      }),
 
     // 更新晒分
     update: (id: number, data: ScoreShareRequest): Promise<void> =>
       request.put(`/tools/scores/${id}`, data),
 
     // 删除晒分
-    delete: (id: number): Promise<void> =>
-      request.delete(`/tools/scores/${id}`),
+    delete: (id: number): Promise<void> => request.delete(`/tools/scores/${id}`),
   },
 };

@@ -87,7 +87,7 @@ export default function KnowledgeDetailPage() {
         // 从课程 API 获取知识点详情
         const { courseApi } = await import("@/services/api/course");
         const response = await courseApi.getKnowledgePoint(knowledgeId);
-        
+
         // 转换 API 响应为页面需要的格式
         const info: KnowledgePointInfo = {
           id: response.id,
@@ -96,10 +96,11 @@ export default function KnowledgeDetailPage() {
           category: response.code || "未分类",
           difficulty: response.importance || 3,
           description: response.description,
-          relatedPoints: response.children?.map((child: { id: number; name: string }) => ({
-            id: child.id,
-            name: child.name,
-          })) || [],
+          relatedPoints:
+            response.children?.map((child: { id: number; name: string }) => ({
+              id: child.id,
+              name: child.name,
+            })) || [],
         };
         setKnowledgeInfo(info);
       } catch (error) {
@@ -155,7 +156,7 @@ export default function KnowledgeDetailPage() {
         };
         setSummaryContent(fallbackSummary);
       } finally {
-        setLoadingStates(prev => ({ ...prev, summary: false }));
+        setLoadingStates((prev) => ({ ...prev, summary: false }));
       }
     };
 
@@ -188,9 +189,7 @@ export default function KnowledgeDetailPage() {
                 id: "root",
                 label: knowledgeInfo?.name || "知识点",
                 color: "#f59e0b",
-                children: [
-                  { id: "1", label: "加载中...", color: "#10b981" },
-                ],
+                children: [{ id: "1", label: "加载中...", color: "#10b981" }],
               },
             },
           },
@@ -201,7 +200,7 @@ export default function KnowledgeDetailPage() {
         };
         setMindmapContent(fallbackMindmap);
       } finally {
-        setLoadingStates(prev => ({ ...prev, mindmap: false }));
+        setLoadingStates((prev) => ({ ...prev, mindmap: false }));
       }
     };
 
@@ -241,7 +240,7 @@ export default function KnowledgeDetailPage() {
         };
         setExamplesContent(fallbackExamples);
       } finally {
-        setLoadingStates(prev => ({ ...prev, examples: false }));
+        setLoadingStates((prev) => ({ ...prev, examples: false }));
       }
     };
 
@@ -258,7 +257,7 @@ export default function KnowledgeDetailPage() {
 
   // 切换收藏
   const handleToggleFavorite = useCallback(() => {
-    setIsFavorited(prev => !prev);
+    setIsFavorited((prev) => !prev);
     toast.success(isFavorited ? "已取消收藏" : "已收藏");
   }, [isFavorited]);
 
@@ -413,7 +412,9 @@ export default function KnowledgeDetailPage() {
                       核心要点
                     </h3>
                     <button
-                      onClick={() => handleCopy(summaryContent.content.key_points?.join("\n") || "")}
+                      onClick={() =>
+                        handleCopy(summaryContent.content.key_points?.join("\n") || "")
+                      }
                       className="flex items-center gap-1 text-sm text-stone-500 hover:text-amber-600 transition-colors"
                     >
                       <Copy className="w-4 h-4" />
@@ -422,10 +423,7 @@ export default function KnowledgeDetailPage() {
                   </div>
                   <div className="space-y-3">
                     {summaryContent.content.key_points?.map((point, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl"
-                      >
+                      <div key={index} className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl">
                         <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
                           {index + 1}
                         </span>
@@ -472,25 +470,26 @@ export default function KnowledgeDetailPage() {
                 )}
 
                 {/* 常见题型 */}
-                {summaryContent.content.common_types && summaryContent.content.common_types.length > 0 && (
-                  <section className="bg-white rounded-2xl p-6 shadow-sm">
-                    <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800 mb-4">
-                      <ListChecks className="w-5 h-5 text-emerald-500" />
-                      常见题型
-                    </h3>
-                    <div className="space-y-2">
-                      {summaryContent.content.common_types.map((type, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg"
-                        >
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                          <span className="text-stone-700">{type}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
+                {summaryContent.content.common_types &&
+                  summaryContent.content.common_types.length > 0 && (
+                    <section className="bg-white rounded-2xl p-6 shadow-sm">
+                      <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800 mb-4">
+                        <ListChecks className="w-5 h-5 text-emerald-500" />
+                        常见题型
+                      </h3>
+                      <div className="space-y-2">
+                        {summaryContent.content.common_types.map((type, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg"
+                          >
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                            <span className="text-stone-700">{type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-stone-500">
@@ -548,12 +547,7 @@ export default function KnowledgeDetailPage() {
 
                 {/* 例题列表 */}
                 {examplesContent.content.examples.map((example, index) => (
-                  <ExampleCard
-                    key={index}
-                    example={example}
-                    index={index}
-                    onCopy={handleCopy}
-                  />
+                  <ExampleCard key={index} example={example} index={index} onCopy={handleCopy} />
                 ))}
 
                 {/* 解题建议 */}
@@ -666,10 +660,10 @@ function ExampleCard({
                   showResult && isAnswer
                     ? "border-emerald-500 bg-emerald-50"
                     : showResult && isSelected && !isAnswer
-                    ? "border-red-500 bg-red-50"
-                    : isSelected
-                    ? "border-amber-500 bg-amber-50"
-                    : "border-stone-200 hover:border-stone-300"
+                      ? "border-red-500 bg-red-50"
+                      : isSelected
+                        ? "border-amber-500 bg-amber-50"
+                        : "border-stone-200 hover:border-stone-300"
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -682,9 +676,7 @@ function ExampleCard({
                   >
                     {option}
                   </span>
-                  {showResult && isAnswer && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  )}
+                  {showResult && isAnswer && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
                   {showResult && isSelected && !isAnswer && (
                     <AlertCircle className="w-5 h-5 text-red-500" />
                   )}
@@ -706,9 +698,13 @@ function ExampleCard({
           >
             <span className="flex items-center gap-2">
               {isCorrect ? (
-                <><CheckCircle2 className="w-5 h-5" /> 回答正确！</>
+                <>
+                  <CheckCircle2 className="w-5 h-5" /> 回答正确！
+                </>
               ) : (
-                <><XCircle className="w-5 h-5" /> 回答错误，正确答案是 {example.answer}</>
+                <>
+                  <XCircle className="w-5 h-5" /> 回答错误，正确答案是 {example.answer}
+                </>
               )}
             </span>
           </div>
@@ -720,12 +716,7 @@ function ExampleCard({
         >
           <Eye className="w-4 h-4" />
           {showAnswer ? "收起解析" : "查看解析"}
-          <ChevronRight
-            className={cn(
-              "w-4 h-4 transition-transform",
-              showAnswer && "rotate-90"
-            )}
-          />
+          <ChevronRight className={cn("w-4 h-4 transition-transform", showAnswer && "rotate-90")} />
         </button>
 
         {showAnswer && (

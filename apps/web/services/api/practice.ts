@@ -4,7 +4,13 @@ import request from "../request";
 // Types - Question
 // ============================================
 
-export type QuestionType = "single_choice" | "multi_choice" | "fill_blank" | "essay" | "material" | "judge";
+export type QuestionType =
+  | "single_choice"
+  | "multi_choice"
+  | "fill_blank"
+  | "essay"
+  | "material"
+  | "judge";
 export type QuestionSourceType = "real_exam" | "mock" | "original";
 
 export interface QuestionOption {
@@ -394,7 +400,7 @@ export interface QuestionDetailResponse extends Question {
 
 export const practiceApi = {
   // ============ Daily Practice & Streak ============
-  
+
   // Get user streak info
   getStreak: () => {
     return request.get<UserStreakResponse>("/practice/streak");
@@ -428,7 +434,7 @@ export const practiceApi = {
   },
 
   // ============ Questions ============
-  
+
   // Get question list
   getQuestions: (params?: QuestionListParams) => {
     return request.get<{
@@ -479,7 +485,7 @@ export const practiceApi = {
   },
 
   // ============ Papers ============
-  
+
   // Get paper list
   getPapers: (params?: PaperListParams) => {
     return request.get<{
@@ -507,12 +513,16 @@ export const practiceApi = {
 
   // Get paper result
   getPaperResult: (paperId: number, recordId: number) => {
-    return request.get<PaperResultResponse>(`/papers/${paperId}/result`, { params: { record_id: recordId } });
+    return request.get<PaperResultResponse>(`/papers/${paperId}/result`, {
+      params: { record_id: recordId },
+    });
   },
 
   // Get paper ranking
   getPaperRanking: (paperId: number, recordId: number) => {
-    return request.get<PaperRankingInfo>(`/papers/${paperId}/ranking`, { params: { record_id: recordId } });
+    return request.get<PaperRankingInfo>(`/papers/${paperId}/ranking`, {
+      params: { record_id: recordId },
+    });
   },
 
   // Get user's paper records
@@ -524,7 +534,7 @@ export const practiceApi = {
   },
 
   // ============ User Stats ============
-  
+
   // Get user practice stats
   getUserStats: () => {
     return request.get<UserStats>("/user/question-stats");
@@ -538,11 +548,7 @@ export const practiceApi = {
   },
 
   // Get wrong questions
-  getWrongQuestions: (params?: { 
-    page?: number; 
-    page_size?: number;
-    category_id?: number;
-  }) => {
+  getWrongQuestions: (params?: { page?: number; page_size?: number; category_id?: number }) => {
     return request.get<{
       questions: WrongQuestionItem[];
       total: number;
@@ -550,7 +556,7 @@ export const practiceApi = {
   },
 
   // ============ Collections ============
-  
+
   // Collect question
   collectQuestion: (questionId: number, note?: string) => {
     return request.post(`/questions/${questionId}/collect`, { note });
@@ -791,7 +797,7 @@ export const formatTime = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   if (hours > 0) {
     return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   }

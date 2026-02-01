@@ -191,13 +191,19 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
   const [sourceType, setSourceType] = useState<QuestionSourceType>("mock");
   const [categoryMode, setCategoryMode] = useState<CategoryMode>("all");
   const [randomCategoryCount, setRandomCategoryCount] = useState<number>(10);
-  
+
   // 自动化选项
   const [autoSave, setAutoSave] = useState(true);
   const [balanceTypes, setBalanceTypes] = useState(true); // 均衡分配题型
 
   // 题型列表 - 常用的5种题型
-  const questionTypes: QuestionType[] = ["single_choice", "multi_choice", "judge", "fill_blank", "essay"];
+  const questionTypes: QuestionType[] = [
+    "single_choice",
+    "multi_choice",
+    "judge",
+    "fill_blank",
+    "essay",
+  ];
   const difficulties = [1, 2, 3, 4, 5];
 
   // 随机选择题型
@@ -264,25 +270,25 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
   }, [fetchCategories]);
 
   // 收集所有叶子分类
-  const collectLeafCategories = useCallback((
-    cats: CourseCategory[],
-    path: string[] = []
-  ): { id: number; name: string; path: string }[] => {
-    let leaves: { id: number; name: string; path: string }[] = [];
-    for (const cat of cats) {
-      const currentPath = [...path, cat.name];
-      if (!cat.children || cat.children.length === 0) {
-        leaves.push({
-          id: cat.id,
-          name: cat.name,
-          path: currentPath.join(" / "),
-        });
-      } else {
-        leaves = leaves.concat(collectLeafCategories(cat.children, currentPath));
+  const collectLeafCategories = useCallback(
+    (cats: CourseCategory[], path: string[] = []): { id: number; name: string; path: string }[] => {
+      let leaves: { id: number; name: string; path: string }[] = [];
+      for (const cat of cats) {
+        const currentPath = [...path, cat.name];
+        if (!cat.children || cat.children.length === 0) {
+          leaves.push({
+            id: cat.id,
+            name: cat.name,
+            path: currentPath.join(" / "),
+          });
+        } else {
+          leaves = leaves.concat(collectLeafCategories(cat.children, currentPath));
+        }
       }
-    }
-    return leaves;
-  }, []);
+      return leaves;
+    },
+    []
+  );
 
   // 统计信息
   const stats = useMemo(() => {
@@ -295,14 +301,13 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
       }
       return total;
     };
-    
+
     // 计算叶子分类数量
     const leafCategories = collectLeafCategories(categories);
     const leafCount = leafCategories.length;
-    const targetCategoryCount = categoryMode === "random" 
-      ? Math.min(randomCategoryCount, leafCount) 
-      : leafCount;
-    
+    const targetCategoryCount =
+      categoryMode === "random" ? Math.min(randomCategoryCount, leafCount) : leafCount;
+
     return {
       totalCategories: countCategories(categories),
       leafCategories: leafCount,
@@ -317,13 +322,21 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
   const generatingTasks = useMemo(() => {
     return tasks
       .filter((t) => ["pending", "generating"].includes(t.status))
-      .filter((t) => !taskSearchKeyword || t.categoryName.toLowerCase().includes(taskSearchKeyword.toLowerCase()));
+      .filter(
+        (t) =>
+          !taskSearchKeyword ||
+          t.categoryName.toLowerCase().includes(taskSearchKeyword.toLowerCase())
+      );
   }, [tasks, taskSearchKeyword]);
 
   const completedTasks = useMemo(() => {
     return tasks
       .filter((t) => ["completed", "failed"].includes(t.status))
-      .filter((t) => !taskSearchKeyword || t.categoryName.toLowerCase().includes(taskSearchKeyword.toLowerCase()));
+      .filter(
+        (t) =>
+          !taskSearchKeyword ||
+          t.categoryName.toLowerCase().includes(taskSearchKeyword.toLowerCase())
+      );
   }, [tasks, taskSearchKeyword]);
 
   // 切换展开
@@ -368,8 +381,13 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
     typeOverride?: QuestionType // 可覆盖题型
   ) => {
     // 确定实际使用的题型和难度
-    const actualType = typeOverride || (questionTypeMode === "random" ? getRandomQuestionType() : 
-                       questionTypeMode === "all" ? getRandomQuestionType() : questionTypeMode);
+    const actualType =
+      typeOverride ||
+      (questionTypeMode === "random"
+        ? getRandomQuestionType()
+        : questionTypeMode === "all"
+          ? getRandomQuestionType()
+          : questionTypeMode);
     const actualDifficulty = difficulty === "random" ? getRandomDifficulty() : difficulty;
     const actualCount = countOverride || 5; // 单个点击默认5道
 
@@ -419,7 +437,9 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
               : t
           )
         );
-        toast.success(`${categoryName}: 成功生成并保存 ${saveResult.success} 道 ${getQuestionTypeName(actualType)}`);
+        toast.success(
+          `${categoryName}: 成功生成并保存 ${saveResult.success} 道 ${getQuestionTypeName(actualType)}`
+        );
       } else if (response.questions && response.questions.length > 0) {
         setTasks((prev) =>
           prev.map((t) =>
@@ -433,7 +453,9 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
               : t
           )
         );
-        toast.success(`${categoryName}: 生成 ${response.questions.length} 道 ${getQuestionTypeName(actualType)}（未保存）`);
+        toast.success(
+          `${categoryName}: 生成 ${response.questions.length} 道 ${getQuestionTypeName(actualType)}（未保存）`
+        );
       } else {
         setTasks((prev) =>
           prev.map((t) =>
@@ -494,13 +516,19 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
 
     // 根据分类模式选择分类
     if (categoryMode === "random") {
-      leafCategories = shuffleArray(leafCategories).slice(0, Math.min(randomCategoryCount, leafCategories.length));
+      leafCategories = shuffleArray(leafCategories).slice(
+        0,
+        Math.min(randomCategoryCount, leafCategories.length)
+      );
     }
 
     // 获取要生成的题型
-    const typesToGenerate = questionTypeMode === "all" ? questionTypes : 
-                           questionTypeMode === "random" ? [getRandomQuestionType()] :
-                           [questionTypeMode];
+    const typesToGenerate =
+      questionTypeMode === "all"
+        ? questionTypes
+        : questionTypeMode === "random"
+          ? [getRandomQuestionType()]
+          : [questionTypeMode];
 
     setGeneratingAll(true);
     setMainTab("generating");
@@ -510,14 +538,16 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
       const totalTypes = typesToGenerate.length;
       const questionsPerType = Math.floor(totalCount / totalTypes);
       const typeRemainder = totalCount % totalTypes;
-      
-      toast.info(`开始批量生成 ${totalCount} 道题目，均衡分配到 ${totalTypes} 种题型，${leafCategories.length} 个分类`);
+
+      toast.info(
+        `开始批量生成 ${totalCount} 道题目，均衡分配到 ${totalTypes} 种题型，${leafCategories.length} 个分类`
+      );
 
       // 为每种题型分配题目
       for (let typeIdx = 0; typeIdx < typesToGenerate.length; typeIdx++) {
         const qType = typesToGenerate[typeIdx];
         const typeTotal = typeIdx < typeRemainder ? questionsPerType + 1 : questionsPerType;
-        
+
         // 计算每个分类应该生成多少题（该题型）
         const countPerCategory = Math.max(1, Math.floor(typeTotal / leafCategories.length));
         const catRemainder = typeTotal % leafCategories.length;
@@ -541,8 +571,12 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
       for (let i = 0; i < leafCategories.length; i++) {
         const leaf = leafCategories[i];
         const categoryCount = i < remainder ? countPerCategory + 1 : countPerCategory;
-        const qType = questionTypeMode === "random" ? getRandomQuestionType() : 
-                     questionTypeMode === "all" ? getRandomQuestionType() : questionTypeMode;
+        const qType =
+          questionTypeMode === "random"
+            ? getRandomQuestionType()
+            : questionTypeMode === "all"
+              ? getRandomQuestionType()
+              : questionTypeMode;
         await handleGenerateForCategory(leaf.id, leaf.name, leaf.path, categoryCount, qType);
       }
     }
@@ -563,9 +597,7 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                   <Sparkles className="h-4 w-4 text-blue-500" />
                   AI 题目生成
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  自动化批量生成各类题目
-                </CardDescription>
+                <CardDescription className="text-xs">自动化批量生成各类题目</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* 题型模式 */}
@@ -584,7 +616,10 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <Select value={questionTypeMode} onValueChange={(v) => setQuestionTypeMode(v as QuestionTypeMode)}>
+                  <Select
+                    value={questionTypeMode}
+                    onValueChange={(v) => setQuestionTypeMode(v as QuestionTypeMode)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -624,8 +659,8 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                 {/* 难度 */}
                 <div className="space-y-2">
                   <Label className="text-xs">难度</Label>
-                  <Select 
-                    value={difficulty.toString()} 
+                  <Select
+                    value={difficulty.toString()}
                     onValueChange={(v) => setDifficulty(v === "random" ? "random" : parseInt(v))}
                   >
                     <SelectTrigger>
@@ -652,7 +687,10 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                 {/* 分类选择模式 */}
                 <div className="space-y-2">
                   <Label className="text-xs">分类选择</Label>
-                  <Select value={categoryMode} onValueChange={(v) => setCategoryMode(v as CategoryMode)}>
+                  <Select
+                    value={categoryMode}
+                    onValueChange={(v) => setCategoryMode(v as CategoryMode)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -677,8 +715,8 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                 {categoryMode === "random" && (
                   <div className="space-y-2">
                     <Label className="text-xs">随机分类数量</Label>
-                    <Select 
-                      value={randomCategoryCount.toString()} 
+                    <Select
+                      value={randomCategoryCount.toString()}
                       onValueChange={(v) => setRandomCategoryCount(parseInt(v))}
                     >
                       <SelectTrigger>
@@ -728,7 +766,7 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                     </div>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    {questionTypeMode === "all" && balanceTypes 
+                    {questionTypeMode === "all" && balanceTypes
                       ? `将生成 ${Math.floor(totalCount / questionTypes.length)} 道/题型，共 ${questionTypes.length} 种题型`
                       : `题目将平均分配到各个分类`}
                   </p>
@@ -755,28 +793,57 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
 
                 {/* 生成计划预览 */}
                 <div className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
-                  <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">生成计划</p>
+                  <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">
+                    生成计划
+                  </p>
                   <div className="space-y-1 text-[11px] text-blue-600 dark:text-blue-400">
-                    <p>• 总数：<span className="font-semibold">{totalCount}</span> 道题目</p>
-                    <p>• 题型：<span className="font-semibold">
-                      {questionTypeMode === "all" ? `全部 ${questionTypes.length} 种` : 
-                       questionTypeMode === "random" ? "随机" : getQuestionTypeName(questionTypeMode)}
-                    </span></p>
-                    <p>• 分类：<span className="font-semibold">
-                      {categoryMode === "random" 
-                        ? `随机 ${stats.targetCategoryCount} 个（共 ${stats.leafCategories} 个）`
-                        : `全部 ${stats.leafCategories} 个`}
-                    </span></p>
+                    <p>
+                      • 总数：<span className="font-semibold">{totalCount}</span> 道题目
+                    </p>
+                    <p>
+                      • 题型：
+                      <span className="font-semibold">
+                        {questionTypeMode === "all"
+                          ? `全部 ${questionTypes.length} 种`
+                          : questionTypeMode === "random"
+                            ? "随机"
+                            : getQuestionTypeName(questionTypeMode)}
+                      </span>
+                    </p>
+                    <p>
+                      • 分类：
+                      <span className="font-semibold">
+                        {categoryMode === "random"
+                          ? `随机 ${stats.targetCategoryCount} 个（共 ${stats.leafCategories} 个）`
+                          : `全部 ${stats.leafCategories} 个`}
+                      </span>
+                    </p>
                     {questionTypeMode === "all" && balanceTypes && (
-                      <p>• 每种题型约：<span className="font-semibold">{Math.floor(totalCount / questionTypes.length)}</span> 道</p>
+                      <p>
+                        • 每种题型约：
+                        <span className="font-semibold">
+                          {Math.floor(totalCount / questionTypes.length)}
+                        </span>{" "}
+                        道
+                      </p>
                     )}
-                    <p>• 每分类约：<span className="font-semibold">
-                      {stats.targetCategoryCount > 0 
-                        ? Math.max(1, Math.floor(totalCount / (questionTypeMode === "all" && balanceTypes 
-                            ? stats.targetCategoryCount * questionTypes.length 
-                            : stats.targetCategoryCount)))
-                        : 0}
-                    </span> 道</p>
+                    <p>
+                      • 每分类约：
+                      <span className="font-semibold">
+                        {stats.targetCategoryCount > 0
+                          ? Math.max(
+                              1,
+                              Math.floor(
+                                totalCount /
+                                  (questionTypeMode === "all" && balanceTypes
+                                    ? stats.targetCategoryCount * questionTypes.length
+                                    : stats.targetCategoryCount)
+                              )
+                            )
+                          : 0}
+                      </span>{" "}
+                      道
+                    </p>
                   </div>
                 </div>
 
@@ -810,8 +877,8 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                   ) : (
                     <Zap className="h-4 w-4 mr-2" />
                   )}
-                  {categoryMode === "random" 
-                    ? `批量生成（随机 ${randomCategoryCount} 分类）` 
+                  {categoryMode === "random"
+                    ? `批量生成（随机 ${randomCategoryCount} 分类）`
                     : "批量生成所有分类"}
                 </Button>
               </CardContent>
@@ -821,8 +888,12 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
             <div className="text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
               <p className="font-medium mb-1">使用说明</p>
               <ul className="space-y-1 text-[11px]">
-                <li>• <strong>全部题型</strong>：生成单选、多选、判断、填空、简答全部 5 种题型</li>
-                <li>• <strong>随机分类</strong>：随机选择指定数量的分类进行生成</li>
+                <li>
+                  • <strong>全部题型</strong>：生成单选、多选、判断、填空、简答全部 5 种题型
+                </li>
+                <li>
+                  • <strong>随机分类</strong>：随机选择指定数量的分类进行生成
+                </li>
                 <li>• 直接输入数字可自定义总题数（1-1000）</li>
                 <li>• 在分类树中点击单个分类可单独生成 5 道题</li>
                 <li>• 开启自动保存后，生成的题目将直接入库</li>
@@ -834,7 +905,11 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
 
       {/* 右侧主内容区 */}
       <Card className="flex-1 min-w-0 flex flex-col overflow-hidden border-0 shadow-lg bg-gradient-to-b from-background to-muted/5">
-        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as MainTabValue)} className="flex-1 flex flex-col">
+        <Tabs
+          value={mainTab}
+          onValueChange={(v) => setMainTab(v as MainTabValue)}
+          className="flex-1 flex flex-col"
+        >
           {/* Tab Header */}
           <div className="flex-shrink-0 border-b bg-muted/30">
             {/* Stats Bar */}
@@ -858,9 +933,7 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                   </div>
                 )}
               </div>
-              <div className="text-xs text-muted-foreground">
-                共 {tasks.length} 个任务
-              </div>
+              <div className="text-xs text-muted-foreground">共 {tasks.length} 个任务</div>
             </div>
 
             {/* Tab Navigation */}
@@ -959,7 +1032,9 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                       </div>
                       <div className="text-center">
                         <p className="text-sm font-medium text-muted-foreground">暂无分类数据</p>
-                        <p className="text-xs text-muted-foreground/70 mt-1">请先在课程结构中创建分类</p>
+                        <p className="text-xs text-muted-foreground/70 mt-1">
+                          请先在课程结构中创建分类
+                        </p>
                       </div>
                     </div>
                   )}
@@ -980,7 +1055,10 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
             </TabsContent>
 
             {/* 生成中 Tab */}
-            <TabsContent value="generating" className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden">
+            <TabsContent
+              value="generating"
+              className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden"
+            >
               <div className="px-4 py-2.5 border-b bg-muted/20">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
@@ -999,28 +1077,41 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                       <Activity className="h-10 w-10 text-blue-300 dark:text-blue-700" />
                     </div>
                     <div className="text-center space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">暂无正在生成的任务</p>
-                      <p className="text-xs text-muted-foreground/70">在分类树中点击"生成"按钮开始</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        暂无正在生成的任务
+                      </p>
+                      <p className="text-xs text-muted-foreground/70">
+                        在分类树中点击"生成"按钮开始
+                      </p>
                     </div>
                   </div>
                 )}
                 {generatingTasks.length > 0 && (
                   <div className="divide-y divide-border/50">
                     {generatingTasks.map((task) => (
-                      <div key={task.id} className="px-4 py-3 hover:bg-blue-50/50 dark:hover:bg-blue-950/20">
+                      <div
+                        key={task.id}
+                        className="px-4 py-3 hover:bg-blue-50/50 dark:hover:bg-blue-950/20"
+                      >
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
                             <Loader2 className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-spin" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium truncate">{task.categoryName}</span>
-                              <Badge variant="outline" className="text-[10px] h-5 border-0 bg-blue-100 text-blue-700">
+                              <span className="text-sm font-medium truncate">
+                                {task.categoryName}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] h-5 border-0 bg-blue-100 text-blue-700"
+                              >
                                 {task.count} 题
                               </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                              {getQuestionTypeName(task.questionType)} · {getDifficultyLabel(task.difficulty)}
+                              {getQuestionTypeName(task.questionType)} ·{" "}
+                              {getDifficultyLabel(task.difficulty)}
                             </p>
                           </div>
                           <span className="text-[11px] text-muted-foreground">
@@ -1049,7 +1140,10 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
             </TabsContent>
 
             {/* 已完成 Tab */}
-            <TabsContent value="completed" className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden">
+            <TabsContent
+              value="completed"
+              className="absolute inset-0 m-0 flex flex-col data-[state=inactive]:hidden"
+            >
               <div className="px-4 py-2.5 border-b bg-muted/20">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
@@ -1125,11 +1219,14 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
                               </Badge>
                             </div>
                             {task.errorMessage && (
-                              <p className="text-xs text-red-500 mt-0.5 truncate">{task.errorMessage}</p>
+                              <p className="text-xs text-red-500 mt-0.5 truncate">
+                                {task.errorMessage}
+                              </p>
                             )}
                             {!task.errorMessage && (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {getQuestionTypeName(task.questionType)} · {getDifficultyLabel(task.difficulty)}
+                                {getQuestionTypeName(task.questionType)} ·{" "}
+                                {getDifficultyLabel(task.difficulty)}
                               </p>
                             )}
                           </div>
@@ -1149,12 +1246,16 @@ export function QuestionTab({ onTaskCreated }: QuestionTabProps) {
               </ScrollArea>
               {completedTasks.length > 0 && (
                 <div className="flex-shrink-0 px-4 py-2.5 border-t bg-muted/20 flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">显示 {completedTasks.length} 个任务</div>
+                  <div className="text-xs text-muted-foreground">
+                    显示 {completedTasks.length} 个任务
+                  </div>
                   <div className="flex items-center gap-4 text-xs">
                     {stats.completedCount > 0 && (
                       <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-emerald-600 font-medium">{stats.completedCount} 成功</span>
+                        <span className="text-emerald-600 font-medium">
+                          {stats.completedCount} 成功
+                        </span>
                       </div>
                     )}
                     {stats.failedCount > 0 && (

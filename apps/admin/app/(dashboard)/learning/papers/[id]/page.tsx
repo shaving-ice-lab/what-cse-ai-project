@@ -206,7 +206,8 @@ function QuestionSelectDialog({
   };
 
   const totalPages = Math.ceil(total / pageSize);
-  const hasActiveFilters = filterSubject !== "all" || filterCategory !== "all" || filterDifficulty !== "all";
+  const hasActiveFilters =
+    filterSubject !== "all" || filterCategory !== "all" || filterDifficulty !== "all";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -234,16 +235,24 @@ function QuestionSelectDialog({
               className="pl-9"
             />
           </div>
-          <Button 
-            variant={hasActiveFilters ? "default" : "outline"} 
+          <Button
+            variant={hasActiveFilters ? "default" : "outline"}
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="h-4 w-4 mr-1" />
             筛选
-            {hasActiveFilters && <Badge variant="secondary" className="ml-1 text-xs">{
-              [filterSubject !== "all", filterCategory !== "all", filterDifficulty !== "all"].filter(Boolean).length
-            }</Badge>}
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {
+                  [
+                    filterSubject !== "all",
+                    filterCategory !== "all",
+                    filterDifficulty !== "all",
+                  ].filter(Boolean).length
+                }
+              </Badge>
+            )}
           </Button>
         </div>
 
@@ -253,7 +262,13 @@ function QuestionSelectDialog({
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">科目</Label>
-                <Select value={filterSubject} onValueChange={(v) => { setFilterSubject(v); setPage(1); }}>
+                <Select
+                  value={filterSubject}
+                  onValueChange={(v) => {
+                    setFilterSubject(v);
+                    setPage(1);
+                  }}
+                >
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
@@ -268,13 +283,18 @@ function QuestionSelectDialog({
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">知识点/分类</Label>
-                <Select 
-                  value={filterCategory} 
-                  onValueChange={(v) => { setFilterCategory(v); setPage(1); }}
+                <Select
+                  value={filterCategory}
+                  onValueChange={(v) => {
+                    setFilterCategory(v);
+                    setPage(1);
+                  }}
                   disabled={filterSubject === "all"}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={filterSubject === "all" ? "请先选择科目" : "全部知识点"} />
+                    <SelectValue
+                      placeholder={filterSubject === "all" ? "请先选择科目" : "全部知识点"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">全部知识点</SelectItem>
@@ -288,7 +308,13 @@ function QuestionSelectDialog({
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">难度</Label>
-                <Select value={filterDifficulty} onValueChange={(v) => { setFilterDifficulty(v); setPage(1); }}>
+                <Select
+                  value={filterDifficulty}
+                  onValueChange={(v) => {
+                    setFilterDifficulty(v);
+                    setPage(1);
+                  }}
+                >
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
@@ -304,9 +330,7 @@ function QuestionSelectDialog({
             </div>
             {hasActiveFilters && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  找到 {total} 道符合条件的题目
-                </span>
+                <span className="text-xs text-muted-foreground">找到 {total} 道符合条件的题目</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -362,7 +386,9 @@ function QuestionSelectDialog({
                       >
                         <TableCell>
                           {isInPaper ? (
-                            <Badge variant="outline" className="text-xs">已添加</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              已添加
+                            </Badge>
                           ) : (
                             <input
                               type="checkbox"
@@ -467,7 +493,7 @@ function RandomSelectDialog({
   const [showPreview, setShowPreview] = useState(false);
 
   const categoryOptions = getCategoryOptions();
-  
+
   const subjectOptions = [
     { value: "all", label: "全部科目" },
     { value: "xingce", label: "行测" },
@@ -529,19 +555,17 @@ function RandomSelectDialog({
       if (sourceType !== "all") params.source_type = sourceType;
 
       const res = await questionApi.getQuestions(params);
-      
+
       // Filter out already selected questions
-      let availableQuestions = (res.questions || []).filter(
-        (q) => !selectedIds.includes(q.id)
-      );
-      
+      let availableQuestions = (res.questions || []).filter((q) => !selectedIds.includes(q.id));
+
       // Randomly select the requested count
       const shuffled = availableQuestions.sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, Math.min(count, shuffled.length));
-      
+
       setPreviewQuestions(selected);
       setShowPreview(true);
-      
+
       if (selected.length < count) {
         toast.info(`仅找到 ${selected.length} 道符合条件的题目`);
       }
@@ -568,22 +592,23 @@ function RandomSelectDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => {
-      onOpenChange(v);
-      if (!v) {
-        setPreviewQuestions([]);
-        setShowPreview(false);
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (!v) {
+          setPreviewQuestions([]);
+          setShowPreview(false);
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shuffle className="h-5 w-5 text-violet-500" />
             随机组卷
           </DialogTitle>
-          <DialogDescription>
-            设置筛选条件，系统将随机抽取题目
-          </DialogDescription>
+          <DialogDescription>设置筛选条件，系统将随机抽取题目</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -617,11 +642,7 @@ function RandomSelectDialog({
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">知识点</Label>
-              <Select 
-                value={category} 
-                onValueChange={setCategory}
-                disabled={subject === "all"}
-              >
+              <Select value={category} onValueChange={setCategory} disabled={subject === "all"}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder={subject === "all" ? "请先选择科目" : "全部知识点"} />
                 </SelectTrigger>
@@ -743,10 +764,7 @@ function RandomSelectDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button 
-            onClick={handleConfirm} 
-            disabled={previewQuestions.length === 0}
-          >
+          <Button onClick={handleConfirm} disabled={previewQuestions.length === 0}>
             添加 {previewQuestions.length} 题
           </Button>
         </DialogFooter>
@@ -759,11 +777,7 @@ function RandomSelectDialog({
 // Main Page Component
 // ============================================
 
-export default function PaperEditPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function PaperEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const paperId = parseInt(resolvedParams.id);
   const router = useRouter();
@@ -780,7 +794,7 @@ export default function PaperEditPage({
   const [selectDialogOpen, setSelectDialogOpen] = useState(false);
   const [randomSelectDialogOpen, setRandomSelectDialogOpen] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  
+
   // Section management
   const [sections, setSections] = useState<PaperSection[]>([]);
   const [sectionDialogOpen, setSectionDialogOpen] = useState(false);
@@ -919,18 +933,18 @@ export default function PaperEditPage({
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
-    
+
     // 重新排序
     const newQuestions = [...paperQuestions];
     const [draggedItem] = newQuestions.splice(draggedIndex, 1);
     newQuestions.splice(index, 0, draggedItem);
-    
+
     // 更新order
     const reorderedQuestions = newQuestions.map((q, i) => ({
       ...q,
       order: i + 1,
     }));
-    
+
     setPaperQuestions(reorderedQuestions);
     setDraggedIndex(index);
   };
@@ -987,11 +1001,11 @@ export default function PaperEditPage({
 
     if (editingSection) {
       // Update existing section
-      setSections(sections.map(s => 
-        s.id === editingSection.id 
-          ? { ...s, name: sectionName, description: sectionDesc }
-          : s
-      ));
+      setSections(
+        sections.map((s) =>
+          s.id === editingSection.id ? { ...s, name: sectionName, description: sectionDesc } : s
+        )
+      );
       toast.success("分区已更新");
     } else {
       // Add new section
@@ -1009,42 +1023,44 @@ export default function PaperEditPage({
 
   const handleDeleteSection = (sectionId: string) => {
     if (!confirm("确定要删除该分区吗？分区内的题目将移至未分类。")) return;
-    setSections(sections.filter(s => s.id !== sectionId));
+    setSections(sections.filter((s) => s.id !== sectionId));
     toast.success("分区已删除");
   };
 
   const handleAddToSection = (sectionId: string, questionId: number) => {
     // Remove from other sections first
-    const newSections = sections.map(s => ({
+    const newSections = sections.map((s) => ({
       ...s,
-      questionIds: s.questionIds.filter(id => id !== questionId),
+      questionIds: s.questionIds.filter((id) => id !== questionId),
     }));
     // Add to target section
-    setSections(newSections.map(s => 
-      s.id === sectionId 
-        ? { ...s, questionIds: [...s.questionIds, questionId] }
-        : s
-    ));
+    setSections(
+      newSections.map((s) =>
+        s.id === sectionId ? { ...s, questionIds: [...s.questionIds, questionId] } : s
+      )
+    );
   };
 
   const handleRemoveFromSection = (questionId: number) => {
-    setSections(sections.map(s => ({
-      ...s,
-      questionIds: s.questionIds.filter(id => id !== questionId),
-    })));
+    setSections(
+      sections.map((s) => ({
+        ...s,
+        questionIds: s.questionIds.filter((id) => id !== questionId),
+      }))
+    );
   };
 
   // Get questions not in any section
   const getUnsectionedQuestions = () => {
-    const allSectionedIds = sections.flatMap(s => s.questionIds);
-    return paperQuestions.filter(pq => !allSectionedIds.includes(pq.question_id));
+    const allSectionedIds = sections.flatMap((s) => s.questionIds);
+    return paperQuestions.filter((pq) => !allSectionedIds.includes(pq.question_id));
   };
 
   // Get questions in a section
   const getSectionQuestions = (sectionId: string) => {
-    const section = sections.find(s => s.id === sectionId);
+    const section = sections.find((s) => s.id === sectionId);
     if (!section) return [];
-    return paperQuestions.filter(pq => section.questionIds.includes(pq.question_id));
+    return paperQuestions.filter((pq) => section.questionIds.includes(pq.question_id));
   };
 
   if (loading) {
@@ -1219,7 +1235,9 @@ export default function PaperEditPage({
                                 <Badge variant="secondary" className="text-xs">
                                   {getQuestionTypeName(question.question_type)}
                                 </Badge>
-                                <Badge className={`text-xs ${getDifficultyColor(question.difficulty)}`}>
+                                <Badge
+                                  className={`text-xs ${getDifficultyColor(question.difficulty)}`}
+                                >
                                   {getDifficultyLabel(question.difficulty)}
                                 </Badge>
                               </div>
@@ -1232,7 +1250,9 @@ export default function PaperEditPage({
                           <Input
                             type="number"
                             value={pq.score}
-                            onChange={(e) => handleScoreChange(pq.question_id, Number(e.target.value))}
+                            onChange={(e) =>
+                              handleScoreChange(pq.question_id, Number(e.target.value))
+                            }
                             className="w-16 h-8 text-center"
                             min={0}
                           />
@@ -1305,13 +1325,17 @@ export default function PaperEditPage({
                                 >
                                   <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm truncate">{question?.content || `题目 #${pq.question_id}`}</p>
+                                    <p className="text-sm truncate">
+                                      {question?.content || `题目 #${pq.question_id}`}
+                                    </p>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <Input
                                       type="number"
                                       value={pq.score}
-                                      onChange={(e) => handleScoreChange(pq.question_id, Number(e.target.value))}
+                                      onChange={(e) =>
+                                        handleScoreChange(pq.question_id, Number(e.target.value))
+                                      }
                                       className="w-14 h-7 text-center text-xs"
                                       min={0}
                                     />
@@ -1356,7 +1380,9 @@ export default function PaperEditPage({
                             >
                               <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm truncate">{question?.content || `题目 #${pq.question_id}`}</p>
+                                <p className="text-sm truncate">
+                                  {question?.content || `题目 #${pq.question_id}`}
+                                </p>
                                 {question && (
                                   <div className="flex items-center gap-1 mt-1">
                                     <Badge variant="secondary" className="text-xs">
@@ -1367,7 +1393,9 @@ export default function PaperEditPage({
                               </div>
                               <div className="flex items-center gap-2">
                                 {sections.length > 0 && (
-                                  <Select onValueChange={(v) => handleAddToSection(v, pq.question_id)}>
+                                  <Select
+                                    onValueChange={(v) => handleAddToSection(v, pq.question_id)}
+                                  >
                                     <SelectTrigger className="h-7 w-24 text-xs">
                                       <SelectValue placeholder="移入分区" />
                                     </SelectTrigger>
@@ -1383,7 +1411,9 @@ export default function PaperEditPage({
                                 <Input
                                   type="number"
                                   value={pq.score}
-                                  onChange={(e) => handleScoreChange(pq.question_id, Number(e.target.value))}
+                                  onChange={(e) =>
+                                    handleScoreChange(pq.question_id, Number(e.target.value))
+                                  }
                                   className="w-14 h-7 text-center text-xs"
                                   min={0}
                                 />
@@ -1429,9 +1459,7 @@ export default function PaperEditPage({
                 <Label>试卷标题 *</Label>
                 <Input
                   value={formData.title || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="输入试卷标题"
                 />
               </div>
@@ -1440,9 +1468,7 @@ export default function PaperEditPage({
                 <Label>试卷类型</Label>
                 <Select
                   value={formData.paper_type || "mock"}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, paper_type: v as PaperType })
-                  }
+                  onValueChange={(v) => setFormData({ ...formData, paper_type: v as PaperType })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1461,9 +1487,7 @@ export default function PaperEditPage({
                   <Label>考试类型</Label>
                   <Select
                     value={formData.exam_type || ""}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, exam_type: v })
-                    }
+                    onValueChange={(v) => setFormData({ ...formData, exam_type: v })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="选择" />
@@ -1481,9 +1505,7 @@ export default function PaperEditPage({
                   <Label>科目</Label>
                   <Select
                     value={formData.subject || ""}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, subject: v })
-                    }
+                    onValueChange={(v) => setFormData({ ...formData, subject: v })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="选择" />
@@ -1542,9 +1564,7 @@ export default function PaperEditPage({
               <div className="flex items-center gap-2 pt-2">
                 <Switch
                   checked={formData.is_free || false}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_free: checked })
-                  }
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_free: checked })}
                 />
                 <Label>免费试卷</Label>
               </div>
@@ -1594,9 +1614,7 @@ export default function PaperEditPage({
                 <Label>试卷描述</Label>
                 <Textarea
                   value={formData.description || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="输入试卷描述..."
                   rows={3}
                 />
@@ -1661,9 +1679,7 @@ export default function PaperEditPage({
               {editingSection ? "编辑分区" : "新建分区"}
             </DialogTitle>
             <DialogDescription>
-              {editingSection 
-                ? "修改分区名称和描述" 
-                : "创建新分区来组织试卷中的题目"}
+              {editingSection ? "修改分区名称和描述" : "创建新分区来组织试卷中的题目"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1688,9 +1704,7 @@ export default function PaperEditPage({
             <Button variant="outline" onClick={() => setSectionDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveSection}>
-              {editingSection ? "保存修改" : "创建分区"}
-            </Button>
+            <Button onClick={handleSaveSection}>{editingSection ? "保存修改" : "创建分区"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

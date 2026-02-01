@@ -235,7 +235,10 @@ export const userApi = {
   },
 
   // 修改密码
-  changePassword: (data: { old_password: string; new_password: string }): Promise<{ message: string }> => {
+  changePassword: (data: {
+    old_password: string;
+    new_password: string;
+  }): Promise<{ message: string }> => {
     return request.post("/user/password", data);
   },
 

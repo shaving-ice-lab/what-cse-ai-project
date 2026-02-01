@@ -315,9 +315,7 @@ export default function NotificationsPage() {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>发送系统通知</DialogTitle>
-                <DialogDescription>
-                  向所有用户发送广播通知
-                </DialogDescription>
+                <DialogDescription>向所有用户发送广播通知</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
@@ -343,9 +341,7 @@ export default function NotificationsPage() {
                   <Input
                     placeholder="请输入通知标题"
                     value={sendForm.title}
-                    onChange={(e) =>
-                      setSendForm((prev) => ({ ...prev, title: e.target.value }))
-                    }
+                    onChange={(e) => setSendForm((prev) => ({ ...prev, title: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
@@ -354,9 +350,7 @@ export default function NotificationsPage() {
                     placeholder="请输入通知内容"
                     rows={4}
                     value={sendForm.content}
-                    onChange={(e) =>
-                      setSendForm((prev) => ({ ...prev, content: e.target.value }))
-                    }
+                    onChange={(e) => setSendForm((prev) => ({ ...prev, content: e.target.value }))}
                   />
                 </div>
               </div>
@@ -405,7 +399,10 @@ export default function NotificationsPage() {
             <p className="text-xs text-muted-foreground">已查看的消息数量</p>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={handleMarkAllAsRead}>
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={handleMarkAllAsRead}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">快捷操作</CardTitle>
             <CheckCheck className="h-4 w-4 text-blue-500" />
@@ -508,7 +505,9 @@ export default function NotificationsPage() {
                   <TableHead className="w-[40px]">
                     <input
                       type="checkbox"
-                      checked={selectedIds.length === notifications.length && notifications.length > 0}
+                      checked={
+                        selectedIds.length === notifications.length && notifications.length > 0
+                      }
                       onChange={handleSelectAll}
                       className="h-4 w-4 rounded border-gray-300"
                     />
@@ -525,13 +524,27 @@ export default function NotificationsPage() {
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-60" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-40" />
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Skeleton className="h-5 w-60" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : notifications.length > 0 ? (
@@ -559,12 +572,17 @@ export default function NotificationsPage() {
                         <TypeBadge type={notification.type} />
                       </TableCell>
                       <TableCell>
-                        <div className={`font-medium ${!notification.is_read ? "text-foreground" : "text-muted-foreground"}`}>
+                        <div
+                          className={`font-medium ${!notification.is_read ? "text-foreground" : "text-muted-foreground"}`}
+                        >
                           {notification.title}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell max-w-[300px]">
-                        <span className="truncate block text-sm text-muted-foreground" title={notification.content}>
+                        <span
+                          className="truncate block text-sm text-muted-foreground"
+                          title={notification.content}
+                        >
                           {notification.content}
                         </span>
                       </TableCell>

@@ -486,7 +486,10 @@ export function VideoPlayer({
           {/* 拖动手柄 */}
           <div
             className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-500 rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity"
-            style={{ left: `${(currentTime / duration) * 100}%`, transform: "translate(-50%, -50%)" }}
+            style={{
+              left: `${(currentTime / duration) * 100}%`,
+              transform: "translate(-50%, -50%)",
+            }}
           />
         </div>
 
@@ -645,9 +648,7 @@ export function VideoPlayer({
         <div className="absolute bottom-24 left-4 right-4 bg-stone-900 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <MessageSquare className="w-4 h-4 text-amber-400" />
-            <span className="text-white text-sm">
-              在 {formatTime(currentTime)} 添加笔记
-            </span>
+            <span className="text-white text-sm">在 {formatTime(currentTime)} 添加笔记</span>
           </div>
           <div className="flex gap-2">
             <input
@@ -673,12 +674,8 @@ export function VideoPlayer({
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
           <div className="bg-stone-900 rounded-xl p-6 max-w-sm mx-4 text-center">
             <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-            <h3 className="text-white text-lg font-semibold mb-2">
-              确认继续观看？
-            </h3>
-            <p className="text-stone-400 text-sm mb-4">
-              检测到您可能已离开，点击按钮继续学习
-            </p>
+            <h3 className="text-white text-lg font-semibold mb-2">确认继续观看？</h3>
+            <p className="text-stone-400 text-sm mb-4">检测到您可能已离开，点击按钮继续学习</p>
             <button
               onClick={handleConfirmWatching}
               className="px-6 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors"

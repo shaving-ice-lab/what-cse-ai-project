@@ -24,7 +24,7 @@ export function useDailyReport() {
   const fetchDailyReport = useCallback(async (date?: string) => {
     setLoading(true);
     try {
-      const result = date 
+      const result = date
         ? await learningApi.getDailyReportByDate(date)
         : await learningApi.getDailyReport();
       setReport(result);
@@ -188,20 +188,23 @@ export function useLearningGoal() {
     }
   }, []);
 
-  const updateGoal = useCallback(async (data: UpdateGoalRequest) => {
-    setLoading(true);
-    try {
-      await learningApi.updateGoal(data);
-      toast.success("目标更新成功");
-      // Refresh goal data
-      await fetchGoal();
-    } catch (error) {
-      toast.error("更新目标失败");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchGoal]);
+  const updateGoal = useCallback(
+    async (data: UpdateGoalRequest) => {
+      setLoading(true);
+      try {
+        await learningApi.updateGoal(data);
+        toast.success("目标更新成功");
+        // Refresh goal data
+        await fetchGoal();
+      } catch (error) {
+        toast.error("更新目标失败");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchGoal]
+  );
 
   return {
     loading,
@@ -219,35 +222,43 @@ export function useLeaderboard() {
   const [loading, setLoading] = useState(false);
   const [dailyLeaderboard, setDailyLeaderboard] = useState<LeaderboardResponse | null>(null);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<LeaderboardResponse | null>(null);
-  const [consecutiveLeaderboard, setConsecutiveLeaderboard] = useState<LeaderboardResponse | null>(null);
+  const [consecutiveLeaderboard, setConsecutiveLeaderboard] = useState<LeaderboardResponse | null>(
+    null
+  );
 
-  const fetchDailyLeaderboard = useCallback(async (metric: "study_time" | "question_count" = "study_time") => {
-    setLoading(true);
-    try {
-      const result = await learningApi.getDailyLeaderboard(metric);
-      setDailyLeaderboard(result);
-      return result;
-    } catch (error) {
-      toast.error("获取排行榜失败");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchDailyLeaderboard = useCallback(
+    async (metric: "study_time" | "question_count" = "study_time") => {
+      setLoading(true);
+      try {
+        const result = await learningApi.getDailyLeaderboard(metric);
+        setDailyLeaderboard(result);
+        return result;
+      } catch (error) {
+        toast.error("获取排行榜失败");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  const fetchWeeklyLeaderboard = useCallback(async (metric: "study_time" | "question_count" = "study_time") => {
-    setLoading(true);
-    try {
-      const result = await learningApi.getWeeklyLeaderboard(metric);
-      setWeeklyLeaderboard(result);
-      return result;
-    } catch (error) {
-      toast.error("获取排行榜失败");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchWeeklyLeaderboard = useCallback(
+    async (metric: "study_time" | "question_count" = "study_time") => {
+      setLoading(true);
+      try {
+        const result = await learningApi.getWeeklyLeaderboard(metric);
+        setWeeklyLeaderboard(result);
+        return result;
+      } catch (error) {
+        toast.error("获取排行榜失败");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   const fetchConsecutiveLeaderboard = useCallback(async () => {
     setLoading(true);
@@ -433,5 +444,5 @@ export function formatDate(dateStr: string): string {
 // 格式化日期时间
 export function formatDateTime(dateStr: string): string {
   const date = new Date(dateStr);
-  return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
 }

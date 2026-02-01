@@ -1,11 +1,11 @@
 // 报名数据总览
 export interface RegistrationOverview {
-  total_applicants: number;       // 总报名人数
-  total_pass_count: number;       // 总过审人数
-  avg_competition_ratio: number;  // 平均竞争比
-  max_competition_ratio: number;  // 最高竞争比
-  no_applicant_count: number;     // 无人报考职位数
-  low_competition_count: number;  // 低竞争比职位数（<10:1）
+  total_applicants: number; // 总报名人数
+  total_pass_count: number; // 总过审人数
+  avg_competition_ratio: number; // 平均竞争比
+  max_competition_ratio: number; // 最高竞争比
+  no_applicant_count: number; // 无人报考职位数
+  low_competition_count: number; // 低竞争比职位数（<10:1）
   high_competition_count: number; // 高竞争比职位数（>100:1）
 }
 
@@ -40,9 +40,9 @@ export interface ColdPosition {
 // 报名趋势
 export interface RegistrationTrend {
   date: string;
-  total_apply: number;       // 当日总报名
-  daily_increment: number;   // 当日增量
-  avg_competition: number;   // 当日平均竞争比
+  total_apply: number; // 当日总报名
+  daily_increment: number; // 当日增量
+  avg_competition: number; // 当日平均竞争比
 }
 
 // 单个职位的报名趋势

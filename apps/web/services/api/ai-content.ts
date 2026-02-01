@@ -5,7 +5,7 @@ import request from "../request";
 // =====================================================
 
 // AI内容类型
-export type AIContentType = 
+export type AIContentType =
   | "question_analysis"
   | "question_tips"
   | "question_similar"
@@ -183,45 +183,44 @@ export const getAIContent = (id: number): Promise<AIGeneratedContent> => {
 // =====================================================
 
 // 获取题目解析
-export const getQuestionAnalysis = (questionId: number) => 
+export const getQuestionAnalysis = (questionId: number) =>
   getQuestionAIContent(questionId, "question_analysis");
 
 // 获取解题技巧
-export const getQuestionTips = (questionId: number) => 
+export const getQuestionTips = (questionId: number) =>
   getQuestionAIContent(questionId, "question_tips");
 
 // 获取相似题目
-export const getSimilarQuestions = (questionId: number) => 
+export const getSimilarQuestions = (questionId: number) =>
   getQuestionAIContent(questionId, "question_similar");
 
 // 获取知识点总结
-export const getKnowledgeSummary = (knowledgePointId: number) => 
+export const getKnowledgeSummary = (knowledgePointId: number) =>
   getKnowledgeAIContent(knowledgePointId, "knowledge_summary");
 
 // 获取知识点思维导图
-export const getKnowledgeMindmap = (knowledgePointId: number) => 
+export const getKnowledgeMindmap = (knowledgePointId: number) =>
   getKnowledgeAIContent(knowledgePointId, "knowledge_mindmap");
 
 // 获取章节总结
-export const getChapterSummary = (chapterId: number) => 
+export const getChapterSummary = (chapterId: number) =>
   getChapterAIContent(chapterId, "chapter_summary");
 
 // 获取章节重点
-export const getChapterKeypoints = (chapterId: number) => 
+export const getChapterKeypoints = (chapterId: number) =>
   getChapterAIContent(chapterId, "chapter_keypoints");
 
 // 获取章节配套练习
-export const getChapterExercises = (chapterId: number) => 
+export const getChapterExercises = (chapterId: number) =>
   getChapterAIContent(chapterId, "chapter_exercises");
 
 // 获取课程预习要点
-export const getCoursePreview = (courseId: number) => 
+export const getCoursePreview = (courseId: number) =>
   getCourseAIContent(courseId, "course_preview");
 
 // 获取课程复习要点
-export const getCourseReview = (courseId: number) => 
-  getCourseAIContent(courseId, "course_review");
+export const getCourseReview = (courseId: number) => getCourseAIContent(courseId, "course_review");
 
 // 获取课程大纲
-export const getCourseOutline = (courseId: number) => 
+export const getCourseOutline = (courseId: number) =>
   getCourseAIContent(courseId, "course_outline");

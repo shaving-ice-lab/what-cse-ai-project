@@ -14,24 +14,12 @@ export { MindMap } from "./MindMap";
 export type { MindMapNode } from "./MindMap";
 
 // 知识点卡片组件
-export {
-  KnowledgeCard,
-  KnowledgeCardDeck,
-} from "./KnowledgeCard";
-export type {
-  KnowledgePointData,
-  MasteryLevel,
-} from "./KnowledgeCard";
+export { KnowledgeCard, KnowledgeCardDeck } from "./KnowledgeCard";
+export type { KnowledgePointData, MasteryLevel } from "./KnowledgeCard";
 
 // 公式展示组件
-export {
-  FormulaDisplay,
-  FormulaList,
-} from "./FormulaDisplay";
-export type {
-  FormulaData,
-  FormulaCategory,
-} from "./FormulaDisplay";
+export { FormulaDisplay, FormulaList } from "./FormulaDisplay";
+export type { FormulaData, FormulaCategory } from "./FormulaDisplay";
 
 // 题型讲解组件
 export { QuestionTypeGuide } from "./QuestionTypeGuide";
@@ -59,16 +47,8 @@ export type {
 } from "./LearningProgress";
 
 // 素材展示组件
-export {
-  MaterialCard,
-  MaterialCarousel,
-  MaterialLibrary,
-} from "./MaterialDisplay";
-export type {
-  MaterialData,
-  MaterialType,
-  MaterialCategory,
-} from "./MaterialDisplay";
+export { MaterialCard, MaterialCarousel, MaterialLibrary } from "./MaterialDisplay";
+export type { MaterialData, MaterialType, MaterialCategory } from "./MaterialDisplay";
 
 // AI 内容展示组件
 export { CoursePreview } from "./CoursePreview";
@@ -102,12 +82,7 @@ export type {
   WrongQuestionData,
 } from "./WrongQuestionAnalysis";
 export { PracticeHints } from "./PracticeHints";
-export type {
-  HintType,
-  PracticeHint,
-  QuickReference,
-  MethodCard,
-} from "./PracticeHints";
+export type { HintType, PracticeHint, QuickReference, MethodCard } from "./PracticeHints";
 
 // MCP 课程内容渲染组件 (支持完整 13 模块)
 export { LessonContentRenderer } from "./LessonContentRenderer";
@@ -131,11 +106,7 @@ export type {
 
 // MCP 素材内容渲染组件 (支持 5 场景+4 范文结构)
 export { MaterialContentRenderer } from "./MaterialContentRenderer";
-export type {
-  MaterialContent,
-  UsageScenario,
-  WritingSegment,
-} from "./MaterialContentRenderer";
+export type { MaterialContent, UsageScenario, WritingSegment } from "./MaterialContentRenderer";
 
 // 骨架屏加载组件
 export {

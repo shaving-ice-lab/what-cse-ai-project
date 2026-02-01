@@ -20,13 +20,7 @@ import {
   AlertCircle,
   Scale,
 } from "lucide-react";
-import {
-  Button,
-  Badge,
-  Skeleton,
-  ScrollArea,
-  Separator,
-} from "@what-cse/ui";
+import { Button, Badge, Skeleton, ScrollArea, Separator } from "@what-cse/ui";
 import { positionApi } from "@/services/position-api";
 import type { PositionDetail } from "@/types/position";
 import { PositionStatus, PositionStatusNames, PositionStatusColors } from "@/types/position";
@@ -90,7 +84,8 @@ export function PositionDetailPanel({
   // 状态徽章
   const getStatusBadge = (status: number) => {
     const name = PositionStatusNames[status as PositionStatus] || "未知";
-    const colorClass = PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
+    const colorClass =
+      PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
     return (
       <Badge variant="secondary" className={colorClass}>
         {name}
@@ -201,9 +196,7 @@ export function PositionDetailPanel({
             {position.is_for_fresh_graduate && (
               <Badge className="bg-blue-100 text-blue-700 border-blue-200">应届可报</Badge>
             )}
-            {position.exam_type && (
-              <Badge variant="outline">{position.exam_type}</Badge>
-            )}
+            {position.exam_type && <Badge variant="outline">{position.exam_type}</Badge>}
           </div>
 
           <Separator />
@@ -298,8 +291,8 @@ export function PositionDetailPanel({
                           daysLeft <= 3
                             ? "bg-red-100 text-red-700"
                             : daysLeft <= 7
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-green-100 text-green-700"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-green-100 text-green-700"
                         }`}
                       >
                         {daysLeft === 0 ? "今日截止" : `还剩${daysLeft}天`}

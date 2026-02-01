@@ -66,7 +66,7 @@ export function useSessionAutoSave({
     if (!enabled || !sessionId) return;
 
     const progress = progressRef.current;
-    
+
     // Build request
     const request: SaveProgressRequest = {
       current_index: progress.currentIndex,
@@ -99,29 +99,32 @@ export function useSessionAutoSave({
   }, [enabled, sessionId, onSaveSuccess, onSaveError]);
 
   // Interrupt session (mark as interrupted with data)
-  const interruptSession = useCallback(async (reason?: string): Promise<void> => {
-    if (!sessionId) return;
+  const interruptSession = useCallback(
+    async (reason?: string): Promise<void> => {
+      if (!sessionId) return;
 
-    const progress = progressRef.current;
+      const progress = progressRef.current;
 
-    const request: InterruptSessionRequest = {
-      reason: reason || "page_close",
-      current_index: progress.currentIndex,
-      total_time_spent: progress.totalTimeSpent,
-      answers: Array.from(progress.answers.entries()).map(([questionId, data]) => ({
-        question_id: questionId,
-        user_answer: data.userAnswer,
-        time_spent: data.timeSpent,
-      })),
-    };
+      const request: InterruptSessionRequest = {
+        reason: reason || "page_close",
+        current_index: progress.currentIndex,
+        total_time_spent: progress.totalTimeSpent,
+        answers: Array.from(progress.answers.entries()).map(([questionId, data]) => ({
+          question_id: questionId,
+          user_answer: data.userAnswer,
+          time_spent: data.timeSpent,
+        })),
+      };
 
-    try {
-      await practiceApi.interruptSession(sessionId, request);
-      onInterrupt?.();
-    } catch (error) {
-      console.error("Failed to interrupt session:", error);
-    }
-  }, [sessionId, onInterrupt]);
+      try {
+        await practiceApi.interruptSession(sessionId, request);
+        onInterrupt?.();
+      } catch (error) {
+        console.error("Failed to interrupt session:", error);
+      }
+    },
+    [sessionId, onInterrupt]
+  );
 
   // Update progress state
   const updateProgress = useCallback((currentIndex: number, totalTimeSpent: number) => {

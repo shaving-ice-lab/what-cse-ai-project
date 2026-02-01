@@ -88,13 +88,7 @@ interface StatsData {
   rejected: number;
 }
 
-function StatsCards({
-  stats,
-  loading,
-}: {
-  stats: StatsData;
-  loading: boolean;
-}) {
+function StatsCards({ stats, loading }: { stats: StatsData; loading: boolean }) {
   const cards = [
     {
       title: "总内容数",
@@ -205,9 +199,7 @@ function ContentPreviewDialog({
       sections.push(
         <div key="analysis" className="space-y-1">
           <h4 className="text-sm font-medium">解析</h4>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {data.analysis}
-          </p>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{data.analysis}</p>
         </div>
       );
     }
@@ -282,10 +274,7 @@ function ContentPreviewDialog({
         <div key="examples" className="space-y-2">
           <h4 className="text-sm font-medium">例题</h4>
           {data.examples.map((example, i) => (
-            <div
-              key={i}
-              className="border rounded-lg p-3 space-y-2 bg-muted/30"
-            >
+            <div key={i} className="border rounded-lg p-3 space-y-2 bg-muted/30">
               <p className="text-sm font-medium">{example.question}</p>
               {example.options && (
                 <div className="text-sm text-muted-foreground space-y-1">
@@ -329,9 +318,7 @@ function ContentPreviewDialog({
           <Badge variant={getContentStatusColor(content.status)}>
             {getContentStatusLabel(content.status)}
           </Badge>
-          <Badge variant="outline">
-            {getContentTypeLabel(content.content_type)}
-          </Badge>
+          <Badge variant="outline">{getContentTypeLabel(content.content_type)}</Badge>
           <Badge variant="secondary">
             {getRelatedTypeLabel(content.related_type)} #{content.related_id}
           </Badge>
@@ -343,7 +330,11 @@ function ContentPreviewDialog({
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex-1 overflow-hidden flex flex-col"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="content">内容详情</TabsTrigger>
             <TabsTrigger value="metadata">元数据</TabsTrigger>
@@ -358,9 +349,7 @@ function ContentPreviewDialog({
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">AI 模型：</span>
-                  <span className="ml-2 font-medium">
-                    {content.metadata?.model_name || "未知"}
-                  </span>
+                  <span className="ml-2 font-medium">{content.metadata?.model_name || "未知"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">版本：</span>
@@ -368,9 +357,7 @@ function ContentPreviewDialog({
                 </div>
                 <div>
                   <span className="text-muted-foreground">Token 消耗：</span>
-                  <span className="ml-2 font-medium">
-                    {content.metadata?.tokens_used || "-"}
-                  </span>
+                  <span className="ml-2 font-medium">{content.metadata?.tokens_used || "-"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">生成耗时：</span>
@@ -380,9 +367,7 @@ function ContentPreviewDialog({
                 </div>
                 <div>
                   <span className="text-muted-foreground">来源：</span>
-                  <span className="ml-2 font-medium">
-                    {content.metadata?.source || "API"}
-                  </span>
+                  <span className="ml-2 font-medium">{content.metadata?.source || "API"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">生成时间：</span>
@@ -660,19 +645,11 @@ export default function AIContentReviewPage() {
                   <span className="text-sm text-muted-foreground">
                     已选择 {selectedIds.size} 项
                   </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBatchApprove}
-                  >
+                  <Button variant="outline" size="sm" onClick={handleBatchApprove}>
                     <CheckCheck className="mr-2 h-4 w-4" />
                     批量通过
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBatchReject}
-                  >
+                  <Button variant="outline" size="sm" onClick={handleBatchReject}>
                     <XCircle className="mr-2 h-4 w-4" />
                     批量拒绝
                   </Button>
@@ -816,11 +793,12 @@ export default function AIContentReviewPage() {
                         <TableCell>
                           <div className="space-y-1">
                             <p className="text-sm font-medium">
-                              {content.title || truncateText(content.content.summary || content.content.analysis || "无标题")}
+                              {content.title ||
+                                truncateText(
+                                  content.content.summary || content.content.analysis || "无标题"
+                                )}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              v{content.version}
-                            </p>
+                            <p className="text-xs text-muted-foreground">v{content.version}</p>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -835,8 +813,12 @@ export default function AIContentReviewPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Star className={`h-4 w-4 ${getQualityScoreColor(content.quality_score)}`} />
-                            <span className={`text-sm font-medium ${getQualityScoreColor(content.quality_score)}`}>
+                            <Star
+                              className={`h-4 w-4 ${getQualityScoreColor(content.quality_score)}`}
+                            />
+                            <span
+                              className={`text-sm font-medium ${getQualityScoreColor(content.quality_score)}`}
+                            >
                               {content.quality_score.toFixed(1)}
                             </span>
                           </div>

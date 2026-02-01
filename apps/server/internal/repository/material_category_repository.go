@@ -184,7 +184,7 @@ func (r *MaterialCategoryRepository) GetMaterialCount(categoryID uint) (int64, e
 func (r *MaterialCategoryRepository) UpdateMaterialCount(categoryID uint) error {
 	var count int64
 	r.db.Model(&model.LearningMaterial{}).
-		Where("category_id = ? AND status = ?", categoryID, model.MaterialStatusPublished).
+		Where("category_id = ?", categoryID).
 		Count(&count)
 
 	return r.db.Model(&model.MaterialCategory{}).
@@ -201,7 +201,6 @@ func (r *MaterialCategoryRepository) UpdateAllMaterialCounts() error {
 			SELECT COUNT(*) 
 			FROM what_learning_materials m 
 			WHERE m.category_id = c.id 
-			AND m.status = 'published'
 			AND m.deleted_at IS NULL
 		)
 	`).Error

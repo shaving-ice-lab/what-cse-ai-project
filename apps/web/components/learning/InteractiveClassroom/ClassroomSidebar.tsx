@@ -88,11 +88,7 @@ interface ClassroomSidebarProps {
   onBack?: () => void;
 }
 
-export function ClassroomSidebar({
-  courseTitle,
-  chapterTitle,
-  onBack,
-}: ClassroomSidebarProps) {
+export function ClassroomSidebar({ courseTitle, chapterTitle, onBack }: ClassroomSidebarProps) {
   const {
     sections,
     currentSectionIndex,
@@ -147,16 +143,12 @@ export function ClassroomSidebar({
                   <span className="text-sm">返回课程</span>
                 </button>
               )}
-              
+
               {courseTitle && (
-                <h2 className="font-bold text-stone-800 truncate text-lg">
-                  {courseTitle}
-                </h2>
+                <h2 className="font-bold text-stone-800 truncate text-lg">{courseTitle}</h2>
               )}
               {chapterTitle && (
-                <p className="text-sm text-stone-500 truncate mt-1">
-                  {chapterTitle}
-                </p>
+                <p className="text-sm text-stone-500 truncate mt-1">{chapterTitle}</p>
               )}
 
               {/* 学习时间统计 */}
@@ -213,8 +205,8 @@ export function ClassroomSidebar({
                         isActive
                           ? "bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 shadow-sm"
                           : section.locked
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-stone-50 border-2 border-transparent"
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-stone-50 border-2 border-transparent"
                       )}
                       whileHover={!section.locked ? { x: 4 } : {}}
                       whileTap={!section.locked ? { scale: 0.98 } : {}}
@@ -226,10 +218,10 @@ export function ClassroomSidebar({
                           isActive
                             ? `${colorClass} text-white shadow-md`
                             : isCompleted
-                            ? "bg-emerald-100 text-emerald-600"
-                            : section.locked
-                            ? "bg-stone-100 text-stone-400"
-                            : "bg-stone-100 text-stone-500"
+                              ? "bg-emerald-100 text-emerald-600"
+                              : section.locked
+                                ? "bg-stone-100 text-stone-400"
+                                : "bg-stone-100 text-stone-500"
                         )}
                       >
                         {section.locked ? (
@@ -249,10 +241,10 @@ export function ClassroomSidebar({
                             isActive
                               ? "text-amber-800"
                               : isCompleted
-                              ? "text-stone-700"
-                              : section.locked
-                              ? "text-stone-400"
-                              : "text-stone-700"
+                                ? "text-stone-700"
+                                : section.locked
+                                  ? "text-stone-400"
+                                  : "text-stone-700"
                           )}
                         >
                           {section.title}

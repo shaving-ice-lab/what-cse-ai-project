@@ -1,6 +1,24 @@
 "use client";
 
-import { Zap, TrendingUp, GraduationCap, Users, Target, Clock, Sparkles, AlertTriangle, MapPinOff, X, Filter, Crown, BadgeCheck, Building2, Briefcase, DollarSign, UserCheck } from "lucide-react";
+import {
+  Zap,
+  TrendingUp,
+  GraduationCap,
+  Users,
+  Target,
+  Clock,
+  Sparkles,
+  AlertTriangle,
+  MapPinOff,
+  X,
+  Filter,
+  Crown,
+  BadgeCheck,
+  Building2,
+  Briefcase,
+  DollarSign,
+  UserCheck,
+} from "lucide-react";
 
 export interface QuickFilter {
   id: string;
@@ -147,7 +165,8 @@ export const quickFilters: QuickFilter[] = [
 const getColorClasses = (color: string, isActive: boolean) => {
   const colorMap: Record<string, { active: string; inactive: string }> = {
     amber: {
-      active: "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200/50",
+      active:
+        "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200/50",
       inactive: "text-amber-700 hover:bg-amber-50 hover:border-amber-300",
     },
     red: {
@@ -155,7 +174,8 @@ const getColorClasses = (color: string, isActive: boolean) => {
       inactive: "text-red-600 hover:bg-red-50 hover:border-red-300",
     },
     emerald: {
-      active: "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200/50",
+      active:
+        "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-200/50",
       inactive: "text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300",
     },
     teal: {
@@ -163,15 +183,18 @@ const getColorClasses = (color: string, isActive: boolean) => {
       inactive: "text-teal-700 hover:bg-teal-50 hover:border-teal-300",
     },
     blue: {
-      active: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-200/50",
+      active:
+        "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-200/50",
       inactive: "text-blue-700 hover:bg-blue-50 hover:border-blue-300",
     },
     violet: {
-      active: "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200/50",
+      active:
+        "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-200/50",
       inactive: "text-violet-700 hover:bg-violet-50 hover:border-violet-300",
     },
     green: {
-      active: "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200/50",
+      active:
+        "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200/50",
       inactive: "text-green-700 hover:bg-green-50 hover:border-green-300",
     },
     cyan: {
@@ -179,15 +202,18 @@ const getColorClasses = (color: string, isActive: boolean) => {
       inactive: "text-cyan-700 hover:bg-cyan-50 hover:border-cyan-300",
     },
     orange: {
-      active: "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-200/50",
+      active:
+        "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-200/50",
       inactive: "text-orange-700 hover:bg-orange-50 hover:border-orange-300",
     },
     purple: {
-      active: "bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white shadow-lg shadow-purple-200/50",
+      active:
+        "bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white shadow-lg shadow-purple-200/50",
       inactive: "text-purple-700 hover:bg-purple-50 hover:border-purple-300",
     },
     indigo: {
-      active: "bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg shadow-indigo-200/50",
+      active:
+        "bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg shadow-indigo-200/50",
       inactive: "text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300",
     },
     rose: {
@@ -195,7 +221,8 @@ const getColorClasses = (color: string, isActive: boolean) => {
       inactive: "text-rose-700 hover:bg-rose-50 hover:border-rose-300",
     },
     yellow: {
-      active: "bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-200/50",
+      active:
+        "bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-200/50",
       inactive: "text-yellow-700 hover:bg-yellow-50 hover:border-yellow-300",
     },
     lime: {
@@ -212,7 +239,11 @@ const getColorClasses = (color: string, isActive: boolean) => {
   return isActive ? styles.active : styles.inactive;
 };
 
-export default function QuickFilters({ activeFilters, onFilterChange, onClearAll }: QuickFiltersProps) {
+export default function QuickFilters({
+  activeFilters,
+  onFilterChange,
+  onClearAll,
+}: QuickFiltersProps) {
   const activeCount = activeFilters.length;
 
   return (
@@ -241,14 +272,17 @@ export default function QuickFilters({ activeFilters, onFilterChange, onClearAll
                 className={`
                   group relative flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium 
                   whitespace-nowrap transition-all duration-200 ease-out
-                  ${isActive 
-                    ? `${colorClasses} scale-[1.02]` 
-                    : `bg-white border border-stone-200 ${colorClasses}`
+                  ${
+                    isActive
+                      ? `${colorClasses} scale-[1.02]`
+                      : `bg-white border border-stone-200 ${colorClasses}`
                   }
                 `}
                 title={filter.description}
               >
-                <span className={`transition-transform duration-200 ${isActive ? "" : "group-hover:scale-110"}`}>
+                <span
+                  className={`transition-transform duration-200 ${isActive ? "" : "group-hover:scale-110"}`}
+                >
                   {filter.icon}
                 </span>
                 <span>{filter.label}</span>

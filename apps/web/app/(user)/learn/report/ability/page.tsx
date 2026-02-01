@@ -112,15 +112,7 @@ function RadarChart({ data }: { data: { dimension: string; value: number; full_m
         {/* 数据点 */}
         {data.map((d, i) => {
           const point = getPoint(i, d.value, d.full_mark);
-          return (
-            <circle
-              key={i}
-              cx={point.x}
-              cy={point.y}
-              r="4"
-              fill="#f59e0b"
-            />
-          );
+          return <circle key={i} cx={point.x} cy={point.y} r="4" fill="#f59e0b" />;
         })}
 
         {/* 标签 */}
@@ -167,7 +159,9 @@ function SubjectAbilityCard({
     <div className="bg-white rounded-xl p-4 border border-stone-200/50 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getSubjectColorClass(subject)} flex items-center justify-center`}>
+          <div
+            className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getSubjectColorClass(subject)} flex items-center justify-center`}
+          >
             <Target className="w-4 h-4 text-white" />
           </div>
           <span className="font-medium text-stone-700">{subjectName}</span>
@@ -187,9 +181,15 @@ function SubjectAbilityCard({
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-stone-500">趋势</span>
-          <div className={`flex items-center gap-1 ${
-            trend === "up" ? "text-green-600" : trend === "down" ? "text-red-600" : "text-stone-400"
-          }`}>
+          <div
+            className={`flex items-center gap-1 ${
+              trend === "up"
+                ? "text-green-600"
+                : trend === "down"
+                  ? "text-red-600"
+                  : "text-stone-400"
+            }`}
+          >
             {trend === "up" ? (
               <>
                 <ArrowUpRight className="w-4 h-4" />
@@ -228,7 +228,9 @@ function QuestionTypeCard({
   isWeak: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between p-3 rounded-xl ${isWeak ? "bg-red-50" : "bg-stone-50"}`}>
+    <div
+      className={`flex items-center justify-between p-3 rounded-xl ${isWeak ? "bg-red-50" : "bg-stone-50"}`}
+    >
       <div className="flex items-center gap-3">
         {isWeak ? (
           <XCircle className="w-5 h-5 text-red-500" />
@@ -237,7 +239,9 @@ function QuestionTypeCard({
         )}
         <div>
           <div className="font-medium text-stone-700">{typeName}</div>
-          <div className="text-xs text-stone-500">{totalCount}题 · 平均{avgTime}秒/题</div>
+          <div className="text-xs text-stone-500">
+            {totalCount}题 · 平均{avgTime}秒/题
+          </div>
         </div>
       </div>
       <span className={`font-semibold ${isWeak ? "text-red-600" : "text-green-600"}`}>
@@ -248,7 +252,11 @@ function QuestionTypeCard({
 }
 
 // 进步曲线
-function ProgressCurve({ data }: { data: { date: string; score: number; correct_rate: number }[] }) {
+function ProgressCurve({
+  data,
+}: {
+  data: { date: string; score: number; correct_rate: number }[];
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-stone-400">
@@ -258,8 +266,8 @@ function ProgressCurve({ data }: { data: { date: string; score: number; correct_
     );
   }
 
-  const maxScore = Math.max(...data.map(d => d.score), 100);
-  const minScore = Math.min(...data.map(d => d.score), 0);
+  const maxScore = Math.max(...data.map((d) => d.score), 100);
+  const minScore = Math.min(...data.map((d) => d.score), 0);
   const range = maxScore - minScore || 1;
 
   return (
@@ -267,10 +275,7 @@ function ProgressCurve({ data }: { data: { date: string; score: number; correct_
       {data.slice(-14).map((item, idx) => {
         const height = ((item.score - minScore) / range) * 100;
         return (
-          <div
-            key={idx}
-            className="flex-1 flex flex-col items-center group"
-          >
+          <div key={idx} className="flex-1 flex flex-col items-center group">
             <div className="flex-1 w-full flex items-end">
               <div
                 className="w-full bg-gradient-to-t from-amber-500 to-orange-400 rounded-t transition-all hover:opacity-80"
@@ -307,8 +312,14 @@ export default function AbilityReportPage() {
   const improvementPlan = aiAnalysis?.improvement_plan;
 
   // 转换雷达图解读数据
-  const strengthAreas = radarInterpretation?.dimension_analysis?.filter(d => d.level === "优秀" || d.level === "良好") || [];
-  const weaknessAreas = radarInterpretation?.dimension_analysis?.filter(d => d.level === "待提升" || d.level === "中等") || [];
+  const strengthAreas =
+    radarInterpretation?.dimension_analysis?.filter(
+      (d) => d.level === "优秀" || d.level === "良好"
+    ) || [];
+  const weaknessAreas =
+    radarInterpretation?.dimension_analysis?.filter(
+      (d) => d.level === "待提升" || d.level === "中等"
+    ) || [];
   const keyInsights = [
     radarInterpretation?.strength_analysis,
     radarInterpretation?.weakness_analysis,
@@ -340,7 +351,9 @@ export default function AbilityReportPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 text-sm text-stone-500 mb-2">
-              <Link href="/learn" className="hover:text-amber-600">学习中心</Link>
+              <Link href="/learn" className="hover:text-amber-600">
+                学习中心
+              </Link>
               <span>/</span>
               <span>学习报告</span>
             </div>
@@ -381,7 +394,8 @@ export default function AbilityReportPage() {
                       <div>
                         <div className="text-sm text-white/80">预测分数区间</div>
                         <div className="text-xl font-semibold">
-                          {Math.round(report.predicted_score.min_score)} - {Math.round(report.predicted_score.max_score)}
+                          {Math.round(report.predicted_score.min_score)} -{" "}
+                          {Math.round(report.predicted_score.max_score)}
                         </div>
                         <div className="text-xs text-white/60">
                           置信度 {Math.round(report.predicted_score.confidence * 100)}%
@@ -462,9 +476,7 @@ export default function AbilityReportPage() {
                 </h2>
                 <div className="bg-white rounded-2xl p-6 border border-stone-200/50 shadow-sm">
                   <ProgressCurve data={report.progress_curve} />
-                  <div className="mt-4 text-center text-sm text-stone-400">
-                    正确率变化趋势
-                  </div>
+                  <div className="mt-4 text-center text-sm text-stone-400">正确率变化趋势</div>
                 </div>
               </section>
             )}
@@ -511,7 +523,12 @@ export default function AbilityReportPage() {
                       <p className="text-sm text-purple-100">点击展开查看 AI 生成的深度分析</p>
                     </div>
                   </div>
-                  <ChevronDown className={cn("w-5 h-5 transition-transform", showAIInterpretation && "rotate-180")} />
+                  <ChevronDown
+                    className={cn(
+                      "w-5 h-5 transition-transform",
+                      showAIInterpretation && "rotate-180"
+                    )}
+                  />
                 </button>
 
                 {showAIInterpretation && (
@@ -522,13 +539,18 @@ export default function AbilityReportPage() {
                         <Brain className="w-5 h-5 text-purple-500" />
                         总体评价
                       </h3>
-                      <p className="text-stone-600 leading-relaxed">{radarInterpretation.overall_summary}</p>
-                      
+                      <p className="text-stone-600 leading-relaxed">
+                        {radarInterpretation.overall_summary}
+                      </p>
+
                       {/* 关键洞察 */}
                       {keyInsights.length > 0 && (
                         <div className="mt-4 space-y-2">
                           {keyInsights.map((insight, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-sm text-stone-600">
+                            <div
+                              key={idx}
+                              className="flex items-start gap-2 text-sm text-stone-600"
+                            >
                               <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                               {insight}
                             </div>
@@ -538,47 +560,70 @@ export default function AbilityReportPage() {
                     </div>
 
                     {/* 各维度详细分析 */}
-                    {radarInterpretation.dimension_analysis && radarInterpretation.dimension_analysis.length > 0 && (
-                      <div className="bg-white rounded-2xl p-6 border border-stone-200/50 shadow-sm">
-                        <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-800 mb-4">
-                          <Target className="w-5 h-5 text-purple-500" />
-                          各维度能力解读
-                        </h3>
-                        <div className="space-y-4">
-                          {radarInterpretation.dimension_analysis.map((dim, idx) => (
-                            <div key={idx} className={cn(
-                              "p-4 rounded-xl",
-                              dim.level === "优秀" ? "bg-emerald-50" :
-                              dim.level === "良好" ? "bg-blue-50" :
-                              dim.level === "中等" ? "bg-amber-50" : "bg-red-50"
-                            )}>
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-stone-700">{dim.dimension}</span>
-                                  <span className={cn(
-                                    "text-xs px-2 py-0.5 rounded-full",
-                                    dim.level === "优秀" ? "bg-emerald-100 text-emerald-700" :
-                                    dim.level === "良好" ? "bg-blue-100 text-blue-700" :
-                                    dim.level === "中等" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
-                                  )}>
-                                    {dim.level}
+                    {radarInterpretation.dimension_analysis &&
+                      radarInterpretation.dimension_analysis.length > 0 && (
+                        <div className="bg-white rounded-2xl p-6 border border-stone-200/50 shadow-sm">
+                          <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-800 mb-4">
+                            <Target className="w-5 h-5 text-purple-500" />
+                            各维度能力解读
+                          </h3>
+                          <div className="space-y-4">
+                            {radarInterpretation.dimension_analysis.map((dim, idx) => (
+                              <div
+                                key={idx}
+                                className={cn(
+                                  "p-4 rounded-xl",
+                                  dim.level === "优秀"
+                                    ? "bg-emerald-50"
+                                    : dim.level === "良好"
+                                      ? "bg-blue-50"
+                                      : dim.level === "中等"
+                                        ? "bg-amber-50"
+                                        : "bg-red-50"
+                                )}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-stone-700">
+                                      {dim.dimension}
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        "text-xs px-2 py-0.5 rounded-full",
+                                        dim.level === "优秀"
+                                          ? "bg-emerald-100 text-emerald-700"
+                                          : dim.level === "良好"
+                                            ? "bg-blue-100 text-blue-700"
+                                            : dim.level === "中等"
+                                              ? "bg-amber-100 text-amber-700"
+                                              : "bg-red-100 text-red-700"
+                                      )}
+                                    >
+                                      {dim.level}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={cn(
+                                      "font-semibold",
+                                      dim.level === "优秀" || dim.level === "良好"
+                                        ? "text-emerald-600"
+                                        : dim.level === "中等"
+                                          ? "text-amber-600"
+                                          : "text-red-600"
+                                    )}
+                                  >
+                                    {dim.score}分
                                   </span>
                                 </div>
-                                <span className={cn(
-                                  "font-semibold",
-                                  dim.level === "优秀" || dim.level === "良好" ? "text-emerald-600" : 
-                                  dim.level === "中等" ? "text-amber-600" : "text-red-600"
-                                )}>
-                                  {dim.score}分
-                                </span>
+                                <p className="text-sm text-stone-500 mb-2">{dim.description}</p>
+                                <p className="text-xs text-stone-600 bg-white/50 p-2 rounded-lg">
+                                  {dim.tips}
+                                </p>
                               </div>
-                              <p className="text-sm text-stone-500 mb-2">{dim.description}</p>
-                              <p className="text-xs text-stone-600 bg-white/50 p-2 rounded-lg">{dim.tips}</p>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* 优势与薄弱分析 */}
                     <div className="grid md:grid-cols-2 gap-4">
@@ -593,8 +638,12 @@ export default function AbilityReportPage() {
                             {strengthAreas.map((area, idx) => (
                               <div key={idx} className="bg-white rounded-xl p-4">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="font-medium text-stone-700">{area.dimension}</span>
-                                  <span className="text-emerald-600 font-semibold">{area.score}分</span>
+                                  <span className="font-medium text-stone-700">
+                                    {area.dimension}
+                                  </span>
+                                  <span className="text-emerald-600 font-semibold">
+                                    {area.score}分
+                                  </span>
                                 </div>
                                 <p className="text-sm text-stone-500 mb-2">{area.description}</p>
                                 <p className="text-xs text-emerald-600">{area.tips}</p>
@@ -617,7 +666,9 @@ export default function AbilityReportPage() {
                             {weaknessAreas.map((area, idx) => (
                               <div key={idx} className="bg-white rounded-xl p-4">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="font-medium text-stone-700">{area.dimension}</span>
+                                  <span className="font-medium text-stone-700">
+                                    {area.dimension}
+                                  </span>
                                   <span className="text-red-600 font-semibold">{area.score}分</span>
                                 </div>
                                 <p className="text-sm text-stone-500 mb-2">{area.description}</p>
@@ -660,54 +711,86 @@ export default function AbilityReportPage() {
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-stone-600">当前分数</span>
-                          <span className="font-bold text-lg">{comparisonAnalysis.target_gap.current_score.toFixed(1)}</span>
+                          <span className="font-bold text-lg">
+                            {comparisonAnalysis.target_gap.current_score.toFixed(1)}
+                          </span>
                         </div>
                         <div className="h-4 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all"
-                            style={{ width: `${Math.min((comparisonAnalysis.target_gap.current_score / comparisonAnalysis.target_gap.target_score) * 100, 100)}%` }}
+                            style={{
+                              width: `${Math.min((comparisonAnalysis.target_gap.current_score / comparisonAnalysis.target_gap.target_score) * 100, 100)}%`,
+                            }}
                           />
                         </div>
                         <div className="flex items-center justify-between mt-2 text-sm">
-                          <span className="text-stone-400">目标: {comparisonAnalysis.target_gap.target_score}分</span>
-                          <span className={cn(
-                            comparisonAnalysis.target_gap.gap_value <= 0 ? "text-emerald-500" : "text-red-500"
-                          )}>
-                            {comparisonAnalysis.target_gap.gap_value <= 0 ? "已达标" : `差距: ${comparisonAnalysis.target_gap.gap_value.toFixed(1)}分`}
+                          <span className="text-stone-400">
+                            目标: {comparisonAnalysis.target_gap.target_score}分
+                          </span>
+                          <span
+                            className={cn(
+                              comparisonAnalysis.target_gap.gap_value <= 0
+                                ? "text-emerald-500"
+                                : "text-red-500"
+                            )}
+                          >
+                            {comparisonAnalysis.target_gap.gap_value <= 0
+                              ? "已达标"
+                              : `差距: ${comparisonAnalysis.target_gap.gap_value.toFixed(1)}分`}
                           </span>
                         </div>
                       </div>
-                      <p className="text-stone-600 text-sm">{comparisonAnalysis.target_gap.gap_description}</p>
+                      <p className="text-stone-600 text-sm">
+                        {comparisonAnalysis.target_gap.gap_description}
+                      </p>
                       {comparisonAnalysis.target_gap.estimated_days > 0 && (
                         <p className="text-amber-600 text-sm mt-2">
-                          预计需要 <span className="font-bold">{comparisonAnalysis.target_gap.estimated_days}</span> 天达成目标
+                          预计需要{" "}
+                          <span className="font-bold">
+                            {comparisonAnalysis.target_gap.estimated_days}
+                          </span>{" "}
+                          天达成目标
                         </p>
                       )}
 
                       {/* 各科目差距 */}
-                      {comparisonAnalysis.target_gap.subject_gaps && comparisonAnalysis.target_gap.subject_gaps.length > 0 && (
-                        <div className="mt-4 space-y-3">
-                          <h5 className="text-sm font-medium text-stone-600">各科目差距</h5>
-                          {comparisonAnalysis.target_gap.subject_gaps.map((gap, idx) => (
-                            <div key={idx} className="flex items-center gap-4">
-                              <div className="w-20 text-sm font-medium text-stone-700">{gap.subject_name}</div>
-                              <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
-                                <div
-                                  className={cn(
-                                    "h-full rounded-full",
-                                    gap.priority <= 2 ? "bg-red-500" : gap.priority <= 3 ? "bg-amber-500" : "bg-emerald-500"
-                                  )}
-                                  style={{ width: `${Math.min((gap.current_score / gap.target_score) * 100, 100)}%` }}
-                                />
+                      {comparisonAnalysis.target_gap.subject_gaps &&
+                        comparisonAnalysis.target_gap.subject_gaps.length > 0 && (
+                          <div className="mt-4 space-y-3">
+                            <h5 className="text-sm font-medium text-stone-600">各科目差距</h5>
+                            {comparisonAnalysis.target_gap.subject_gaps.map((gap, idx) => (
+                              <div key={idx} className="flex items-center gap-4">
+                                <div className="w-20 text-sm font-medium text-stone-700">
+                                  {gap.subject_name}
+                                </div>
+                                <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full",
+                                      gap.priority <= 2
+                                        ? "bg-red-500"
+                                        : gap.priority <= 3
+                                          ? "bg-amber-500"
+                                          : "bg-emerald-500"
+                                    )}
+                                    style={{
+                                      width: `${Math.min((gap.current_score / gap.target_score) * 100, 100)}%`,
+                                    }}
+                                  />
+                                </div>
+                                <div className="w-24 text-right text-sm">
+                                  <span className="text-stone-600">
+                                    {gap.current_score.toFixed(0)}
+                                  </span>
+                                  <span className="text-stone-400">
+                                    {" "}
+                                    / {gap.target_score.toFixed(0)}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="w-24 text-right text-sm">
-                                <span className="text-stone-600">{gap.current_score.toFixed(0)}</span>
-                                <span className="text-stone-400"> / {gap.target_score.toFixed(0)}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        )}
                     </div>
                   )}
 
@@ -719,18 +802,33 @@ export default function AbilityReportPage() {
                         与平均水平对比
                       </h4>
                       <div className="flex items-center gap-4 mb-2">
-                        <span className="text-stone-600">您的分数: {comparisonAnalysis.average_gap.current_score.toFixed(1)}</span>
-                        <span className="text-stone-400">平均分数: {comparisonAnalysis.average_gap.average_score.toFixed(1)}</span>
-                        <span className={cn(
-                          "font-semibold",
-                          comparisonAnalysis.average_gap.gap_value >= 0 ? "text-emerald-600" : "text-red-600"
-                        )}>
-                          {comparisonAnalysis.average_gap.gap_value >= 0 ? "+" : ""}{comparisonAnalysis.average_gap.gap_value.toFixed(1)}分
+                        <span className="text-stone-600">
+                          您的分数: {comparisonAnalysis.average_gap.current_score.toFixed(1)}
+                        </span>
+                        <span className="text-stone-400">
+                          平均分数: {comparisonAnalysis.average_gap.average_score.toFixed(1)}
+                        </span>
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            comparisonAnalysis.average_gap.gap_value >= 0
+                              ? "text-emerald-600"
+                              : "text-red-600"
+                          )}
+                        >
+                          {comparisonAnalysis.average_gap.gap_value >= 0 ? "+" : ""}
+                          {comparisonAnalysis.average_gap.gap_value.toFixed(1)}分
                         </span>
                       </div>
-                      <p className="text-sm text-blue-700">{comparisonAnalysis.average_gap.gap_description}</p>
+                      <p className="text-sm text-blue-700">
+                        {comparisonAnalysis.average_gap.gap_description}
+                      </p>
                       <p className="text-sm text-blue-600 mt-1">
-                        您超过了 <span className="font-bold">{comparisonAnalysis.average_gap.percentile_rank}%</span> 的考生
+                        您超过了{" "}
+                        <span className="font-bold">
+                          {comparisonAnalysis.average_gap.percentile_rank}%
+                        </span>{" "}
+                        的考生
                       </p>
                     </div>
                   )}
@@ -743,32 +841,48 @@ export default function AbilityReportPage() {
                         与优秀者（前10%）对比
                       </h4>
                       <div className="flex items-center gap-4 mb-2">
-                        <span className="text-stone-600">您的分数: {comparisonAnalysis.top_gap.current_score.toFixed(1)}</span>
-                        <span className="text-stone-400">优秀者平均: {comparisonAnalysis.top_gap.top_score.toFixed(1)}</span>
-                        <span className={cn(
-                          "font-semibold",
-                          comparisonAnalysis.top_gap.gap_value <= 0 ? "text-emerald-600" : "text-amber-600"
-                        )}>
-                          {comparisonAnalysis.top_gap.gap_value <= 0 ? "已达标" : `差距: ${comparisonAnalysis.top_gap.gap_value.toFixed(1)}分`}
+                        <span className="text-stone-600">
+                          您的分数: {comparisonAnalysis.top_gap.current_score.toFixed(1)}
+                        </span>
+                        <span className="text-stone-400">
+                          优秀者平均: {comparisonAnalysis.top_gap.top_score.toFixed(1)}
+                        </span>
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            comparisonAnalysis.top_gap.gap_value <= 0
+                              ? "text-emerald-600"
+                              : "text-amber-600"
+                          )}
+                        >
+                          {comparisonAnalysis.top_gap.gap_value <= 0
+                            ? "已达标"
+                            : `差距: ${comparisonAnalysis.top_gap.gap_value.toFixed(1)}分`}
                         </span>
                       </div>
-                      <p className="text-sm text-amber-700">{comparisonAnalysis.top_gap.gap_description}</p>
+                      <p className="text-sm text-amber-700">
+                        {comparisonAnalysis.top_gap.gap_description}
+                      </p>
                     </div>
                   )}
 
                   {/* 主要差距领域 */}
-                  {comparisonAnalysis.key_gap_areas && comparisonAnalysis.key_gap_areas.length > 0 && (
-                    <div className="mt-4 p-4 bg-red-50 rounded-xl">
-                      <h4 className="font-medium text-red-800 mb-2">主要差距领域</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {comparisonAnalysis.key_gap_areas.map((area, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-white text-red-600 text-sm rounded-full">
-                            {area}
-                          </span>
-                        ))}
+                  {comparisonAnalysis.key_gap_areas &&
+                    comparisonAnalysis.key_gap_areas.length > 0 && (
+                      <div className="mt-4 p-4 bg-red-50 rounded-xl">
+                        <h4 className="font-medium text-red-800 mb-2">主要差距领域</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {comparisonAnalysis.key_gap_areas.map((area, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 bg-white text-red-600 text-sm rounded-full"
+                            >
+                              {area}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </section>
             )}
@@ -794,10 +908,18 @@ export default function AbilityReportPage() {
                           </div>
                           <div className="text-left">
                             <h3 className="font-medium text-stone-800">短期突破计划</h3>
-                            <p className="text-sm text-stone-500">{improvementPlan.short_term_strategy.period} · 预计提升{improvementPlan.short_term_strategy.expected_gain}分</p>
+                            <p className="text-sm text-stone-500">
+                              {improvementPlan.short_term_strategy.period} · 预计提升
+                              {improvementPlan.short_term_strategy.expected_gain}分
+                            </p>
                           </div>
                         </div>
-                        <ChevronDown className={cn("w-5 h-5 text-stone-400 transition-transform", expandedStrategy === 0 && "rotate-180")} />
+                        <ChevronDown
+                          className={cn(
+                            "w-5 h-5 text-stone-400 transition-transform",
+                            expandedStrategy === 0 && "rotate-180"
+                          )}
+                        />
                       </button>
                       {expandedStrategy === 0 && (
                         <div className="px-4 pb-4">
@@ -806,7 +928,10 @@ export default function AbilityReportPage() {
                               <h4 className="text-sm font-medium text-stone-700 mb-2">目标</h4>
                               <ul className="space-y-1">
                                 {improvementPlan.short_term_strategy.goals.map((goal, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-stone-600">
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 text-sm text-stone-600"
+                                  >
                                     <Target className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
                                     {goal}
                                   </li>
@@ -817,7 +942,10 @@ export default function AbilityReportPage() {
                               <h4 className="text-sm font-medium text-stone-700 mb-2">行动建议</h4>
                               <ul className="space-y-1">
                                 {improvementPlan.short_term_strategy.actions.map((action, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-stone-600">
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 text-sm text-stone-600"
+                                  >
                                     <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                                     {action}
                                   </li>
@@ -843,10 +971,18 @@ export default function AbilityReportPage() {
                           </div>
                           <div className="text-left">
                             <h3 className="font-medium text-stone-800">中期巩固计划</h3>
-                            <p className="text-sm text-stone-500">{improvementPlan.medium_term_strategy.period} · 预计提升{improvementPlan.medium_term_strategy.expected_gain}分</p>
+                            <p className="text-sm text-stone-500">
+                              {improvementPlan.medium_term_strategy.period} · 预计提升
+                              {improvementPlan.medium_term_strategy.expected_gain}分
+                            </p>
                           </div>
                         </div>
-                        <ChevronDown className={cn("w-5 h-5 text-stone-400 transition-transform", expandedStrategy === 1 && "rotate-180")} />
+                        <ChevronDown
+                          className={cn(
+                            "w-5 h-5 text-stone-400 transition-transform",
+                            expandedStrategy === 1 && "rotate-180"
+                          )}
+                        />
                       </button>
                       {expandedStrategy === 1 && (
                         <div className="px-4 pb-4">
@@ -855,7 +991,10 @@ export default function AbilityReportPage() {
                               <h4 className="text-sm font-medium text-stone-700 mb-2">目标</h4>
                               <ul className="space-y-1">
                                 {improvementPlan.medium_term_strategy.goals.map((goal, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-stone-600">
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 text-sm text-stone-600"
+                                  >
                                     <Target className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                                     {goal}
                                   </li>
@@ -866,7 +1005,10 @@ export default function AbilityReportPage() {
                               <h4 className="text-sm font-medium text-stone-700 mb-2">行动建议</h4>
                               <ul className="space-y-1">
                                 {improvementPlan.medium_term_strategy.actions.map((action, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-stone-600">
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 text-sm text-stone-600"
+                                  >
                                     <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                                     {action}
                                   </li>
@@ -892,10 +1034,18 @@ export default function AbilityReportPage() {
                           </div>
                           <div className="text-left">
                             <h3 className="font-medium text-stone-800">长期提升规划</h3>
-                            <p className="text-sm text-stone-500">{improvementPlan.long_term_strategy.period} · 预计提升{improvementPlan.long_term_strategy.expected_gain}分</p>
+                            <p className="text-sm text-stone-500">
+                              {improvementPlan.long_term_strategy.period} · 预计提升
+                              {improvementPlan.long_term_strategy.expected_gain}分
+                            </p>
                           </div>
                         </div>
-                        <ChevronDown className={cn("w-5 h-5 text-stone-400 transition-transform", expandedStrategy === 2 && "rotate-180")} />
+                        <ChevronDown
+                          className={cn(
+                            "w-5 h-5 text-stone-400 transition-transform",
+                            expandedStrategy === 2 && "rotate-180"
+                          )}
+                        />
                       </button>
                       {expandedStrategy === 2 && (
                         <div className="px-4 pb-4">
@@ -904,7 +1054,10 @@ export default function AbilityReportPage() {
                               <h4 className="text-sm font-medium text-stone-700 mb-2">目标</h4>
                               <ul className="space-y-1">
                                 {improvementPlan.long_term_strategy.goals.map((goal, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-stone-600">
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 text-sm text-stone-600"
+                                  >
                                     <Target className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                                     {goal}
                                   </li>
@@ -915,7 +1068,10 @@ export default function AbilityReportPage() {
                               <h4 className="text-sm font-medium text-stone-700 mb-2">行动建议</h4>
                               <ul className="space-y-1">
                                 {improvementPlan.long_term_strategy.actions.map((action, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-stone-600">
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 text-sm text-stone-600"
+                                  >
                                     <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                                     {action}
                                   </li>
@@ -940,15 +1096,23 @@ export default function AbilityReportPage() {
                           <div key={idx} className="bg-white rounded-xl p-4">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                <span className={cn(
-                                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white",
-                                  area.priority === 1 ? "bg-red-500" : area.priority === 2 ? "bg-amber-500" : "bg-blue-500"
-                                )}>
+                                <span
+                                  className={cn(
+                                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white",
+                                    area.priority === 1
+                                      ? "bg-red-500"
+                                      : area.priority === 2
+                                        ? "bg-amber-500"
+                                        : "bg-blue-500"
+                                  )}
+                                >
                                   {area.priority}
                                 </span>
                                 <span className="font-medium text-stone-800">{area.area}</span>
                               </div>
-                              <span className="text-sm text-stone-500">预计{area.estimated_time}小时</span>
+                              <span className="text-sm text-stone-500">
+                                预计{area.estimated_time}小时
+                              </span>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-stone-600 mb-2">
                               <span>当前: {area.current_level}</span>
@@ -958,7 +1122,10 @@ export default function AbilityReportPage() {
                             {area.recommend_tasks && (
                               <ul className="space-y-1 mt-2">
                                 {area.recommend_tasks.map((task, taskIdx) => (
-                                  <li key={taskIdx} className="text-sm text-stone-500 flex items-center gap-2">
+                                  <li
+                                    key={taskIdx}
+                                    className="text-sm text-stone-500 flex items-center gap-2"
+                                  >
                                     <span className="w-1 h-1 bg-purple-400 rounded-full" />
                                     {task}
                                   </li>
@@ -983,7 +1150,9 @@ export default function AbilityReportPage() {
                           <div key={idx} className="p-4 bg-stone-50 rounded-xl">
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-medium text-stone-700">第{week.week}周</span>
-                              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">{week.theme}</span>
+                              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                                {week.theme}
+                              </span>
                             </div>
                             <ul className="space-y-1 text-sm text-stone-600 mb-2">
                               {week.main_tasks.map((task, taskIdx) => (
@@ -1004,22 +1173,23 @@ export default function AbilityReportPage() {
                   )}
 
                   {/* 激励建议 */}
-                  {improvementPlan.motivational_tips && improvementPlan.motivational_tips.length > 0 && (
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-amber-800 mb-4">
-                        <Lightbulb className="w-5 h-5" />
-                        学习建议
-                      </h3>
-                      <div className="space-y-2">
-                        {improvementPlan.motivational_tips.map((tip, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-stone-600">
-                            <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                            {tip}
-                          </div>
-                        ))}
+                  {improvementPlan.motivational_tips &&
+                    improvementPlan.motivational_tips.length > 0 && (
+                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6">
+                        <h3 className="flex items-center gap-2 text-lg font-semibold text-amber-800 mb-4">
+                          <Lightbulb className="w-5 h-5" />
+                          学习建议
+                        </h3>
+                        <div className="space-y-2">
+                          {improvementPlan.motivational_tips.map((tip, idx) => (
+                            <div key={idx} className="flex items-start gap-2 text-stone-600">
+                              <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                              {tip}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </section>
             )}
@@ -1048,7 +1218,9 @@ export default function AbilityReportPage() {
               <Calendar className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">日报告</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                日报告
+              </div>
               <div className="text-xs text-stone-400">查看今日学习详情</div>
             </div>
           </Link>
@@ -1060,7 +1232,9 @@ export default function AbilityReportPage() {
               <Clock className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">周报告</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                周报告
+              </div>
               <div className="text-xs text-stone-400">查看本周学习趋势</div>
             </div>
           </Link>
@@ -1086,9 +1260,11 @@ function ComparisonItem({
   return (
     <div className="text-center">
       <div className="text-sm text-stone-500 mb-2">{label}</div>
-      <div className={`flex items-center justify-center gap-1 ${
-        isNeutral ? "text-stone-400" : isPositive ? "text-green-600" : "text-red-600"
-      }`}>
+      <div
+        className={`flex items-center justify-center gap-1 ${
+          isNeutral ? "text-stone-400" : isPositive ? "text-green-600" : "text-red-600"
+        }`}
+      >
         {isNeutral ? (
           <Minus className="w-5 h-5" />
         ) : isPositive ? (

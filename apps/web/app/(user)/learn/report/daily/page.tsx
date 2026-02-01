@@ -44,7 +44,7 @@ function formatDateStr(dateStr: string): string {
   } else if (date.toDateString() === yesterday.toDateString()) {
     return "昨日";
   }
-  
+
   const weekDays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   return `${date.getMonth() + 1}月${date.getDate()}日 ${weekDays[date.getDay()]}`;
 }
@@ -79,9 +79,14 @@ function StatCard({
           {subValue && <div className="text-xs text-stone-400 mt-1">{subValue}</div>}
         </div>
         {change !== undefined && change !== 0 && (
-          <div className={`flex items-center gap-1 text-sm ${change > 0 ? "text-green-600" : "text-red-600"}`}>
+          <div
+            className={`flex items-center gap-1 text-sm ${change > 0 ? "text-green-600" : "text-red-600"}`}
+          >
             {change > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span>{change > 0 ? "+" : ""}{change}</span>
+            <span>
+              {change > 0 ? "+" : ""}
+              {change}
+            </span>
           </div>
         )}
       </div>
@@ -90,7 +95,11 @@ function StatCard({
 }
 
 // 科目分布条形图
-function SubjectBarChart({ data }: { data: { subject: string; minutes: number; question_count: number; correct_rate: number }[] }) {
+function SubjectBarChart({
+  data,
+}: {
+  data: { subject: string; minutes: number; question_count: number; correct_rate: number }[];
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-stone-400">
@@ -100,7 +109,7 @@ function SubjectBarChart({ data }: { data: { subject: string; minutes: number; q
     );
   }
 
-  const maxMinutes = Math.max(...data.map(d => d.minutes), 1);
+  const maxMinutes = Math.max(...data.map((d) => d.minutes), 1);
 
   return (
     <div className="space-y-4">
@@ -109,7 +118,8 @@ function SubjectBarChart({ data }: { data: { subject: string; minutes: number; q
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-stone-700">{getSubjectLabel(item.subject)}</span>
             <span className="text-stone-500">
-              {formatStudyTime(item.minutes)} · {item.question_count}题 · {formatPercent(item.correct_rate)}
+              {formatStudyTime(item.minutes)} · {item.question_count}题 ·{" "}
+              {formatPercent(item.correct_rate)}
             </span>
           </div>
           <div className="h-3 bg-stone-100 rounded-full overflow-hidden">
@@ -125,7 +135,17 @@ function SubjectBarChart({ data }: { data: { subject: string; minutes: number; q
 }
 
 // 目标进度环
-function GoalRing({ actual, goal, label, unit }: { actual: number; goal: number; label: string; unit: string }) {
+function GoalRing({
+  actual,
+  goal,
+  label,
+  unit,
+}: {
+  actual: number;
+  goal: number;
+  label: string;
+  unit: string;
+}) {
   const percent = calculateGoalProgress(actual, goal);
   const isAchieved = percent >= 100;
   const circumference = 2 * Math.PI * 40;
@@ -135,14 +155,7 @@ function GoalRing({ actual, goal, label, unit }: { actual: number; goal: number;
     <div className="flex flex-col items-center">
       <div className="relative w-24 h-24">
         <svg className="w-full h-full transform -rotate-90">
-          <circle
-            cx="48"
-            cy="48"
-            r="40"
-            stroke="#e5e5e5"
-            strokeWidth="8"
-            fill="none"
-          />
+          <circle cx="48" cy="48" r="40" stroke="#e5e5e5" strokeWidth="8" fill="none" />
           <circle
             cx="48"
             cy="48"
@@ -167,7 +180,8 @@ function GoalRing({ actual, goal, label, unit }: { actual: number; goal: number;
       <div className="mt-2 text-center">
         <div className="text-sm font-medium text-stone-700">{label}</div>
         <div className="text-xs text-stone-400">
-          {actual}/{goal}{unit}
+          {actual}/{goal}
+          {unit}
         </div>
       </div>
     </div>
@@ -226,7 +240,9 @@ export default function DailyReportPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 text-sm text-stone-500 mb-2">
-              <Link href="/learn" className="hover:text-amber-600">学习中心</Link>
+              <Link href="/learn" className="hover:text-amber-600">
+                学习中心
+              </Link>
               <span>/</span>
               <span>学习报告</span>
             </div>
@@ -432,7 +448,9 @@ export default function DailyReportPage() {
               <Calendar className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">周报告</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                周报告
+              </div>
               <div className="text-xs text-stone-400">查看本周学习趋势</div>
             </div>
           </Link>
@@ -444,7 +462,9 @@ export default function DailyReportPage() {
               <Target className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">能力分析</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                能力分析
+              </div>
               <div className="text-xs text-stone-400">查看综合能力评估</div>
             </div>
           </Link>
@@ -473,9 +493,11 @@ function ComparisonItem({
   return (
     <div className="text-center">
       <div className="text-sm text-stone-500 mb-2">{label}</div>
-      <div className={`flex items-center justify-center gap-1 ${
-        isNeutral ? "text-stone-400" : isPositive ? "text-green-600" : "text-red-600"
-      }`}>
+      <div
+        className={`flex items-center justify-center gap-1 ${
+          isNeutral ? "text-stone-400" : isPositive ? "text-green-600" : "text-red-600"
+        }`}
+      >
         {isNeutral ? (
           <Minus className="w-5 h-5" />
         ) : isPositive ? (

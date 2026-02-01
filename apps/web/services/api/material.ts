@@ -288,8 +288,7 @@ export const materialApi = {
     }),
 
   // 获取素材详情
-  getMaterial: (id: number) =>
-    request.get<LearningMaterial>(`/materials/${id}`),
+  getMaterial: (id: number) => request.get<LearningMaterial>(`/materials/${id}`),
 
   // 获取热门素材
   getHotMaterials: (limit?: number) =>
@@ -307,23 +306,18 @@ export const materialApi = {
 
   // 按主题获取素材
   getMaterialsByThemeTopic: (topic: string, limit?: number) =>
-    request.get<MaterialBrief[]>(
-      `/materials/by-theme/${encodeURIComponent(topic)}`,
-      {
-        params: { limit },
-      }
-    ),
+    request.get<MaterialBrief[]>(`/materials/by-theme/${encodeURIComponent(topic)}`, {
+      params: { limit },
+    }),
 
   // 获取素材统计
   getMaterialStats: () => request.get<MaterialStats>("/materials/stats"),
 
   // 获取素材类型列表
-  getMaterialTypes: () =>
-    request.get<Record<MaterialType, string>>("/materials/types"),
+  getMaterialTypes: () => request.get<Record<MaterialType, string>>("/materials/types"),
 
   // 获取素材子类型列表
-  getMaterialSubTypes: () =>
-    request.get<Record<MaterialSubType, string>>("/materials/sub-types"),
+  getMaterialSubTypes: () => request.get<Record<MaterialSubType, string>>("/materials/sub-types"),
 
   // 获取热点主题列表
   getThemeTopics: () => request.get<string[]>("/materials/theme-topics"),
@@ -333,8 +327,7 @@ export const materialApi = {
   // =====================================================
 
   // 获取所有分类
-  getCategories: () =>
-    request.get<{ categories: MaterialCategory[] }>("/materials/categories"),
+  getCategories: () => request.get<{ categories: MaterialCategory[] }>("/materials/categories"),
 
   // 获取分类树
   getCategoryTree: () =>
@@ -342,9 +335,7 @@ export const materialApi = {
 
   // 按素材类型获取分类
   getCategoriesByType: (type: MaterialType) =>
-    request.get<{ categories: MaterialCategory[] }>(
-      `/materials/categories/type/${type}`
-    ),
+    request.get<{ categories: MaterialCategory[] }>(`/materials/categories/type/${type}`),
 
   // 按科目获取分类
   getCategoriesBySubject: (subject: string) =>
@@ -353,16 +344,14 @@ export const materialApi = {
     ),
 
   // 获取分类详情
-  getCategory: (id: number) =>
-    request.get<MaterialCategory>(`/materials/categories/${id}`),
+  getCategory: (id: number) => request.get<MaterialCategory>(`/materials/categories/${id}`),
 
   // =====================================================
   // 收藏接口 (需要登录)
   // =====================================================
 
   // 收藏素材
-  collectMaterial: (id: number) =>
-    request.post<{ message: string }>(`/materials/${id}/collect`),
+  collectMaterial: (id: number) => request.post<{ message: string }>(`/materials/${id}/collect`),
 
   // 取消收藏素材
   uncollectMaterial: (id: number) =>

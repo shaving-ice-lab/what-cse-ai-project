@@ -23,9 +23,7 @@ const CONFIG = {
   // 无 token：使用内部接口（开发环境无需认证）
   apiBaseUrl:
     process.env.API_BASE_URL ||
-    (apiToken
-      ? "http://localhost:9000/api/v1"
-      : "http://localhost:9000/api/v1/internal"),
+    (apiToken ? "http://localhost:9000/api/v1" : "http://localhost:9000/api/v1/internal"),
   apiToken,
   generatedDir: path.join(__dirname, "generated"),
   importedFile: path.join(__dirname, "generated/.imported.json"),
@@ -66,11 +64,7 @@ function convertOptions(options: string[]): QuestionOption[] {
 }
 
 // API 请求封装
-async function apiRequest(
-  endpoint: string,
-  method: string,
-  body?: any
-): Promise<any> {
+async function apiRequest(endpoint: string, method: string, body?: any): Promise<any> {
   const url = `${CONFIG.apiBaseUrl}${endpoint}`;
 
   const headers: Record<string, string> = {
@@ -97,9 +91,7 @@ async function apiRequest(
     }
 
     if (!response.ok) {
-      throw new Error(
-        `API Error ${response.status}: ${responseData.message || responseText}`
-      );
+      throw new Error(`API Error ${response.status}: ${responseData.message || responseText}`);
     }
 
     return responseData;
@@ -118,8 +110,8 @@ async function importCourse(
 ): Promise<{ success: boolean; count: number; error?: string }> {
   const metadata = data._metadata;
   const lessonOrder = metadata?.lesson_order || 0;
-  const section = metadata?.section || '';
-  
+  const section = metadata?.section || "";
+
   console.log(`   📚 导入课程：${data.chapter_title}`);
   if (lessonOrder > 0) {
     console.log(`      📍 顺序: ${lessonOrder}, 章节: ${section}`);
@@ -136,20 +128,19 @@ async function importCourse(
     const endpoint = CONFIG.apiToken
       ? "/admin/content/import/course-lesson"
       : "/content/import/course-lesson";
-    
+
     // 发送完整数据，包括元数据
     const result = await apiRequest(endpoint, "POST", {
-        // 元数据
-        _metadata: data._metadata,
-        // 课程内容
-        chapter_title: data.chapter_title,
-        subject: data.subject,
-        knowledge_point: data.knowledge_point,
-        lesson_content: data.lesson_content,
-        lesson_sections: data.lesson_sections,
-        practice_problems: data.practice_problems,
-      }
-    );
+      // 元数据
+      _metadata: data._metadata,
+      // 课程内容
+      chapter_title: data.chapter_title,
+      subject: data.subject,
+      knowledge_point: data.knowledge_point,
+      lesson_content: data.lesson_content,
+      lesson_sections: data.lesson_sections,
+      practice_problems: data.practice_problems,
+    });
 
     return { success: true, count: 1 };
   } catch (error) {
@@ -198,11 +189,10 @@ async function importQuestions(
       ? "/admin/content/import/questions"
       : "/content/import/questions";
     const result = await apiRequest(endpoint, "POST", {
-        questions: formattedQuestions,
-        category_name: batchInfo.category,
-        sub_category_name: batchInfo.topic,
-      }
-    );
+      questions: formattedQuestions,
+      category_name: batchInfo.category,
+      sub_category_name: batchInfo.topic,
+    });
 
     return {
       success: true,
@@ -240,11 +230,7 @@ async function importMaterials(
       type: m.material_type || "quote",
       sub_type: m.sub_type || "",
       // 后端期望逗号分隔的字符串
-      theme_topics: Array.isArray(m.theme)
-        ? m.theme.join(",")
-        : m.theme
-          ? String(m.theme)
-          : "",
+      theme_topics: Array.isArray(m.theme) ? m.theme.join(",") : m.theme ? String(m.theme) : "",
       usage: m.usage_scenario || "",
       // 后端期望逗号分隔的字符串
       tags: Array.isArray(m.tags) ? m.tags.join(",") : m.tags || "",
@@ -272,12 +258,10 @@ async function importMaterials(
 // 根据分类名称推断素材类型
 function detectMaterialType(categoryName: string): string {
   if (!categoryName) return "quote";
-  if (categoryName.includes("名言") || categoryName.includes("警句"))
-    return "quote";
+  if (categoryName.includes("名言") || categoryName.includes("警句")) return "quote";
   if (categoryName.includes("案例")) return "case";
   if (categoryName.includes("热点")) return "hot_topic";
-  if (categoryName.includes("面试") || categoryName.includes("金句"))
-    return "interview";
+  if (categoryName.includes("面试") || categoryName.includes("金句")) return "interview";
   return "quote";
 }
 
@@ -286,10 +270,7 @@ function detectMaterialType(categoryName: string): string {
 // =====================================================
 
 // 判断文件类型
-function detectFileType(
-  filePath: string,
-  content: any
-): "course" | "question" | "material" {
+function detectFileType(filePath: string, content: any): "course" | "question" | "material" {
   const dir = path.dirname(filePath);
   if (dir.includes("courses") || content.lesson_content) {
     return "course";
@@ -348,10 +329,7 @@ function scanPendingFiles(): string[] {
 }
 
 // 导入单个文件
-async function importFile(
-  filePath: string,
-  dryRun: boolean
-): Promise<ImportResult> {
+async function importFile(filePath: string, dryRun: boolean): Promise<ImportResult> {
   const relativePath = path.relative(CONFIG.generatedDir, filePath);
   console.log(`\n📄 处理文件：${relativePath}`);
 
@@ -400,15 +378,9 @@ async function main() {
   const specificFile = fileIndex >= 0 ? args[fileIndex + 1] : null;
 
   console.log("");
-  console.log(
-    "╔══════════════════════════════════════════════════════════════════╗"
-  );
-  console.log(
-    "║                    内容导入工具 v2.0                             ║"
-  );
-  console.log(
-    "╚══════════════════════════════════════════════════════════════════╝"
-  );
+  console.log("╔══════════════════════════════════════════════════════════════════╗");
+  console.log("║                    内容导入工具 v2.0                             ║");
+  console.log("╚══════════════════════════════════════════════════════════════════╝");
 
   if (dryRun) {
     console.log("⚠️  预览模式：不会实际导入数据");

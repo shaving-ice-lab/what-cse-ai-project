@@ -29,13 +29,13 @@ interface FullscreenExamModeProps {
 }
 
 // Anti-cheat warning modal
-function AntiCheatWarning({ 
-  isOpen, 
-  onClose, 
-  warningCount 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
+function AntiCheatWarning({
+  isOpen,
+  onClose,
+  warningCount,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
   warningCount: number;
 }) {
   if (!isOpen) return null;
@@ -254,7 +254,7 @@ export function FullscreenExamMode({
         setWarningCount((prev) => {
           const newCount = prev + 1;
           setShowWarningModal(true);
-          
+
           // Play warning sound if enabled
           if (soundEnabled) {
             try {
@@ -262,7 +262,7 @@ export function FullscreenExamMode({
               audio.play().catch(() => {});
             } catch {}
           }
-          
+
           return newCount;
         });
       }
@@ -380,8 +380,8 @@ export function FullscreenExamMode({
                   isTimeCritical
                     ? "bg-red-100 text-red-700 animate-pulse"
                     : isTimeWarning
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-stone-100 text-stone-700"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-stone-100 text-stone-700"
                 )}
               >
                 <Clock className="w-5 h-5" />
@@ -406,16 +406,28 @@ export function FullscreenExamMode({
       </div>
 
       {/* Main content */}
-      <div className="container mx-auto px-4 py-6">
-        {children}
-      </div>
+      <div className="container mx-auto px-4 py-6">{children}</div>
 
       {/* CSS for shake animation */}
       <style jsx global>{`
         @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          10%,
+          30%,
+          50%,
+          70%,
+          90% {
+            transform: translateX(-5px);
+          }
+          20%,
+          40%,
+          60%,
+          80% {
+            transform: translateX(5px);
+          }
         }
         .animate-shake {
           animation: shake 0.5s ease-in-out;

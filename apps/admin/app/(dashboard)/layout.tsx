@@ -11,7 +11,7 @@ const fullHeightPages = ["/learning/manager", "/learning/content"];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isFullHeight = fullHeightPages.some(p => pathname.startsWith(p));
+  const isFullHeight = fullHeightPages.some((p) => pathname.startsWith(p));
 
   // 启用活动追踪
   useActivityTracker();
@@ -21,7 +21,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <AppSidebar />
       <SidebarInset className="flex flex-col h-screen overflow-hidden">
         <SiteHeader />
-        <main className={isFullHeight ? "flex-1 overflow-hidden" : "flex-1 overflow-auto p-4 md:p-6"}>
+        <main
+          className={isFullHeight ? "flex-1 overflow-hidden" : "flex-1 overflow-auto p-4 md:p-6"}
+        >
           {children}
         </main>
       </SidebarInset>

@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  MapPin, 
-  Calculator, 
-  Trophy, 
+import {
+  MapPin,
+  Calculator,
+  Trophy,
   ArrowRight,
   Building2,
   Target,
   Clock,
   Users,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 
 const tools = [
@@ -64,7 +64,7 @@ export default function ToolsPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-white to-blue-50/30" />
         <div className="absolute top-20 right-10 w-64 h-64 bg-amber-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-10 w-48 h-48 bg-blue-200/20 rounded-full blur-2xl" />
-        
+
         <div className="container relative mx-auto px-4 lg:px-6 py-12 lg:py-16">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 text-sm font-medium text-amber-700 mb-6">
@@ -82,7 +82,7 @@ export default function ToolsPage() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-12">
             {stats.map((stat) => (
-              <div 
+              <div
                 key={stat.label}
                 className="flex flex-col items-center p-4 bg-white/80 backdrop-blur rounded-xl border border-stone-200"
               >
@@ -99,34 +99,34 @@ export default function ToolsPage() {
       <section className="container mx-auto px-4 lg:px-6 pb-12">
         <div className="grid md:grid-cols-3 gap-6">
           {tools.map((tool) => (
-            <Link 
+            <Link
               key={tool.id}
               href={tool.href}
               className="group relative bg-white rounded-2xl border border-stone-200 hover:border-amber-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
             >
               {/* Top gradient bar */}
               <div className={`h-1.5 ${tool.bgColor}`} />
-              
+
               <div className="p-6">
                 {/* Icon and Title */}
                 <div className="flex items-start gap-4 mb-4">
-                  <div className={`w-14 h-14 rounded-xl ${tool.bgColor} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                  <div
+                    className={`w-14 h-14 rounded-xl ${tool.bgColor} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}
+                  >
                     <tool.icon className={`w-7 h-7 ${tool.color}`} />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-stone-800 mb-1 group-hover:text-amber-700 transition-colors">
                       {tool.title}
                     </h3>
-                    <p className="text-sm text-stone-500 line-clamp-2">
-                      {tool.description}
-                    </p>
+                    <p className="text-sm text-stone-500 line-clamp-2">{tool.description}</p>
                   </div>
                 </div>
 
                 {/* Features */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {tool.features.map((feature) => (
-                    <span 
+                    <span
                       key={feature}
                       className={`px-3 py-1 text-sm rounded-lg ${tool.bgColor} ${tool.color}`}
                     >
@@ -138,7 +138,9 @@ export default function ToolsPage() {
                 {/* CTA */}
                 <div className="flex items-center justify-between pt-4 border-t border-stone-100">
                   <span className="text-sm text-stone-500">立即使用</span>
-                  <div className={`w-8 h-8 rounded-lg ${tool.bgColor} flex items-center justify-center group-hover:translate-x-1 transition-transform`}>
+                  <div
+                    className={`w-8 h-8 rounded-lg ${tool.bgColor} flex items-center justify-center group-hover:translate-x-1 transition-transform`}
+                  >
                     <ArrowRight className={`w-4 h-4 ${tool.color}`} />
                   </div>
                 </div>
@@ -157,8 +159,7 @@ export default function ToolsPage() {
           </div>
           <p className="text-stone-300 text-sm max-w-2xl mx-auto">
             考前务必确认考点地址和交通路线，提前规划出行时间。
-            估分仅供参考，实际分数以官方公布为准。
-            晒分数据来自用户自愿提交，统计结果仅供参考。
+            估分仅供参考，实际分数以官方公布为准。 晒分数据来自用户自愿提交，统计结果仅供参考。
           </p>
         </div>
       </section>

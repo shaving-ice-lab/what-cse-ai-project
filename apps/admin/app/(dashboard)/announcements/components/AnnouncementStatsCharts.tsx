@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import {
-  MapPin,
-  Calendar,
-  TrendingUp,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-} from "lucide-react";
+import { MapPin, Calendar, TrendingUp, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -65,11 +58,7 @@ function SimpleBarChart({
   }
 
   if (data.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        暂无数据
-      </div>
-    );
+    return <div className="text-center py-8 text-muted-foreground">暂无数据</div>;
   }
 
   return (
@@ -87,9 +76,13 @@ function SimpleBarChart({
                 {item.label}
               </span>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <span>{item.value} {valueLabel}</span>
+                <span>
+                  {item.value} {valueLabel}
+                </span>
                 {item.subValue !== undefined && subValueLabel && (
-                  <span className="text-xs">({item.subValue} {subValueLabel})</span>
+                  <span className="text-xs">
+                    ({item.subValue} {subValueLabel})
+                  </span>
                 )}
               </div>
             </div>
@@ -226,7 +219,10 @@ export function AnnouncementStatsCharts({
       <Card>
         <CardHeader className="pb-2">
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent">
+            <Button
+              variant="ghost"
+              className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent"
+            >
               <CardTitle className="flex items-center gap-2 text-base">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 数据统计分析
@@ -249,9 +245,7 @@ export function AnnouncementStatsCharts({
                     <MapPin className="h-4 w-4 text-emerald-500" />
                     按地区统计
                   </h3>
-                  <span className="text-xs text-muted-foreground">
-                    共 {totalByProvince} 条
-                  </span>
+                  <span className="text-xs text-muted-foreground">共 {totalByProvince} 条</span>
                 </div>
                 <SimpleBarChart
                   data={provinceChartData}
@@ -272,9 +266,7 @@ export function AnnouncementStatsCharts({
                     按时间统计
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      共 {totalByMonth} 条
-                    </span>
+                    <span className="text-xs text-muted-foreground">共 {totalByMonth} 条</span>
                     <Select
                       value={String(selectedYear)}
                       onValueChange={(v) => setSelectedYear(Number(v))}

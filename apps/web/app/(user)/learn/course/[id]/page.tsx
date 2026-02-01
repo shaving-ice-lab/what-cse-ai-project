@@ -186,7 +186,8 @@ function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: strin
 
   return (
     <span className="font-display font-bold tabular-nums">
-      {count.toLocaleString()}{suffix}
+      {count.toLocaleString()}
+      {suffix}
     </span>
   );
 }
@@ -205,10 +206,10 @@ function CourseHighlights({ course }: { course: CourseDetail }) {
       color: getDifficultyColor(course.difficulty).includes("green")
         ? "bg-green-500"
         : getDifficultyColor(course.difficulty).includes("amber")
-        ? "bg-amber-500"
-        : getDifficultyColor(course.difficulty).includes("orange")
-        ? "bg-orange-500"
-        : "bg-red-500",
+          ? "bg-amber-500"
+          : getDifficultyColor(course.difficulty).includes("orange")
+            ? "bg-orange-500"
+            : "bg-red-500",
     },
     {
       icon: <Flame className="w-5 h-5" />,
@@ -281,8 +282,8 @@ function ChapterTreeNode({
           hasChildren
             ? "cursor-pointer hover:bg-gradient-to-r hover:from-stone-50 hover:to-transparent"
             : canAccess
-            ? "cursor-pointer hover:bg-gradient-to-r hover:from-amber-50 hover:to-transparent hover:shadow-sm"
-            : "cursor-not-allowed opacity-60"
+              ? "cursor-pointer hover:bg-gradient-to-r hover:from-amber-50 hover:to-transparent hover:shadow-sm"
+              : "cursor-not-allowed opacity-60"
         }`}
         style={{ paddingLeft: `${16 + level * 24}px` }}
         onClick={() => {
@@ -296,10 +297,7 @@ function ChapterTreeNode({
         {/* 展开/折叠图标 或 播放图标 */}
         {hasChildren ? (
           <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-stone-100 group-hover:bg-stone-200 transition-colors">
-            <motion.div
-              animate={{ rotate: expanded ? 90 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
+            <motion.div animate={{ rotate: expanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronRight className="w-5 h-5 text-stone-500" />
             </motion.div>
           </div>
@@ -313,11 +311,7 @@ function ChapterTreeNode({
                 : "bg-stone-100 text-stone-400"
             }`}
           >
-            {canAccess ? (
-              getContentTypeIcon(chapter.content_type)
-            ) : (
-              <Lock className="w-4 h-4" />
-            )}
+            {canAccess ? getContentTypeIcon(chapter.content_type) : <Lock className="w-4 h-4" />}
           </motion.div>
         )}
 
@@ -329,8 +323,8 @@ function ChapterTreeNode({
                 hasChildren
                   ? "text-stone-800 text-base"
                   : canAccess
-                  ? "text-stone-700 group-hover:text-amber-700 transition-colors"
-                  : "text-stone-500"
+                    ? "text-stone-700 group-hover:text-amber-700 transition-colors"
+                    : "text-stone-500"
               }`}
             >
               {chapter.title}
@@ -384,10 +378,13 @@ function ChapterTreeNode({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="relative ml-[calc(16px+24px*var(--level))]" style={{ "--level": level } as any}>
+            <div
+              className="relative ml-[calc(16px+24px*var(--level))]"
+              style={{ "--level": level } as any}
+            >
               {/* 连接线 */}
               <div className="absolute left-[18px] top-0 bottom-4 w-px bg-gradient-to-b from-stone-200 to-transparent" />
-              
+
               {chapter.children!.map((child, idx) => (
                 <ChapterTreeNode
                   key={child.id}
@@ -438,8 +435,7 @@ export default function CourseDetailPage() {
   const headerRef = useRef<HTMLDivElement>(null);
 
   const { isAuthenticated, user } = useAuthStore();
-  const { loading, course, fetchCourse, collectCourse, uncollectCourse } =
-    useCourse();
+  const { loading, course, fetchCourse, collectCourse, uncollectCourse } = useCourse();
 
   const [copySuccess, setCopySuccess] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -538,28 +534,19 @@ export default function CourseDetailPage() {
     }
 
     // 找到第一个可播放的章节
-    const findFirstPlayableChapter = (
-      chapters: CourseChapter[]
-    ): CourseChapter | null => {
+    const findFirstPlayableChapter = (chapters: CourseChapter[]): CourseChapter | null => {
       for (const chapter of chapters) {
         if (chapter.children && chapter.children.length > 0) {
           const found = findFirstPlayableChapter(chapter.children);
           if (found) return found;
-        } else if (
-          course.is_free ||
-          chapter.is_free_preview ||
-          isVIP ||
-          !course.vip_only
-        ) {
+        } else if (course.is_free || chapter.is_free_preview || isVIP || !course.vip_only) {
           return chapter;
         }
       }
       return null;
     };
 
-    const firstChapter = course.chapters
-      ? findFirstPlayableChapter(course.chapters)
-      : null;
+    const firstChapter = course.chapters ? findFirstPlayableChapter(course.chapters) : null;
 
     if (firstChapter) {
       router.push(`/learn/course/${course.id}/chapter/${firstChapter.id}`);
@@ -602,9 +589,7 @@ export default function CourseDetailPage() {
           <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-stone-100 flex items-center justify-center">
             <AlertCircle className="w-12 h-12 text-stone-400" />
           </div>
-          <h2 className="text-2xl font-bold text-stone-800 mb-3">
-            课程不存在
-          </h2>
+          <h2 className="text-2xl font-bold text-stone-800 mb-3">课程不存在</h2>
           <p className="text-stone-500 mb-8 max-w-md">
             该课程可能已被删除或链接无效，请检查链接是否正确
           </p>
@@ -749,10 +734,7 @@ export default function CourseDetailPage() {
                 {course.title}
               </motion.h1>
               {course.subtitle && (
-                <motion.p
-                  variants={fadeInUp}
-                  className="text-lg text-white/80 mb-4"
-                >
+                <motion.p variants={fadeInUp} className="text-lg text-white/80 mb-4">
                   {course.subtitle}
                 </motion.p>
               )}
@@ -833,9 +815,7 @@ export default function CourseDetailPage() {
                   <div className="flex-1">
                     <p className="font-semibold text-lg">{course.author_name}</p>
                     {course.author_intro && (
-                      <p className="text-sm text-white/70 line-clamp-1">
-                        {course.author_intro}
-                      </p>
+                      <p className="text-sm text-white/70 line-clamp-1">{course.author_intro}</p>
                     )}
                   </div>
                   <div className="hidden sm:flex items-center gap-1 text-amber-400 text-sm">
@@ -1091,7 +1071,7 @@ export default function CourseDetailPage() {
               >
                 {/* 装饰背景 */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-100/50 to-transparent rounded-full -translate-y-16 translate-x-16" />
-                
+
                 {/* Price/VIP Info */}
                 {!course.is_free && (
                   <div className="mb-5 pb-5 border-b border-stone-100 relative">
@@ -1099,9 +1079,7 @@ export default function CourseDetailPage() {
                       <div className="flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 rounded-xl border border-amber-200 relative overflow-hidden">
                         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgZmlsbD0iI0Y1OUUwQiIgZmlsbC1vcGFjaXR5PSIuMSIgY3g9IjIwIiBjeT0iMjAiIHI9IjMiLz48L2c+PC9zdmc+')] opacity-50" />
                         <Star className="w-6 h-6 text-amber-500" />
-                        <span className="font-bold text-amber-700 text-lg">
-                          VIP专享课程
-                        </span>
+                        <span className="font-bold text-amber-700 text-lg">VIP专享课程</span>
                       </div>
                     ) : course.price ? (
                       <div className="text-center">
@@ -1198,12 +1176,8 @@ export default function CourseDetailPage() {
                           <Star className="w-6 h-6 text-amber-600" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-bold text-amber-800">
-                            开通VIP，解锁全部
-                          </p>
-                          <p className="text-sm text-amber-600">
-                            畅享1000+精品课程
-                          </p>
+                          <p className="font-bold text-amber-800">开通VIP，解锁全部</p>
+                          <p className="text-sm text-amber-600">畅享1000+精品课程</p>
                         </div>
                         <ChevronRight className="w-5 h-5 text-amber-500 group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -1296,9 +1270,7 @@ export default function CourseDetailPage() {
               : "border-stone-200 text-stone-500 hover:border-stone-300"
           }`}
         >
-          <Heart
-            className={`w-5 h-5 ${course.is_collected ? "fill-current" : ""}`}
-          />
+          <Heart className={`w-5 h-5 ${course.is_collected ? "fill-current" : ""}`} />
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.9 }}

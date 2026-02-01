@@ -80,7 +80,7 @@ export default function SearchInput({
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const value = propValue !== undefined ? propValue : localValue;
 
   // 初始化搜索历史
@@ -117,7 +117,7 @@ export default function SearchInput({
   const addToHistory = useCallback(
     (keyword: string) => {
       if (!keyword.trim() || !showHistory) return;
-      
+
       const trimmed = keyword.trim();
       const newHistory = [trimmed, ...searchHistory.filter((h) => h !== trimmed)].slice(
         0,
@@ -190,13 +190,13 @@ export default function SearchInput({
   // 是否显示下拉框
   const showDropdown = useMemo(() => {
     if (!isFocused) return false;
-    
+
     // 如果有输入内容且有建议，显示建议
     if (value.trim() && suggestions.length > 0) return true;
-    
+
     // 如果没有输入内容，显示历史或热门
     if (!value.trim() && (searchHistory.length > 0 || hotSearches.length > 0)) return true;
-    
+
     return false;
   }, [isFocused, value, suggestions, searchHistory, hotSearches]);
 
@@ -332,9 +332,7 @@ export default function SearchInput({
 
           {/* 无内容提示 */}
           {!value.trim() && searchHistory.length === 0 && filteredHotSearches.length === 0 && (
-            <div className="p-4 text-center text-sm text-stone-500">
-              暂无搜索历史
-            </div>
+            <div className="p-4 text-center text-sm text-stone-500">暂无搜索历史</div>
           )}
         </div>
       )}

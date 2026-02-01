@@ -27,7 +27,6 @@ export function useMaterials() {
         const result = await materialApi.getMaterials({
           page,
           page_size: pageSize,
-          status: "published",
           ...params,
         });
         setMaterials(result.materials || []);
@@ -51,7 +50,6 @@ export function useMaterials() {
         const result = await materialApi.searchMaterials(keyword, {
           page,
           page_size: pageSize,
-          status: "published",
           ...params,
         });
         setMaterials(result.materials || []);
@@ -116,9 +114,7 @@ export function useMaterialDetail() {
 export function useFeaturedMaterials() {
   const [loading, setLoading] = useState(false);
   const [hotMaterials, setHotMaterials] = useState<MaterialBrief[]>([]);
-  const [featuredMaterials, setFeaturedMaterials] = useState<MaterialBrief[]>(
-    []
-  );
+  const [featuredMaterials, setFeaturedMaterials] = useState<MaterialBrief[]>([]);
 
   const fetchHotMaterials = useCallback(async (limit?: number) => {
     try {
@@ -146,10 +142,7 @@ export function useFeaturedMaterials() {
     async (limit?: number) => {
       setLoading(true);
       try {
-        await Promise.all([
-          fetchHotMaterials(limit),
-          fetchFeaturedMaterials(limit),
-        ]);
+        await Promise.all([fetchHotMaterials(limit), fetchFeaturedMaterials(limit)]);
       } finally {
         setLoading(false);
       }
@@ -174,22 +167,19 @@ export function useRandomMaterials() {
   const [loading, setLoading] = useState(false);
   const [materials, setMaterials] = useState<MaterialBrief[]>([]);
 
-  const fetchRandomMaterials = useCallback(
-    async (type?: MaterialType, count?: number) => {
-      setLoading(true);
-      try {
-        const result = await materialApi.getRandomMaterials(type, count);
-        setMaterials(result || []);
-        return result;
-      } catch (error) {
-        console.error("Failed to fetch random materials:", error);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const fetchRandomMaterials = useCallback(async (type?: MaterialType, count?: number) => {
+    setLoading(true);
+    try {
+      const result = await materialApi.getRandomMaterials(type, count);
+      setMaterials(result || []);
+      return result;
+    } catch (error) {
+      console.error("Failed to fetch random materials:", error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return {
     loading,
@@ -236,10 +226,7 @@ export function useMaterialCategories() {
 
   // 扁平化分类（用于下拉选择）
   const flattenCategories = useCallback(
-    (
-      cats: MaterialCategory[],
-      level = 0
-    ): { category: MaterialCategory; level: number }[] => {
+    (cats: MaterialCategory[], level = 0): { category: MaterialCategory; level: number }[] => {
       let result: { category: MaterialCategory; level: number }[] = [];
       for (const cat of cats) {
         result.push({ category: cat, level });

@@ -265,9 +265,7 @@ function MembershipList({ memberships, loading, onActivate, onDeactivate }: Memb
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {membership.expire_at
-                  ? new Date(membership.expire_at).toLocaleDateString()
-                  : "-"}
+                {membership.expire_at ? new Date(membership.expire_at).toLocaleDateString() : "-"}
               </TableCell>
               <TableCell>{membership.total_days}天</TableCell>
               <TableCell>
@@ -382,10 +380,7 @@ function PlansList({ plans, loading, onEdit, onDelete }: PlansListProps) {
                     <Edit className="mr-2 h-4 w-4" />
                     编辑
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onDelete(plan.id)}
-                    className="text-destructive"
-                  >
+                  <DropdownMenuItem onClick={() => onDelete(plan.id)} className="text-destructive">
                     <Trash2 className="mr-2 h-4 w-4" />
                     删除
                   </DropdownMenuItem>
@@ -472,9 +467,7 @@ function OrdersList({ orders, loading }: OrdersListProps) {
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
-                    <AvatarFallback>
-                      {(order.user?.nickname || "U").slice(0, 1)}
-                    </AvatarFallback>
+                    <AvatarFallback>{(order.user?.nickname || "U").slice(0, 1)}</AvatarFallback>
                   </Avatar>
                   <span>{order.user?.nickname || "未知用户"}</span>
                 </div>
@@ -749,11 +742,7 @@ export default function VIPManagementPage() {
       </div>
 
       {/* 统计卡片 */}
-      <StatsCards
-        membershipStats={membershipStats}
-        orderStats={orderStats}
-        loading={loading}
-      />
+      <StatsCards membershipStats={membershipStats} orderStats={orderStats} loading={loading} />
 
       {/* 标签页 */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

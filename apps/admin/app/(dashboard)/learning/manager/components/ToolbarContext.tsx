@@ -30,7 +30,7 @@ export function useToolbar() {
 // Hook for components to register their toolbar
 export function useRegisterToolbar(content: ReactNode) {
   const { setToolbarContent } = useToolbar();
-  
+
   // Register on mount, clear on unmount
   const register = useCallback(() => {
     setToolbarContent(content);

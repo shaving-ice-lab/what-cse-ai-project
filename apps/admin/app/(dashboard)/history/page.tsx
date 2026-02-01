@@ -86,7 +86,7 @@ export default function AdminHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("keyword") || "");
-  
+
   // 统计数据
   const [stats, setStats] = useState<HistoryStats | null>(null);
   const [yearStats, setYearStats] = useState<YearStats[]>([]);
@@ -128,14 +128,15 @@ export default function AdminHistoryPage() {
   // 加载统计数据
   const fetchStats = async () => {
     try {
-      const [statsData, yearData, provinceData, examTypeData, optionsData, trendsData] = await Promise.all([
-        historyApi.getHistoryStats(),
-        historyApi.getStatsByYear(),
-        historyApi.getStatsByProvince(),
-        historyApi.getStatsByExamType(),
-        historyApi.getFilterOptions(),
-        historyApi.getYearlyTrends(),
-      ]);
+      const [statsData, yearData, provinceData, examTypeData, optionsData, trendsData] =
+        await Promise.all([
+          historyApi.getHistoryStats(),
+          historyApi.getStatsByYear(),
+          historyApi.getStatsByProvince(),
+          historyApi.getStatsByExamType(),
+          historyApi.getFilterOptions(),
+          historyApi.getYearlyTrends(),
+        ]);
       setStats(statsData);
       setYearStats(yearData.stats || []);
       setProvinceStats(provinceData.stats || []);
@@ -242,7 +243,14 @@ export default function AdminHistoryPage() {
           <p className="text-muted-foreground">管理历年招录数据、查看趋势分析和分数线预测</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => { fetchHistories(); fetchStats(); }} disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              fetchHistories();
+              fetchStats();
+            }}
+            disabled={loading}
+          >
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             刷新
           </Button>
@@ -267,7 +275,9 @@ export default function AdminHistoryPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatNumber(stats?.total_records)}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.min_year && stats?.max_year ? `${stats.min_year} - ${stats.max_year}年数据` : "-"}
+              {stats?.min_year && stats?.max_year
+                ? `${stats.min_year} - ${stats.max_year}年数据`
+                : "-"}
             </p>
           </CardContent>
         </Card>
@@ -470,15 +480,33 @@ export default function AdminHistoryPage() {
                     {loading ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell><Skeleton className="h-5 w-12" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                          <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-40" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-8" /></TableCell>
-                          <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                          <TableCell className="hidden xl:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
-                          <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                          <TableCell>
+                            <Skeleton className="h-5 w-12" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-5 w-32" />
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Skeleton className="h-5 w-40" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-5 w-8" />
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <Skeleton className="h-5 w-16" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-5 w-16" />
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            <Skeleton className="h-5 w-16" />
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <Skeleton className="h-5 w-16" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-8 w-8" />
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : histories.length > 0 ? (
@@ -499,7 +527,9 @@ export default function AdminHistoryPage() {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <span className="font-semibold">{formatNumber(history.recruit_count)}</span>
+                            <span className="font-semibold">
+                              {formatNumber(history.recruit_count)}
+                            </span>
                             <span className="text-muted-foreground text-xs ml-1">人</span>
                           </TableCell>
                           <TableCell className="hidden lg:table-cell">
@@ -513,8 +543,8 @@ export default function AdminHistoryPage() {
                                   history.competition_ratio > 100
                                     ? "bg-red-100 text-red-700"
                                     : history.competition_ratio > 50
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-green-100 text-green-700"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-green-100 text-green-700"
                                 }
                               >
                                 {formatRatio(history.competition_ratio)}
@@ -623,7 +653,9 @@ export default function AdminHistoryPage() {
                         <div className="flex items-center gap-2">
                           <div
                             className="h-2 bg-blue-500 rounded"
-                            style={{ width: `${Math.min((item.recruit_count / Math.max(...trends.map(t => t.recruit_count))) * 200, 200)}px` }}
+                            style={{
+                              width: `${Math.min((item.recruit_count / Math.max(...trends.map((t) => t.recruit_count))) * 200, 200)}px`,
+                            }}
                           />
                           <span className="text-sm text-muted-foreground w-16 text-right">
                             {formatNumber(item.recruit_count)}人
@@ -652,7 +684,9 @@ export default function AdminHistoryPage() {
                         <div className="flex items-center gap-2">
                           <div
                             className="h-2 bg-amber-500 rounded"
-                            style={{ width: `${Math.min((item.competition_ratio / Math.max(...trends.map(t => t.competition_ratio || 1))) * 200, 200)}px` }}
+                            style={{
+                              width: `${Math.min((item.competition_ratio / Math.max(...trends.map((t) => t.competition_ratio || 1))) * 200, 200)}px`,
+                            }}
                           />
                           <span className="text-sm text-muted-foreground w-16 text-right">
                             {formatRatio(item.competition_ratio)}
@@ -681,7 +715,9 @@ export default function AdminHistoryPage() {
                         <div className="flex items-center gap-2">
                           <div
                             className="h-2 bg-green-500 rounded"
-                            style={{ width: `${item.avg_interview_score ? Math.min((item.avg_interview_score / 200) * 200, 200) : 0}px` }}
+                            style={{
+                              width: `${item.avg_interview_score ? Math.min((item.avg_interview_score / 200) * 200, 200) : 0}px`,
+                            }}
                           />
                           <span className="text-sm text-muted-foreground w-16 text-right">
                             {formatScore(item.avg_interview_score)}
@@ -710,7 +746,9 @@ export default function AdminHistoryPage() {
                         <div className="flex items-center gap-2">
                           <div
                             className="h-2 bg-purple-500 rounded"
-                            style={{ width: `${Math.min((item.apply_count / Math.max(...trends.map(t => t.apply_count || 1))) * 200, 200)}px` }}
+                            style={{
+                              width: `${Math.min((item.apply_count / Math.max(...trends.map((t) => t.apply_count || 1))) * 200, 200)}px`,
+                            }}
                           />
                           <span className="text-sm text-muted-foreground w-16 text-right">
                             {formatNumber(item.apply_count)}
@@ -739,7 +777,10 @@ export default function AdminHistoryPage() {
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {yearStats.length > 0 ? (
                     yearStats.map((item) => (
-                      <div key={item.year} className="flex items-center justify-between py-1 border-b last:border-0">
+                      <div
+                        key={item.year}
+                        className="flex items-center justify-between py-1 border-b last:border-0"
+                      >
                         <span className="font-medium">{item.year}年</span>
                         <div className="text-right">
                           <span className="text-sm">{formatNumber(item.count)} 条</span>
@@ -765,7 +806,10 @@ export default function AdminHistoryPage() {
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {provinceStats.length > 0 ? (
                     provinceStats.slice(0, 15).map((item) => (
-                      <div key={item.province} className="flex items-center justify-between py-1 border-b last:border-0">
+                      <div
+                        key={item.province}
+                        className="flex items-center justify-between py-1 border-b last:border-0"
+                      >
                         <span className="font-medium">{item.province}</span>
                         <div className="text-right">
                           <span className="text-sm">{formatNumber(item.total_records)} 条</span>
@@ -791,7 +835,10 @@ export default function AdminHistoryPage() {
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {examTypeStats.length > 0 ? (
                     examTypeStats.map((item) => (
-                      <div key={item.exam_type} className="flex items-center justify-between py-1 border-b last:border-0">
+                      <div
+                        key={item.exam_type}
+                        className="flex items-center justify-between py-1 border-b last:border-0"
+                      >
                         <span className="font-medium">{item.exam_type}</span>
                         <div className="text-right">
                           <span className="text-sm">{formatNumber(item.total_records)} 条</span>

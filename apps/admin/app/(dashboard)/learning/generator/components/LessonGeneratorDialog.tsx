@@ -18,10 +18,7 @@ import {
   Switch,
 } from "@what-cse/ui";
 import { Loader2, Wand2, BookOpen, FolderTree } from "lucide-react";
-import {
-  aiContentApi,
-  getSubjectLabel,
-} from "@/services/ai-content-api";
+import { aiContentApi, getSubjectLabel } from "@/services/ai-content-api";
 import { toast } from "sonner";
 
 interface LessonGeneratorDialogProps {
@@ -104,9 +101,7 @@ export function LessonGeneratorDialog({
             subject: subject || undefined,
             auto_approve: autoApprove,
           });
-          toast.success(
-            `课程教学内容生成任务已创建！任务ID: ${courseResult.task.id}`
-          );
+          toast.success(`课程教学内容生成任务已创建！任务ID: ${courseResult.task.id}`);
           break;
 
         case "category":
@@ -115,9 +110,7 @@ export function LessonGeneratorDialog({
             subject: subject || undefined,
             auto_approve: autoApprove,
           });
-          toast.success(
-            `分类教学内容生成任务已创建！共 ${categoryResult.task_count} 个任务`
-          );
+          toast.success(`分类教学内容生成任务已创建！共 ${categoryResult.task_count} 个任务`);
           break;
       }
 
@@ -145,7 +138,10 @@ export function LessonGeneratorDialog({
           {/* 科目选择 */}
           <div className="space-y-2">
             <Label htmlFor="subject">科目（可选）</Label>
-            <Select value={subject || "auto"} onValueChange={(v) => setSubject(v === "auto" ? "" : v)}>
+            <Select
+              value={subject || "auto"}
+              onValueChange={(v) => setSubject(v === "auto" ? "" : v)}
+            >
               <SelectTrigger id="subject">
                 <SelectValue placeholder="选择科目以获得更精准的内容" />
               </SelectTrigger>
@@ -158,24 +154,16 @@ export function LessonGeneratorDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              选择科目可以生成更加针对性的教学内容
-            </p>
+            <p className="text-xs text-muted-foreground">选择科目可以生成更加针对性的教学内容</p>
           </div>
 
           {/* 自动审核 */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="auto-approve">自动审核通过</Label>
-              <p className="text-xs text-muted-foreground">
-                生成的内容将自动标记为已审核通过
-              </p>
+              <p className="text-xs text-muted-foreground">生成的内容将自动标记为已审核通过</p>
             </div>
-            <Switch
-              id="auto-approve"
-              checked={autoApprove}
-              onCheckedChange={setAutoApprove}
-            />
+            <Switch id="auto-approve" checked={autoApprove} onCheckedChange={setAutoApprove} />
           </div>
 
           {/* 提示信息 */}
@@ -192,11 +180,7 @@ export function LessonGeneratorDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             取消
           </Button>
           <Button onClick={handleGenerate} disabled={loading}>

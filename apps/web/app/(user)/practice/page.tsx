@@ -23,11 +23,7 @@ import {
   Zap,
   Loader2,
 } from "lucide-react";
-import {
-  practiceApi,
-  UserStats,
-  getSubjectName,
-} from "@/services/api/practice";
+import { practiceApi, UserStats, getSubjectName } from "@/services/api/practice";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "@what-cse/ui";
 
@@ -158,11 +154,7 @@ function StatsCard({
 }
 
 // 科目卡片组件
-function SubjectCard({
-  subject,
-}: {
-  subject: typeof subjects[0];
-}) {
+function SubjectCard({ subject }: { subject: (typeof subjects)[0] }) {
   const Icon = subject.icon;
   return (
     <Link
@@ -172,19 +164,21 @@ function SubjectCard({
       <div className="absolute top-0 right-0 w-24 h-24 opacity-5 transform translate-x-6 -translate-y-6">
         <Icon className="w-full h-full" />
       </div>
-      
+
       <div className="flex items-start justify-between mb-3">
         <div className={`p-2.5 rounded-xl bg-gradient-to-br ${subject.color}`}>
           <Icon className="w-5 h-5 text-white" />
         </div>
         <ChevronRight className="w-5 h-5 text-stone-300 group-hover:text-stone-500 group-hover:translate-x-1 transition-all" />
       </div>
-      
+
       <h3 className="text-lg font-bold text-stone-800 mb-1">{subject.name}题库</h3>
       <p className="text-xs text-stone-500 mb-3 line-clamp-2">{subject.description}</p>
-      
+
       <div className="flex items-center gap-2">
-        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${subject.bgColor} ${subject.textColor}`}>
+        <span
+          className={`px-2 py-1 rounded-lg text-xs font-medium ${subject.bgColor} ${subject.textColor}`}
+        >
           {subject.questionCount.toLocaleString()}+ 道题
         </span>
       </div>
@@ -193,11 +187,7 @@ function SubjectCard({
 }
 
 // 快捷入口组件
-function QuickEntryCard({
-  entry,
-}: {
-  entry: typeof quickEntries[0];
-}) {
+function QuickEntryCard({ entry }: { entry: (typeof quickEntries)[0] }) {
   const Icon = entry.icon;
   return (
     <Link
@@ -227,7 +217,7 @@ export default function PracticePage() {
         setLoading(false);
         return;
       }
-      
+
       try {
         const data = await practiceApi.getUserStats();
         setStats(data);
@@ -259,7 +249,10 @@ export default function PracticePage() {
             {loading ? (
               <>
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-stone-200/50 p-4 animate-pulse">
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl border border-stone-200/50 p-4 animate-pulse"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-stone-200 rounded-xl" />
                       <div className="space-y-2">
@@ -350,9 +343,7 @@ export default function PracticePage() {
                 <Trophy className="w-6 h-6" />
                 试卷中心
               </h3>
-              <p className="text-blue-100 text-sm mb-4">
-                历年真题、模拟试卷、专项练习，全方位备考
-              </p>
+              <p className="text-blue-100 text-sm mb-4">历年真题、模拟试卷、专项练习，全方位备考</p>
               <Link
                 href="/practice/papers"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-600 font-medium rounded-xl hover:bg-blue-50 transition-colors"

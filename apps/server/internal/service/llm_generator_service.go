@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -1092,6 +1093,24 @@ func parseJSONModule(response string, target interface{}) error {
 	return json.Unmarshal([]byte(clean), target)
 }
 
+func (s *LLMGeneratorService) updateTaskProgress(taskID uint, progress float64, currentStep string) {
+	if s.taskRepo == nil {
+		return
+	}
+	if progress < 0 {
+		progress = 0
+	}
+	if progress > 100 {
+		progress = 100
+	}
+	if err := s.taskRepo.UpdateProgress(taskID, progress, currentStep); err != nil {
+		s.logger.Warn("更新任务进度失败",
+			zap.Uint("task_id", taskID),
+			zap.Error(err),
+		)
+	}
+}
+
 func (s *LLMGeneratorService) generateModuleWithContinuation(
 	taskID uint,
 	moduleName string,
@@ -1189,7 +1208,37 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		"只输出所要求模块",
 	}
 
+	totalSections := 9
+	sectionsPerPage := 3
+	totalProblems := 12
+	problemsPerPage := 4
+
+	sectionBatches := (totalSections + sectionsPerPage - 1) / sectionsPerPage
+	problemBatches := (totalProblems + problemsPerPage - 1) / problemsPerPage
+	baseModuleSteps := 14
+	finalSteps := 1
+	totalSteps := baseModuleSteps + sectionBatches + problemBatches + finalSteps
+	completedSteps := 0
+
+	updateProgress := func(step string, completed bool) {
+		if completed {
+			completedSteps++
+		}
+		progress := float64(0)
+		if totalSteps > 0 {
+			progress = float64(completedSteps) / float64(totalSteps) * 100
+		}
+		s.updateTaskProgress(taskID, progress, step)
+	}
+	beginStep := func(step string) {
+		updateProgress(step, false)
+	}
+	finishStep := func(step string) {
+		updateProgress(step, true)
+	}
+
 	// 1) 课程元信息
+	beginStep("课程内容生成")
 	{
 		schema := `{
   "chapter_title": "课程标题",
@@ -1227,8 +1276,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		content.DifficultyLevel = meta.DifficultyLevel
 		content.WordCountTarget = meta.WordCountTarget
 	}
+	finishStep("课程内容生成")
 
 	// 2) 考情分析
+	beginStep("考情分析")
 	{
 		schema := `{
   "exam_analysis": {
@@ -1259,8 +1310,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.ExamAnalysis = wrap.ExamAnalysis
 	}
+	finishStep("考情分析")
 
 	// 3) 课程导入 + 目标 + 前置
+	beginStep("课程导入")
 	{
 		schema := `{
   "lesson_content": {
@@ -1293,8 +1346,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		content.LessonContent.LearningGoals = wrap.LessonContent.LearningGoals
 		content.LessonContent.Prerequisites = wrap.LessonContent.Prerequisites
 	}
+	finishStep("课程导入")
 
 	// 4) 核心概念
+	beginStep("核心概念")
 	{
 		schema := `{
   "core_concepts": [
@@ -1326,6 +1381,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.CoreConcepts = wrap.CoreConcepts
 	}
+	finishStep("核心概念")
 
 	coreConceptNames := []string{}
 	for _, c := range content.LessonContent.CoreConcepts {
@@ -1335,6 +1391,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 	}
 
 	// 5) 方法步骤
+	beginStep("方法步骤")
 	{
 		schema := `{
   "method_steps": [
@@ -1371,8 +1428,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.MethodSteps = wrap.MethodSteps
 	}
+	finishStep("方法步骤")
 
 	// 6) 记忆口诀（必需）
+	beginStep("记忆口诀")
 	{
 		schema := `{
   "formulas": [
@@ -1403,8 +1462,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.Formulas = wrap.Formulas
 	}
+	finishStep("记忆口诀")
 
 	// 7) 记忆技巧（必需）
+	beginStep("记忆技巧")
 	{
 		schema := `{
   "memory_tips": [
@@ -1434,8 +1495,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.MemoryTips = wrap.MemoryTips
 	}
+	finishStep("记忆技巧")
 
 	// 8) 易错点（必需）
+	beginStep("易错陷阱")
 	{
 		schema := `{
   "common_mistakes": [
@@ -1466,8 +1529,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.CommonMistakes = wrap.CommonMistakes
 	}
+	finishStep("易错陷阱")
 
 	// 9) 应试策略（必需）
+	beginStep("应试策略")
 	{
 		schema := `{
   "exam_strategies": [
@@ -1495,8 +1560,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.ExamStrategies = wrap.ExamStrategies
 	}
+	finishStep("应试策略")
 
 	// 10) 高频词汇（必需）
+	beginStep("高频词汇")
 	{
 		schema := `{
   "vocabulary_accumulation": {
@@ -1526,8 +1593,10 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.VocabularyAccum = wrap.VocabularyAccumulation
 	}
+	finishStep("高频词汇")
 
 	// 11) 拓展知识 + 总结 + 思维导图（必需）
+	beginStep("拓展知识")
 	{
 		schema := `{
   "extension_knowledge": "拓展知识内容",
@@ -1556,8 +1625,12 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		content.LessonContent.SummaryPoints = wrap.SummaryPoints
 		content.LessonContent.MindMapMermaid = wrap.MindMapMermaid
 	}
+	finishStep("拓展知识")
+	finishStep("课程总结")
+	finishStep("思维导图")
 
 	// 12) 快速笔记（必需）
+	beginStep("快速笔记")
 	{
 		schema := `{
   "quick_notes": {
@@ -1596,6 +1669,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.LessonContent.QuickNotes = wrap.QuickNotes
 	}
+	finishStep("快速笔记")
 
 	// 13) 课程章节
 	{
@@ -1624,14 +1698,14 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			return buildModulePrompt(moduleCtx, "课程章节内容"+rangeName, schema, requirements, hints)
 		}
 
-		totalSections := 9
-		sectionsPerPage := 3
 		for start := 1; start <= totalSections; start += sectionsPerPage {
 			count := sectionsPerPage
 			if start+count-1 > totalSections {
 				count = totalSections - start + 1
 			}
 			rangeName := fmt.Sprintf("（第%d-%d节）", start, start+count-1)
+			stepName := "课程章节" + rangeName
+			beginStep(stepName)
 			var wrap struct {
 				LessonSections []model.GenLessonSection `json:"lesson_sections"`
 			}
@@ -1656,6 +1730,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 				return "", nil, err
 			}
 			content.LessonSections = append(content.LessonSections, wrap.LessonSections...)
+			finishStep(stepName)
 		}
 		sort.Slice(content.LessonSections, func(i, j int) bool {
 			return content.LessonSections[i].Order < content.LessonSections[j].Order
@@ -1690,14 +1765,14 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 			return buildModulePrompt(moduleCtx, "练习题目"+rangeName, schema, requirements, hints)
 		}
 
-		totalProblems := 12
-		problemsPerPage := 4
 		for start := 1; start <= totalProblems; start += problemsPerPage {
 			count := problemsPerPage
 			if start+count-1 > totalProblems {
 				count = totalProblems - start + 1
 			}
 			rangeName := fmt.Sprintf("（第%d-%d题）", start, start+count-1)
+			stepName := "练习题目" + rangeName
+			beginStep(stepName)
 			var wrap struct {
 				PracticeProblems []model.GenPracticeItem `json:"practice_problems"`
 			}
@@ -1722,6 +1797,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 				return "", nil, err
 			}
 			content.PracticeProblems = append(content.PracticeProblems, wrap.PracticeProblems...)
+			finishStep(stepName)
 		}
 		sort.Slice(content.PracticeProblems, func(i, j int) bool {
 			return content.PracticeProblems[i].Order < content.PracticeProblems[j].Order
@@ -1729,6 +1805,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 	}
 
 	// 15) 课后作业（必需）
+	beginStep("课后作业")
 	{
 		schema := `{
   "homework": {
@@ -1755,6 +1832,7 @@ func (s *LLMGeneratorService) generateCourseContentByModules(
 		}
 		content.Homework = wrap.Homework
 	}
+	finishStep("课后作业")
 
 	if !isCourseContentComplete(content) {
 		return "", nil, errors.New("course content incomplete after module generation")
@@ -1795,18 +1873,22 @@ type GenerateCourseContentV2Request struct {
 	UserPromptTemplate string `json:"user_prompt_template,omitempty"`
 }
 
-// GenerateCourseContentV2 生成课程内容（V2增强版：使用高质量Prompt）
-func (s *LLMGeneratorService) GenerateCourseContentV2(ctx context.Context, req GenerateCourseContentV2Request) (*model.GenerationTask, error) {
-	// 获取章节信息
-	chapter, err := s.chapterRepo.GetByID(req.ChapterID)
-	if err != nil {
-		return nil, fmt.Errorf("获取章节失败: %w", err)
-	}
+type courseGenerationJob struct {
+	taskID uint
+	req    GenerateCourseContentV2Request
+}
 
-	chapterTitle := req.ChapterTitle
+func (s *LLMGeneratorService) createCourseGenerationTask(ctx context.Context, req GenerateCourseContentV2Request) (*model.GenerationTask, GenerateCourseContentV2Request, error) {
+	chapterTitle := strings.TrimSpace(req.ChapterTitle)
 	if chapterTitle == "" {
+		// 获取章节信息
+		chapter, err := s.chapterRepo.GetByID(req.ChapterID)
+		if err != nil {
+			return nil, req, fmt.Errorf("获取章节失败: %w", err)
+		}
 		chapterTitle = chapter.Title
 	}
+	req.ChapterTitle = chapterTitle
 
 	// 创建生成任务
 	targetInfo, _ := json.Marshal(map[string]interface{}{
@@ -1827,11 +1909,21 @@ func (s *LLMGeneratorService) GenerateCourseContentV2(ctx context.Context, req G
 	}
 
 	if err := s.taskRepo.Create(task); err != nil {
-		return nil, fmt.Errorf("创建任务失败: %w", err)
+		return nil, req, fmt.Errorf("创建任务失败: %w", err)
+	}
+
+	return task, req, nil
+}
+
+// GenerateCourseContentV2 生成课程内容（V2增强版：使用高质量Prompt）
+func (s *LLMGeneratorService) GenerateCourseContentV2(ctx context.Context, req GenerateCourseContentV2Request) (*model.GenerationTask, error) {
+	task, resolvedReq, err := s.createCourseGenerationTask(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 
 	// 启动异步生成
-	go s.executeCourseGenerationV2(task.ID, req)
+	go s.executeCourseGenerationV2(task.ID, resolvedReq)
 
 	return task, nil
 }
@@ -1868,6 +1960,7 @@ func (s *LLMGeneratorService) executeCourseGenerationV2(taskID uint, req Generat
 			userPrompt = buildCourseContentUserPrompt(req, chapterTitle)
 		}
 
+		s.updateTaskProgress(taskID, 0, "整章生成")
 		response, parsedContent, err := s.generateCourseContentWithContinuation(
 			taskID,
 			systemPrompt,
@@ -2013,25 +2106,49 @@ func (s *LLMGeneratorService) autoImportCourseContent(ctx context.Context, taskI
 		zap.Int("word_count", result.WordCount))
 }
 
+func (s *LLMGeneratorService) runCourseGenerationJobs(jobs []courseGenerationJob, maxConcurrency int) {
+	if len(jobs) == 0 {
+		return
+	}
+	if maxConcurrency < 1 {
+		maxConcurrency = 1
+	}
+	if maxConcurrency > len(jobs) {
+		maxConcurrency = len(jobs)
+	}
+
+	jobCh := make(chan courseGenerationJob)
+	var wg sync.WaitGroup
+
+	for i := 0; i < maxConcurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range jobCh {
+				s.executeCourseGenerationV2(job.taskID, job.req)
+			}
+		}()
+	}
+
+	for _, job := range jobs {
+		jobCh <- job
+	}
+	close(jobCh)
+	wg.Wait()
+}
+
 // BatchGenerateChapterLessons 批量生成章节课程内容
 func (s *LLMGeneratorService) BatchGenerateChapterLessons(ctx context.Context, req model.BatchGenerateChapterLessonsRequest) (*model.BatchGenerateResult, error) {
 	result := &model.BatchGenerateResult{
 		TotalTasks: len(req.ChapterIDs),
 	}
 
-	for _, chapterID := range req.ChapterIDs {
-		// 获取章节信息
-		chapter, err := s.chapterRepo.GetByID(chapterID)
-		if err != nil {
-			result.SkippedTasks++
-			result.SkippedReasons = append(result.SkippedReasons, fmt.Sprintf("章节 %d 不存在", chapterID))
-			continue
-		}
+	jobs := make([]courseGenerationJob, 0, len(req.ChapterIDs))
+	maxConcurrency := req.MaxConcurrency
 
-		// 创建生成任务
+	for _, chapterID := range req.ChapterIDs {
 		genReq := GenerateCourseContentV2Request{
 			ChapterID:          chapterID,
-			ChapterTitle:       chapter.Title,
 			Subject:            req.Subject,
 			AutoApprove:        req.AutoApprove,
 			AutoImport:         req.AutoImport,
@@ -2039,7 +2156,7 @@ func (s *LLMGeneratorService) BatchGenerateChapterLessons(ctx context.Context, r
 			UserPromptTemplate: req.UserPromptTemplate,
 		}
 
-		task, err := s.GenerateCourseContentV2(ctx, genReq)
+		task, resolvedReq, err := s.createCourseGenerationTask(ctx, genReq)
 		if err != nil {
 			result.SkippedTasks++
 			result.SkippedReasons = append(result.SkippedReasons, fmt.Sprintf("章节 %d 创建任务失败: %v", chapterID, err))
@@ -2048,8 +2165,24 @@ func (s *LLMGeneratorService) BatchGenerateChapterLessons(ctx context.Context, r
 
 		result.CreatedTasks++
 		result.TaskIDs = append(result.TaskIDs, task.ID)
+		jobs = append(jobs, courseGenerationJob{
+			taskID: task.ID,
+			req:    resolvedReq,
+		})
 	}
 
+	if len(jobs) == 0 {
+		return result, nil
+	}
+
+	if maxConcurrency <= 0 {
+		for _, job := range jobs {
+			go s.executeCourseGenerationV2(job.taskID, job.req)
+		}
+		return result, nil
+	}
+
+	go s.runCourseGenerationJobs(jobs, maxConcurrency)
 	return result, nil
 }
 
@@ -2075,6 +2208,7 @@ func (s *LLMGeneratorService) BatchGenerateCourseLessons(ctx context.Context, re
 		Subject:            req.Subject,
 		AutoApprove:        req.AutoApprove,
 		AutoImport:         req.AutoImport,
+		MaxConcurrency:     req.MaxConcurrency,
 		SystemPrompt:       req.SystemPrompt,
 		UserPromptTemplate: req.UserPromptTemplate,
 	})
@@ -2124,6 +2258,7 @@ func (s *LLMGeneratorService) BatchGenerateCategoryLessons(ctx context.Context, 
 		Subject:            req.Subject,
 		AutoApprove:        req.AutoApprove,
 		AutoImport:         req.AutoImport,
+		MaxConcurrency:     req.MaxConcurrency,
 		SystemPrompt:       req.SystemPrompt,
 		UserPromptTemplate: req.UserPromptTemplate,
 	})

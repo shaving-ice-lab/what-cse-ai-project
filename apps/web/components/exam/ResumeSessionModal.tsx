@@ -41,9 +41,7 @@ function SessionCard({
   isResuming: boolean;
 }) {
   const progress = Math.round(session.progress);
-  const timeAgo = session.last_saved_at
-    ? getTimeAgo(new Date(session.last_saved_at))
-    : "未知";
+  const timeAgo = session.last_saved_at ? getTimeAgo(new Date(session.last_saved_at)) : "未知";
 
   return (
     <div className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -197,7 +195,7 @@ export function ResumeSessionModal({
     try {
       const session = await practiceApi.resumeSession(sessionId);
       setIsOpen(false);
-      
+
       if (onResume) {
         onResume(session);
       } else {
@@ -266,9 +264,7 @@ export function ResumeSessionModal({
               <RotateCcw className="w-6 h-6 text-amber-500 animate-spin" />
             </div>
           ) : sessions.length === 0 ? (
-            <div className="text-center py-8 text-stone-500">
-              没有未完成的练习
-            </div>
+            <div className="text-center py-8 text-stone-500">没有未完成的练习</div>
           ) : (
             <div className="space-y-4">
               {sessions.map((session) => (
@@ -287,9 +283,7 @@ export function ResumeSessionModal({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-stone-100 bg-stone-50">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-stone-400">
-              系统会自动保存您的答题进度
-            </p>
+            <p className="text-xs text-stone-400">系统会自动保存您的答题进度</p>
             <button
               onClick={handleDismiss}
               className="px-4 py-2 text-sm text-stone-600 hover:text-stone-800 transition-colors"

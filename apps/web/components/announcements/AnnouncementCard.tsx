@@ -29,13 +29,15 @@ export function AnnouncementCard({
   variant = "default",
 }: AnnouncementCardProps) {
   const now = new Date();
-  const regStart = announcement.registration_start ? new Date(announcement.registration_start) : null;
+  const regStart = announcement.registration_start
+    ? new Date(announcement.registration_start)
+    : null;
   const regEnd = announcement.registration_end ? new Date(announcement.registration_end) : null;
-  
+
   // 计算报名状态
   let regStatus: "registering" | "upcoming" | "ended" | null = null;
   let daysLeft: number | null = null;
-  
+
   if (regStart && regEnd) {
     if (now < regStart) {
       regStatus = "upcoming";
@@ -47,9 +49,10 @@ export function AnnouncementCard({
       daysLeft = Math.ceil((regEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     }
   }
-  
+
   // 是否是热门（根据职位数量或招录人数判断）
-  const isHot = (announcement.position_count || 0) > 100 || (announcement.recruit_count || 0) > 1000;
+  const isHot =
+    (announcement.position_count || 0) > 100 || (announcement.recruit_count || 0) > 1000;
 
   // 格式化数字
   const formatNumber = (num: number) => {
@@ -68,15 +71,15 @@ export function AnnouncementCard({
   // 考试类型颜色
   const examTypeColor = (type?: string) => {
     const colors: Record<string, string> = {
-      "公务员": "bg-blue-100 text-blue-700",
-      "国考": "bg-blue-100 text-blue-700",
-      "省考": "bg-emerald-100 text-emerald-700",
-      "事业单位": "bg-violet-100 text-violet-700",
-      "教师招聘": "bg-orange-100 text-orange-700",
-      "医疗卫生": "bg-cyan-100 text-cyan-700",
-      "选调生": "bg-amber-100 text-amber-700",
-      "军队文职": "bg-stone-200 text-stone-700",
-      "三支一扶": "bg-rose-100 text-rose-700",
+      公务员: "bg-blue-100 text-blue-700",
+      国考: "bg-blue-100 text-blue-700",
+      省考: "bg-emerald-100 text-emerald-700",
+      事业单位: "bg-violet-100 text-violet-700",
+      教师招聘: "bg-orange-100 text-orange-700",
+      医疗卫生: "bg-cyan-100 text-cyan-700",
+      选调生: "bg-amber-100 text-amber-700",
+      军队文职: "bg-stone-200 text-stone-700",
+      三支一扶: "bg-rose-100 text-rose-700",
     };
     return colors[type || ""] || "bg-stone-100 text-stone-700";
   };
@@ -99,7 +102,9 @@ export function AnnouncementCard({
             <div className="flex items-center gap-2 mb-2">
               {isHot && <Flame className="w-4 h-4 text-red-500 flex-shrink-0" />}
               {announcement.exam_type && (
-                <span className={`px-2 py-0.5 text-xs font-medium rounded ${examTypeColor(announcement.exam_type)}`}>
+                <span
+                  className={`px-2 py-0.5 text-xs font-medium rounded ${examTypeColor(announcement.exam_type)}`}
+                >
                   {announcement.exam_type}
                 </span>
               )}
@@ -145,13 +150,18 @@ export function AnnouncementCard({
               </span>
             )}
             {announcement.exam_type && (
-              <span className={`px-2 py-0.5 text-xs font-medium rounded ${examTypeColor(announcement.exam_type)}`}>
+              <span
+                className={`px-2 py-0.5 text-xs font-medium rounded ${examTypeColor(announcement.exam_type)}`}
+              >
                 {announcement.exam_type}
               </span>
             )}
             {regStatus && (
-              <span className={`px-2 py-0.5 text-xs font-medium rounded ${regStatusStyle[regStatus]}`}>
-                {regStatus === "registering" && `报名中${daysLeft !== null ? ` · 剩${daysLeft}天` : ""}`}
+              <span
+                className={`px-2 py-0.5 text-xs font-medium rounded ${regStatusStyle[regStatus]}`}
+              >
+                {regStatus === "registering" &&
+                  `报名中${daysLeft !== null ? ` · 剩${daysLeft}天` : ""}`}
                 {regStatus === "upcoming" && `${daysLeft}天后开始`}
                 {regStatus === "ended" && "已结束"}
               </span>
@@ -164,9 +174,7 @@ export function AnnouncementCard({
                 onFavoriteToggle(announcement.id);
               }}
               className={`p-1.5 rounded-lg transition-colors ${
-                isFavorite
-                  ? "text-amber-500"
-                  : "text-stone-300 hover:text-amber-400"
+                isFavorite ? "text-amber-500" : "text-stone-300 hover:text-amber-400"
               }`}
             >
               <Star className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
@@ -175,10 +183,7 @@ export function AnnouncementCard({
         </div>
 
         {/* Title */}
-        <Link
-          href={`/announcements/${announcement.id}`}
-          className="block mt-3"
-        >
+        <Link href={`/announcements/${announcement.id}`} className="block mt-3">
           <h3 className="text-lg font-semibold text-stone-800 hover:text-amber-700 line-clamp-2 transition-colors leading-snug">
             {announcement.title}
           </h3>
@@ -208,9 +213,7 @@ export function AnnouncementCard({
             <Briefcase className="w-3 h-3" />
             职位数
           </div>
-          <div className="text-lg font-bold text-stone-800">
-            {announcement.position_count || 0}
-          </div>
+          <div className="text-lg font-bold text-stone-800">{announcement.position_count || 0}</div>
         </div>
         <div className="text-center p-3 bg-amber-50 rounded-xl">
           <div className="flex items-center justify-center gap-1 text-amber-600 text-xs mb-1">
@@ -238,7 +241,8 @@ export function AnnouncementCard({
           <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-sm">
             <Clock className="w-4 h-4 text-blue-500" />
             <span className="text-blue-700">
-              报名时间：{formatDate(announcement.registration_start)} - {formatDate(announcement.registration_end)}
+              报名时间：{formatDate(announcement.registration_start)} -{" "}
+              {formatDate(announcement.registration_end)}
             </span>
           </div>
         </div>

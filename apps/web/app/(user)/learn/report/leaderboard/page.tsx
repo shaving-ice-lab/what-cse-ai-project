@@ -55,25 +55,19 @@ function RankBadge({ rank }: { rank: number }) {
 }
 
 // 排行榜项
-function LeaderboardItem({
-  entry,
-  isMe,
-}: {
-  entry: LeaderboardEntry;
-  isMe?: boolean;
-}) {
+function LeaderboardItem({ entry, isMe }: { entry: LeaderboardEntry; isMe?: boolean }) {
   return (
     <div
       className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
         isMe
           ? "bg-amber-50 border border-amber-200"
           : entry.rank <= 3
-          ? "bg-gradient-to-r from-amber-50/50 to-transparent"
-          : "hover:bg-stone-50"
+            ? "bg-gradient-to-r from-amber-50/50 to-transparent"
+            : "hover:bg-stone-50"
       }`}
     >
       <RankBadge rank={entry.rank} />
-      
+
       <div className="w-10 h-10 rounded-full bg-stone-200 overflow-hidden flex-shrink-0">
         {entry.avatar ? (
           <img src={entry.avatar} alt={entry.username} className="w-full h-full object-cover" />
@@ -102,9 +96,15 @@ function LeaderboardItem({
             : `${entry.value}${entry.value_unit}`}
         </div>
         {entry.change !== 0 && (
-          <div className={`flex items-center justify-end gap-1 text-xs ${
-            entry.change > 0 ? "text-green-600" : entry.change < 0 ? "text-red-600" : "text-stone-400"
-          }`}>
+          <div
+            className={`flex items-center justify-end gap-1 text-xs ${
+              entry.change > 0
+                ? "text-green-600"
+                : entry.change < 0
+                  ? "text-red-600"
+                  : "text-stone-400"
+            }`}
+          >
             {entry.change > 0 ? (
               <TrendingUp className="w-3 h-3" />
             ) : entry.change < 0 ? (
@@ -136,9 +136,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-        active
-          ? "bg-amber-500 text-white"
-          : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+        active ? "bg-amber-500 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
       }`}
     >
       <Icon className="w-4 h-4" />
@@ -178,7 +176,13 @@ export default function LeaderboardPage() {
       }
     };
     loadData();
-  }, [leaderboardTab, metricTab, fetchDailyLeaderboard, fetchWeeklyLeaderboard, fetchConsecutiveLeaderboard]);
+  }, [
+    leaderboardTab,
+    metricTab,
+    fetchDailyLeaderboard,
+    fetchWeeklyLeaderboard,
+    fetchConsecutiveLeaderboard,
+  ]);
 
   // 获取当前排行榜数据
   const getCurrentLeaderboard = () => {
@@ -203,7 +207,9 @@ export default function LeaderboardPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 text-sm text-stone-500 mb-2">
-              <Link href="/learn" className="hover:text-amber-600">学习中心</Link>
+              <Link href="/learn" className="hover:text-amber-600">
+                学习中心
+              </Link>
               <span>/</span>
               <span>排行榜</span>
             </div>
@@ -287,11 +293,7 @@ export default function LeaderboardPage() {
           ) : currentLeaderboard?.entries && currentLeaderboard.entries.length > 0 ? (
             <div className="divide-y divide-stone-100">
               {currentLeaderboard.entries.slice(0, 50).map((entry, idx) => (
-                <LeaderboardItem
-                  key={idx}
-                  entry={entry}
-                  isMe={user?.id === entry.user_id}
-                />
+                <LeaderboardItem key={idx} entry={entry} isMe={user?.id === entry.user_id} />
               ))}
             </div>
           ) : (
@@ -326,7 +328,9 @@ export default function LeaderboardPage() {
               <TrendingUp className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">能力分析</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                能力分析
+              </div>
               <div className="text-xs text-stone-400">查看综合能力评估</div>
             </div>
           </Link>
@@ -338,7 +342,9 @@ export default function LeaderboardPage() {
               <Zap className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">继续学习</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                继续学习
+              </div>
               <div className="text-xs text-stone-400">提升排名！</div>
             </div>
           </Link>

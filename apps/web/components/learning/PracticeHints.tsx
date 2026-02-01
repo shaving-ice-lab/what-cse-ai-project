@@ -102,13 +102,7 @@ const HINT_TYPE_CONFIG: Record<
 };
 
 // 单个提示卡片
-function HintCard({
-  hint,
-  onReveal,
-}: {
-  hint: PracticeHint;
-  onReveal?: () => void;
-}) {
+function HintCard({ hint, onReveal }: { hint: PracticeHint; onReveal?: () => void }) {
   const config = HINT_TYPE_CONFIG[hint.type];
   const Icon = config.icon;
 
@@ -123,9 +117,7 @@ function HintCard({
     <div
       className={cn(
         "rounded-xl border overflow-hidden transition-all",
-        hint.isRevealed
-          ? "border-stone-200 bg-white"
-          : "border-dashed border-stone-300 bg-stone-50"
+        hint.isRevealed ? "border-stone-200 bg-white" : "border-dashed border-stone-300 bg-stone-50"
       )}
     >
       {/* 头部 */}
@@ -142,12 +134,7 @@ function HintCard({
               hint.isRevealed ? "bg-white/80" : "bg-white"
             )}
           >
-            <Icon
-              className={cn(
-                "w-4 h-4",
-                hint.isRevealed ? config.color : "text-stone-400"
-              )}
-            />
+            <Icon className={cn("w-4 h-4", hint.isRevealed ? config.color : "text-stone-400")} />
           </div>
           <div>
             <span
@@ -238,10 +225,7 @@ function QuickReferenceCard({
               <p className="text-sm font-medium text-stone-600 mb-1">要点：</p>
               <ul className="space-y-1">
                 {reference.tips.map((tip, idx) => (
-                  <li
-                    key={idx}
-                    className="text-sm text-stone-600 flex items-start gap-2"
-                  >
+                  <li key={idx} className="text-sm text-stone-600 flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                     {tip}
                   </li>
@@ -295,10 +279,7 @@ function MethodTechCard({ method }: { method: MethodCard }) {
             <p className="text-sm font-medium text-purple-600 mb-2">解题步骤：</p>
             <ol className="space-y-1">
               {method.steps.map((step, idx) => (
-                <li
-                  key={idx}
-                  className="text-sm text-stone-600 flex items-start gap-2"
-                >
+                <li key={idx} className="text-sm text-stone-600 flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center flex-shrink-0">
                     {idx + 1}
                   </span>
@@ -340,9 +321,7 @@ export function PracticeHints({
   onKnowledgeClick,
   className,
 }: PracticeHintsProps) {
-  const [activeTab, setActiveTab] = useState<"hints" | "knowledge" | "methods">(
-    "hints"
-  );
+  const [activeTab, setActiveTab] = useState<"hints" | "knowledge" | "methods">("hints");
   const [revealedHints, setRevealedHints] = useState<Set<string>>(new Set());
 
   // 模拟数据
@@ -368,8 +347,7 @@ export function PracticeHints({
       type: "thinking",
       level: 2,
       title: "解题思路引导",
-      content:
-        "设相遇时间为t，根据「两人走过的路程之和=总路程」列方程。",
+      content: "设相遇时间为t，根据「两人走过的路程之和=总路程」列方程。",
       isRevealed: revealedHints.has("3"),
     },
     {
@@ -388,10 +366,7 @@ export function PracticeHints({
       name: "行程问题基本公式",
       content: "路程、速度、时间三者之间的基本关系。",
       formula: "路程 = 速度 × 时间",
-      tips: [
-        "单位要统一（km/h配km，m/s配m）",
-        "注意时间的换算（小时、分钟、秒）",
-      ],
+      tips: ["单位要统一（km/h配km，m/s配m）", "注意时间的换算（小时、分钟、秒）"],
     },
     {
       id: 2,
@@ -406,22 +381,14 @@ export function PracticeHints({
     {
       id: "1",
       title: "速度和法",
-      steps: [
-        "判断两者相向运动",
-        "计算速度之和",
-        "用总路程除以速度和得到相遇时间",
-      ],
+      steps: ["判断两者相向运动", "计算速度之和", "用总路程除以速度和得到相遇时间"],
       applicability: "同时出发的相遇问题",
       example: "甲乙相距100km，甲速60km/h，乙速40km/h，相遇时间=100÷(60+40)=1h",
     },
     {
       id: "2",
       title: "比例法",
-      steps: [
-        "确定速度比",
-        "由速度比推出时间比或路程比",
-        "根据已知量求解未知量",
-      ],
+      steps: ["确定速度比", "由速度比推出时间比或路程比", "根据已知量求解未知量"],
       applicability: "已知速度比的行程问题",
     },
   ];
@@ -436,15 +403,20 @@ export function PracticeHints({
   );
 
   // 按级别分组提示
-  const groupedHints = mockHints.reduce((acc, hint) => {
-    if (!acc[hint.level]) acc[hint.level] = [];
-    acc[hint.level].push(hint);
-    return acc;
-  }, {} as Record<number, PracticeHint[]>);
+  const groupedHints = mockHints.reduce(
+    (acc, hint) => {
+      if (!acc[hint.level]) acc[hint.level] = [];
+      acc[hint.level].push(hint);
+      return acc;
+    },
+    {} as Record<number, PracticeHint[]>
+  );
 
   if (!isEnabled) {
     return (
-      <div className={cn("p-4 bg-stone-50 rounded-xl border border-stone-200 text-center", className)}>
+      <div
+        className={cn("p-4 bg-stone-50 rounded-xl border border-stone-200 text-center", className)}
+      >
         <HelpCircle className="w-8 h-8 text-stone-300 mx-auto mb-2" />
         <p className="text-sm text-stone-500 mb-3">解题提示已关闭</p>
         <button
@@ -533,9 +505,7 @@ export function PracticeHints({
               (level) =>
                 groupedHints[level] && (
                   <div key={level}>
-                    <h4 className="text-sm font-medium text-stone-500 mb-2">
-                      Level {level} 提示
-                    </h4>
+                    <h4 className="text-sm font-medium text-stone-500 mb-2">Level {level} 提示</h4>
                     <div className="space-y-2">
                       {groupedHints[level].map((hint) => (
                         <HintCard

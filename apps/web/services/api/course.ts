@@ -166,15 +166,15 @@ export interface SubjectOverview {
 // =====================================================
 
 // 学习内容类型
-export type LearningContentType = 
-  | "tips"        // 学习技巧
-  | "formulas"    // 公式/口诀
-  | "guides"      // 学习指南
-  | "hot_topics"  // 热点话题
-  | "patterns"    // 图形规律
-  | "methods"     // 学习方法
-  | "strategies"  // 答题策略
-  | "quick_facts" // 速记知识点
+export type LearningContentType =
+  | "tips" // 学习技巧
+  | "formulas" // 公式/口诀
+  | "guides" // 学习指南
+  | "hot_topics" // 热点话题
+  | "patterns" // 图形规律
+  | "methods" // 学习方法
+  | "strategies" // 答题策略
+  | "quick_facts"; // 速记知识点
 
 // 学习内容
 export interface LearningContent {
@@ -314,41 +314,40 @@ export interface UpdateProgressRequest {
 
 export const courseApi = {
   // =============== 分类 ===============
-  
+
   // 获取所有分类
-  getCategories: () => 
-    request.get<CategoryListResponse>("/courses/categories", { params: { status: "published" } }),
-  
+  getCategories: () => request.get<CategoryListResponse>("/courses/categories"),
+
   // 按科目获取分类
-  getCategoriesBySubject: (subject: string, status: string = "published") =>
-    request.get<CategoryListResponse>("/courses/categories", { params: { subject, status } }),
-  
+  getCategoriesBySubject: (subject: string) =>
+    request.get<CategoryListResponse>("/courses/categories", { params: { subject } }),
+
   // 获取单个分类
-  getCategory: (id: number) =>
-    request.get<CourseCategory>(`/courses/categories/${id}`),
+  getCategory: (id: number) => request.get<CourseCategory>(`/courses/categories/${id}`),
 
   // =============== 课程 ===============
-  
+
   // 获取课程列表
   getCourses: (params?: CourseQueryParams) =>
-    request.get<CourseListResponse>("/courses", { params }),
-  
+    request.get<CourseListResponse>("/courses", {
+      params: params ? { ...params, status: params.status ?? "all" } : { status: "all" },
+    }),
+
   // 获取推荐课程
   getFeaturedCourses: (limit?: number) =>
-    request.get<{ courses: CourseBrief[] }>("/courses/featured", { 
-      params: { limit } 
+    request.get<{ courses: CourseBrief[] }>("/courses/featured", {
+      params: { limit },
     }),
-  
+
   // 获取免费课程
   getFreeCourses: (limit?: number) =>
-    request.get<{ courses: CourseBrief[] }>("/courses/free", { 
-      params: { limit } 
+    request.get<{ courses: CourseBrief[] }>("/courses/free", {
+      params: { limit },
     }),
-  
+
   // 获取课程详情
-  getCourse: (id: number) =>
-    request.get<CourseDetail>(`/courses/${id}`),
-  
+  getCourse: (id: number) => request.get<CourseDetail>(`/courses/${id}`),
+
   // 获取章节内容（基础）
   getChapterContent: (chapterId: number) =>
     request.get<CourseChapter>(`/courses/chapters/${chapterId}`),
@@ -364,70 +363,70 @@ export const courseApi = {
   // 获取科目模块配置（替代前端硬编码）
   getSubjectModulesConfig: (subject: string) =>
     request.get<{ subject: string; modules: SubjectModuleConfig[] }>("/courses/modules-config", {
-      params: { subject }
+      params: { subject },
     }),
-  
+
   // 获取所有科目概览（用于学习首页展示）
-  getSubjectsOverview: () =>
-    request.get<{ subjects: SubjectOverview[] }>("/courses/subjects"),
+  getSubjectsOverview: () => request.get<{ subjects: SubjectOverview[] }>("/courses/subjects"),
 
   // =============== 用户操作 ===============
-  
+
   // 收藏课程
   collectCourse: (courseId: number) =>
     request.post<{ message: string }>(`/courses/${courseId}/collect`),
-  
+
   // 取消收藏
   uncollectCourse: (courseId: number) =>
     request.delete<{ message: string }>(`/courses/${courseId}/collect`),
-  
+
   // 获取我的收藏
   getMyCollects: (page?: number, pageSize?: number) =>
     request.get<CollectListResponse>("/courses/my/collects", {
-      params: { page, page_size: pageSize }
+      params: { page, page_size: pageSize },
     }),
-  
+
   // 获取最近学习
   getRecentLearning: (limit?: number) =>
     request.get<{ courses: UserCourseProgress[] }>("/courses/my/recent", {
-      params: { limit }
+      params: { limit },
     }),
-  
+
   // 获取在学课程
   getMyLearning: (page?: number, pageSize?: number) =>
     request.get<LearningListResponse>("/courses/my/learning", {
-      params: { page, page_size: pageSize }
+      params: { page, page_size: pageSize },
     }),
-  
+
   // 获取课程学习进度
   getCourseProgress: (courseId: number) =>
     request.get<UserCourseProgress>(`/courses/${courseId}/progress`),
-  
+
   // 更新学习进度
   updateProgress: (courseId: number, data: UpdateProgressRequest) =>
     request.put<{ message: string }>(`/courses/${courseId}/progress`, data),
 
   // =============== 知识点 ===============
-  
+
   // 获取知识点树
   getKnowledgeTree: (categoryId: number) =>
     request.get<KnowledgeTreeResponse>(`/courses/knowledge/${categoryId}`),
-  
+
   // 获取单个知识点
-  getKnowledgePoint: (id: number) =>
-    request.get<KnowledgePoint>(`/courses/knowledge/point/${id}`),
-  
+  getKnowledgePoint: (id: number) => request.get<KnowledgePoint>(`/courses/knowledge/point/${id}`),
+
   // 获取高频知识点
   getHotKnowledge: (categoryId?: number, limit?: number) =>
     request.get<{ knowledge_points: KnowledgePoint[] }>("/courses/knowledge/hot", {
-      params: { category_id: categoryId, limit }
+      params: { category_id: categoryId, limit },
     }),
 
   // =============== 学习内容 ===============
 
   // 按类型获取学习内容
-  getLearningContent: (contentType: LearningContentType, params?: Omit<LearningContentQueryParams, 'content_type'>) =>
-    request.get<LearningContentListResponse>(`/learning-content/${contentType}`, { params }),
+  getLearningContent: (
+    contentType: LearningContentType,
+    params?: Omit<LearningContentQueryParams, "content_type">
+  ) => request.get<LearningContentListResponse>(`/learning-content/${contentType}`, { params }),
 
   // 获取所有学习内容
   getAllLearningContent: (params?: LearningContentQueryParams) =>
@@ -440,7 +439,7 @@ export const courseApi = {
   // 按科目获取学习内容
   getLearningContentBySubject: (subject: string, module?: string) =>
     request.get<{ contents: LearningContent[] }>(`/learning-content/subject/${subject}`, {
-      params: module ? { module } : undefined
+      params: module ? { module } : undefined,
     }),
 
   // 获取学习内容过滤选项

@@ -74,11 +74,7 @@ import { toast } from "sonner";
 // Main Page Component
 // ============================================
 
-export default function QuestionEditPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function QuestionEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const questionId = parseInt(resolvedParams.id);
   const router = useRouter();
@@ -91,26 +87,28 @@ export default function QuestionEditPage({
   // Form state
   const [formData, setFormData] = useState<UpdateQuestionRequest>({});
   const [options, setOptions] = useState<QuestionOption[]>([]);
-  
+
   // Dialog states
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [tableDialogOpen, setTableDialogOpen] = useState(false);
   const [formulaDialogOpen, setFormulaDialogOpen] = useState(false);
   const [knowledgeDialogOpen, setKnowledgeDialogOpen] = useState(false);
-  
+
   // Image dialog state
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
-  
+
   // Table dialog state
   const [tableRows, setTableRows] = useState(3);
   const [tableCols, setTableCols] = useState(3);
-  
+
   // Formula dialog state
   const [formulaText, setFormulaText] = useState("");
-  
+
   // Knowledge points state (these would come from an API in a real app)
-  const [allKnowledgePoints, setAllKnowledgePoints] = useState<{id: number; name: string; category: string}[]>([]);
+  const [allKnowledgePoints, setAllKnowledgePoints] = useState<
+    { id: number; name: string; category: string }[]
+  >([]);
   const [selectedKnowledgePoints, setSelectedKnowledgePoints] = useState<number[]>([]);
   const [knowledgeSearchTerm, setKnowledgeSearchTerm] = useState("");
 
@@ -146,16 +144,18 @@ export default function QuestionEditPage({
           status: questionRes.status,
         });
 
-        setOptions(questionRes.options || [
-          { key: "A", content: "" },
-          { key: "B", content: "" },
-          { key: "C", content: "" },
-          { key: "D", content: "" },
-        ]);
-        
+        setOptions(
+          questionRes.options || [
+            { key: "A", content: "" },
+            { key: "B", content: "" },
+            { key: "C", content: "" },
+            { key: "D", content: "" },
+          ]
+        );
+
         // Initialize selected knowledge points
         setSelectedKnowledgePoints(questionRes.knowledge_points || []);
-        
+
         // Mock knowledge points (in real app, fetch from API)
         setAllKnowledgePoints([
           { id: 1, name: "逻辑填空", category: "言语理解" },
@@ -265,7 +265,9 @@ export default function QuestionEditPage({
   const insertTable = () => {
     const headerRow = "| " + Array(tableCols).fill("表头").join(" | ") + " |";
     const separatorRow = "| " + Array(tableCols).fill("---").join(" | ") + " |";
-    const dataRows = Array(tableRows - 1).fill("| " + Array(tableCols).fill("数据").join(" | ") + " |").join("\n");
+    const dataRows = Array(tableRows - 1)
+      .fill("| " + Array(tableCols).fill("数据").join(" | ") + " |")
+      .join("\n");
     const tableMarkdown = `\n${headerRow}\n${separatorRow}\n${dataRows}\n`;
     setFormData({ ...formData, content: (formData.content || "") + tableMarkdown });
     setTableDialogOpen(false);
@@ -288,10 +290,8 @@ export default function QuestionEditPage({
 
   // Toggle knowledge point selection
   const toggleKnowledgePoint = (id: number) => {
-    setSelectedKnowledgePoints(prev => 
-      prev.includes(id) 
-        ? prev.filter(p => p !== id)
-        : [...prev, id]
+    setSelectedKnowledgePoints((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
   };
 
@@ -303,16 +303,19 @@ export default function QuestionEditPage({
   };
 
   // Filter knowledge points by search
-  const filteredKnowledgePoints = allKnowledgePoints.filter(kp => 
-    kp.name.includes(knowledgeSearchTerm) || kp.category.includes(knowledgeSearchTerm)
+  const filteredKnowledgePoints = allKnowledgePoints.filter(
+    (kp) => kp.name.includes(knowledgeSearchTerm) || kp.category.includes(knowledgeSearchTerm)
   );
 
   // Group knowledge points by category
-  const groupedKnowledgePoints = filteredKnowledgePoints.reduce((acc, kp) => {
-    if (!acc[kp.category]) acc[kp.category] = [];
-    acc[kp.category].push(kp);
-    return acc;
-  }, {} as Record<string, typeof allKnowledgePoints>);
+  const groupedKnowledgePoints = filteredKnowledgePoints.reduce(
+    (acc, kp) => {
+      if (!acc[kp.category]) acc[kp.category] = [];
+      acc[kp.category].push(kp);
+      return acc;
+    },
+    {} as Record<string, typeof allKnowledgePoints>
+  );
 
   // Flatten categories
   const flattenCategories = (
@@ -330,7 +333,9 @@ export default function QuestionEditPage({
   };
 
   const flatCategories = flattenCategories(categories);
-  const isChoiceType = ["single_choice", "multi_choice", "judge"].includes(formData.question_type || "");
+  const isChoiceType = ["single_choice", "multi_choice", "judge"].includes(
+    formData.question_type || ""
+  );
 
   if (loading) {
     return (
@@ -442,9 +447,7 @@ export default function QuestionEditPage({
                 </div>
                 <Textarea
                   value={formData.content || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder="输入题目内容...&#10;&#10;支持 Markdown 格式：&#10;- 图片：![描述](图片链接)&#10;- 表格：| 列1 | 列2 |&#10;- 公式：$公式内容$"
                   rows={8}
                   className="font-mono text-sm"
@@ -459,12 +462,7 @@ export default function QuestionEditPage({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>选项</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addOption}
-                    >
+                    <Button type="button" variant="outline" size="sm" onClick={addOption}>
                       <Plus className="h-3 w-3 mr-1" />
                       添加选项
                     </Button>
@@ -504,14 +502,16 @@ export default function QuestionEditPage({
                     onChange={(e) =>
                       setFormData({ ...formData, answer: e.target.value.toUpperCase() })
                     }
-                    placeholder={formData.question_type === "multi_choice" ? "多选请用逗号分隔，如：A,B,D" : "输入正确选项，如：A"}
+                    placeholder={
+                      formData.question_type === "multi_choice"
+                        ? "多选请用逗号分隔，如：A,B,D"
+                        : "输入正确选项，如：A"
+                    }
                   />
                 ) : (
                   <Textarea
                     value={formData.answer || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, answer: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
                     placeholder="输入正确答案..."
                     rows={3}
                   />
@@ -522,9 +522,7 @@ export default function QuestionEditPage({
                 <Label>答案解析</Label>
                 <Textarea
                   value={formData.analysis || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, analysis: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, analysis: e.target.value })}
                   placeholder="输入答案解析..."
                   rows={4}
                 />
@@ -534,9 +532,7 @@ export default function QuestionEditPage({
                 <Label>解题技巧</Label>
                 <Textarea
                   value={formData.tips || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tips: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, tips: e.target.value })}
                   placeholder="输入解题技巧..."
                   rows={2}
                 />
@@ -557,9 +553,7 @@ export default function QuestionEditPage({
                 <Label>所属分类</Label>
                 <Select
                   value={formData.category_id?.toString() || ""}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, category_id: Number(v) })
-                  }
+                  onValueChange={(v) => setFormData({ ...formData, category_id: Number(v) })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="选择分类" />
@@ -601,9 +595,7 @@ export default function QuestionEditPage({
                 <Label>难度</Label>
                 <Select
                   value={formData.difficulty?.toString() || "3"}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, difficulty: Number(v) })
-                  }
+                  onValueChange={(v) => setFormData({ ...formData, difficulty: Number(v) })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -640,9 +632,7 @@ export default function QuestionEditPage({
               <div className="flex items-center gap-2 pt-2">
                 <Switch
                   checked={formData.is_vip || false}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_vip: checked })
-                  }
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_vip: checked })}
                 />
                 <Label>VIP专属题目</Label>
               </div>
@@ -667,13 +657,11 @@ export default function QuestionEditPage({
             </CardHeader>
             <CardContent>
               {selectedKnowledgePoints.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  暂未关联知识点，点击"管理"添加
-                </p>
+                <p className="text-sm text-muted-foreground">暂未关联知识点，点击"管理"添加</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {selectedKnowledgePoints.map(id => {
-                    const kp = allKnowledgePoints.find(p => p.id === id);
+                  {selectedKnowledgePoints.map((id) => {
+                    const kp = allKnowledgePoints.find((p) => p.id === id);
                     return kp ? (
                       <Badge key={id} variant="secondary" className="gap-1">
                         <BookOpen className="h-3 w-3" />
@@ -722,7 +710,10 @@ export default function QuestionEditPage({
                 <Select
                   value={formData.source_year?.toString() || "none"}
                   onValueChange={(v) =>
-                    setFormData({ ...formData, source_year: v && v !== "none" ? Number(v) : undefined })
+                    setFormData({
+                      ...formData,
+                      source_year: v && v !== "none" ? Number(v) : undefined,
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -743,9 +734,7 @@ export default function QuestionEditPage({
                 <Label>来源地区</Label>
                 <Input
                   value={formData.source_region || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, source_region: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, source_region: e.target.value })}
                   placeholder="如：国考、浙江省考等"
                 />
               </div>
@@ -754,9 +743,7 @@ export default function QuestionEditPage({
                 <Label>来源考试</Label>
                 <Input
                   value={formData.source_exam || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, source_exam: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, source_exam: e.target.value })}
                   placeholder="如：2024年国家公务员考试行测"
                 />
               </div>
@@ -810,9 +797,7 @@ export default function QuestionEditPage({
               <Image className="h-5 w-5" />
               插入图片
             </DialogTitle>
-            <DialogDescription>
-              输入图片链接，将以 Markdown 格式插入到题目内容中
-            </DialogDescription>
+            <DialogDescription>输入图片链接，将以 Markdown 格式插入到题目内容中</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -834,12 +819,12 @@ export default function QuestionEditPage({
             {imageUrl && (
               <div className="border rounded-lg p-2">
                 <p className="text-xs text-muted-foreground mb-2">预览：</p>
-                <img 
-                  src={imageUrl} 
-                  alt={imageAlt || "预览"} 
+                <img
+                  src={imageUrl}
+                  alt={imageAlt || "预览"}
                   className="max-h-40 mx-auto object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
               </div>
@@ -862,64 +847,72 @@ export default function QuestionEditPage({
               <Table2 className="h-5 w-5" />
               插入表格
             </DialogTitle>
-            <DialogDescription>
-              设置表格的行数和列数，将生成 Markdown 表格
-            </DialogDescription>
+            <DialogDescription>设置表格的行数和列数，将生成 Markdown 表格</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>行数</Label>
-                <Select
-                  value={tableRows.toString()}
-                  onValueChange={(v) => setTableRows(Number(v))}
-                >
+                <Select value={tableRows.toString()} onValueChange={(v) => setTableRows(Number(v))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                      <SelectItem key={n} value={n.toString()}>{n} 行</SelectItem>
+                    {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                      <SelectItem key={n} value={n.toString()}>
+                        {n} 行
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>列数</Label>
-                <Select
-                  value={tableCols.toString()}
-                  onValueChange={(v) => setTableCols(Number(v))}
-                >
+                <Select value={tableCols.toString()} onValueChange={(v) => setTableCols(Number(v))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[2, 3, 4, 5, 6].map(n => (
-                      <SelectItem key={n} value={n.toString()}>{n} 列</SelectItem>
+                    {[2, 3, 4, 5, 6].map((n) => (
+                      <SelectItem key={n} value={n.toString()}>
+                        {n} 列
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="border rounded-lg p-3 bg-muted/50">
-              <p className="text-xs text-muted-foreground mb-2">预览（{tableRows}×{tableCols}）：</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                预览（{tableRows}×{tableCols}）：
+              </p>
               <div className="overflow-x-auto">
                 <table className="text-xs border-collapse">
                   <thead>
                     <tr>
-                      {Array(tableCols).fill(0).map((_, i) => (
-                        <th key={i} className="border px-2 py-1 bg-muted">表头{i+1}</th>
-                      ))}
+                      {Array(tableCols)
+                        .fill(0)
+                        .map((_, i) => (
+                          <th key={i} className="border px-2 py-1 bg-muted">
+                            表头{i + 1}
+                          </th>
+                        ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {Array(tableRows - 1).fill(0).map((_, r) => (
-                      <tr key={r}>
-                        {Array(tableCols).fill(0).map((_, c) => (
-                          <td key={c} className="border px-2 py-1">数据</td>
-                        ))}
-                      </tr>
-                    ))}
+                    {Array(tableRows - 1)
+                      .fill(0)
+                      .map((_, r) => (
+                        <tr key={r}>
+                          {Array(tableCols)
+                            .fill(0)
+                            .map((_, c) => (
+                              <td key={c} className="border px-2 py-1">
+                                数据
+                              </td>
+                            ))}
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -942,9 +935,7 @@ export default function QuestionEditPage({
               <Calculator className="h-5 w-5" />
               插入公式
             </DialogTitle>
-            <DialogDescription>
-              输入 LaTeX 格式的数学公式
-            </DialogDescription>
+            <DialogDescription>输入 LaTeX 格式的数学公式</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -960,37 +951,37 @@ export default function QuestionEditPage({
             <div className="border rounded-lg p-3 bg-muted/50">
               <p className="text-xs text-muted-foreground mb-2">常用公式示例：</p>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <button 
+                <button
                   className="text-left p-2 hover:bg-muted rounded"
                   onClick={() => setFormulaText("x^2 + y^2 = r^2")}
                 >
                   <code>x^2 + y^2 = r^2</code> → 平方和
                 </button>
-                <button 
+                <button
                   className="text-left p-2 hover:bg-muted rounded"
                   onClick={() => setFormulaText("\\frac{a}{b}")}
                 >
-                  <code>\frac{'{a}{b}'}</code> → 分数
+                  <code>\frac{"{a}{b}"}</code> → 分数
                 </button>
-                <button 
+                <button
                   className="text-left p-2 hover:bg-muted rounded"
                   onClick={() => setFormulaText("\\sqrt{x}")}
                 >
-                  <code>\sqrt{'{x}'}</code> → 根号
+                  <code>\sqrt{"{x}"}</code> → 根号
                 </button>
-                <button 
+                <button
                   className="text-left p-2 hover:bg-muted rounded"
                   onClick={() => setFormulaText("\\sum_{i=1}^{n}")}
                 >
                   <code>\sum</code> → 求和
                 </button>
-                <button 
+                <button
                   className="text-left p-2 hover:bg-muted rounded"
                   onClick={() => setFormulaText("\\pi \\times r^2")}
                 >
                   <code>\pi × r^2</code> → 圆面积
                 </button>
-                <button 
+                <button
                   className="text-left p-2 hover:bg-muted rounded"
                   onClick={() => setFormulaText("a \\times b \\div c")}
                 >
@@ -1022,9 +1013,7 @@ export default function QuestionEditPage({
               <BookOpen className="h-5 w-5" />
               关联知识点
             </DialogTitle>
-            <DialogDescription>
-              选择与此题目相关的知识点，便于分类学习和智能推荐
-            </DialogDescription>
+            <DialogDescription>选择与此题目相关的知识点，便于分类学习和智能推荐</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Input
@@ -1037,7 +1026,7 @@ export default function QuestionEditPage({
                 <div key={category} className="mb-4">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">{category}</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    {points.map(kp => (
+                    {points.map((kp) => (
                       <button
                         key={kp.id}
                         onClick={() => toggleKnowledgePoint(kp.id)}
@@ -1047,9 +1036,11 @@ export default function QuestionEditPage({
                             : "hover:bg-muted"
                         }`}
                       >
-                        <CheckCircle className={`h-4 w-4 ${
-                          selectedKnowledgePoints.includes(kp.id) ? "opacity-100" : "opacity-0"
-                        }`} />
+                        <CheckCircle
+                          className={`h-4 w-4 ${
+                            selectedKnowledgePoints.includes(kp.id) ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
                         {kp.name}
                       </button>
                     ))}
@@ -1057,9 +1048,7 @@ export default function QuestionEditPage({
                 </div>
               ))}
               {Object.keys(groupedKnowledgePoints).length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  没有找到匹配的知识点
-                </p>
+                <p className="text-center text-muted-foreground py-8">没有找到匹配的知识点</p>
               )}
             </ScrollArea>
             <div className="flex items-center justify-between text-sm">
@@ -1067,11 +1056,7 @@ export default function QuestionEditPage({
                 已选择 {selectedKnowledgePoints.length} 个知识点
               </span>
               {selectedKnowledgePoints.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedKnowledgePoints([])}
-                >
+                <Button variant="ghost" size="sm" onClick={() => setSelectedKnowledgePoints([])}>
                   清空选择
                 </Button>
               )}
@@ -1081,9 +1066,7 @@ export default function QuestionEditPage({
             <Button variant="outline" onClick={() => setKnowledgeDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={applyKnowledgePoints}>
-              确认关联
-            </Button>
+            <Button onClick={applyKnowledgePoints}>确认关联</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

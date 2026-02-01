@@ -15,11 +15,7 @@ export function HotPositionsList({ positions, type, showAll = false }: HotPositi
   const displayList = showAll ? positions : positions.slice(0, 10);
 
   if (displayList.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        暂无数据
-      </div>
-    );
+    return <div className="text-center py-8 text-muted-foreground">暂无数据</div>;
   }
 
   return (
@@ -88,10 +84,7 @@ export function HotPositionsList({ positions, type, showAll = false }: HotPositi
               </div>
             )}
 
-            <Badge
-              variant="secondary"
-              className="bg-green-50 text-green-700 whitespace-nowrap"
-            >
+            <Badge variant="secondary" className="bg-green-50 text-green-700 whitespace-nowrap">
               招{position.recruit_count}人
             </Badge>
           </div>

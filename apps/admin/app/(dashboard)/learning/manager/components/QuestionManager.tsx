@@ -183,12 +183,7 @@ interface QuestionFormDialogProps {
   onSubmit: (data: CreateQuestionRequest) => void;
 }
 
-function QuestionFormDialog({
-  open,
-  onOpenChange,
-  categories,
-  onSubmit,
-}: QuestionFormDialogProps) {
+function QuestionFormDialog({ open, onOpenChange, categories, onSubmit }: QuestionFormDialogProps) {
   const [formData, setFormData] = useState<CreateQuestionRequest>({
     category_id: 0,
     question_type: "single_choice",
@@ -303,9 +298,7 @@ function QuestionFormDialog({
               <Label className="text-xs text-muted-foreground">所属分类 *</Label>
               <Select
                 value={formData.category_id ? formData.category_id.toString() : ""}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, category_id: Number(v) })
-                }
+                onValueChange={(v) => setFormData({ ...formData, category_id: Number(v) })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="选择分类" />
@@ -349,9 +342,7 @@ function QuestionFormDialog({
               <Label className="text-xs text-muted-foreground">难度</Label>
               <Select
                 value={formData.difficulty.toString()}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, difficulty: Number(v) })
-                }
+                onValueChange={(v) => setFormData({ ...formData, difficulty: Number(v) })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -412,9 +403,7 @@ function QuestionFormDialog({
             <Label className="text-xs text-muted-foreground">题目内容 *</Label>
             <Textarea
               value={formData.content}
-              onChange={(e) =>
-                setFormData({ ...formData, content: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder="输入题目内容..."
               rows={3}
               className="text-sm resize-none"
@@ -440,7 +429,9 @@ function QuestionFormDialog({
               <div className="space-y-1.5">
                 {(formData.options || []).map((option, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="w-6 text-center text-sm font-medium text-muted-foreground">{option.key}.</span>
+                    <span className="w-6 text-center text-sm font-medium text-muted-foreground">
+                      {option.key}.
+                    </span>
                     <Input
                       value={option.content}
                       onChange={(e) => handleOptionChange(index, e.target.value)}
@@ -468,19 +459,19 @@ function QuestionFormDialog({
             {isChoiceType ? (
               <Input
                 value={formData.answer}
-                onChange={(e) =>
-                  setFormData({ ...formData, answer: e.target.value.toUpperCase() })
+                onChange={(e) => setFormData({ ...formData, answer: e.target.value.toUpperCase() })}
+                placeholder={
+                  formData.question_type === "multi_choice"
+                    ? "多选请用逗号分隔，如：A,B,D"
+                    : "输入正确选项，如：A"
                 }
-                placeholder={formData.question_type === "multi_choice" ? "多选请用逗号分隔，如：A,B,D" : "输入正确选项，如：A"}
                 maxLength={formData.question_type === "multi_choice" ? 20 : 1}
                 className="h-9 text-sm"
               />
             ) : (
               <Textarea
                 value={formData.answer}
-                onChange={(e) =>
-                  setFormData({ ...formData, answer: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
                 placeholder="输入正确答案..."
                 rows={2}
                 className="text-sm resize-none"
@@ -493,9 +484,7 @@ function QuestionFormDialog({
             <Label className="text-xs text-muted-foreground">答案解析</Label>
             <Textarea
               value={formData.analysis}
-              onChange={(e) =>
-                setFormData({ ...formData, analysis: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, analysis: e.target.value })}
               placeholder="输入答案解析..."
               rows={2}
               className="text-sm resize-none"
@@ -507,9 +496,7 @@ function QuestionFormDialog({
             <Label className="text-xs text-muted-foreground">解题技巧</Label>
             <Textarea
               value={formData.tips}
-              onChange={(e) =>
-                setFormData({ ...formData, tips: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, tips: e.target.value })}
               placeholder="输入解题技巧（可选）..."
               rows={2}
               className="text-sm resize-none"
@@ -521,18 +508,14 @@ function QuestionFormDialog({
             <div className="flex items-center gap-2">
               <Switch
                 checked={formData.is_vip}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_vip: checked })
-                }
+                onCheckedChange={(checked) => setFormData({ ...formData, is_vip: checked })}
               />
               <Label className="text-sm">VIP专属</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
                 checked={formData.status === 1}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, status: checked ? 1 : 0 })
-                }
+                onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? 1 : 0 })}
               />
               <Label className="text-sm">立即发布</Label>
             </div>
@@ -543,7 +526,9 @@ function QuestionFormDialog({
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button size="sm" onClick={handleSubmit}>创建题目</Button>
+          <Button size="sm" onClick={handleSubmit}>
+            创建题目
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -704,21 +689,43 @@ export default function QuestionManager() {
           <Input
             placeholder="搜索题目..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
             className="h-8 w-40 pl-8 pr-3 text-sm bg-muted/40 border-transparent focus:border-border focus:bg-background transition-colors"
           />
         </div>
-        <Button size="sm" variant="ghost" onClick={() => setImportDialogOpen(true)} className="h-8 w-8 p-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setImportDialogOpen(true)}
+          className="h-8 w-8 p-0"
+        >
           <FileUp className="h-3.5 w-3.5" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setAiGenerateDialogOpen(true)} className="h-8 w-8 p-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setAiGenerateDialogOpen(true)}
+          className="h-8 w-8 p-0"
+        >
           <Sparkles className="h-3.5 w-3.5" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={fetchData} disabled={loading} className="h-8 w-8 p-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={fetchData}
+          disabled={loading}
+          className="h-8 w-8 p-0"
+        >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
         </Button>
-        <Button size="sm" onClick={() => setCreateDialogOpen(true)}
-          className="h-8 px-3 text-xs bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-sm">
+        <Button
+          size="sm"
+          onClick={() => setCreateDialogOpen(true)}
+          className="h-8 px-3 text-xs bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-sm"
+        >
           <Plus className="mr-1 h-3.5 w-3.5" />
           新建
         </Button>
@@ -733,10 +740,26 @@ export default function QuestionManager() {
       <div className="flex-shrink-0 flex items-center gap-4 px-4 py-2 border-b border-border/30 bg-muted/20 overflow-x-auto">
         {[
           { label: "全部", value: questions.length, icon: FileQuestion },
-          { label: "单选", value: questions.filter(q => q.question_type === "single_choice").length, icon: CheckCircle },
-          { label: "多选", value: questions.filter(q => q.question_type === "multi_choice").length, icon: CheckSquare },
-          { label: "判断", value: questions.filter(q => q.question_type === "judge").length, icon: CircleDot },
-          { label: "已发布", value: questions.filter(q => q.status === 1).length, icon: CheckCircle2 },
+          {
+            label: "单选",
+            value: questions.filter((q) => q.question_type === "single_choice").length,
+            icon: CheckCircle,
+          },
+          {
+            label: "多选",
+            value: questions.filter((q) => q.question_type === "multi_choice").length,
+            icon: CheckSquare,
+          },
+          {
+            label: "判断",
+            value: questions.filter((q) => q.question_type === "judge").length,
+            icon: CircleDot,
+          },
+          {
+            label: "已发布",
+            value: questions.filter((q) => q.status === 1).length,
+            icon: CheckCircle2,
+          },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-1.5 text-xs whitespace-nowrap">
             <item.icon className="h-3 w-3 text-muted-foreground" />
@@ -751,7 +774,13 @@ export default function QuestionManager() {
         <Card className="flex-1 flex flex-col shadow-sm border-border/50 rounded-xl overflow-hidden">
           {/* Filter Bar */}
           <div className="flex-shrink-0 flex flex-wrap items-center gap-2 px-3 py-2 border-b bg-muted/20">
-            <Select value={statusFilter === "all" ? "all" : statusFilter.toString()} onValueChange={(v) => { setStatusFilter(v === "all" ? "all" : (Number(v) as QuestionStatus)); setPage(1); }}>
+            <Select
+              value={statusFilter === "all" ? "all" : statusFilter.toString()}
+              onValueChange={(v) => {
+                setStatusFilter(v === "all" ? "all" : (Number(v) as QuestionStatus));
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[90px] h-8 text-xs">
                 <SelectValue placeholder="状态" />
               </SelectTrigger>
@@ -763,7 +792,13 @@ export default function QuestionManager() {
               </SelectContent>
             </Select>
 
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as QuestionType | "all"); setPage(1); }}>
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => {
+                setTypeFilter(v as QuestionType | "all");
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[90px] h-8 text-xs">
                 <SelectValue placeholder="题型" />
               </SelectTrigger>
@@ -778,7 +813,13 @@ export default function QuestionManager() {
               </SelectContent>
             </Select>
 
-            <Select value={difficultyFilter === "all" ? "all" : difficultyFilter.toString()} onValueChange={(v) => { setDifficultyFilter(v === "all" ? "all" : Number(v)); setPage(1); }}>
+            <Select
+              value={difficultyFilter === "all" ? "all" : difficultyFilter.toString()}
+              onValueChange={(v) => {
+                setDifficultyFilter(v === "all" ? "all" : Number(v));
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[90px] h-8 text-xs">
                 <SelectValue placeholder="难度" />
               </SelectTrigger>
@@ -792,7 +833,13 @@ export default function QuestionManager() {
               </SelectContent>
             </Select>
 
-            <Select value={sourceFilter} onValueChange={(v) => { setSourceFilter(v as QuestionSourceType | "all"); setPage(1); }}>
+            <Select
+              value={sourceFilter}
+              onValueChange={(v) => {
+                setSourceFilter(v as QuestionSourceType | "all");
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[85px] h-8 text-xs">
                 <SelectValue placeholder="来源" />
               </SelectTrigger>
@@ -804,18 +851,27 @@ export default function QuestionManager() {
               </SelectContent>
             </Select>
 
-            <Select value={categoryFilter === "all" ? "all" : categoryFilter.toString()} onValueChange={(v) => { setCategoryFilter(v === "all" ? "all" : Number(v)); setPage(1); }}>
+            <Select
+              value={categoryFilter === "all" ? "all" : categoryFilter.toString()}
+              onValueChange={(v) => {
+                setCategoryFilter(v === "all" ? "all" : Number(v));
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[110px] h-8 text-xs">
                 <SelectValue placeholder="分类" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部分类</SelectItem>
                 {flatCategories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id.toString()}>{"　".repeat(cat.level)}{cat.name}</SelectItem>
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                    {"　".repeat(cat.level)}
+                    {cat.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            
+
             <div className="flex-1" />
             <span className="text-xs text-muted-foreground">共 {total} 题</span>
           </div>
@@ -825,7 +881,10 @@ export default function QuestionManager() {
             {loading ? (
               <div className="space-y-1 p-2">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2.5 border-b border-transparent">
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-3 py-2.5 border-b border-transparent"
+                  >
                     <Skeleton className="h-3.5 w-10" />
                     <Skeleton className="h-3.5 w-48 flex-1" />
                     <Skeleton className="h-5 w-12 rounded-full" />
@@ -855,139 +914,169 @@ export default function QuestionManager() {
                     <TableHead className="w-[60px] py-2 text-xs">操作</TableHead>
                   </TableRow>
                 </TableHeader>
-                  <TableBody>
-                    {questions.map((question) => (
-                      <TableRow key={question.id} className="hover:bg-muted/50">
-                        <TableCell className="py-2 font-mono text-xs text-muted-foreground">
-                          #{question.id}
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div className="space-y-0.5">
-                            <p className="text-sm line-clamp-2">{truncateContent(question.content)}</p>
-                            <div className="flex items-center gap-1.5">
-                              {question.category && (
-                                <Badge variant="outline" className="text-xs">
-                                  {question.category.name}
-                                </Badge>
-                              )}
-                              {question.source_year && (
-                                <span className="text-xs text-muted-foreground">
-                                  {question.source_year}年
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <Badge variant="secondary" className="text-xs">
-                            {getQuestionTypeName(question.question_type)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <Badge className={`text-xs ${getDifficultyColor(question.difficulty)}`}>
-                            {getDifficultyLabel(question.difficulty)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <Badge variant="outline" className="text-xs">
-                            {getSourceTypeName(question.source_type)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div className="flex items-center gap-1 text-sm">
-                            <span className={question.correct_rate >= 50 ? "text-green-600" : "text-amber-600"}>
-                              {question.correct_rate.toFixed(1)}%
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              ({question.attempt_count})
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div className="flex items-center gap-1">
-                            <Badge
-                              variant={
-                                question.status === 1
-                                  ? "default"
-                                  : question.status === 2
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {getQuestionStatusLabel(question.status)}
-                            </Badge>
-                            {question.is_vip && (
-                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700">
-                                VIP
+                <TableBody>
+                  {questions.map((question) => (
+                    <TableRow key={question.id} className="hover:bg-muted/50">
+                      <TableCell className="py-2 font-mono text-xs text-muted-foreground">
+                        #{question.id}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <div className="space-y-0.5">
+                          <p className="text-sm line-clamp-2">
+                            {truncateContent(question.content)}
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            {question.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {question.category.name}
                               </Badge>
                             )}
+                            {question.source_year && (
+                              <span className="text-xs text-muted-foreground">
+                                {question.source_year}年
+                              </span>
+                            )}
                           </div>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel className="text-xs">操作</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem asChild className="text-sm">
-                                <Link href={`/learning/questions/${question.id}`}>
-                                  <Edit className="mr-2 h-3.5 w-3.5" />
-                                  编辑
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleCopy(question)} className="text-sm">
-                                <Copy className="mr-2 h-3.5 w-3.5" />
-                                复制
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleStatus(question)} className="text-sm">
-                                {question.status === 1 ? (
-                                  <>
-                                    <XCircle className="mr-2 h-3.5 w-3.5" />
-                                    下架
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="mr-2 h-3.5 w-3.5" />
-                                    发布
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(question.id)}
-                                className="text-sm text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                删除
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-t bg-muted/10">
-                <span className="text-xs text-muted-foreground">共 {total} 条</span>
-                <div className="flex items-center gap-1">
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>上一页</Button>
-                  <span className="text-xs px-2">{page} / {totalPages}</span>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>下一页</Button>
-                </div>
-              </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {getQuestionTypeName(question.question_type)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <Badge className={`text-xs ${getDifficultyColor(question.difficulty)}`}>
+                          {getDifficultyLabel(question.difficulty)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <Badge variant="outline" className="text-xs">
+                          {getSourceTypeName(question.source_type)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <div className="flex items-center gap-1 text-sm">
+                          <span
+                            className={
+                              question.correct_rate >= 50 ? "text-green-600" : "text-amber-600"
+                            }
+                          >
+                            {question.correct_rate.toFixed(1)}%
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({question.attempt_count})
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <div className="flex items-center gap-1">
+                          <Badge
+                            variant={
+                              question.status === 1
+                                ? "default"
+                                : question.status === 2
+                                  ? "secondary"
+                                  : "outline"
+                            }
+                            className="text-xs"
+                          >
+                            {getQuestionStatusLabel(question.status)}
+                          </Badge>
+                          {question.is_vip && (
+                            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700">
+                              VIP
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel className="text-xs">操作</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild className="text-sm">
+                              <Link href={`/learning/questions/${question.id}`}>
+                                <Edit className="mr-2 h-3.5 w-3.5" />
+                                编辑
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleCopy(question)}
+                              className="text-sm"
+                            >
+                              <Copy className="mr-2 h-3.5 w-3.5" />
+                              复制
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleToggleStatus(question)}
+                              className="text-sm"
+                            >
+                              {question.status === 1 ? (
+                                <>
+                                  <XCircle className="mr-2 h-3.5 w-3.5" />
+                                  下架
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="mr-2 h-3.5 w-3.5" />
+                                  发布
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(question.id)}
+                              className="text-sm text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-3.5 w-3.5" />
+                              删除
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </Card>
-        </div>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-t bg-muted/10">
+              <span className="text-xs text-muted-foreground">共 {total} 条</span>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  上一页
+                </Button>
+                <span className="text-xs px-2">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  下一页
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* 新建题目对话框 */}
       <QuestionFormDialog

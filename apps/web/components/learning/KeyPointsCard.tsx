@@ -107,9 +107,7 @@ function KeyPointItem({
     <div
       className={cn(
         "border rounded-xl overflow-hidden transition-all",
-        point.isMastered
-          ? "border-green-200 bg-green-50/50"
-          : "border-stone-200 bg-white"
+        point.isMastered ? "border-green-200 bg-green-50/50" : "border-stone-200 bg-white"
       )}
     >
       {/* 头部 */}
@@ -145,18 +143,10 @@ function KeyPointItem({
         {/* 标题 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "text-xs px-1.5 py-0.5 rounded",
-                config.bgColor,
-                config.color
-              )}
-            >
+            <span className={cn("text-xs px-1.5 py-0.5 rounded", config.bgColor, config.color)}>
               {config.label}
             </span>
-            {point.isImportant && (
-              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-            )}
+            {point.isImportant && <Star className="w-4 h-4 text-amber-500 fill-amber-500" />}
           </div>
           <h4
             className={cn(
@@ -237,9 +227,7 @@ function FlashCardItem({ card }: { card: FlashCard }) {
           className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white backface-hidden flex flex-col justify-center items-center"
           style={{ backfaceVisibility: "hidden" }}
         >
-          {card.category && (
-            <span className="text-xs text-white/70 mb-1">{card.category}</span>
-          )}
+          {card.category && <span className="text-xs text-white/70 mb-1">{card.category}</span>}
           <p className="text-center font-medium">{card.front}</p>
           <p className="text-xs text-white/60 mt-2">点击翻转查看</p>
         </div>
@@ -274,9 +262,7 @@ export function KeyPointsCard({
   // 计算掌握进度
   const masteredCount = keyPoints.filter((p) => p.isMastered).length;
   const masteryProgress =
-    keyPoints.length > 0
-      ? Math.round((masteredCount / keyPoints.length) * 100)
-      : 0;
+    keyPoints.length > 0 ? Math.round((masteredCount / keyPoints.length) * 100) : 0;
 
   // 重要要点排在前面
   const sortedPoints = [...keyPoints].sort((a, b) => {
@@ -298,9 +284,7 @@ export function KeyPointsCard({
             </div>
             <div>
               <h3 className="font-semibold text-stone-800">AI 提炼要点</h3>
-              {chapterTitle && (
-                <p className="text-xs text-stone-500">{chapterTitle}</p>
-              )}
+              {chapterTitle && <p className="text-xs text-stone-500">{chapterTitle}</p>}
             </div>
           </div>
           <div className="text-right">
@@ -356,9 +340,7 @@ export function KeyPointsCard({
               <KeyPointItem
                 key={point.id}
                 point={point}
-                onMasteryToggle={(mastered) =>
-                  onMasteryToggle?.(point.id, mastered)
-                }
+                onMasteryToggle={(mastered) => onMasteryToggle?.(point.id, mastered)}
                 onCopy={() => onCopy?.(point.content)}
                 onBookmark={() => onBookmark?.(point.id)}
               />

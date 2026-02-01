@@ -23,12 +23,7 @@ import {
   CheckCircle,
   Home,
 } from "lucide-react";
-import {
-  useCourse,
-  useChapter,
-  useMyLearning,
-  formatDuration,
-} from "@/hooks/useCourse";
+import { useCourse, useChapter, useMyLearning, formatDuration } from "@/hooks/useCourse";
 import { CourseChapter, CourseDetail } from "@/services/api/course";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "@what-cse/ui";
@@ -66,13 +61,7 @@ interface ChapterSidebarProps {
   onClose: () => void;
 }
 
-function ChapterSidebar({
-  course,
-  currentChapterId,
-  isVIP,
-  isOpen,
-  onClose,
-}: ChapterSidebarProps) {
+function ChapterSidebar({ course, currentChapterId, isVIP, isOpen, onClose }: ChapterSidebarProps) {
   const router = useRouter();
 
   // 统计章节数量
@@ -107,13 +96,7 @@ function ChapterSidebar({
   };
 
   // 章节树节点
-  const ChapterNode = ({
-    chapter,
-    level = 0,
-  }: {
-    chapter: CourseChapter;
-    level?: number;
-  }) => {
+  const ChapterNode = ({ chapter, level = 0 }: { chapter: CourseChapter; level?: number }) => {
     const [expanded, setExpanded] = useState(true);
     const hasChildren = chapter.children && chapter.children.length > 0;
     const isCurrent = chapter.id === currentChapterId;
@@ -128,18 +111,11 @@ function ChapterSidebar({
             className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50 rounded-lg transition-colors"
             style={{ paddingLeft: `${12 + level * 16}px` }}
           >
-            <motion.div
-              animate={{ rotate: expanded ? 90 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
+            <motion.div animate={{ rotate: expanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronRight className="w-4 h-4 text-stone-400" />
             </motion.div>
-            <span className="font-medium text-stone-700 text-sm truncate">
-              {chapter.title}
-            </span>
-            <span className="ml-auto text-xs text-stone-400">
-              {chapter.children!.length}
-            </span>
+            <span className="font-medium text-stone-700 text-sm truncate">{chapter.title}</span>
+            <span className="ml-auto text-xs text-stone-400">{chapter.children!.length}</span>
           </button>
         ) : (
           // 叶子节点（可点击学习）
@@ -151,8 +127,8 @@ function ChapterSidebar({
               isCurrent
                 ? "bg-amber-50 border-l-3 border-amber-500"
                 : accessible
-                ? "hover:bg-stone-50"
-                : "opacity-50 cursor-not-allowed"
+                  ? "hover:bg-stone-50"
+                  : "opacity-50 cursor-not-allowed"
             )}
             style={{ paddingLeft: `${12 + level * 16}px` }}
           >
@@ -162,8 +138,8 @@ function ChapterSidebar({
                 isCurrent
                   ? "bg-amber-500 text-white"
                   : accessible
-                  ? "bg-stone-100 text-stone-500"
-                  : "bg-stone-100 text-stone-400"
+                    ? "bg-stone-100 text-stone-500"
+                    : "bg-stone-100 text-stone-400"
               )}
             >
               {accessible ? (
@@ -179,8 +155,8 @@ function ChapterSidebar({
                   isCurrent
                     ? "font-medium text-amber-800"
                     : accessible
-                    ? "text-stone-700"
-                    : "text-stone-400"
+                      ? "text-stone-700"
+                      : "text-stone-400"
                 )}
               >
                 {chapter.title}
@@ -232,9 +208,7 @@ function ChapterSidebar({
           </div>
           <span className="text-sm font-medium">返回课程</span>
         </Link>
-        <h2 className="font-bold text-stone-800 line-clamp-2 leading-snug">
-          {course.title}
-        </h2>
+        <h2 className="font-bold text-stone-800 line-clamp-2 leading-snug">{course.title}</h2>
         <div className="flex items-center gap-3 mt-2 text-xs text-stone-500">
           <span className="flex items-center gap-1">
             <BookOpen className="w-3.5 h-3.5" />
@@ -362,9 +336,7 @@ export default function ChapterPage() {
   const currentIndex = flatChapters.findIndex((c) => c.id === chapterId);
   const prevChapter = currentIndex > 0 ? flatChapters[currentIndex - 1] : null;
   const nextChapter =
-    currentIndex < flatChapters.length - 1
-      ? flatChapters[currentIndex + 1]
-      : null;
+    currentIndex < flatChapters.length - 1 ? flatChapters[currentIndex + 1] : null;
 
   // 检查章节访问权限
   const canAccessChapter = useCallback(
@@ -501,9 +473,7 @@ export default function ChapterPage() {
                 {course.title}
               </Link>
               <ChevronRight className="w-4 h-4 flex-shrink-0" />
-              <span className="text-stone-700 font-medium truncate">
-                {chapter.title}
-              </span>
+              <span className="text-stone-700 font-medium truncate">{chapter.title}</span>
             </nav>
 
             {/* 移动端标题 */}
@@ -556,13 +526,13 @@ export default function ChapterPage() {
                     {chapter.content_type === "video"
                       ? "视频"
                       : chapter.content_type === "audio"
-                      ? "音频"
-                      : "图文"}
+                        ? "音频"
+                        : "图文"}
                   </span>
                   {fullContent?.word_count?.total && (
                     <span className="flex items-center gap-1.5 bg-stone-100 px-2.5 py-1 rounded-lg">
-                      <FileText className="w-4 h-4" />
-                      约 {Math.round(fullContent.word_count.total / 1000)}k 字
+                      <FileText className="w-4 h-4" />约{" "}
+                      {Math.round(fullContent.word_count.total / 1000)}k 字
                     </span>
                   )}
                 </div>
@@ -575,11 +545,7 @@ export default function ChapterPage() {
         {chapter.content_type === "video" && chapter.content_url && (
           <div className="bg-stone-900">
             <div className="max-w-5xl mx-auto">
-              <video
-                src={chapter.content_url}
-                controls
-                className="w-full aspect-video"
-              />
+              <video src={chapter.content_url} controls className="w-full aspect-video" />
             </div>
           </div>
         )}

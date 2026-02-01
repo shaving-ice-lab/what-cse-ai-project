@@ -38,7 +38,13 @@ import {
   getDifficultyLabel,
   getDifficultyColor,
 } from "@/hooks/useCourse";
-import { CourseBrief, CourseCategory, KnowledgePoint, CourseQueryParams, SubjectOverview } from "@/services/api/course";
+import {
+  CourseBrief,
+  CourseCategory,
+  KnowledgePoint,
+  CourseQueryParams,
+  SubjectOverview,
+} from "@/services/api/course";
 import { courseApi } from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -52,7 +58,10 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 // 默认科目配置（作为加载时的骨架屏和错误回退）
-const defaultSubjectConfig: Record<string, { name: string; fullName: string; icon: string; color: string; bgColor: string }> = {
+const defaultSubjectConfig: Record<
+  string,
+  { name: string; fullName: string; icon: string; color: string; bgColor: string }
+> = {
   xingce: {
     name: "行测",
     fullName: "行政职业能力测验",
@@ -158,13 +167,7 @@ function CategoryTreeNode({
 }
 
 // 知识点树节点组件
-function KnowledgeTreeNode({
-  point,
-  level = 0,
-}: {
-  point: KnowledgePoint;
-  level?: number;
-}) {
+function KnowledgeTreeNode({ point, level = 0 }: { point: KnowledgePoint; level?: number }) {
   const [expanded, setExpanded] = useState(level < 1);
   const hasChildren = point.children && point.children.length > 0;
 
@@ -212,19 +215,55 @@ function KnowledgeTreeNode({
 }
 
 // 根据课程属性生成封面配色
-function getCoverGradient(course: CourseBrief): { gradient: string; accent: string; pattern: string } {
+function getCoverGradient(course: CourseBrief): {
+  gradient: string;
+  accent: string;
+  pattern: string;
+} {
   // 基于分类 ID 和难度生成不同的配色方案
   const colorSchemes = [
-    { gradient: "from-blue-500 via-blue-600 to-indigo-700", accent: "bg-blue-400/30", pattern: "text-blue-300/20" },
-    { gradient: "from-emerald-500 via-teal-600 to-cyan-700", accent: "bg-emerald-400/30", pattern: "text-emerald-300/20" },
-    { gradient: "from-violet-500 via-purple-600 to-indigo-700", accent: "bg-violet-400/30", pattern: "text-violet-300/20" },
-    { gradient: "from-amber-500 via-orange-600 to-red-600", accent: "bg-amber-400/30", pattern: "text-amber-300/20" },
-    { gradient: "from-rose-500 via-pink-600 to-fuchsia-700", accent: "bg-rose-400/30", pattern: "text-rose-300/20" },
-    { gradient: "from-cyan-500 via-sky-600 to-blue-700", accent: "bg-cyan-400/30", pattern: "text-cyan-300/20" },
-    { gradient: "from-lime-500 via-green-600 to-emerald-700", accent: "bg-lime-400/30", pattern: "text-lime-300/20" },
-    { gradient: "from-fuchsia-500 via-purple-600 to-violet-700", accent: "bg-fuchsia-400/30", pattern: "text-fuchsia-300/20" },
+    {
+      gradient: "from-blue-500 via-blue-600 to-indigo-700",
+      accent: "bg-blue-400/30",
+      pattern: "text-blue-300/20",
+    },
+    {
+      gradient: "from-emerald-500 via-teal-600 to-cyan-700",
+      accent: "bg-emerald-400/30",
+      pattern: "text-emerald-300/20",
+    },
+    {
+      gradient: "from-violet-500 via-purple-600 to-indigo-700",
+      accent: "bg-violet-400/30",
+      pattern: "text-violet-300/20",
+    },
+    {
+      gradient: "from-amber-500 via-orange-600 to-red-600",
+      accent: "bg-amber-400/30",
+      pattern: "text-amber-300/20",
+    },
+    {
+      gradient: "from-rose-500 via-pink-600 to-fuchsia-700",
+      accent: "bg-rose-400/30",
+      pattern: "text-rose-300/20",
+    },
+    {
+      gradient: "from-cyan-500 via-sky-600 to-blue-700",
+      accent: "bg-cyan-400/30",
+      pattern: "text-cyan-300/20",
+    },
+    {
+      gradient: "from-lime-500 via-green-600 to-emerald-700",
+      accent: "bg-lime-400/30",
+      pattern: "text-lime-300/20",
+    },
+    {
+      gradient: "from-fuchsia-500 via-purple-600 to-violet-700",
+      accent: "bg-fuchsia-400/30",
+      pattern: "text-fuchsia-300/20",
+    },
   ];
-  
+
   // 使用课程 ID 来确定配色（保证同一课程始终相同配色）
   const index = (course.id + (course.category_id || 0)) % colorSchemes.length;
   return colorSchemes[index];
@@ -233,10 +272,14 @@ function getCoverGradient(course: CourseBrief): { gradient: string; accent: stri
 // 获取难度对应的装饰图标数量
 function getDifficultyStars(difficulty: string): number {
   switch (difficulty) {
-    case "beginner": return 1;
-    case "intermediate": return 2;
-    case "advanced": return 3;
-    default: return 1;
+    case "beginner":
+      return 1;
+    case "intermediate":
+      return 2;
+    case "advanced":
+      return 3;
+    default:
+      return 1;
   }
 }
 
@@ -266,34 +309,56 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
             {/* 装饰性几何图案背景 */}
             <div className="absolute inset-0 overflow-hidden">
               {/* 大圆形装饰 */}
-              <div className={`absolute -top-8 -right-8 w-32 h-32 rounded-full ${accent} blur-xl`} />
-              <div className={`absolute -bottom-4 -left-4 w-24 h-24 rounded-full ${accent} blur-lg`} />
-              
+              <div
+                className={`absolute -top-8 -right-8 w-32 h-32 rounded-full ${accent} blur-xl`}
+              />
+              <div
+                className={`absolute -bottom-4 -left-4 w-24 h-24 rounded-full ${accent} blur-lg`}
+              />
+
               {/* 网格线条装饰 */}
-              <svg className={`absolute inset-0 w-full h-full ${pattern}`} xmlns="http://www.w3.org/2000/svg">
+              <svg
+                className={`absolute inset-0 w-full h-full ${pattern}`}
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <defs>
-                  <pattern id={`grid-${course.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
-                    <path d="M 24 0 L 0 0 0 24" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <pattern
+                    id={`grid-${course.id}`}
+                    width="24"
+                    height="24"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <path
+                      d="M 24 0 L 0 0 0 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="0.5"
+                    />
                   </pattern>
                 </defs>
                 <rect width="100%" height="100%" fill={`url(#grid-${course.id})`} />
               </svg>
-              
+
               {/* 装饰性圆点 */}
               <div className="absolute top-4 left-4 flex gap-1.5">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className={`w-2 h-2 rounded-full ${i < difficultyStars ? 'bg-white/60' : 'bg-white/20'}`} />
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full ${i < difficultyStars ? "bg-white/60" : "bg-white/20"}`}
+                  />
                 ))}
               </div>
             </div>
-            
+
             {/* 中心内容区 */}
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white">
               {/* 图标容器 */}
-              <div className={`w-14 h-14 rounded-2xl ${accent} backdrop-blur-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+              <div
+                className={`w-14 h-14 rounded-2xl ${accent} backdrop-blur-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}
+              >
                 <FileText className="w-7 h-7 text-white" />
               </div>
-              
+
               {/* 章节数标签 */}
               <div className="flex items-center gap-1.5 text-white/90 text-sm font-medium">
                 <BookMarked className="w-4 h-4" />
@@ -372,11 +437,14 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
 export default function SubjectLearnPage() {
   const params = useParams();
   const subject = params.subject as string;
-  const includeDraftCourses = process.env.NODE_ENV !== "production";
 
   const { isAuthenticated } = useAuthStore();
   const { loading: coursesLoading, courses, total, fetchCourses } = useCourses();
-  const { loading: categoriesLoading, categories, fetchCategoriesBySubject } = useCourseCategories();
+  const {
+    loading: categoriesLoading,
+    categories,
+    fetchCategoriesBySubject,
+  } = useCourseCategories();
   const { loading: knowledgeLoading, knowledgeTree, fetchKnowledgeTree } = useKnowledge();
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
@@ -427,8 +495,8 @@ export default function SubjectLearnPage() {
 
   // 加载分类
   useEffect(() => {
-    fetchCategoriesBySubject(subject, includeDraftCourses ? "all" : "published");
-  }, [subject, includeDraftCourses, fetchCategoriesBySubject]);
+    fetchCategoriesBySubject(subject);
+  }, [subject, fetchCategoriesBySubject]);
 
   // 加载课程
   useEffect(() => {
@@ -442,10 +510,10 @@ export default function SubjectLearnPage() {
     if (difficulty) params.difficulty = difficulty;
     if (keyword) params.keyword = keyword;
     if (showOnlyFree) params.is_free = true;
-    if (includeDraftCourses) params.status = "all";
+    params.status = "all";
 
     fetchCourses(params);
-  }, [subject, selectedCategoryId, difficulty, sortBy, keyword, page, showOnlyFree, includeDraftCourses, fetchCourses]);
+  }, [subject, selectedCategoryId, difficulty, sortBy, keyword, page, showOnlyFree, fetchCourses]);
 
   // 加载知识点（当选择分类时）
   useEffect(() => {
@@ -521,7 +589,9 @@ export default function SubjectLearnPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
       {/* Header */}
-      <div className={`bg-gradient-to-br ${config?.color || "from-amber-500 to-orange-600"} text-white`}>
+      <div
+        className={`bg-gradient-to-br ${config?.color || "from-amber-500 to-orange-600"} text-white`}
+      >
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <Link
             href="/learn"
@@ -646,9 +716,7 @@ export default function SubjectLearnPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-stone-500 py-4 text-center">
-                        暂无知识点数据
-                      </p>
+                      <p className="text-sm text-stone-500 py-4 text-center">暂无知识点数据</p>
                     )}
                   </div>
                 )}

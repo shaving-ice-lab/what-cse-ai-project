@@ -40,7 +40,13 @@ import {
 import { courseApi, CourseCategory } from "@/services/api/course";
 
 // 快速练习模板卡片
-function QuickTemplateCard({ template, onSelect }: { template: PracticeTemplate; onSelect: () => void }) {
+function QuickTemplateCard({
+  template,
+  onSelect,
+}: {
+  template: PracticeTemplate;
+  onSelect: () => void;
+}) {
   const iconMap: Record<string, React.ReactNode> = {
     zap: <Zap className="w-6 h-6" />,
     target: <Target className="w-6 h-6" />,
@@ -62,9 +68,19 @@ function QuickTemplateCard({ template, onSelect }: { template: PracticeTemplate;
       onClick={onSelect}
       className="group relative overflow-hidden rounded-2xl bg-white border border-stone-200/50 hover:shadow-lg transition-all text-left"
     >
-      <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity", colorMap[template.color] || colorMap.amber)} />
+      <div
+        className={cn(
+          "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity",
+          colorMap[template.color] || colorMap.amber
+        )}
+      />
       <div className="p-5">
-        <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white mb-4", colorMap[template.color] || colorMap.amber)}>
+        <div
+          className={cn(
+            "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white mb-4",
+            colorMap[template.color] || colorMap.amber
+          )}
+        >
           {iconMap[template.icon] || <Target className="w-6 h-6" />}
         </div>
         <h3 className="font-semibold text-stone-800 mb-1 group-hover:text-amber-600 transition-colors">
@@ -86,11 +102,19 @@ function QuickTemplateCard({ template, onSelect }: { template: PracticeTemplate;
 }
 
 // 进行中的练习卡片
-function ActiveSessionCard({ session, onContinue }: { session: PracticeSession; onContinue: () => void }) {
+function ActiveSessionCard({
+  session,
+  onContinue,
+}: {
+  session: PracticeSession;
+  onContinue: () => void;
+}) {
   return (
     <div className="bg-white rounded-xl border border-stone-200/50 p-4 hover:shadow-card transition-shadow">
       <div className="flex items-center justify-between mb-3">
-        <span className={cn("px-2 py-0.5 text-xs rounded-lg", getSessionStatusColor(session.status))}>
+        <span
+          className={cn("px-2 py-0.5 text-xs rounded-lg", getSessionStatusColor(session.status))}
+        >
           {getSessionStatusName(session.status)}
         </span>
         <span className="text-xs text-stone-400">
@@ -101,7 +125,9 @@ function ActiveSessionCard({ session, onContinue }: { session: PracticeSession; 
         {session.title || getSessionTypeName(session.session_type)}
       </h4>
       <div className="flex items-center gap-4 text-sm text-stone-500 mb-3">
-        <span>{session.completed_count}/{session.total_questions}题</span>
+        <span>
+          {session.completed_count}/{session.total_questions}题
+        </span>
         <span>{Math.round(session.progress)}%</span>
         {session.time_limit > 0 && (
           <span className="flex items-center gap-1">
@@ -132,7 +158,9 @@ function SessionHistoryCard({ session }: { session: PracticeSession }) {
   return (
     <div className="bg-white rounded-xl border border-stone-200/50 p-4">
       <div className="flex items-center justify-between mb-2">
-        <span className={cn("px-2 py-0.5 text-xs rounded-lg", getSessionStatusColor(session.status))}>
+        <span
+          className={cn("px-2 py-0.5 text-xs rounded-lg", getSessionStatusColor(session.status))}
+        >
           {getSessionStatusName(session.status)}
         </span>
         <span className="text-xs text-stone-400">
@@ -234,7 +262,8 @@ function CustomPracticeModal({
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                     selectedDifficulties.includes(diff)
-                      ? getDifficultyColor(diff).replace("bg-", "bg-").replace("-100", "-500") + " text-white"
+                      ? getDifficultyColor(diff).replace("bg-", "bg-").replace("-100", "-500") +
+                          " text-white"
                       : getDifficultyColor(diff)
                   )}
                 >
@@ -352,7 +381,7 @@ export default function SpecializedPracticePage() {
 
       setTemplates(templatesRes || []);
       setActiveSessions(activeRes || []);
-      setHistorySessions(historyRes?.data?.filter(s => s.status === "completed") || []);
+      setHistorySessions(historyRes?.data?.filter((s) => s.status === "completed") || []);
       setStats(statsRes);
       setCategories(categoriesRes?.categories || []);
     } catch (error) {
@@ -363,38 +392,47 @@ export default function SpecializedPracticePage() {
   };
 
   // 创建练习会话
-  const createSession = useCallback(async (config: CreatePracticeSessionRequest) => {
-    setCreating(true);
-    try {
-      const session = await practiceApi.createSession(config);
-      if (session) {
-        router.push(`/learn/practice/session/${session.id}`);
+  const createSession = useCallback(
+    async (config: CreatePracticeSessionRequest) => {
+      setCreating(true);
+      try {
+        const session = await practiceApi.createSession(config);
+        if (session) {
+          router.push(`/learn/practice/session/${session.id}`);
+        }
+      } catch (error) {
+        console.error("Failed to create session:", error);
+        alert("创建练习失败，请稍后再试");
+      } finally {
+        setCreating(false);
+        setShowCustomModal(false);
       }
-    } catch (error) {
-      console.error("Failed to create session:", error);
-      alert("创建练习失败，请稍后再试");
-    } finally {
-      setCreating(false);
-      setShowCustomModal(false);
-    }
-  }, [router]);
+    },
+    [router]
+  );
 
   // 从模板创建会话
-  const createFromTemplate = useCallback(async (template: PracticeTemplate) => {
-    await createSession({
-      session_type: template.session_type,
-      title: template.name,
-      question_count: template.config.question_count,
-      smart_random: template.config.smart_random,
-      total_time_limit: template.config.total_time_limit,
-      show_countdown: template.config.show_countdown,
-    });
-  }, [createSession]);
+  const createFromTemplate = useCallback(
+    async (template: PracticeTemplate) => {
+      await createSession({
+        session_type: template.session_type,
+        title: template.name,
+        question_count: template.config.question_count,
+        smart_random: template.config.smart_random,
+        total_time_limit: template.config.total_time_limit,
+        show_countdown: template.config.show_countdown,
+      });
+    },
+    [createSession]
+  );
 
   // 继续练习
-  const continueSession = useCallback((session: PracticeSession) => {
-    router.push(`/learn/practice/session/${session.id}`);
-  }, [router]);
+  const continueSession = useCallback(
+    (session: PracticeSession) => {
+      router.push(`/learn/practice/session/${session.id}`);
+    },
+    [router]
+  );
 
   // 未登录
   if (!authLoading && !isAuthenticated) {
@@ -477,11 +515,15 @@ export default function SpecializedPracticePage() {
               <div className="text-sm text-stone-500">累计做题</div>
             </div>
             <div className="bg-white rounded-xl p-4 border border-stone-200/50">
-              <div className="text-2xl font-bold text-green-600">{Math.round(stats.avg_correct_rate)}%</div>
+              <div className="text-2xl font-bold text-green-600">
+                {Math.round(stats.avg_correct_rate)}%
+              </div>
               <div className="text-sm text-stone-500">正确率</div>
             </div>
             <div className="bg-white rounded-xl p-4 border border-stone-200/50">
-              <div className="text-2xl font-bold text-blue-600">{formatTime(stats.total_time_spent)}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatTime(stats.total_time_spent)}
+              </div>
               <div className="text-sm text-stone-500">学习时长</div>
             </div>
           </div>

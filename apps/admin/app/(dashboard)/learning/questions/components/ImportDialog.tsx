@@ -106,12 +106,7 @@ const sourceTypeMap: Record<string, QuestionSourceType> = {
   original: "original",
 };
 
-export function ImportDialog({
-  open,
-  onOpenChange,
-  categories,
-  onSuccess,
-}: ImportDialogProps) {
+export function ImportDialog({ open, onOpenChange, categories, onSuccess }: ImportDialogProps) {
   const [step, setStep] = useState<"upload" | "preview" | "result">("upload");
   const [parsedQuestions, setParsedQuestions] = useState<ParsedQuestion[]>([]);
   const [importing, setImporting] = useState(false);
@@ -142,16 +137,14 @@ export function ImportDialog({
 
   // 根据分类名称查找分类 ID
   const findCategoryId = (name: string): number | undefined => {
-    const found = flatCategories.find(
-      (cat) => cat.name === name || cat.code === name
-    );
+    const found = flatCategories.find((cat) => cat.name === name || cat.code === name);
     return found?.id;
   };
 
   // 解析选项字符串（支持多种格式）
   const parseOptions = (optionStr: string): { key: string; content: string }[] => {
     if (!optionStr) return [];
-    
+
     // 尝试解析 JSON 格式
     try {
       const parsed = JSON.parse(optionStr);
@@ -168,11 +161,11 @@ export function ImportDialog({
     // 尝试解析 "A.xxx|B.xxx" 或 "A、xxx|B、xxx" 格式
     const options: { key: string; content: string }[] = [];
     const parts = optionStr.split(/[|｜;；\n]/);
-    
+
     for (const part of parts) {
       const trimmed = part.trim();
       if (!trimmed) continue;
-      
+
       // 匹配 "A.xxx" 或 "A、xxx" 或 "A:xxx" 格式
       const match = trimmed.match(/^([A-Za-z])[\.\、\:\：\s](.+)$/);
       if (match) {
@@ -185,7 +178,7 @@ export function ImportDialog({
         });
       }
     }
-    
+
     return options;
   };
 
@@ -198,21 +191,24 @@ export function ImportDialog({
     } catch {
       // 不是 JSON 格式
     }
-    return tagStr.split(/[,，、;；|｜]/).map((t) => t.trim()).filter(Boolean);
+    return tagStr
+      .split(/[,，、;；|｜]/)
+      .map((t) => t.trim())
+      .filter(Boolean);
   };
 
   // 验证题目
   const validateQuestion = (q: ParsedQuestion): ParsedQuestion => {
     const errors: string[] = [];
-    
+
     if (!q.content || q.content.trim().length < 5) {
       errors.push("题目内容过短");
     }
-    
+
     if (!q.answer || q.answer.trim().length === 0) {
       errors.push("缺少正确答案");
     }
-    
+
     if (!q.category_id && !q.category_name) {
       if (defaultCategoryId) {
         q.category_id = defaultCategoryId;
@@ -227,14 +223,14 @@ export function ImportDialog({
         errors.push(`未找到分类：${q.category_name}`);
       }
     }
-    
+
     const choiceTypes: QuestionType[] = ["single_choice", "multi_choice", "judge"];
     if (choiceTypes.includes(q.question_type)) {
       if (!q.options || q.options.length < 2) {
         errors.push("选择题至少需要2个选项");
       }
     }
-    
+
     return {
       ...q,
       category_id: q.category_id || defaultCategoryId,
@@ -249,12 +245,13 @@ export function ImportDialog({
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
-    
+
     return rows.map((row, index) => {
       const q: ParsedQuestion = {
         id: index + 1,
         category_name: row["分类"] || row["category"] || row["category_name"],
-        question_type: questionTypeMap[row["题型"] || row["type"] || row["question_type"]] || "single_choice",
+        question_type:
+          questionTypeMap[row["题型"] || row["type"] || row["question_type"]] || "single_choice",
         difficulty: parseInt(row["难度"] || row["difficulty"]) || 3,
         source_type: sourceTypeMap[row["来源类型"] || row["source_type"]] || "mock",
         source_year: parseInt(row["年份"] || row["source_year"]) || undefined,
@@ -270,7 +267,7 @@ export function ImportDialog({
         isValid: false,
         errors: [],
       };
-      
+
       return validateQuestion(q);
     });
   };
@@ -280,7 +277,7 @@ export function ImportDialog({
     try {
       const parsed = JSON.parse(data);
       const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
-      
+
       return questions.map((row: any, index: number) => {
         const q: ParsedQuestion = {
           id: index + 1,
@@ -302,7 +299,7 @@ export function ImportDialog({
           isValid: false,
           errors: [],
         };
-        
+
         return validateQuestion(q);
       });
     } catch (e) {
@@ -316,16 +313,16 @@ export function ImportDialog({
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
-      
+
       const fileName = file.name.toLowerCase();
       const reader = new FileReader();
-      
+
       reader.onload = (e) => {
         const result = e.target?.result;
         if (!result) return;
-        
+
         let questions: ParsedQuestion[] = [];
-        
+
         if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
           questions = parseExcel(result as ArrayBuffer);
         } else if (fileName.endsWith(".json")) {
@@ -334,23 +331,23 @@ export function ImportDialog({
           toast.error("不支持的文件格式，请上传 Excel 或 JSON 文件");
           return;
         }
-        
+
         if (questions.length === 0) {
           toast.error("未解析到任何题目数据");
           return;
         }
-        
+
         setParsedQuestions(questions);
         setStep("preview");
         toast.success(`成功解析 ${questions.length} 道题目`);
       };
-      
+
       if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
         reader.readAsArrayBuffer(file);
       } else {
         reader.readAsText(file);
       }
-      
+
       // 清除 input 值，允许重复上传同一文件
       event.target.value = "";
     },
@@ -371,9 +368,9 @@ export function ImportDialog({
       toast.error("没有有效的题目可导入");
       return;
     }
-    
+
     setImporting(true);
-    
+
     try {
       const questionsToCreate: CreateQuestionRequest[] = validQuestions.map((q) => ({
         category_id: q.category_id!,
@@ -392,9 +389,9 @@ export function ImportDialog({
         is_vip: q.is_vip,
         status: 0, // 默认草稿状态
       }));
-      
+
       await questionApi.batchCreateQuestions(questionsToCreate);
-      
+
       setImportResult({
         success: validQuestions.length,
         failed: parsedQuestions.length - validQuestions.length,
@@ -433,7 +430,7 @@ export function ImportDialog({
           VIP: "否",
         },
       ];
-      
+
       const ws = XLSX.utils.json_to_sheet(templateData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "题目导入模板");
@@ -464,7 +461,7 @@ export function ImportDialog({
           },
         ],
       };
-      
+
       const blob = new Blob([JSON.stringify(templateData, null, 2)], {
         type: "application/json",
       });
@@ -501,9 +498,7 @@ export function ImportDialog({
             <Upload className="h-5 w-5" />
             批量导入题目
           </DialogTitle>
-          <DialogDescription>
-            支持 Excel (.xlsx) 和 JSON 格式导入
-          </DialogDescription>
+          <DialogDescription>支持 Excel (.xlsx) 和 JSON 格式导入</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
@@ -544,30 +539,18 @@ export function ImportDialog({
                   onChange={handleFileUpload}
                 />
                 <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium mb-2">
-                  点击或拖拽文件到此处上传
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  支持 .xlsx、.xls、.json 格式
-                </p>
+                <p className="text-lg font-medium mb-2">点击或拖拽文件到此处上传</p>
+                <p className="text-sm text-muted-foreground">支持 .xlsx、.xls、.json 格式</p>
               </div>
 
               {/* 模板下载 */}
               <div className="flex items-center justify-center gap-4">
                 <span className="text-sm text-muted-foreground">下载导入模板：</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadTemplate("excel")}
-                >
+                <Button variant="outline" size="sm" onClick={() => downloadTemplate("excel")}>
                   <FileSpreadsheet className="h-4 w-4 mr-2" />
                   Excel 模板
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadTemplate("json")}
-                >
+                <Button variant="outline" size="sm" onClick={() => downloadTemplate("json")}>
                   <FileJson className="h-4 w-4 mr-2" />
                   JSON 模板
                 </Button>
@@ -626,14 +609,10 @@ export function ImportDialog({
                   <QuestionPreviewTable questions={parsedQuestions} />
                 </TabsContent>
                 <TabsContent value="valid" className="mt-4">
-                  <QuestionPreviewTable
-                    questions={parsedQuestions.filter((q) => q.isValid)}
-                  />
+                  <QuestionPreviewTable questions={parsedQuestions.filter((q) => q.isValid)} />
                 </TabsContent>
                 <TabsContent value="invalid" className="mt-4">
-                  <QuestionPreviewTable
-                    questions={parsedQuestions.filter((q) => !q.isValid)}
-                  />
+                  <QuestionPreviewTable questions={parsedQuestions.filter((q) => !q.isValid)} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -649,10 +628,12 @@ export function ImportDialog({
               <div>
                 <h3 className="text-xl font-medium mb-2">导入完成</h3>
                 <p className="text-muted-foreground">
-                  成功导入 <span className="text-green-600 font-medium">{importResult.success}</span> 道题目
+                  成功导入{" "}
+                  <span className="text-green-600 font-medium">{importResult.success}</span> 道题目
                   {importResult.failed > 0 && (
                     <>
-                      ，<span className="text-red-600 font-medium">{importResult.failed}</span> 道失败
+                      ，<span className="text-red-600 font-medium">{importResult.failed}</span>{" "}
+                      道失败
                     </>
                   )}
                 </p>
@@ -692,16 +673,12 @@ export function ImportDialog({
                     导入中...
                   </>
                 ) : (
-                  <>
-                    导入 {validCount} 道题目
-                  </>
+                  <>导入 {validCount} 道题目</>
                 )}
               </Button>
             </>
           )}
-          {step === "result" && (
-            <Button onClick={() => onOpenChange(false)}>完成</Button>
-          )}
+          {step === "result" && <Button onClick={() => onOpenChange(false)}>完成</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -711,11 +688,7 @@ export function ImportDialog({
 // 题目预览表格组件
 function QuestionPreviewTable({ questions }: { questions: ParsedQuestion[] }) {
   if (questions.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        暂无题目
-      </div>
-    );
+    return <div className="text-center py-8 text-muted-foreground">暂无题目</div>;
   }
 
   return (
@@ -753,16 +726,12 @@ function QuestionPreviewTable({ questions }: { questions: ParsedQuestion[] }) {
                 <div className="max-w-[300px]">
                   <p className="text-sm truncate">{q.content}</p>
                   {!q.isValid && q.errors.length > 0 && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {q.errors.join(", ")}
-                    </p>
+                    <p className="text-xs text-red-500 mt-1">{q.errors.join(", ")}</p>
                   )}
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">
-                  {getQuestionTypeName(q.question_type)}
-                </Badge>
+                <Badge variant="secondary">{getQuestionTypeName(q.question_type)}</Badge>
               </TableCell>
               <TableCell>{getDifficultyLabel(q.difficulty)}</TableCell>
               <TableCell className="text-sm text-muted-foreground">

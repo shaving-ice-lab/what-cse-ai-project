@@ -85,12 +85,7 @@ interface TemplateFormDialogProps {
   onSubmit: (data: CreatePromptTemplateRequest | UpdatePromptTemplateRequest, id?: number) => void;
 }
 
-function TemplateFormDialog({
-  open,
-  onOpenChange,
-  template,
-  onSubmit,
-}: TemplateFormDialogProps) {
+function TemplateFormDialog({ open, onOpenChange, template, onSubmit }: TemplateFormDialogProps) {
   const [formData, setFormData] = useState<CreatePromptTemplateRequest>({
     name: "",
     code: "",
@@ -113,9 +108,7 @@ function TemplateFormDialog({
         description: template.description || "",
       });
       setVariableText(
-        (template.variables || [])
-          .map((v) => `${v.name}: ${v.description}`)
-          .join("\n")
+        (template.variables || []).map((v) => `${v.name}: ${v.description}`).join("\n")
       );
     } else {
       setFormData({
@@ -171,9 +164,7 @@ function TemplateFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>
-            {template ? "编辑 Prompt 模板" : "新建 Prompt 模板"}
-          </DialogTitle>
+          <DialogTitle>{template ? "编辑 Prompt 模板" : "新建 Prompt 模板"}</DialogTitle>
           <DialogDescription>
             {template ? "修改现有的 Prompt 模板" : "创建新的 Prompt 模板"}
           </DialogDescription>
@@ -197,9 +188,7 @@ function TemplateFormDialog({
                   <Label>模板名称 *</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="例如：题目深度解析"
                   />
                 </div>
@@ -223,9 +212,7 @@ function TemplateFormDialog({
                 <Label>所属分类 *</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, category: v })
-                  }
+                  onValueChange={(v) => setFormData({ ...formData, category: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -244,9 +231,7 @@ function TemplateFormDialog({
                 <Label>描述说明</Label>
                 <Textarea
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="简要描述该模板的用途..."
                   rows={3}
                 />
@@ -263,9 +248,7 @@ function TemplateFormDialog({
                 </div>
                 <Textarea
                   value={formData.content}
-                  onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder={`你是一位资深的公考培训专家。请根据以下题目信息生成深度解析。
 
 ## 题目信息
@@ -315,10 +298,7 @@ options: 选项列表`}
                     .map((line, i) => {
                       const [name, ...descParts] = line.split(":");
                       return (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 text-sm"
-                        >
+                        <div key={i} className="flex items-center gap-2 text-sm">
                           <code className="bg-muted px-2 py-0.5 rounded">
                             {`{{${name.trim()}}}`}
                           </code>
@@ -329,9 +309,7 @@ options: 选项列表`}
                       );
                     })}
                   {!variableText.trim() && (
-                    <p className="text-sm text-muted-foreground">
-                      暂未定义变量
-                    </p>
+                    <p className="text-sm text-muted-foreground">暂未定义变量</p>
                   )}
                 </div>
               </div>
@@ -363,11 +341,7 @@ interface TestTemplateDialogProps {
   template: PromptTemplate | null;
 }
 
-function TestTemplateDialog({
-  open,
-  onOpenChange,
-  template,
-}: TestTemplateDialogProps) {
+function TestTemplateDialog({ open, onOpenChange, template }: TestTemplateDialogProps) {
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [result, setResult] = useState<string>("");
   const [testing, setTesting] = useState(false);
@@ -433,18 +407,14 @@ function TestTemplateDialog({
                   </Label>
                   <Input
                     value={variables[v.name] || ""}
-                    onChange={(e) =>
-                      setVariables({ ...variables, [v.name]: e.target.value })
-                    }
+                    onChange={(e) => setVariables({ ...variables, [v.name]: e.target.value })}
                     placeholder={v.description}
                     className="text-sm"
                   />
                 </div>
               ))}
               {(template.variables || []).length === 0 && (
-                <p className="text-sm text-muted-foreground col-span-2">
-                  该模板没有定义变量
-                </p>
+                <p className="text-sm text-muted-foreground col-span-2">该模板没有定义变量</p>
               )}
             </div>
           </div>
@@ -570,10 +540,7 @@ function VersionHistoryDialog({
           ) : (
             <div className="space-y-3">
               {versions.map((version) => (
-                <div
-                  key={version.id}
-                  className="border rounded-lg p-4 space-y-2"
-                >
+                <div key={version.id} className="border rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">v{version.version}</Badge>
@@ -598,9 +565,7 @@ function VersionHistoryDialog({
                     )}
                   </div>
                   {version.change_note && (
-                    <p className="text-sm text-muted-foreground">
-                      {version.change_note}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{version.change_note}</p>
                   )}
                   <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-32">
                     {version.content.slice(0, 200)}
@@ -745,10 +710,7 @@ export default function AIPromptsPage() {
               <CardDescription>共 {templates.length} 个 Prompt 模板</CardDescription>
             </div>
 
-            <Select
-              value={categoryFilter}
-              onValueChange={setCategoryFilter}
-            >
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="选择分类" />
               </SelectTrigger>
@@ -816,14 +778,10 @@ export default function AIPromptsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {template.code}
-                        </code>
+                        <code className="text-xs bg-muted px-2 py-1 rounded">{template.code}</code>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">
-                          {getPromptCategoryLabel(template.category)}
-                        </Badge>
+                        <Badge variant="outline">{getPromptCategoryLabel(template.category)}</Badge>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">v{template.version}</span>

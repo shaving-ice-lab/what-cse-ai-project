@@ -93,17 +93,20 @@ export function InteractiveQuiz({
   const currentQuestion = questions[state.currentIndex];
 
   // 选择答案
-  const handleSelectAnswer = useCallback((option: string) => {
-    if (state.showResult[state.currentIndex]) return;
+  const handleSelectAnswer = useCallback(
+    (option: string) => {
+      if (state.showResult[state.currentIndex]) return;
 
-    setState(prev => ({
-      ...prev,
-      selectedAnswers: {
-        ...prev.selectedAnswers,
-        [prev.currentIndex]: option,
-      },
-    }));
-  }, [state.currentIndex, state.showResult]);
+      setState((prev) => ({
+        ...prev,
+        selectedAnswers: {
+          ...prev.selectedAnswers,
+          [prev.currentIndex]: option,
+        },
+      }));
+    },
+    [state.currentIndex, state.showResult]
+  );
 
   // 提交当前答案
   const handleSubmit = useCallback(() => {
@@ -112,7 +115,7 @@ export function InteractiveQuiz({
 
     const isCorrect = selectedAnswer === currentQuestion.answer;
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       showResult: {
         ...prev.showResult,
@@ -125,7 +128,7 @@ export function InteractiveQuiz({
   // 下一题
   const handleNext = useCallback(() => {
     if (state.currentIndex < questions.length - 1) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         currentIndex: prev.currentIndex + 1,
       }));
@@ -134,7 +137,7 @@ export function InteractiveQuiz({
       const finalScore = state.score;
       const totalTime = Math.floor((Date.now() - state.startTime) / 1000);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         completed: true,
       }));
@@ -146,7 +149,15 @@ export function InteractiveQuiz({
 
       onComplete?.(finalScore, totalTime);
     }
-  }, [state.currentIndex, state.score, state.startTime, questions.length, currentSection, updateQuizScore, onComplete]);
+  }, [
+    state.currentIndex,
+    state.score,
+    state.startTime,
+    questions.length,
+    currentSection,
+    updateQuizScore,
+    onComplete,
+  ]);
 
   // 重新开始
   const handleReset = useCallback(() => {
@@ -253,9 +264,7 @@ export function InteractiveQuiz({
             </div>
 
             {/* 题目 */}
-            <p className="text-lg text-stone-800 leading-relaxed mb-6">
-              {currentQuestion.problem}
-            </p>
+            <p className="text-lg text-stone-800 leading-relaxed mb-6">{currentQuestion.problem}</p>
 
             {/* 选项 */}
             <div className="space-y-3">
@@ -264,7 +273,8 @@ export function InteractiveQuiz({
                 const isSelected = selectedAnswer === optionLetter;
                 const isCorrectOption = optionLetter === currentQuestion.answer;
 
-                let optionStyle = "bg-stone-50 border-stone-200 hover:bg-stone-100 hover:border-stone-300";
+                let optionStyle =
+                  "bg-stone-50 border-stone-200 hover:bg-stone-100 hover:border-stone-300";
 
                 if (showCurrentResult) {
                   if (isCorrectOption) {
@@ -289,16 +299,18 @@ export function InteractiveQuiz({
                     whileHover={!showCurrentResult ? { scale: 1.01 } : {}}
                     whileTap={!showCurrentResult ? { scale: 0.99 } : {}}
                   >
-                    <span className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm",
-                      showCurrentResult && isCorrectOption
-                        ? "bg-emerald-500 text-white"
-                        : showCurrentResult && isSelected && !isCorrectOption
-                        ? "bg-red-500 text-white"
-                        : isSelected
-                        ? "bg-violet-500 text-white"
-                        : "bg-stone-200 text-stone-600"
-                    )}>
+                    <span
+                      className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm",
+                        showCurrentResult && isCorrectOption
+                          ? "bg-emerald-500 text-white"
+                          : showCurrentResult && isSelected && !isCorrectOption
+                            ? "bg-red-500 text-white"
+                            : isSelected
+                              ? "bg-violet-500 text-white"
+                              : "bg-stone-200 text-stone-600"
+                      )}
+                    >
                       {showCurrentResult && isCorrectOption ? (
                         <CheckCircle className="w-5 h-5" />
                       ) : showCurrentResult && isSelected && !isCorrectOption ? (
@@ -307,14 +319,16 @@ export function InteractiveQuiz({
                         optionLetter
                       )}
                     </span>
-                    <span className={cn(
-                      "flex-1 text-sm",
-                      showCurrentResult && isCorrectOption
-                        ? "text-emerald-800 font-medium"
-                        : showCurrentResult && isSelected && !isCorrectOption
-                        ? "text-red-700"
-                        : "text-stone-700"
-                    )}>
+                    <span
+                      className={cn(
+                        "flex-1 text-sm",
+                        showCurrentResult && isCorrectOption
+                          ? "text-emerald-800 font-medium"
+                          : showCurrentResult && isSelected && !isCorrectOption
+                            ? "text-red-700"
+                            : "text-stone-700"
+                      )}
+                    >
                       {option}
                     </span>
                   </motion.button>
@@ -337,21 +351,27 @@ export function InteractiveQuiz({
                   )}
                 >
                   <div className="flex items-start gap-3">
-                    <Lightbulb className={cn(
-                      "w-5 h-5 flex-shrink-0",
-                      isCorrect ? "text-emerald-500" : "text-amber-500"
-                    )} />
+                    <Lightbulb
+                      className={cn(
+                        "w-5 h-5 flex-shrink-0",
+                        isCorrect ? "text-emerald-500" : "text-amber-500"
+                      )}
+                    />
                     <div>
-                      <p className={cn(
-                        "font-medium mb-2",
-                        isCorrect ? "text-emerald-700" : "text-amber-700"
-                      )}>
+                      <p
+                        className={cn(
+                          "font-medium mb-2",
+                          isCorrect ? "text-emerald-700" : "text-amber-700"
+                        )}
+                      >
                         {isCorrect ? "回答正确！" : "答案解析"}
                       </p>
-                      <p className={cn(
-                        "text-sm leading-relaxed",
-                        isCorrect ? "text-emerald-600" : "text-amber-700"
-                      )}>
+                      <p
+                        className={cn(
+                          "text-sm leading-relaxed",
+                          isCorrect ? "text-emerald-600" : "text-amber-700"
+                        )}
+                      >
                         {currentQuestion.analysis}
                       </p>
                     </div>
@@ -439,18 +459,16 @@ interface QuizCompletionScreenProps {
   onRetry: () => void;
 }
 
-function QuizCompletionScreen({
-  score,
-  total,
-  time,
-  onRetry,
-}: QuizCompletionScreenProps) {
+function QuizCompletionScreen({ score, total, time, onRetry }: QuizCompletionScreenProps) {
   const percentage = Math.round((score / total) * 100);
 
   const getMessage = () => {
-    if (percentage >= 90) return { text: "太棒了！完美表现！", emoji: "🎉", color: "text-emerald-600" };
-    if (percentage >= 70) return { text: "做得不错！继续加油！", emoji: "💪", color: "text-blue-600" };
-    if (percentage >= 50) return { text: "还需努力，再接再厉！", emoji: "📚", color: "text-amber-600" };
+    if (percentage >= 90)
+      return { text: "太棒了！完美表现！", emoji: "🎉", color: "text-emerald-600" };
+    if (percentage >= 70)
+      return { text: "做得不错！继续加油！", emoji: "💪", color: "text-blue-600" };
+    if (percentage >= 50)
+      return { text: "还需努力，再接再厉！", emoji: "📚", color: "text-amber-600" };
     return { text: "别灰心，多多练习！", emoji: "🌟", color: "text-red-600" };
   };
 
@@ -481,7 +499,9 @@ function QuizCompletionScreen({
           <Trophy className="w-12 h-12" />
         </motion.div>
         <h2 className="text-2xl font-bold mb-2">练习完成！</h2>
-        <p className="text-white/80">{message.emoji} {message.text}</p>
+        <p className="text-white/80">
+          {message.emoji} {message.text}
+        </p>
       </div>
 
       <div className="p-8">
@@ -489,14 +509,7 @@ function QuizCompletionScreen({
         <div className="text-center mb-8">
           <div className="relative inline-block">
             <svg className="w-40 h-40">
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="#e5e7eb"
-                strokeWidth="12"
-              />
+              <circle cx="80" cy="80" r="70" fill="none" stroke="#e5e7eb" strokeWidth="12" />
               <motion.circle
                 cx="80"
                 cy="80"
@@ -653,16 +666,18 @@ export function QuickCheck({
                 style
               )}
             >
-              <span className={cn(
-                "w-6 h-6 rounded flex items-center justify-center text-xs font-bold",
-                revealed && isCorrectOption
-                  ? "bg-emerald-500 text-white"
-                  : revealed && isThis
-                  ? "bg-red-500 text-white"
-                  : isThis
-                  ? "bg-indigo-500 text-white"
-                  : "bg-stone-200"
-              )}>
+              <span
+                className={cn(
+                  "w-6 h-6 rounded flex items-center justify-center text-xs font-bold",
+                  revealed && isCorrectOption
+                    ? "bg-emerald-500 text-white"
+                    : revealed && isThis
+                      ? "bg-red-500 text-white"
+                      : isThis
+                        ? "bg-indigo-500 text-white"
+                        : "bg-stone-200"
+                )}
+              >
                 {letter}
               </span>
               {option}
@@ -677,18 +692,18 @@ export function QuickCheck({
           disabled={!selected}
           className={cn(
             "w-full py-2.5 rounded-lg font-medium transition-all",
-            selected
-              ? "bg-indigo-500 text-white"
-              : "bg-stone-200 text-stone-400 cursor-not-allowed"
+            selected ? "bg-indigo-500 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"
           )}
         >
           确认答案
         </button>
       ) : (
-        <div className={cn(
-          "p-3 rounded-lg text-sm",
-          isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-        )}>
+        <div
+          className={cn(
+            "p-3 rounded-lg text-sm",
+            isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+          )}
+        >
           <p className="font-medium mb-1">
             {isCorrect ? "✓ 回答正确！" : `✗ 正确答案是 ${correctAnswer}`}
           </p>

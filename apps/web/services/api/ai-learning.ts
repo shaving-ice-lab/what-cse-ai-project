@@ -239,8 +239,7 @@ export const aiLearningApi = {
   // =============== 学习路径 ===============
 
   // 获取学习路径
-  getLearningPath: () =>
-    request.get<LearningPath>("/api/v1/ai/learning/path"),
+  getLearningPath: () => request.get<LearningPath>("/api/v1/ai/learning/path"),
 
   // 生成学习路径
   generateLearningPath: (data: GeneratePathRequest) =>
@@ -251,8 +250,7 @@ export const aiLearningApi = {
     request.put<LearningPath>("/api/v1/ai/learning/path/adjust", data),
 
   // 获取进度摘要
-  getProgressSummary: () =>
-    request.get<ProgressSummary>("/api/v1/ai/learning/path/progress"),
+  getProgressSummary: () => request.get<ProgressSummary>("/api/v1/ai/learning/path/progress"),
 
   // 获取下一步推荐
   getNextStepRecommendations: (limit?: number) =>
@@ -261,8 +259,7 @@ export const aiLearningApi = {
     }),
 
   // 获取用户画像
-  getUserProfile: () =>
-    request.get<UserProfile>("/api/v1/ai/learning/profile"),
+  getUserProfile: () => request.get<UserProfile>("/api/v1/ai/learning/profile"),
 
   // =============== 薄弱点分析 ===============
 

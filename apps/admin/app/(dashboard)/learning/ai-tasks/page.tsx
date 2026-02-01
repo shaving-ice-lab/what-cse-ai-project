@@ -87,13 +87,7 @@ interface TaskStatsData {
   failed: number;
 }
 
-function StatsCards({
-  stats,
-  loading,
-}: {
-  stats: TaskStatsData;
-  loading: boolean;
-}) {
+function StatsCards({ stats, loading }: { stats: TaskStatsData; loading: boolean }) {
   const cards = [
     {
       title: "总任务数",
@@ -181,11 +175,7 @@ interface CreateTaskDialogProps {
   onSubmit: (data: CreateAIBatchTaskRequest) => void;
 }
 
-function CreateTaskDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-}: CreateTaskDialogProps) {
+function CreateTaskDialog({ open, onOpenChange, onSubmit }: CreateTaskDialogProps) {
   const [formData, setFormData] = useState<CreateAIBatchTaskRequest>({
     task_name: "",
     content_type: "question_analysis",
@@ -238,19 +228,20 @@ function CreateTaskDialog({
     setTargetIdsText("");
   };
 
-  const contentTypeOptions: { value: AIContentType; label: string; relatedType: AIRelatedType }[] = [
-    { value: "question_analysis", label: "题目解析", relatedType: "question" },
-    { value: "question_tips", label: "解题技巧", relatedType: "question" },
-    { value: "question_similar", label: "相似题目", relatedType: "question" },
-    { value: "knowledge_summary", label: "知识点总结", relatedType: "knowledge_point" },
-    { value: "knowledge_mindmap", label: "知识点导图", relatedType: "knowledge_point" },
-    { value: "knowledge_examples", label: "例题解析", relatedType: "knowledge_point" },
-    { value: "chapter_summary", label: "章节总结", relatedType: "chapter" },
-    { value: "chapter_keypoints", label: "章节重点", relatedType: "chapter" },
-    { value: "chapter_exercises", label: "配套练习", relatedType: "chapter" },
-    { value: "course_preview", label: "预习要点", relatedType: "course" },
-    { value: "course_review", label: "复习要点", relatedType: "course" },
-  ];
+  const contentTypeOptions: { value: AIContentType; label: string; relatedType: AIRelatedType }[] =
+    [
+      { value: "question_analysis", label: "题目解析", relatedType: "question" },
+      { value: "question_tips", label: "解题技巧", relatedType: "question" },
+      { value: "question_similar", label: "相似题目", relatedType: "question" },
+      { value: "knowledge_summary", label: "知识点总结", relatedType: "knowledge_point" },
+      { value: "knowledge_mindmap", label: "知识点导图", relatedType: "knowledge_point" },
+      { value: "knowledge_examples", label: "例题解析", relatedType: "knowledge_point" },
+      { value: "chapter_summary", label: "章节总结", relatedType: "chapter" },
+      { value: "chapter_keypoints", label: "章节重点", relatedType: "chapter" },
+      { value: "chapter_exercises", label: "配套练习", relatedType: "chapter" },
+      { value: "course_preview", label: "预习要点", relatedType: "course" },
+      { value: "course_review", label: "复习要点", relatedType: "course" },
+    ];
 
   const handleContentTypeChange = (value: AIContentType) => {
     const option = contentTypeOptions.find((o) => o.value === value);
@@ -275,9 +266,7 @@ function CreateTaskDialog({
             <Label>任务名称 *</Label>
             <Input
               value={formData.task_name}
-              onChange={(e) =>
-                setFormData({ ...formData, task_name: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, task_name: e.target.value })}
               placeholder="例如：2024年行测题目解析生成"
             />
           </div>
@@ -315,9 +304,7 @@ function CreateTaskDialog({
 
           {/* 目标 ID */}
           <div className="space-y-2">
-            <Label>
-              目标 {getRelatedTypeLabel(formData.related_type)} ID *
-            </Label>
+            <Label>目标 {getRelatedTypeLabel(formData.related_type)} ID *</Label>
             <Textarea
               value={targetIdsText}
               onChange={(e) => setTargetIdsText(e.target.value)}
@@ -326,11 +313,7 @@ function CreateTaskDialog({
             />
             <p className="text-xs text-muted-foreground">
               当前已输入{" "}
-              {
-                targetIdsText
-                  .split(/[,，\s\n]+/)
-                  .filter((s) => /^\d+$/.test(s.trim())).length
-              }{" "}
+              {targetIdsText.split(/[,，\s\n]+/).filter((s) => /^\d+$/.test(s.trim())).length}{" "}
               个有效 ID
             </p>
           </div>
@@ -340,9 +323,7 @@ function CreateTaskDialog({
             <Label>优先级</Label>
             <Select
               value={formData.priority?.toString() || "0"}
-              onValueChange={(v) =>
-                setFormData({ ...formData, priority: parseInt(v) })
-              }
+              onValueChange={(v) => setFormData({ ...formData, priority: parseInt(v) })}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -460,19 +441,11 @@ interface TaskDetailDialogProps {
   onRetry: (id: number) => void;
 }
 
-function TaskDetailDialog({
-  task,
-  open,
-  onOpenChange,
-  onCancel,
-  onRetry,
-}: TaskDetailDialogProps) {
+function TaskDetailDialog({ task, open, onOpenChange, onCancel, onRetry }: TaskDetailDialogProps) {
   if (!task) return null;
 
   const progress =
-    task.total_count > 0
-      ? Math.round((task.processed_count / task.total_count) * 100)
-      : 0;
+    task.total_count > 0 ? Math.round((task.processed_count / task.total_count) * 100) : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -502,15 +475,11 @@ function TaskDetailDialog({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">内容类型：</span>
-                <span className="ml-2 font-medium">
-                  {getContentTypeLabel(task.content_type)}
-                </span>
+                <span className="ml-2 font-medium">{getContentTypeLabel(task.content_type)}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">关联类型：</span>
-                <span className="ml-2 font-medium">
-                  {getRelatedTypeLabel(task.related_type)}
-                </span>
+                <span className="ml-2 font-medium">{getRelatedTypeLabel(task.related_type)}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">总数量：</span>
@@ -522,15 +491,11 @@ function TaskDetailDialog({
               </div>
               <div>
                 <span className="text-muted-foreground">成功数：</span>
-                <span className="ml-2 font-medium text-green-600">
-                  {task.success_count}
-                </span>
+                <span className="ml-2 font-medium text-green-600">{task.success_count}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">失败数：</span>
-                <span className="ml-2 font-medium text-red-600">
-                  {task.failed_count}
-                </span>
+                <span className="ml-2 font-medium text-red-600">{task.failed_count}</span>
               </div>
             </div>
 
@@ -540,24 +505,18 @@ function TaskDetailDialog({
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-muted-foreground">创建时间：</span>
-                <span className="ml-2">
-                  {new Date(task.created_at).toLocaleString()}
-                </span>
+                <span className="ml-2">{new Date(task.created_at).toLocaleString()}</span>
               </div>
               {task.started_at && (
                 <div>
                   <span className="text-muted-foreground">开始时间：</span>
-                  <span className="ml-2">
-                    {new Date(task.started_at).toLocaleString()}
-                  </span>
+                  <span className="ml-2">{new Date(task.started_at).toLocaleString()}</span>
                 </div>
               )}
               {task.completed_at && (
                 <div>
                   <span className="text-muted-foreground">完成时间：</span>
-                  <span className="ml-2">
-                    {new Date(task.completed_at).toLocaleString()}
-                  </span>
+                  <span className="ml-2">{new Date(task.completed_at).toLocaleString()}</span>
                 </div>
               )}
               {task.creator && (
@@ -585,15 +544,11 @@ function TaskDetailDialog({
                     </div>
                     <div>
                       <span className="text-muted-foreground">跳过已存在：</span>
-                      <span className="ml-2">
-                        {task.config.skip_existing ? "是" : "否"}
-                      </span>
+                      <span className="ml-2">{task.config.skip_existing ? "是" : "否"}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">自动审核：</span>
-                      <span className="ml-2">
-                        {task.config.auto_approve ? "是" : "否"}
-                      </span>
+                      <span className="ml-2">{task.config.auto_approve ? "是" : "否"}</span>
                     </div>
                   </div>
                 </div>
@@ -907,9 +862,7 @@ export default function AITaskManagementPage() {
                     {tasks.map((task) => {
                       const progress =
                         task.total_count > 0
-                          ? Math.round(
-                              (task.processed_count / task.total_count) * 100
-                            )
+                          ? Math.round((task.processed_count / task.total_count) * 100)
                           : 0;
 
                       return (
@@ -921,8 +874,7 @@ export default function AITaskManagementPage() {
                             <div className="space-y-1">
                               <p className="text-sm font-medium">{task.task_name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {getRelatedTypeLabel(task.related_type)} ×{" "}
-                                {task.total_count}
+                                {getRelatedTypeLabel(task.related_type)} × {task.total_count}
                               </p>
                             </div>
                           </TableCell>
@@ -934,7 +886,9 @@ export default function AITaskManagementPage() {
                           <TableCell>
                             <div className="space-y-1 w-24">
                               <div className="flex justify-between text-xs">
-                                <span>{task.processed_count}/{task.total_count}</span>
+                                <span>
+                                  {task.processed_count}/{task.total_count}
+                                </span>
                                 <span>{progress}%</span>
                               </div>
                               <Progress value={progress} className="h-1.5" />
@@ -942,13 +896,9 @@ export default function AITaskManagementPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2 text-sm">
-                              <span className="text-green-600">
-                                {task.success_count}
-                              </span>
+                              <span className="text-green-600">{task.success_count}</span>
                               <span className="text-muted-foreground">/</span>
-                              <span className="text-red-600">
-                                {task.failed_count}
-                              </span>
+                              <span className="text-red-600">{task.failed_count}</span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -982,15 +932,12 @@ export default function AITaskManagementPage() {
                                   查看详情
                                 </DropdownMenuItem>
                                 {task.status === "failed" && (
-                                  <DropdownMenuItem
-                                    onClick={() => handleRetryTask(task.id)}
-                                  >
+                                  <DropdownMenuItem onClick={() => handleRetryTask(task.id)}>
                                     <RotateCcw className="mr-2 h-4 w-4" />
                                     重试
                                   </DropdownMenuItem>
                                 )}
-                                {(task.status === "pending" ||
-                                  task.status === "processing") && (
+                                {(task.status === "pending" || task.status === "processing") && (
                                   <DropdownMenuItem
                                     onClick={() => handleCancelTask(task.id)}
                                     className="text-destructive"

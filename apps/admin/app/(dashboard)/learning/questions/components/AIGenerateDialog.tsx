@@ -85,7 +85,7 @@ export function AIGenerateDialog({
   const [generatedQuestions, setGeneratedQuestions] = useState<AIGeneratedQuestion[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState<Set<number>>(new Set());
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
-  
+
   // 编辑状态
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<AIGeneratedQuestion | null>(null);
@@ -335,10 +335,7 @@ export function AIGenerateDialog({
                 {/* 生成数量 */}
                 <div className="space-y-2">
                   <Label>生成数量 *</Label>
-                  <Select
-                    value={count.toString()}
-                    onValueChange={(v) => setCount(Number(v))}
-                  >
+                  <Select value={count.toString()} onValueChange={(v) => setCount(Number(v))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -425,14 +422,8 @@ export function AIGenerateDialog({
               {/* 操作栏 */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleSelectAll}
-                  >
-                    {selectedQuestions.size === generatedQuestions.length
-                      ? "取消全选"
-                      : "全选"}
+                  <Button variant="outline" size="sm" onClick={toggleSelectAll}>
+                    {selectedQuestions.size === generatedQuestions.length ? "取消全选" : "全选"}
                   </Button>
                   <span className="text-sm text-muted-foreground">
                     已选择 {selectedQuestions.size} / {generatedQuestions.length} 道题目
@@ -475,9 +466,7 @@ export function AIGenerateDialog({
                             <Badge variant="secondary" className="text-xs">
                               {getQuestionTypeName(questionType)}
                             </Badge>
-                            <Badge
-                              className={`text-xs ${getDifficultyColor(q.difficulty)}`}
-                            >
+                            <Badge className={`text-xs ${getDifficultyColor(q.difficulty)}`}>
                               {getDifficultyLabel(q.difficulty)}
                             </Badge>
                           </div>
@@ -535,15 +524,11 @@ export function AIGenerateDialog({
                                 <Label>选项</Label>
                                 {editingQuestion.options.map((opt, i) => (
                                   <div key={i} className="flex items-center gap-2">
-                                    <span className="w-8 text-center font-medium">
-                                      {opt.key}.
-                                    </span>
+                                    <span className="w-8 text-center font-medium">{opt.key}.</span>
                                     <Input
                                       value={opt.content}
                                       onChange={(e) => {
-                                        const newOptions = [
-                                          ...(editingQuestion.options || []),
-                                        ];
+                                        const newOptions = [...(editingQuestion.options || [])];
                                         newOptions[i] = {
                                           ...newOptions[i],
                                           content: e.target.value,
@@ -584,11 +569,7 @@ export function AIGenerateDialog({
                               />
                             </div>
                             <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={cancelEditing}
-                              >
+                              <Button variant="outline" size="sm" onClick={cancelEditing}>
                                 取消
                               </Button>
                               <Button size="sm" onClick={saveEditing}>
@@ -606,9 +587,7 @@ export function AIGenerateDialog({
                                   <div
                                     key={i}
                                     className={`text-sm ${
-                                      q.answer.includes(opt.key)
-                                        ? "text-green-600 font-medium"
-                                        : ""
+                                      q.answer.includes(opt.key) ? "text-green-600 font-medium" : ""
                                     }`}
                                   >
                                     {opt.key}. {opt.content}
@@ -617,9 +596,7 @@ export function AIGenerateDialog({
                               </div>
                             )}
                             <div className="text-sm">
-                              <span className="font-medium text-green-600">
-                                答案：{q.answer}
-                              </span>
+                              <span className="font-medium text-green-600">答案：{q.answer}</span>
                             </div>
                             {expandedQuestions.has(index) && (
                               <>
@@ -712,9 +689,7 @@ export function AIGenerateDialog({
               </Button>
             </>
           )}
-          {step === "result" && (
-            <Button onClick={() => onOpenChange(false)}>完成</Button>
-          )}
+          {step === "result" && <Button onClick={() => onOpenChange(false)}>完成</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

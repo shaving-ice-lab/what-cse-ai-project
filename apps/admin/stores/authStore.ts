@@ -25,7 +25,11 @@ interface AuthState {
 }
 
 // Cookie 操作工具函数
-const setCookie = (name: string, value: string, days: number = ADMIN_AUTH_CONFIG.cookieMaxAgeDays) => {
+const setCookie = (
+  name: string,
+  value: string,
+  days: number = ADMIN_AUTH_CONFIG.cookieMaxAgeDays
+) => {
   if (typeof document === "undefined") return;
   const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;

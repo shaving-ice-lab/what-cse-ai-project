@@ -304,13 +304,13 @@ export interface ReorderRequest {
 
 export const courseApi = {
   // =============== 统计 ===============
-  
+
   getStats: () => {
     return request.get<CourseStats>("/admin/courses/stats");
   },
 
   // =============== 分类管理 ===============
-  
+
   // 获取分类列表（树形）- 使用公共API
   getCategories: (params?: CategoryListParams) => {
     return request.get<{
@@ -373,7 +373,7 @@ export const courseApi = {
   },
 
   // =============== 课程管理 ===============
-  
+
   // 获取课程列表
   getCourses: (params?: CourseListParams) => {
     return request.get<{
@@ -423,7 +423,7 @@ export const courseApi = {
   },
 
   // =============== 章节管理 ===============
-  
+
   // 获取课程章节
   getChapters: (courseId: number) => {
     return request.get<{
@@ -453,7 +453,7 @@ export const courseApi = {
   },
 
   // =============== 知识点管理 ===============
-  
+
   // 获取知识点列表（树形）
   getKnowledgePoints: (params?: KnowledgeListParams) => {
     return request.get<{
@@ -484,7 +484,10 @@ export const courseApi = {
 
   // 知识点排序
   reorderKnowledgePoints: (categoryId: number, data: ReorderRequest) => {
-    return request.post<{ message: string }>(`/admin/courses/knowledge/${categoryId}/reorder`, data);
+    return request.post<{ message: string }>(
+      `/admin/courses/knowledge/${categoryId}/reorder`,
+      data
+    );
   },
 };
 
@@ -553,7 +556,7 @@ export const getFrequencyLabel = (frequency: Frequency): string => {
 // §25.3 知识点内容生成 Types
 // ============================================
 
-export type KnowledgeDetailContentType = 
+export type KnowledgeDetailContentType =
   | "definition"
   | "key_points"
   | "question_types"
@@ -578,12 +581,7 @@ export type FlashCardType =
   | "data"
   | "other";
 
-export type MindMapType =
-  | "knowledge"
-  | "course"
-  | "subject"
-  | "chapter"
-  | "custom";
+export type MindMapType = "knowledge" | "course" | "subject" | "chapter" | "custom";
 
 // 知识点详情
 export interface KnowledgeDetail {
@@ -775,7 +773,7 @@ export const knowledgeContentApi = {
   },
 
   // =============== 知识点详情 ===============
-  
+
   // 获取详情列表
   getDetails: (params?: KnowledgeDetailListParams) => {
     return request.get<{
@@ -793,7 +791,9 @@ export const knowledgeContentApi = {
 
   // 获取知识点的所有详情
   getDetailsByKnowledgePoint: (knowledgePointId: number) => {
-    return request.get<KnowledgeDetail[]>(`/admin/knowledge-content/knowledge/${knowledgePointId}/details`);
+    return request.get<KnowledgeDetail[]>(
+      `/admin/knowledge-content/knowledge/${knowledgePointId}/details`
+    );
   },
 
   // 获取知识点的完整内容
@@ -822,7 +822,7 @@ export const knowledgeContentApi = {
   },
 
   // =============== 速记卡片 ===============
-  
+
   // 获取卡片列表
   getFlashCards: (params?: FlashCardListParams) => {
     return request.get<{
@@ -840,12 +840,16 @@ export const knowledgeContentApi = {
 
   // 获取指定类型的卡片
   getFlashCardsByType: (cardType: FlashCardType, limit?: number) => {
-    return request.get<FlashCard[]>(`/admin/knowledge-content/flash-cards/type/${cardType}`, { params: { limit } });
+    return request.get<FlashCard[]>(`/admin/knowledge-content/flash-cards/type/${cardType}`, {
+      params: { limit },
+    });
   },
 
   // 随机获取卡片
   getRandomFlashCards: (cardType?: FlashCardType, count?: number) => {
-    return request.get<FlashCard[]>("/admin/knowledge-content/flash-cards/random", { params: { type: cardType, count } });
+    return request.get<FlashCard[]>("/admin/knowledge-content/flash-cards/random", {
+      params: { type: cardType, count },
+    });
   },
 
   // 获取卡片类型统计
@@ -874,7 +878,7 @@ export const knowledgeContentApi = {
   },
 
   // =============== 思维导图 ===============
-  
+
   // 获取导图列表
   getMindMaps: (params?: MindMapListParams) => {
     return request.get<{
@@ -892,7 +896,9 @@ export const knowledgeContentApi = {
 
   // 获取指定类型的导图
   getMindMapsByType: (mapType: MindMapType, limit?: number) => {
-    return request.get<MindMap[]>(`/admin/knowledge-content/mind-maps/type/${mapType}`, { params: { limit } });
+    return request.get<MindMap[]>(`/admin/knowledge-content/mind-maps/type/${mapType}`, {
+      params: { limit },
+    });
   },
 
   // 获取导图类型统计
@@ -921,7 +927,7 @@ export const knowledgeContentApi = {
   },
 
   // =============== 种子数据生成 ===============
-  
+
   // 生成所有种子数据
   seedAll: () => {
     return request.post<{
@@ -934,7 +940,9 @@ export const knowledgeContentApi = {
 
   // 生成速记卡片种子数据
   seedFlashCards: () => {
-    return request.post<{ flash_cards_created: number }>("/admin/knowledge-content/seed/flash-cards");
+    return request.post<{ flash_cards_created: number }>(
+      "/admin/knowledge-content/seed/flash-cards"
+    );
   },
 
   // 生成思维导图种子数据

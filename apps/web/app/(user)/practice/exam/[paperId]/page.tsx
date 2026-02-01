@@ -245,11 +245,7 @@ function OptionItem({
   );
 }
 
-export default function ExamPage({
-  params,
-}: {
-  params: Promise<{ paperId: string }>;
-}) {
+export default function ExamPage({ params }: { params: Promise<{ paperId: string }> }) {
   const { paperId } = use(params);
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
@@ -412,10 +408,7 @@ export default function ExamPage({
         <div className="text-center">
           <Target className="w-12 h-12 text-stone-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-stone-700 mb-2">试卷加载失败</h3>
-          <Link
-            href="/practice/papers"
-            className="text-blue-500 hover:text-blue-600"
-          >
+          <Link href="/practice/papers" className="text-blue-500 hover:text-blue-600">
             返回试卷中心
           </Link>
         </div>
@@ -442,9 +435,7 @@ export default function ExamPage({
               {/* 倒计时 */}
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-mono text-sm ${
-                  isTimeWarning
-                    ? "bg-red-100 text-red-600"
-                    : "bg-stone-100 text-stone-700"
+                  isTimeWarning ? "bg-red-100 text-red-600" : "bg-stone-100 text-stone-700"
                 }`}
               >
                 <Clock className={`w-4 h-4 ${isTimeWarning ? "animate-pulse" : ""}`} />
@@ -484,11 +475,14 @@ export default function ExamPage({
         <div className="bg-white rounded-xl p-3 mb-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-stone-600">
-              第 <span className="font-bold text-blue-600">{currentIndex + 1}</span> / {questions.length} 题
+              第 <span className="font-bold text-blue-600">{currentIndex + 1}</span> /{" "}
+              {questions.length} 题
             </span>
             <span className="text-sm text-stone-500">
               已答 {answeredCount} 题
-              {markedCount > 0 && <span className="text-amber-600 ml-2">标记 {markedCount} 题</span>}
+              {markedCount > 0 && (
+                <span className="text-amber-600 ml-2">标记 {markedCount} 题</span>
+              )}
             </span>
           </div>
           <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
@@ -507,7 +501,9 @@ export default function ExamPage({
               <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg font-medium">
                 {getQuestionTypeName(currentQuestion.question_type)}
               </span>
-              <span className={`px-2 py-1 text-xs rounded-lg font-medium ${getDifficultyColor(currentQuestion.difficulty)}`}>
+              <span
+                className={`px-2 py-1 text-xs rounded-lg font-medium ${getDifficultyColor(currentQuestion.difficulty)}`}
+              >
                 {getDifficultyLabel(currentQuestion.difficulty)}
               </span>
             </div>

@@ -58,25 +58,25 @@ export function PositionsManageModal({
   // 已关联的职位
   const [linkedPositions, setLinkedPositions] = useState<LinkedPosition[]>([]);
   const [linkedLoading, setLinkedLoading] = useState(false);
-  
+
   // 搜索添加职位
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<PositionBrief[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  
+
   // 操作状态
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 当前 Tab
   const [activeTab, setActiveTab] = useState<"linked" | "search">("linked");
 
   // 加载已关联职位
   const fetchLinkedPositions = useCallback(async () => {
     if (!announcementId) return;
-    
+
     try {
       setLinkedLoading(true);
       setError(null);
@@ -95,7 +95,7 @@ export function PositionsManageModal({
       setSearchResults([]);
       return;
     }
-    
+
     try {
       setSearchLoading(true);
       const data = await positionApi.getPositions({
@@ -115,7 +115,7 @@ export function PositionsManageModal({
   // 关联选中的职位
   const handleLinkPositions = async () => {
     if (selectedIds.length === 0) return;
-    
+
     try {
       setLinking(true);
       setError(null);
@@ -152,7 +152,7 @@ export function PositionsManageModal({
   const handleBatchUnlink = async () => {
     if (selectedIds.length === 0) return;
     if (!confirm(`确定要取消关联选中的 ${selectedIds.length} 个职位吗？`)) return;
-    
+
     try {
       setUnlinking(true);
       setError(null);
@@ -169,9 +169,7 @@ export function PositionsManageModal({
 
   // 切换选择
   const toggleSelect = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   // 初始化加载
@@ -194,9 +192,7 @@ export function PositionsManageModal({
             <Briefcase className="h-5 w-5 text-primary" />
             关联职位管理
           </DialogTitle>
-          <DialogDescription className="line-clamp-1">
-            {announcementTitle}
-          </DialogDescription>
+          <DialogDescription className="line-clamp-1">{announcementTitle}</DialogDescription>
         </DialogHeader>
 
         {/* Tab 切换 */}
@@ -233,9 +229,7 @@ export function PositionsManageModal({
             {/* 批量操作 */}
             {selectedIds.length > 0 && (
               <div className="flex items-center justify-between py-2 px-1 bg-muted/50 rounded-lg mb-2">
-                <span className="text-sm text-muted-foreground">
-                  已选 {selectedIds.length} 项
-                </span>
+                <span className="text-sm text-muted-foreground">已选 {selectedIds.length} 项</span>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -247,7 +241,7 @@ export function PositionsManageModal({
                 </Button>
               </div>
             )}
-            
+
             <ScrollArea className="flex-1">
               {linkedLoading ? (
                 <div className="space-y-2">
@@ -292,12 +286,7 @@ export function PositionsManageModal({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          asChild
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                           <a
                             href={`/positions/${position.id}`}
                             target="_blank"
@@ -353,25 +342,15 @@ export function PositionsManageModal({
                 />
               </div>
               <Button onClick={handleSearch} disabled={searchLoading}>
-                {searchLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "搜索"
-                )}
+                {searchLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "搜索"}
               </Button>
             </div>
 
             {/* 选中操作 */}
             {selectedIds.length > 0 && (
               <div className="flex items-center justify-between py-2 px-3 bg-primary/10 rounded-lg mb-2">
-                <span className="text-sm">
-                  已选 {selectedIds.length} 个职位
-                </span>
-                <Button
-                  size="sm"
-                  onClick={handleLinkPositions}
-                  disabled={linking}
-                >
+                <span className="text-sm">已选 {selectedIds.length} 个职位</span>
+                <Button size="sm" onClick={handleLinkPositions} disabled={linking}>
                   {linking ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
                   ) : (

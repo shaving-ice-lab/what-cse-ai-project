@@ -38,10 +38,7 @@ import { courseApi, ModuleConfig } from "@/services/api/course";
 import { Empty } from "@/components/common";
 
 // 科目配置
-const subjectConfig: Record<
-  string,
-  { name: string; fullName: string; gradient: string }
-> = {
+const subjectConfig: Record<string, { name: string; fullName: string; gradient: string }> = {
   xingce: {
     name: "行测",
     fullName: "行政职业能力测验",
@@ -339,9 +336,7 @@ function KnowledgeCard({
                         <div
                           key={level}
                           className={`w-1.5 h-1.5 rounded-full ${
-                            level <= child.difficulty
-                              ? "bg-amber-400"
-                              : "bg-stone-200"
+                            level <= child.difficulty ? "bg-amber-400" : "bg-stone-200"
                           }`}
                         />
                       ))}
@@ -351,10 +346,7 @@ function KnowledgeCard({
                   {/* 关键考点 */}
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {child.keyPoints.map((point, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 text-xs bg-sky-50 text-sky-600 rounded"
-                      >
+                      <span key={i} className="px-2 py-0.5 text-xs bg-sky-50 text-sky-600 rounded">
                         {point}
                       </span>
                     ))}
@@ -439,11 +431,7 @@ export default function ModuleLearningPage() {
             <ArrowLeft className="w-4 h-4" />
             返回{subjectInfo.name}
           </Link>
-          <Empty
-            title="模块未找到"
-            description="该学习模块暂未开放或不存在"
-            Icon={BookOpen}
-          />
+          <Empty title="模块未找到" description="该学习模块暂未开放或不存在" Icon={BookOpen} />
         </div>
       </div>
     );
@@ -510,8 +498,7 @@ export default function ModuleLearningPage() {
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
                   <Target className="w-4 h-4" />
                   <span>
-                    难度{" "}
-                    {"★".repeat(moduleData.difficulty || 3)}
+                    难度 {"★".repeat(moduleData.difficulty || 3)}
                     {"☆".repeat(5 - (moduleData.difficulty || 3))}
                   </span>
                 </div>
@@ -674,12 +661,8 @@ export default function ModuleLearningPage() {
           <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-2xl p-6 text-white`}>
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex-1">
-                <h3 className="text-xl font-bold mb-2">
-                  开始{moduleData.name}专项练习
-                </h3>
-                <p className="text-white/80">
-                  精选历年真题，智能推荐薄弱知识点，快速提分
-                </p>
+                <h3 className="text-xl font-bold mb-2">开始{moduleData.name}专项练习</h3>
+                <p className="text-white/80">精选历年真题，智能推荐薄弱知识点，快速提分</p>
               </div>
               <Link
                 href={`/learn/practice?subject=${subject}&module=${module}`}

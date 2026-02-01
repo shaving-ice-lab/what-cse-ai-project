@@ -49,7 +49,12 @@ import {
   TooltipTrigger,
   ScrollArea,
 } from "@what-cse/ui";
-import { positionApi, type CompareResponse, type CompareDimension, type DimensionValue } from "@/services/position-api";
+import {
+  positionApi,
+  type CompareResponse,
+  type CompareDimension,
+  type DimensionValue,
+} from "@/services/position-api";
 
 export default function PositionComparePage() {
   const router = useRouter();
@@ -99,7 +104,7 @@ export default function PositionComparePage() {
   // 处理分享
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/positions/compare?ids=${ids.join(",")}`;
-    
+
     // 尝试使用 Web Share API
     if (navigator.share) {
       try {
@@ -114,7 +119,7 @@ export default function PositionComparePage() {
         if ((err as Error).name === "AbortError") return;
       }
     }
-    
+
     // 回退到复制链接
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -254,9 +259,7 @@ export default function PositionComparePage() {
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                {copied ? "链接已复制到剪贴板" : "分享对比结果"}
-              </TooltipContent>
+              <TooltipContent>{copied ? "链接已复制到剪贴板" : "分享对比结果"}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           <Button variant="outline" size="sm" onClick={() => handleExport("excel")}>
@@ -334,8 +337,12 @@ export default function PositionComparePage() {
                   <Users className="h-4 w-4 text-blue-600" />
                   <span className="text-sm font-medium text-blue-600">招录人数最多</span>
                 </div>
-                <p className="font-semibold line-clamp-1">{recommendation.most_recruit.position_name}</p>
-                <p className="text-2xl font-bold text-blue-700 mt-1">{recommendation.most_recruit.value}</p>
+                <p className="font-semibold line-clamp-1">
+                  {recommendation.most_recruit.position_name}
+                </p>
+                <p className="text-2xl font-bold text-blue-700 mt-1">
+                  {recommendation.most_recruit.value}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -347,8 +354,12 @@ export default function PositionComparePage() {
                   <Check className="h-4 w-4 text-green-600" />
                   <span className="text-sm font-medium text-green-600">条件最宽松</span>
                 </div>
-                <p className="font-semibold line-clamp-1">{recommendation.lowest_requirement.position_name}</p>
-                <p className="text-sm text-green-600 mt-1">{recommendation.lowest_requirement.reason}</p>
+                <p className="font-semibold line-clamp-1">
+                  {recommendation.lowest_requirement.position_name}
+                </p>
+                <p className="text-sm text-green-600 mt-1">
+                  {recommendation.lowest_requirement.reason}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -360,8 +371,12 @@ export default function PositionComparePage() {
                   <GraduationCap className="h-4 w-4 text-purple-600" />
                   <span className="text-sm font-medium text-purple-600">适合应届生</span>
                 </div>
-                <p className="font-semibold line-clamp-1">{recommendation.best_for_fresh_grad.position_name}</p>
-                <p className="text-sm text-purple-600 mt-1">{recommendation.best_for_fresh_grad.reason}</p>
+                <p className="font-semibold line-clamp-1">
+                  {recommendation.best_for_fresh_grad.position_name}
+                </p>
+                <p className="text-sm text-purple-600 mt-1">
+                  {recommendation.best_for_fresh_grad.reason}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -373,8 +388,12 @@ export default function PositionComparePage() {
                   <Clock className="h-4 w-4 text-amber-600" />
                   <span className="text-sm font-medium text-amber-600">即将截止</span>
                 </div>
-                <p className="font-semibold line-clamp-1">{recommendation.soonest_deadline.position_name}</p>
-                <p className="text-lg font-bold text-amber-700 mt-1">{recommendation.soonest_deadline.value}</p>
+                <p className="font-semibold line-clamp-1">
+                  {recommendation.soonest_deadline.position_name}
+                </p>
+                <p className="text-lg font-bold text-amber-700 mt-1">
+                  {recommendation.soonest_deadline.value}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -386,8 +405,12 @@ export default function PositionComparePage() {
                   <TrendingUp className="h-4 w-4 text-teal-600" />
                   <span className="text-sm font-medium text-teal-600">竞争最小</span>
                 </div>
-                <p className="font-semibold line-clamp-1">{recommendation.lowest_competition.position_name}</p>
-                <p className="text-lg font-bold text-teal-700 mt-1">{recommendation.lowest_competition.value}</p>
+                <p className="font-semibold line-clamp-1">
+                  {recommendation.lowest_competition.position_name}
+                </p>
+                <p className="text-lg font-bold text-teal-700 mt-1">
+                  {recommendation.lowest_competition.value}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -443,7 +466,10 @@ export default function PositionComparePage() {
                             {item.position.city && `·${item.position.city}`}
                           </div>
                           {item.is_registering && (
-                            <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                            <Badge
+                              variant="secondary"
+                              className="bg-green-100 text-green-700 text-xs"
+                            >
                               正在报名
                             </Badge>
                           )}
@@ -464,7 +490,10 @@ export default function PositionComparePage() {
                         <div className="flex items-center gap-2">
                           {dim.label}
                           {dim.has_diff && (
-                            <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-amber-100 text-amber-700 border-amber-200"
+                            >
                               差异
                             </Badge>
                           )}
@@ -483,9 +512,7 @@ export default function PositionComparePage() {
                               {val.display}
                             </span>
                             {val.is_best && (
-                              <Badge className="bg-green-500 text-white text-xs">
-                                最优
-                              </Badge>
+                              <Badge className="bg-green-500 text-white text-xs">最优</Badge>
                             )}
                           </div>
                         </TableCell>
@@ -502,18 +529,25 @@ export default function PositionComparePage() {
                       <TableCell key={item.position.id}>
                         <div className="flex flex-wrap gap-1">
                           {item.position.is_unlimited_major && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-700 border-green-200"
+                            >
                               不限专业
                             </Badge>
                           )}
                           {item.position.is_for_fresh_graduate && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-50 text-blue-700 border-blue-200"
+                            >
                               应届可报
                             </Badge>
                           )}
-                          {!item.position.is_unlimited_major && !item.position.is_for_fresh_graduate && (
-                            <span className="text-muted-foreground text-sm">无</span>
-                          )}
+                          {!item.position.is_unlimited_major &&
+                            !item.position.is_for_fresh_graduate && (
+                              <span className="text-muted-foreground text-sm">无</span>
+                            )}
                         </div>
                       </TableCell>
                     ))}

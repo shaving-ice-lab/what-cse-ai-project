@@ -76,12 +76,10 @@ export const announcementApi = {
     request.get("/admin/announcements/search", { params: { keyword, ...params } }),
 
   // 获取公告详情
-  getAnnouncement: (id: number): Promise<Announcement> =>
-    request.get(`/admin/announcements/${id}`),
+  getAnnouncement: (id: number): Promise<Announcement> => request.get(`/admin/announcements/${id}`),
 
   // 获取统计数据
-  getStats: (): Promise<AnnouncementStats> =>
-    request.get("/admin/announcements/stats"),
+  getStats: (): Promise<AnnouncementStats> => request.get("/admin/announcements/stats"),
 
   // 按考试类型统计
   getStatsByExamType: (): Promise<ExamTypeStats[]> =>
@@ -103,11 +101,16 @@ export const announcementApi = {
   }> => request.get("/admin/announcements/filter-options"),
 
   // 创建公告
-  createAnnouncement: (data: Partial<Announcement>): Promise<{ message: string; announcement: Announcement }> =>
+  createAnnouncement: (
+    data: Partial<Announcement>
+  ): Promise<{ message: string; announcement: Announcement }> =>
     request.post("/admin/announcements", data),
 
   // 更新公告
-  updateAnnouncement: (id: number, data: Partial<Announcement>): Promise<{ message: string; announcement: Announcement }> =>
+  updateAnnouncement: (
+    id: number,
+    data: Partial<Announcement>
+  ): Promise<{ message: string; announcement: Announcement }> =>
     request.put(`/admin/announcements/${id}`, data),
 
   // 更新公告状态
@@ -131,7 +134,9 @@ export const announcementApi = {
     request.put(`/admin/announcements/${id}/exam-type`, { exam_type: examType }),
 
   // 获取关联职位
-  getAnnouncementPositions: (id: number): Promise<{
+  getAnnouncementPositions: (
+    id: number
+  ): Promise<{
     positions: Array<{
       id: number;
       position_name: string;

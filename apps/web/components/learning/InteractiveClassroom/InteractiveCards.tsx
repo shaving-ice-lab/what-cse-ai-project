@@ -53,19 +53,16 @@ export function FlipCard({
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* 正面 */}
-        <div
-          className="absolute inset-0 backface-hidden"
-          style={{ backfaceVisibility: "hidden" }}
-        >
-          <div className={cn(
-            "w-full h-full rounded-2xl p-6 flex flex-col items-center justify-center text-white shadow-xl bg-gradient-to-br",
-            color
-          )}>
+        <div className="absolute inset-0 backface-hidden" style={{ backfaceVisibility: "hidden" }}>
+          <div
+            className={cn(
+              "w-full h-full rounded-2xl p-6 flex flex-col items-center justify-center text-white shadow-xl bg-gradient-to-br",
+              color
+            )}
+          >
             <Lightbulb className="w-12 h-12 mb-4 opacity-80" />
             <h3 className="text-xl font-bold text-center mb-2">{front.title}</h3>
-            {front.subtitle && (
-              <p className="text-sm opacity-80 text-center">{front.subtitle}</p>
-            )}
+            {front.subtitle && <p className="text-sm opacity-80 text-center">{front.subtitle}</p>}
             <div className="absolute bottom-4 flex items-center gap-2 text-sm opacity-70">
               <span>点击查看详解</span>
               <RotateCcw className="w-4 h-4" />
@@ -85,9 +82,7 @@ export function FlipCard({
               </div>
               <h4 className="font-bold text-stone-800">{front.title}</h4>
             </div>
-            <p className="text-stone-600 text-sm leading-relaxed flex-1">
-              {back.content}
-            </p>
+            <p className="text-stone-600 text-sm leading-relaxed flex-1">{back.content}</p>
             {back.examples && back.examples.length > 0 && (
               <div className="mt-3 pt-3 border-t border-stone-200">
                 <p className="text-xs font-medium text-stone-500 mb-2">示例：</p>
@@ -215,12 +210,12 @@ export function ProgressiveReveal({ items, title }: ProgressiveRevealProps) {
               )}
             >
               <div className="flex items-start gap-3">
-                <span className={cn(
-                  "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                  item.highlight
-                    ? "bg-amber-500 text-white"
-                    : "bg-stone-300 text-stone-700"
-                )}>
+                <span
+                  className={cn(
+                    "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                    item.highlight ? "bg-amber-500 text-white" : "bg-stone-300 text-stone-700"
+                  )}
+                >
                   {idx + 1}
                 </span>
                 <div>
@@ -236,7 +231,7 @@ export function ProgressiveReveal({ items, title }: ProgressiveRevealProps) {
       {!showAll && revealedCount < items.length && (
         <div className="mt-4 flex items-center gap-3">
           <motion.button
-            onClick={() => setRevealedCount(prev => prev + 1)}
+            onClick={() => setRevealedCount((prev) => prev + 1)}
             className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-lg"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -285,13 +280,7 @@ interface FormulaCardProps {
   examples?: string[];
 }
 
-export function FormulaCard({
-  name,
-  content,
-  explanation,
-  memoryAid,
-  examples,
-}: FormulaCardProps) {
+export function FormulaCard({ name, content, explanation, memoryAid, examples }: FormulaCardProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -317,9 +306,7 @@ export function FormulaCard({
               className="mt-4 space-y-3"
             >
               {explanation && (
-                <p className="text-sm text-stone-600 leading-relaxed">
-                  {explanation}
-                </p>
+                <p className="text-sm text-stone-600 leading-relaxed">{explanation}</p>
               )}
               {memoryAid && (
                 <div className="p-3 bg-white/60 rounded-lg">
@@ -401,9 +388,7 @@ export function MistakeCard({
           </div>
           <div className="flex-1">
             <h4 className="font-bold text-red-700">{mistake}</h4>
-            {frequency && (
-              <p className="text-xs text-red-400 mt-1">错误频率：{frequency}</p>
-            )}
+            {frequency && <p className="text-xs text-red-400 mt-1">错误频率：{frequency}</p>}
           </div>
         </div>
 
@@ -456,12 +441,7 @@ export function MistakeCard({
             className="mt-4 w-full py-2 text-sm text-stone-500 hover:text-stone-700 flex items-center justify-center gap-1"
           >
             {expanded ? "收起" : "查看更多"}
-            <ChevronRight
-              className={cn(
-                "w-4 h-4 transition-transform",
-                expanded && "rotate-90"
-              )}
-            />
+            <ChevronRight className={cn("w-4 h-4 transition-transform", expanded && "rotate-90")} />
           </button>
         )}
       </div>

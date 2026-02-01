@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 /**
  * 认证配置 - 与 @what-cse/shared 保持同步
- * 注意：middleware 运行在 Edge Runtime，不能直接导入 workspace 包
+ * 注意：proxy 运行在 Edge Runtime，不能直接导入 workspace 包
  */
 const AUTH_CONFIG = {
   loginPath: "/login",
@@ -34,7 +34,7 @@ function clearAuthAndRedirect(request: NextRequest) {
   return response;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // 开发模式下跳过所有鉴权
   if (DEV_SKIP_AUTH) {
     return NextResponse.next();

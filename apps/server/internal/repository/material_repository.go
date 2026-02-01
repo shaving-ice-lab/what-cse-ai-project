@@ -121,7 +121,7 @@ func (r *MaterialRepository) Search(keyword string, params *model.MaterialQueryP
 // GetByType 按类型获取素材
 func (r *MaterialRepository) GetByType(materialType model.MaterialType, limit int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	query := r.db.Where("type = ? AND status = ?", materialType, model.MaterialStatusPublished)
+	query := r.db.Where("type = ?", materialType)
 
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -137,7 +137,7 @@ func (r *MaterialRepository) GetByType(materialType model.MaterialType, limit in
 // GetBySubType 按子类型获取素材
 func (r *MaterialRepository) GetBySubType(subType model.MaterialSubType, limit int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	query := r.db.Where("sub_type = ? AND status = ?", subType, model.MaterialStatusPublished)
+	query := r.db.Where("sub_type = ?", subType)
 
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -153,7 +153,7 @@ func (r *MaterialRepository) GetBySubType(subType model.MaterialSubType, limit i
 // GetByCategoryID 按分类获取素材
 func (r *MaterialRepository) GetByCategoryID(categoryID uint, limit int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	query := r.db.Where("category_id = ? AND status = ?", categoryID, model.MaterialStatusPublished)
+	query := r.db.Where("category_id = ?", categoryID)
 
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -169,7 +169,7 @@ func (r *MaterialRepository) GetByCategoryID(categoryID uint, limit int) ([]*mod
 // GetHotMaterials 获取热门素材
 func (r *MaterialRepository) GetHotMaterials(limit int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	err := r.db.Where("is_hot = ? AND status = ?", true, model.MaterialStatusPublished).
+	err := r.db.Where("is_hot = ?", true).
 		Order("view_count DESC, collect_count DESC").
 		Limit(limit).
 		Preload("Category").
@@ -180,7 +180,7 @@ func (r *MaterialRepository) GetHotMaterials(limit int) ([]*model.LearningMateri
 // GetFeaturedMaterials 获取精选素材
 func (r *MaterialRepository) GetFeaturedMaterials(limit int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	err := r.db.Where("is_featured = ? AND status = ?", true, model.MaterialStatusPublished).
+	err := r.db.Where("is_featured = ?", true).
 		Order("sort_order ASC, created_at DESC").
 		Limit(limit).
 		Preload("Category").
@@ -191,7 +191,7 @@ func (r *MaterialRepository) GetFeaturedMaterials(limit int) ([]*model.LearningM
 // GetRandomMaterials 随机获取素材
 func (r *MaterialRepository) GetRandomMaterials(materialType model.MaterialType, count int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	query := r.db.Where("status = ?", model.MaterialStatusPublished)
+	query := r.db
 
 	if materialType != "" {
 		query = query.Where("type = ?", materialType)
@@ -208,8 +208,7 @@ func (r *MaterialRepository) GetRandomMaterials(materialType model.MaterialType,
 // GetByThemeTopic 按主题获取素材
 func (r *MaterialRepository) GetByThemeTopic(topic string, limit int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	query := r.db.Where("JSON_CONTAINS(theme_topics, ?) AND status = ?",
-		`"`+topic+`"`, model.MaterialStatusPublished)
+	query := r.db.Where("JSON_CONTAINS(theme_topics, ?)", `"`+topic+`"`)
 
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -225,7 +224,7 @@ func (r *MaterialRepository) GetByThemeTopic(topic string, limit int) ([]*model.
 // GetByYear 按年份获取素材
 func (r *MaterialRepository) GetByYear(year int, materialType model.MaterialType, limit int) ([]*model.LearningMaterial, error) {
 	var materials []*model.LearningMaterial
-	query := r.db.Where("year = ? AND status = ?", year, model.MaterialStatusPublished)
+	query := r.db.Where("year = ?", year)
 
 	if materialType != "" {
 		query = query.Where("type = ?", materialType)

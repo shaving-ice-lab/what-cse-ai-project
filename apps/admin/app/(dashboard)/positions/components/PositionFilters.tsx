@@ -105,14 +105,14 @@ export function PositionFilters({
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const [loading, setLoading] = useState(true);
-  
+
   // 区县选项状态
   const [districts, setDistricts] = useState<string[]>([]);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
-  
+
   // 专业关键词搜索状态
   const [majorKeyword, setMajorKeyword] = useState("");
-  
+
   // 保存筛选条件相关状态
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -126,7 +126,7 @@ export function PositionFilters({
   // 保存当前筛选条件
   const handleSaveFilter = useCallback(() => {
     if (!newFilterName.trim()) return;
-    
+
     // 提取有效的筛选条件
     const filterToSave: Partial<PositionQueryParams> = {};
     if (filters.province) filterToSave.province = filters.province;
@@ -146,7 +146,8 @@ export function PositionFilters({
     if (filters.no_experience) filterToSave.no_experience = filters.no_experience;
     if (filters.updated_today) filterToSave.updated_today = filters.updated_today;
     if (filters.expiring_days) filterToSave.expiring_days = filters.expiring_days;
-    if (filters.min_recruit && filters.min_recruit > 1) filterToSave.min_recruit = filters.min_recruit;
+    if (filters.min_recruit && filters.min_recruit > 1)
+      filterToSave.min_recruit = filters.min_recruit;
 
     const newSavedFilter: SavedFilter = {
       id: `filter_${Date.now()}`,
@@ -158,22 +159,28 @@ export function PositionFilters({
     const updatedFilters = [...savedFilters, newSavedFilter];
     setSavedFilters(updatedFilters);
     persistSavedFilters(updatedFilters);
-    
+
     setNewFilterName("");
     setSaveDialogOpen(false);
   }, [newFilterName, filters, savedFilters]);
 
   // 应用保存的筛选条件
-  const handleApplySavedFilter = useCallback((savedFilter: SavedFilter) => {
-    onFiltersChange({ ...filters, ...savedFilter.filters, page: 1 });
-  }, [filters, onFiltersChange]);
+  const handleApplySavedFilter = useCallback(
+    (savedFilter: SavedFilter) => {
+      onFiltersChange({ ...filters, ...savedFilter.filters, page: 1 });
+    },
+    [filters, onFiltersChange]
+  );
 
   // 删除保存的筛选条件
-  const handleDeleteSavedFilter = useCallback((id: string) => {
-    const updatedFilters = savedFilters.filter(f => f.id !== id);
-    setSavedFilters(updatedFilters);
-    persistSavedFilters(updatedFilters);
-  }, [savedFilters]);
+  const handleDeleteSavedFilter = useCallback(
+    (id: string) => {
+      const updatedFilters = savedFilters.filter((f) => f.id !== id);
+      setSavedFilters(updatedFilters);
+      persistSavedFilters(updatedFilters);
+    },
+    [savedFilters]
+  );
 
   // 获取筛选条件描述
   const getFilterDescription = (filter: SavedFilter) => {
@@ -226,7 +233,7 @@ export function PositionFilters({
         setDistricts([]);
         return;
       }
-      
+
       try {
         setLoadingDistricts(true);
         const data = await positionApi.getDistricts(filters.province, filters.city);
@@ -274,7 +281,7 @@ export function PositionFilters({
   // 获取活跃筛选标签
   const getActiveFilterTags = () => {
     const tags: { key: keyof PositionQueryParams; label: string; value: string }[] = [];
-    
+
     if (filters.province) {
       tags.push({ key: "province", label: "省份", value: filters.province });
     }
@@ -310,7 +317,11 @@ export function PositionFilters({
     }
     if (filters.reg_status) {
       const statusMap = { registering: "报名中", upcoming: "即将开始", ended: "已结束" };
-      tags.push({ key: "reg_status", label: "报名状态", value: statusMap[filters.reg_status] || filters.reg_status });
+      tags.push({
+        key: "reg_status",
+        label: "报名状态",
+        value: statusMap[filters.reg_status] || filters.reg_status,
+      });
     }
     if (filters.unlimited_major) {
       tags.push({ key: "unlimited_major", label: "", value: "不限专业" });
@@ -330,7 +341,7 @@ export function PositionFilters({
     if (filters.min_recruit && filters.min_recruit > 1) {
       tags.push({ key: "min_recruit", label: "招录人数", value: `≥${filters.min_recruit}人` });
     }
-    
+
     return tags;
   };
 
@@ -360,7 +371,13 @@ export function PositionFilters({
                   {externalLoading ? (
                     <span className="animate-pulse">查询中...</span>
                   ) : (
-                    <>共 <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> 条</>
+                    <>
+                      共{" "}
+                      <span className="font-medium text-foreground">
+                        {totalCount.toLocaleString()}
+                      </span>{" "}
+                      条
+                    </>
                   )}
                 </span>
               )}
@@ -420,7 +437,7 @@ export function PositionFilters({
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-              
+
               {/* 保存当前筛选 */}
               {activeCount > 0 && (
                 <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
@@ -441,9 +458,7 @@ export function PositionFilters({
                   <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
                       <DialogTitle>保存筛选条件</DialogTitle>
-                      <DialogDescription>
-                        为当前筛选条件命名，方便下次快速使用
-                      </DialogDescription>
+                      <DialogDescription>为当前筛选条件命名，方便下次快速使用</DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
                       <Input
@@ -478,7 +493,7 @@ export function PositionFilters({
                   </DialogContent>
                 </Dialog>
               )}
-              
+
               {activeCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={onReset}>
                   <RotateCcw className="h-4 w-4 mr-1" />
@@ -561,12 +576,12 @@ export function PositionFilters({
                 <Select
                   value={filters.province || "all"}
                   onValueChange={(v) => {
-                    onFiltersChange({ 
-                      ...filters, 
-                      province: v === "all" ? undefined : v, 
-                      city: undefined, 
+                    onFiltersChange({
+                      ...filters,
+                      province: v === "all" ? undefined : v,
+                      city: undefined,
                       district: undefined,
-                      page: 1 
+                      page: 1,
                     });
                   }}
                 >
@@ -585,11 +600,11 @@ export function PositionFilters({
                 <Select
                   value={filters.city || "all"}
                   onValueChange={(v) => {
-                    onFiltersChange({ 
-                      ...filters, 
-                      city: v === "all" ? undefined : v, 
+                    onFiltersChange({
+                      ...filters,
+                      city: v === "all" ? undefined : v,
                       district: undefined,
-                      page: 1 
+                      page: 1,
                     });
                   }}
                   disabled={!filters.province}
@@ -819,7 +834,12 @@ export function PositionFilters({
               <Label className="text-sm font-medium">报名状态</Label>
               <Select
                 value={filters.reg_status || "all"}
-                onValueChange={(v) => updateFilter("reg_status", v === "all" ? undefined : v as "registering" | "upcoming" | "ended")}
+                onValueChange={(v) =>
+                  updateFilter(
+                    "reg_status",
+                    v === "all" ? undefined : (v as "registering" | "upcoming" | "ended")
+                  )
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="全部" />
@@ -917,7 +937,9 @@ export function PositionFilters({
               <Label className="text-sm font-medium">最低招录人数</Label>
               <Select
                 value={String(filters.min_recruit || 0)}
-                onValueChange={(v) => updateFilter("min_recruit", v === "0" ? undefined : Number(v))}
+                onValueChange={(v) =>
+                  updateFilter("min_recruit", v === "0" ? undefined : Number(v))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="不限" />

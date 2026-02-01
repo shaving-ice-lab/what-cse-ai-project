@@ -125,7 +125,8 @@ export function PositionList({
   // 状态徽章
   const getStatusBadge = (status: number) => {
     const name = PositionStatusNames[status as PositionStatus] || "未知";
-    const colorClass = PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
+    const colorClass =
+      PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
     return (
       <Badge variant="secondary" className={colorClass}>
         {name}
@@ -149,9 +150,7 @@ export function PositionList({
             {/* 批量操作 */}
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  已选 {selectedIds.length} 项
-                </span>
+                <span className="text-sm text-muted-foreground">已选 {selectedIds.length} 项</span>
                 {onBatchStatusChange && (
                   <Button
                     variant="outline"
@@ -174,10 +173,7 @@ export function PositionList({
 
           <div className="flex items-center gap-2">
             {/* 排序 */}
-            <Select
-              value={sortBy}
-              onValueChange={(v) => onSortChange(v as SortField)}
-            >
+            <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortField)}>
               <SelectTrigger className="w-[130px]">
                 <ArrowUpDown className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="排序" />
@@ -247,15 +243,33 @@ export function PositionList({
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-8" /></TableCell>
-                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
-                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-12" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                      <TableCell className="hidden xl:table-cell"><Skeleton className="h-5 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-32" />
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Skeleton className="h-5 w-40" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-8" />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Skeleton className="h-5 w-16" />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Skeleton className="h-5 w-12" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-16" />
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        <Skeleton className="h-5 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : positions.length > 0 ? (
@@ -281,12 +295,18 @@ export function PositionList({
                             </Link>
                             <div className="flex gap-1 mt-1">
                               {position.is_unlimited_major && (
-                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-green-50 text-green-700 border-green-200"
+                                >
                                   不限专业
                                 </Badge>
                               )}
                               {position.is_for_fresh_graduate && (
-                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                >
                                   应届可报
                                 </Badge>
                               )}
@@ -349,7 +369,9 @@ export function PositionList({
                               </DropdownMenuItem>
                               {position.status === PositionStatus.Pending && (
                                 <DropdownMenuItem
-                                  onClick={() => onStatusChange(position.id, PositionStatus.Published)}
+                                  onClick={() =>
+                                    onStatusChange(position.id, PositionStatus.Published)
+                                  }
                                 >
                                   <CheckCircle className="mr-2 h-4 w-4" />
                                   审核通过
@@ -357,7 +379,9 @@ export function PositionList({
                               )}
                               {position.status === PositionStatus.Published && (
                                 <DropdownMenuItem
-                                  onClick={() => onStatusChange(position.id, PositionStatus.Offline)}
+                                  onClick={() =>
+                                    onStatusChange(position.id, PositionStatus.Offline)
+                                  }
                                 >
                                   <XCircle className="mr-2 h-4 w-4" />
                                   下线

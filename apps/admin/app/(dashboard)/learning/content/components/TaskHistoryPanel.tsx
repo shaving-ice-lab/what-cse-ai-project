@@ -87,10 +87,15 @@ export function TaskHistoryPanel({
 
   const filteredTasks = tasks.filter((t) => {
     if (filterStatus !== "all") {
-      if (filterStatus === "processing" && t.status !== "processing" && t.status !== "generating") return false;
+      if (filterStatus === "processing" && t.status !== "processing" && t.status !== "generating")
+        return false;
       if (filterStatus !== "processing" && t.status !== filterStatus) return false;
     }
-    if (filterKeyword && !(t.template_name ?? "").toLowerCase().includes(filterKeyword.toLowerCase())) return false;
+    if (
+      filterKeyword &&
+      !(t.template_name ?? "").toLowerCase().includes(filterKeyword.toLowerCase())
+    )
+      return false;
     return true;
   });
 
@@ -121,7 +126,7 @@ export function TaskHistoryPanel({
                 <Activity className="h-4 w-4 text-amber-500" />
                 <span className="text-sm font-medium">任务历史</span>
               </div>
-              
+
               {/* Quick stats */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -175,16 +180,29 @@ export function TaskHistoryPanel({
                     className="h-7 text-xs pl-7"
                   />
                 </div>
-                <Select value={filterStatus} onValueChange={(v: typeof filterStatus) => setFilterStatus(v)}>
+                <Select
+                  value={filterStatus}
+                  onValueChange={(v: typeof filterStatus) => setFilterStatus(v)}
+                >
                   <SelectTrigger className="w-[90px] h-7 text-xs">
                     <SelectValue placeholder="状态" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-xs">全部状态</SelectItem>
-                    <SelectItem value="completed" className="text-xs">已完成</SelectItem>
-                    <SelectItem value="processing" className="text-xs">处理中</SelectItem>
-                    <SelectItem value="pending" className="text-xs">待处理</SelectItem>
-                    <SelectItem value="failed" className="text-xs">失败</SelectItem>
+                    <SelectItem value="all" className="text-xs">
+                      全部状态
+                    </SelectItem>
+                    <SelectItem value="completed" className="text-xs">
+                      已完成
+                    </SelectItem>
+                    <SelectItem value="processing" className="text-xs">
+                      处理中
+                    </SelectItem>
+                    <SelectItem value="pending" className="text-xs">
+                      待处理
+                    </SelectItem>
+                    <SelectItem value="failed" className="text-xs">
+                      失败
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 {(filterKeyword || filterStatus !== "all") && (
@@ -232,11 +250,21 @@ export function TaskHistoryPanel({
                   <Table>
                     <TableHeader className="sticky top-0 bg-muted/80 z-10">
                       <TableRow className="hover:bg-transparent border-b">
-                        <TableHead className="w-20 py-1.5 px-3 text-[10px] font-medium">状态</TableHead>
-                        <TableHead className="py-1.5 px-3 text-[10px] font-medium">任务名称</TableHead>
-                        <TableHead className="w-16 py-1.5 px-3 text-[10px] font-medium">类型</TableHead>
-                        <TableHead className="w-20 py-1.5 px-3 text-[10px] font-medium">进度</TableHead>
-                        <TableHead className="w-14 py-1.5 px-3 text-[10px] font-medium">时间</TableHead>
+                        <TableHead className="w-20 py-1.5 px-3 text-[10px] font-medium">
+                          状态
+                        </TableHead>
+                        <TableHead className="py-1.5 px-3 text-[10px] font-medium">
+                          任务名称
+                        </TableHead>
+                        <TableHead className="w-16 py-1.5 px-3 text-[10px] font-medium">
+                          类型
+                        </TableHead>
+                        <TableHead className="w-20 py-1.5 px-3 text-[10px] font-medium">
+                          进度
+                        </TableHead>
+                        <TableHead className="w-14 py-1.5 px-3 text-[10px] font-medium">
+                          时间
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

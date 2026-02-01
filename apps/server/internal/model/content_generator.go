@@ -184,6 +184,7 @@ type ContentGeneratorTaskResponse struct {
 	SuccessItems   int                        `json:"success_items"`
 	FailedItems    int                        `json:"failed_items"`
 	ErrorMessage   string                     `json:"error_message,omitempty"`
+	CurrentStep    string                     `json:"current_step,omitempty"`
 	Progress       float64                    `json:"progress"` // 0-100
 	StartedAt      *time.Time                 `json:"started_at,omitempty"`
 	CompletedAt    *time.Time                 `json:"completed_at,omitempty"`

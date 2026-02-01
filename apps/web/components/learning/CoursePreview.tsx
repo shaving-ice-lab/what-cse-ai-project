@@ -29,15 +29,15 @@ interface CoursePreviewProps {
 }
 
 // AI预习要点卡片
-function PreviewPointCard({ 
-  icon: Icon, 
-  title, 
-  points, 
-  color 
-}: { 
-  icon: typeof Target; 
-  title: string; 
-  points: string[]; 
+function PreviewPointCard({
+  icon: Icon,
+  title,
+  points,
+  color,
+}: {
+  icon: typeof Target;
+  title: string;
+  points: string[];
   color: string;
 }) {
   return (
@@ -61,13 +61,7 @@ function PreviewPointCard({
 }
 
 // 预习小测卡片
-function PreQuizCard({ 
-  questions, 
-  onStart 
-}: { 
-  questions?: number; 
-  onStart?: () => void;
-}) {
+function PreQuizCard({ questions, onStart }: { questions?: number; onStart?: () => void }) {
   return (
     <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-6 text-white">
       <div className="flex items-center gap-3 mb-4">
@@ -94,10 +88,10 @@ function PreQuizCard({
 }
 
 // 知识体系定位卡片
-function KnowledgePositionCard({ 
+function KnowledgePositionCard({
   currentTopic,
-  relatedTopics 
-}: { 
+  relatedTopics,
+}: {
   currentTopic: string;
   relatedTopics?: { name: string; relation: string }[];
 }) {
@@ -109,7 +103,7 @@ function KnowledgePositionCard({
         </div>
         <h4 className="font-semibold text-stone-800">知识体系定位</h4>
       </div>
-      
+
       {/* 当前知识点 */}
       <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
         <div className="flex items-center gap-2 mb-1">
@@ -251,14 +245,23 @@ export function CoursePreview({
             <h4 className="font-semibold text-stone-800">预习思考问题</h4>
           </div>
           <div className="space-y-3">
-            {(content.summary ? [content.summary] : ["这个知识点的核心概念是什么？", "它与之前学过的内容有什么联系？", "在实际考试中可能怎么考？"]).slice(0, 3).map((question, idx) => (
-              <div key={idx} className="flex items-start gap-2 p-3 bg-purple-50 rounded-lg">
-                <span className="w-5 h-5 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {idx + 1}
-                </span>
-                <span className="text-sm text-stone-700">{question}</span>
-              </div>
-            ))}
+            {(content.summary
+              ? [content.summary]
+              : [
+                  "这个知识点的核心概念是什么？",
+                  "它与之前学过的内容有什么联系？",
+                  "在实际考试中可能怎么考？",
+                ]
+            )
+              .slice(0, 3)
+              .map((question, idx) => (
+                <div key={idx} className="flex items-start gap-2 p-3 bg-purple-50 rounded-lg">
+                  <span className="w-5 h-5 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                    {idx + 1}
+                  </span>
+                  <span className="text-sm text-stone-700">{question}</span>
+                </div>
+              ))}
           </div>
         </div>
       </div>

@@ -107,13 +107,13 @@ import { toast } from "sonner";
 // Utility: Highlight search terms in text
 function HighlightText({ text, searchQuery }: { text: string; searchQuery: string }) {
   if (!searchQuery.trim()) return <>{text}</>;
-  
-  const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+
+  const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
   const parts = text.split(regex);
-  
+
   return (
     <>
-      {parts.map((part, i) => 
+      {parts.map((part, i) =>
         regex.test(part) ? (
           <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 text-inherit rounded-sm px-0.5">
             {part}
@@ -129,9 +129,9 @@ function HighlightText({ text, searchQuery }: { text: string; searchQuery: strin
 // Utility: Export data as JSON file
 function exportToJson(data: any, filename: string) {
   const jsonStr = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const blob = new Blob([jsonStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(link);
@@ -141,15 +141,18 @@ function exportToJson(data: any, filename: string) {
 }
 
 // Subject color themes - consistent with categories page
-const subjectThemes: Record<Subject, {
-  icon: LucideIcon;
-  gradient: string;
-  bgLight: string;
-  bgDark: string;
-  text: string;
-  border: string;
-  ring: string;
-}> = {
+const subjectThemes: Record<
+  Subject,
+  {
+    icon: LucideIcon;
+    gradient: string;
+    bgLight: string;
+    bgDark: string;
+    text: string;
+    border: string;
+    ring: string;
+  }
+> = {
   xingce: {
     icon: BarChart3,
     gradient: "from-blue-500 to-cyan-500",
@@ -270,7 +273,10 @@ function CourseFormDialog({
     });
   };
 
-  const flattenCategories = (cats: CourseCategory[], level = 0): { id: number; name: string; level: number; subject?: Subject }[] => {
+  const flattenCategories = (
+    cats: CourseCategory[],
+    level = 0
+  ): { id: number; name: string; level: number; subject?: Subject }[] => {
     const result: { id: number; name: string; level: number; subject?: Subject }[] = [];
     for (const cat of cats) {
       result.push({ id: cat.id, name: cat.name, level, subject: cat.subject });
@@ -284,8 +290,10 @@ function CourseFormDialog({
   const flatCategories = flattenCategories(categories);
 
   // Get theme based on selected category
-  const selectedCategory = flatCategories.find(c => c.id === formData.category_id);
-  const theme = selectedCategory?.subject ? subjectThemes[selectedCategory.subject] : subjectThemes.xingce;
+  const selectedCategory = flatCategories.find((c) => c.id === formData.category_id);
+  const theme = selectedCategory?.subject
+    ? subjectThemes[selectedCategory.subject]
+    : subjectThemes.xingce;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -295,14 +303,14 @@ function CourseFormDialog({
           <div className={`absolute inset-0 bg-gradient-to-r ${theme.gradient} opacity-10`} />
           <DialogHeader className="relative">
             <div className="flex items-center gap-3">
-              <div className={`h-11 w-11 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm`}>
+              <div
+                className={`h-11 w-11 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm`}
+              >
                 <ContentTypeIcon type={formData.content_type} className="h-5 w-5 text-white" />
               </div>
               <div>
                 <DialogTitle className="text-lg">新建课程</DialogTitle>
-                <DialogDescription className="mt-0.5">
-                  创建新的学习课程内容
-                </DialogDescription>
+                <DialogDescription className="mt-0.5">创建新的学习课程内容</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -318,7 +326,9 @@ function CourseFormDialog({
               </h4>
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label className="text-xs">课程标题 <span className="text-red-500">*</span></Label>
+                  <Label className="text-xs">
+                    课程标题 <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -346,7 +356,9 @@ function CourseFormDialog({
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs">所属分类 <span className="text-red-500">*</span></Label>
+                  <Label className="text-xs">
+                    所属分类 <span className="text-red-500">*</span>
+                  </Label>
                   <Select
                     value={formData.category_id ? formData.category_id.toString() : ""}
                     onValueChange={(v) => setFormData({ ...formData, category_id: Number(v) })}
@@ -359,9 +371,13 @@ function CourseFormDialog({
                         <SelectItem key={cat.id} value={cat.id.toString()}>
                           <span className="flex items-center gap-2">
                             {cat.subject && (
-                              <SubjectIcon subject={cat.subject} className={`h-3.5 w-3.5 ${subjectThemes[cat.subject].text}`} />
+                              <SubjectIcon
+                                subject={cat.subject}
+                                className={`h-3.5 w-3.5 ${subjectThemes[cat.subject].text}`}
+                              />
                             )}
-                            {"　".repeat(cat.level)}{cat.name}
+                            {"　".repeat(cat.level)}
+                            {cat.name}
                           </span>
                         </SelectItem>
                       ))}
@@ -373,7 +389,9 @@ function CourseFormDialog({
                   <Label className="text-xs">内容类型</Label>
                   <Select
                     value={formData.content_type}
-                    onValueChange={(v) => setFormData({ ...formData, content_type: v as ContentType })}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, content_type: v as ContentType })
+                    }
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue />
@@ -519,16 +537,22 @@ function CourseFormDialog({
                 访问权限
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                <div className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
-                  formData.is_free 
-                    ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800" 
-                    : "bg-muted/30 border-muted"
-                }`}>
+                <div
+                  className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                    formData.is_free
+                      ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                      : "bg-muted/30 border-muted"
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                      formData.is_free ? "bg-green-500/20" : "bg-muted"
-                    }`}>
-                      <Star className={`h-4 w-4 ${formData.is_free ? "text-green-600" : "text-muted-foreground"}`} />
+                    <div
+                      className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                        formData.is_free ? "bg-green-500/20" : "bg-muted"
+                      }`}
+                    >
+                      <Star
+                        className={`h-4 w-4 ${formData.is_free ? "text-green-600" : "text-muted-foreground"}`}
+                      />
                     </div>
                     <div>
                       <Label className="text-sm font-medium">免费课程</Label>
@@ -538,20 +562,30 @@ function CourseFormDialog({
                   <Switch
                     checked={formData.is_free}
                     onCheckedChange={(checked) =>
-                      setFormData({ ...formData, is_free: checked, vip_only: checked ? false : formData.vip_only })
+                      setFormData({
+                        ...formData,
+                        is_free: checked,
+                        vip_only: checked ? false : formData.vip_only,
+                      })
                     }
                   />
                 </div>
-                <div className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
-                  formData.vip_only 
-                    ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800" 
-                    : "bg-muted/30 border-muted"
-                }`}>
+                <div
+                  className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                    formData.vip_only
+                      ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+                      : "bg-muted/30 border-muted"
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                      formData.vip_only ? "bg-amber-500/20" : "bg-muted"
-                    }`}>
-                      <Users className={`h-4 w-4 ${formData.vip_only ? "text-amber-600" : "text-muted-foreground"}`} />
+                    <div
+                      className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                        formData.vip_only ? "bg-amber-500/20" : "bg-muted"
+                      }`}
+                    >
+                      <Users
+                        className={`h-4 w-4 ${formData.vip_only ? "text-amber-600" : "text-muted-foreground"}`}
+                      />
                     </div>
                     <div>
                       <Label className="text-sm font-medium">VIP专属</Label>
@@ -561,7 +595,11 @@ function CourseFormDialog({
                   <Switch
                     checked={formData.vip_only}
                     onCheckedChange={(checked) =>
-                      setFormData({ ...formData, vip_only: checked, is_free: checked ? false : formData.is_free })
+                      setFormData({
+                        ...formData,
+                        vip_only: checked,
+                        is_free: checked ? false : formData.is_free,
+                      })
                     }
                   />
                 </div>
@@ -574,8 +612,8 @@ function CourseFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} className="h-9">
             取消
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             className={`h-9 bg-gradient-to-r ${theme.gradient} hover:opacity-90 transition-opacity`}
           >
             创建课程
@@ -602,7 +640,7 @@ interface ColumnItemProps {
   onQuickEdit?: () => void;
   onQuickDelete?: () => void;
   onToggleActive?: () => void;
-  colorTheme?: typeof subjectThemes[Subject];
+  colorTheme?: (typeof subjectThemes)[Subject];
   showQuickActions?: boolean;
   enableContextMenu?: boolean;
   searchQuery?: string;
@@ -626,7 +664,7 @@ function ColumnItem({
   searchQuery = "",
 }: ColumnItemProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  
+
   const itemContent = (
     <div
       onClick={onClick}
@@ -634,11 +672,12 @@ function ColumnItem({
       className={`
         group relative flex items-center gap-1.5 px-2 py-1.5 cursor-pointer 
         transition-all duration-150 ease-out rounded mx-0.5 my-px
-        ${isSelected 
-          ? colorTheme 
-            ? `bg-gradient-to-r ${colorTheme.gradient} text-white shadow-sm` 
-            : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm"
-          : "hover:bg-muted/60"
+        ${
+          isSelected
+            ? colorTheme
+              ? `bg-gradient-to-r ${colorTheme.gradient} text-white shadow-sm`
+              : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm"
+            : "hover:bg-muted/60"
         }
         ${!isActive ? "opacity-50" : ""}
       `}
@@ -648,7 +687,9 @@ function ColumnItem({
           <HighlightText text={name} searchQuery={searchQuery} />
         </div>
         {subtitle && (
-          <div className={`text-[10px] truncate transition-colors leading-tight ${isSelected ? "text-white/70" : "text-muted-foreground"}`}>
+          <div
+            className={`text-[10px] truncate transition-colors leading-tight ${isSelected ? "text-white/70" : "text-muted-foreground"}`}
+          >
             <HighlightText text={subtitle} searchQuery={searchQuery} />
           </div>
         )}
@@ -659,7 +700,10 @@ function ColumnItem({
         <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-px bg-background/95 backdrop-blur-sm rounded shadow-sm border px-0.5 py-0.5 animate-in fade-in-0 zoom-in-95 duration-150">
           {onQuickEdit && (
             <button
-              onClick={(e) => { e.stopPropagation(); onQuickEdit(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickEdit();
+              }}
               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
               title="编辑"
             >
@@ -668,7 +712,10 @@ function ColumnItem({
           )}
           {onQuickDelete && (
             <button
-              onClick={(e) => { e.stopPropagation(); onQuickDelete(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickDelete();
+              }}
               className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50 text-muted-foreground hover:text-red-600 transition-colors"
               title="删除"
             >
@@ -682,27 +729,27 @@ function ColumnItem({
       {count !== undefined && count > 0 && (
         <span
           className={`text-[10px] px-1 py-px rounded font-medium transition-all flex-shrink-0 ${
-            isSelected 
-              ? "bg-white/20 text-white" 
-              : "bg-muted/60 text-muted-foreground"
-          } ${showQuickActions && !isSelected ? 'group-hover:opacity-0' : ''}`}
+            isSelected ? "bg-white/20 text-white" : "bg-muted/60 text-muted-foreground"
+          } ${showQuickActions && !isSelected ? "group-hover:opacity-0" : ""}`}
         >
           {count}
         </span>
       )}
-      
+
       {/* Inactive indicator - simplified */}
       {!isActive && (
-        <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${isSelected ? "bg-white/50" : "bg-orange-400"}`} />
+        <div
+          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${isSelected ? "bg-white/50" : "bg-orange-400"}`}
+        />
       )}
-      
+
       {hasChildren && (
-        <ChevronRight 
+        <ChevronRight
           className={`h-3 w-3 flex-shrink-0 transition-all duration-200 ${
-            isSelected 
-              ? "text-white/60" 
+            isSelected
+              ? "text-white/60"
               : "text-muted-foreground/50 group-hover:text-muted-foreground"
-          }`} 
+          }`}
         />
       )}
     </div>
@@ -711,53 +758,56 @@ function ColumnItem({
   // Wrap with context menu if enabled (only opens on right-click)
   if (enableContextMenu) {
     return (
-      <div 
+      <div
         className="relative"
-        onContextMenu={(e) => { 
-          e.preventDefault(); 
+        onContextMenu={(e) => {
+          e.preventDefault();
           setContextMenuOpen(true);
         }}
       >
         {itemContent}
         <DropdownMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
           <DropdownMenuTrigger className="sr-only" />
-        <DropdownMenuContent align="start" className="w-48">
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-            操作
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {onQuickEdit && (
-            <DropdownMenuItem onClick={onQuickEdit} className="text-sm">
-              <Edit className="h-3.5 w-3.5 mr-2" />
-              编辑
-              <span className="ml-auto text-xs text-muted-foreground">双击</span>
-            </DropdownMenuItem>
-          )}
-          {onToggleActive && (
-            <DropdownMenuItem onClick={onToggleActive} className="text-sm">
-              {isActive ? (
-                <>
-                  <EyeOff className="h-3.5 w-3.5 mr-2" />
-                  下架
-                </>
-              ) : (
-                <>
-                  <Eye className="h-3.5 w-3.5 mr-2" />
-                  发布
-                </>
-              )}
-            </DropdownMenuItem>
-          )}
-          {onQuickDelete && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onQuickDelete} className="text-sm text-red-600 focus:text-red-600">
-                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                删除
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              操作
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {onQuickEdit && (
+              <DropdownMenuItem onClick={onQuickEdit} className="text-sm">
+                <Edit className="h-3.5 w-3.5 mr-2" />
+                编辑
+                <span className="ml-auto text-xs text-muted-foreground">双击</span>
               </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
+            )}
+            {onToggleActive && (
+              <DropdownMenuItem onClick={onToggleActive} className="text-sm">
+                {isActive ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5 mr-2" />
+                    下架
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 mr-2" />
+                    发布
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+            {onQuickDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={onQuickDelete}
+                  className="text-sm text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                  删除
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
         </DropdownMenu>
       </div>
     );
@@ -783,7 +833,7 @@ interface ColumnProps {
     isActive?: boolean;
     hasChildren: boolean;
     data?: any;
-    colorTheme?: typeof subjectThemes[Subject];
+    colorTheme?: (typeof subjectThemes)[Subject];
   }>;
   selectedId: string | number | null;
   onSelect: (id: string | number, data?: any) => void;
@@ -829,16 +879,17 @@ function Column({
 
   // Apply status filter
   if (statusFilter !== "all") {
-    processedItems = processedItems.filter(item => 
+    processedItems = processedItems.filter((item) =>
       statusFilter === "active" ? item.isActive !== false : item.isActive === false
     );
   }
 
   // Apply search filter
   if (searchQuery.trim()) {
-    processedItems = processedItems.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
+    processedItems = processedItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
 
@@ -860,8 +911,8 @@ function Column({
     });
   }
 
-  const activeCount = items.filter(i => i.isActive !== false).length;
-  const inactiveCount = items.filter(i => i.isActive === false).length;
+  const activeCount = items.filter((i) => i.isActive !== false).length;
+  const inactiveCount = items.filter((i) => i.isActive === false).length;
   const hasFilters = statusFilter !== "all" || sortOrder !== "default";
 
   return (
@@ -872,18 +923,16 @@ function Column({
           <span className="text-[11px] font-semibold text-foreground/70 tracking-wide truncate">
             {title}
           </span>
-          {hasFilters && (
-            <div className="h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-          )}
+          {hasFilters && <div className="h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
         </div>
         <div className="flex items-center gap-0.5 flex-shrink-0">
           {(filterable || sortable) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={`h-5 w-5 transition-colors ${hasFilters ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600' : 'hover:bg-muted/80'}`}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-5 w-5 transition-colors ${hasFilters ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600" : "hover:bg-muted/80"}`}
                 >
                   <Filter className="h-3 w-3" />
                 </Button>
@@ -892,14 +941,14 @@ function Column({
                 {filterable && (
                   <>
                     <DropdownMenuLabel className="text-[11px] py-1">状态</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={statusFilter === "all"}
                       onCheckedChange={() => setStatusFilter("all")}
                       className="text-xs py-1"
                     >
                       全部 ({items.length})
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={statusFilter === "active"}
                       onCheckedChange={() => setStatusFilter("active")}
                       className="text-xs py-1"
@@ -907,7 +956,7 @@ function Column({
                       <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5" />
                       已发布 ({activeCount})
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={statusFilter === "inactive"}
                       onCheckedChange={() => setStatusFilter("inactive")}
                       className="text-xs py-1"
@@ -921,21 +970,21 @@ function Column({
                 {sortable && (
                   <>
                     <DropdownMenuLabel className="text-[11px] py-1">排序</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={sortOrder === "default"}
                       onCheckedChange={() => setSortOrder("default")}
                       className="text-xs py-1"
                     >
                       默认
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={sortOrder === "name-asc"}
                       onCheckedChange={() => setSortOrder("name-asc")}
                       className="text-xs py-1"
                     >
                       名称 A→Z
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={sortOrder === "name-desc"}
                       onCheckedChange={() => setSortOrder("name-desc")}
                       className="text-xs py-1"
@@ -947,8 +996,11 @@ function Column({
                 {hasFilters && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => { setStatusFilter("all"); setSortOrder("default"); }}
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setStatusFilter("all");
+                        setSortOrder("default");
+                      }}
                       className="text-xs py-1 text-blue-600"
                     >
                       <RefreshCw className="h-3 w-3 mr-1.5" />
@@ -960,10 +1012,10 @@ function Column({
             </DropdownMenu>
           )}
           {searchable && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-5 w-5 transition-colors ${isSearching ? 'bg-muted text-foreground' : 'hover:bg-muted/80'}`}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-5 w-5 transition-colors ${isSearching ? "bg-muted text-foreground" : "hover:bg-muted/80"}`}
               onClick={() => {
                 setIsSearching(!isSearching);
                 if (isSearching) setSearchQuery("");
@@ -974,11 +1026,11 @@ function Column({
             </Button>
           )}
           {onAdd && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-5 w-5 hover:bg-amber-500/10 hover:text-amber-600 transition-colors" 
-              onClick={onAdd} 
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 hover:bg-amber-500/10 hover:text-amber-600 transition-colors"
+              onClick={onAdd}
               title="新建"
             >
               <Plus className="h-3 w-3" />
@@ -1021,8 +1073,8 @@ function Column({
         {loading ? (
           <div className="p-1 space-y-0.5">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="flex flex-col gap-1 px-2 py-1.5 mx-0.5 rounded bg-muted/30"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
@@ -1034,25 +1086,33 @@ function Column({
         ) : processedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 px-3 text-muted-foreground">
             <div className="h-10 w-10 rounded-lg bg-muted/40 flex items-center justify-center mb-2">
-              {searchQuery || hasFilters ? <Filter className="h-4 w-4 opacity-40" /> : <Folder className="h-4 w-4 opacity-40" />}
+              {searchQuery || hasFilters ? (
+                <Filter className="h-4 w-4 opacity-40" />
+              ) : (
+                <Folder className="h-4 w-4 opacity-40" />
+              )}
             </div>
             <span className="text-[11px] text-center">
               {searchQuery ? `未找到` : hasFilters ? "无匹配项" : emptyText}
             </span>
             {hasFilters && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="mt-2 h-6 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                onClick={() => { setStatusFilter("all"); setSortOrder("default"); setSearchQuery(""); }}
+                onClick={() => {
+                  setStatusFilter("all");
+                  setSortOrder("default");
+                  setSearchQuery("");
+                }}
               >
                 重置
               </Button>
             )}
             {!searchQuery && !hasFilters && onAdd && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="mt-2 h-6 text-[11px] text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                 onClick={onAdd}
               >
@@ -1075,8 +1135,12 @@ function Column({
                   onClick={() => onSelect(item.id, item.data)}
                   onDoubleClick={() => onDoubleClick?.(item.id, item.data)}
                   onQuickEdit={onQuickEdit ? () => onQuickEdit(item.id, item.data) : undefined}
-                  onQuickDelete={onQuickDelete ? () => onQuickDelete(item.id, item.data) : undefined}
-                  onToggleActive={onToggleActive ? () => onToggleActive(item.id, item.data) : undefined}
+                  onQuickDelete={
+                    onQuickDelete ? () => onQuickDelete(item.id, item.data) : undefined
+                  }
+                  onToggleActive={
+                    onToggleActive ? () => onToggleActive(item.id, item.data) : undefined
+                  }
                   colorTheme={item.colorTheme}
                   showQuickActions={showQuickActions}
                   enableContextMenu={enableContextMenu}
@@ -1091,11 +1155,16 @@ function Column({
       {/* Column Footer - 更紧凑 */}
       <div className="flex items-center gap-1 px-2.5 py-1.5 border-t border-border/40 bg-muted/15 text-[10px] text-muted-foreground">
         <span className="font-medium tabular-nums">{processedItems.length}</span>
-        {(searchQuery || hasFilters) && <span className="text-muted-foreground/50">/{items.length}</span>}
+        {(searchQuery || hasFilters) && (
+          <span className="text-muted-foreground/50">/{items.length}</span>
+        )}
         <span className="text-muted-foreground/50">项</span>
         {hasFilters && (
           <button
-            onClick={() => { setStatusFilter("all"); setSortOrder("default"); }}
+            onClick={() => {
+              setStatusFilter("all");
+              setSortOrder("default");
+            }}
             className="ml-auto text-blue-500 hover:text-blue-600 transition-colors"
           >
             <RefreshCw className="h-2.5 w-2.5" />
@@ -1118,13 +1187,19 @@ interface CourseDetailPanelProps {
   onDelete: () => void;
 }
 
-function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: CourseDetailPanelProps) {
+function CourseDetailPanel({
+  course,
+  onEdit,
+  onPublish,
+  onArchive,
+  onDelete,
+}: CourseDetailPanelProps) {
   // Calculate course health score
   const getCourseHealth = (c: Course) => {
     let score = 0;
     const issues: string[] = [];
     const suggestions: string[] = [];
-    
+
     // Check description
     if (c.description && c.description.length > 30) {
       score += 20;
@@ -1132,7 +1207,7 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
       issues.push("描述太短或缺失");
       suggestions.push("添加详细的课程描述");
     }
-    
+
     // Check cover image
     if (c.cover_image) {
       score += 15;
@@ -1140,7 +1215,7 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
       issues.push("缺少封面图");
       suggestions.push("添加吸引人的封面图片");
     }
-    
+
     // Check chapters
     if (c.chapter_count && c.chapter_count > 0) {
       score += 25;
@@ -1148,26 +1223,26 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
       issues.push("暂无章节内容");
       suggestions.push("添加课程章节和内容");
     }
-    
+
     // Check status
     if (c.status === "published") {
       score += 20;
     } else if (c.status === "draft") {
       suggestions.push("课程完善后发布上线");
     }
-    
+
     // Check author
     if (c.author_name) {
       score += 10;
     } else {
       suggestions.push("添加讲师信息增加可信度");
     }
-    
+
     // Check rating
     if (c.rating && c.rating > 0) {
       score += 10;
     }
-    
+
     return { score, issues, suggestions };
   };
 
@@ -1199,9 +1274,15 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
         <div className={`h-28 bg-gradient-to-br ${theme.gradient} opacity-20`} />
         <div className="absolute inset-0 flex items-center justify-center">
           {course.cover_image ? (
-            <img src={course.cover_image} alt={course.title} className="w-full h-full object-cover" />
+            <img
+              src={course.cover_image}
+              alt={course.title}
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-lg`}>
+            <div
+              className={`h-12 w-12 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-lg`}
+            >
               <ContentTypeIcon type={course.content_type} className="h-6 w-6 text-white" />
             </div>
           )}
@@ -1212,7 +1293,9 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
       {/* Title - 更紧凑 */}
       <div className="px-4 -mt-4 relative">
         <h2 className="text-lg font-bold leading-tight">{course.title}</h2>
-        {course.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{course.subtitle}</p>}
+        {course.subtitle && (
+          <p className="text-xs text-muted-foreground mt-0.5">{course.subtitle}</p>
+        )}
       </div>
 
       {/* Content */}
@@ -1233,30 +1316,40 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
           )}
 
           {/* Course Health Score - 更紧凑 */}
-          <div className={`rounded-lg p-3 border ${
-            healthInfo.score >= 80 ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800" :
-            healthInfo.score >= 50 ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800" :
-            "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
-          }`}>
+          <div
+            className={`rounded-lg p-3 border ${
+              healthInfo.score >= 80
+                ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800"
+                : healthInfo.score >= 50
+                  ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+                  : "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
+            }`}
+          >
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1">
                 <BarChart3 className="h-3 w-3" />
                 完整度
               </h3>
-              <div className={`text-base font-bold ${
-                healthInfo.score >= 80 ? "text-emerald-600" :
-                healthInfo.score >= 50 ? "text-amber-600" :
-                "text-red-600"
-              }`}>
+              <div
+                className={`text-base font-bold ${
+                  healthInfo.score >= 80
+                    ? "text-emerald-600"
+                    : healthInfo.score >= 50
+                      ? "text-amber-600"
+                      : "text-red-600"
+                }`}
+              >
                 {healthInfo.score}%
               </div>
             </div>
             <div className="w-full h-1.5 rounded-full bg-muted/50 overflow-hidden mb-2">
-              <div 
+              <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  healthInfo.score >= 80 ? "bg-emerald-500" :
-                  healthInfo.score >= 50 ? "bg-amber-500" :
-                  "bg-red-500"
+                  healthInfo.score >= 80
+                    ? "bg-emerald-500"
+                    : healthInfo.score >= 50
+                      ? "bg-amber-500"
+                      : "bg-red-500"
                 }`}
                 style={{ width: `${healthInfo.score}%` }}
               />
@@ -1264,7 +1357,10 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
             {healthInfo.suggestions.length > 0 && (
               <div className="space-y-1">
                 {healthInfo.suggestions.slice(0, 2).map((suggestion, i) => (
-                  <div key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                  <div
+                    key={i}
+                    className="flex items-start gap-1.5 text-[11px] text-muted-foreground"
+                  >
                     <Info className="h-2.5 w-2.5 mt-0.5 flex-shrink-0" />
                     <span>{suggestion}</span>
                   </div>
@@ -1276,10 +1372,18 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
           {/* Status badges - 更紧凑 */}
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge
-              variant={course.status === "published" ? "default" : course.status === "archived" ? "secondary" : "outline"}
+              variant={
+                course.status === "published"
+                  ? "default"
+                  : course.status === "archived"
+                    ? "secondary"
+                    : "outline"
+              }
               className={`px-2 py-0.5 text-[11px] ${course.status === "published" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" : ""}`}
             >
-              {course.status === "published" && <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse" />}
+              {course.status === "published" && (
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse" />
+              )}
               {getStatusLabel(course.status)}
             </Badge>
             <Badge variant="outline" className="px-2 py-0.5 text-[11px]">
@@ -1291,23 +1395,29 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
                 course.difficulty === "beginner"
                   ? "bg-green-100 text-green-700 dark:bg-green-900/50"
                   : course.difficulty === "intermediate"
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/50"
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50"
+                    : "bg-red-100 text-red-700 dark:bg-red-900/50"
               }`}
             >
               {getDifficultyLabel(course.difficulty)}
             </Badge>
             {course.is_free && (
-              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-2 py-0.5 text-[11px]">免费</Badge>
+              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-2 py-0.5 text-[11px]">
+                免费
+              </Badge>
             )}
             {course.vip_only && (
-              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 px-2 py-0.5 text-[11px]">VIP</Badge>
+              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 px-2 py-0.5 text-[11px]">
+                VIP
+              </Badge>
             )}
           </div>
 
           {/* Description Card - 更紧凑 */}
           <div className={`rounded-lg ${theme.bgLight} ${theme.bgDark} ${theme.border} border p-3`}>
-            <h3 className={`text-[11px] font-semibold ${theme.text} uppercase tracking-wider mb-1.5 flex items-center gap-1`}>
+            <h3
+              className={`text-[11px] font-semibold ${theme.text} uppercase tracking-wider mb-1.5 flex items-center gap-1`}
+            >
               <FileText className="h-3 w-3" />
               简介
             </h3>
@@ -1324,7 +1434,9 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] text-blue-600/70 dark:text-blue-400/70">学习人次</p>
-                <p className="text-sm font-bold text-blue-700 dark:text-blue-300 truncate">{course.study_count.toLocaleString()}</p>
+                <p className="text-sm font-bold text-blue-700 dark:text-blue-300 truncate">
+                  {course.study_count.toLocaleString()}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 p-2 border border-amber-100 dark:border-amber-900">
@@ -1333,7 +1445,9 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70">评分</p>
-                <p className="text-sm font-bold text-amber-700 dark:text-amber-300">{course.rating?.toFixed(1) || "-"}</p>
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
+                  {course.rating?.toFixed(1) || "-"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-md bg-purple-50 dark:bg-purple-950/30 p-2 border border-purple-100 dark:border-purple-900">
@@ -1342,7 +1456,9 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] text-purple-600/70 dark:text-purple-400/70">时长</p>
-                <p className="text-sm font-bold text-purple-700 dark:text-purple-300">{course.duration ? `${Math.floor(course.duration / 60)}分` : "-"}</p>
+                <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                  {course.duration ? `${Math.floor(course.duration / 60)}分` : "-"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-md bg-emerald-50 dark:bg-emerald-950/30 p-2 border border-emerald-100 dark:border-emerald-900">
@@ -1351,7 +1467,9 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">章节</p>
-                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{course.chapter_count || 0}章</p>
+                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                  {course.chapter_count || 0}章
+                </p>
               </div>
             </div>
           </div>
@@ -1359,19 +1477,27 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
           {/* Info Grid - 更紧凑 */}
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-md bg-muted/30 p-2">
-              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">分类</h3>
+              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                分类
+              </h3>
               <p className="text-xs font-medium truncate">{course.category?.name || "-"}</p>
             </div>
             <div className="rounded-md bg-muted/30 p-2">
-              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">讲师</h3>
+              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                讲师
+              </h3>
               <p className="text-xs font-medium truncate">{course.author_name || "-"}</p>
             </div>
             <div className="rounded-md bg-muted/30 p-2">
-              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">排序</h3>
+              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                排序
+              </h3>
               <p className="text-xs font-medium">#{course.sort_order}</p>
             </div>
             <div className="rounded-md bg-muted/30 p-2">
-              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">ID</h3>
+              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                ID
+              </h3>
               <p className="text-xs font-mono text-muted-foreground">{course.id}</p>
             </div>
           </div>
@@ -1389,7 +1515,9 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
               >
                 <ListOrdered className="h-3 w-3" />
                 管理章节
-                <span className="ml-auto text-[10px] text-violet-500">{course.chapter_count || 0}章</span>
+                <span className="ml-auto text-[10px] text-violet-500">
+                  {course.chapter_count || 0}章
+                </span>
               </Link>
               <button
                 onClick={() => {
@@ -1412,29 +1540,54 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete }: C
               操作
             </h3>
             <div className="grid grid-cols-2 gap-1.5">
-              <Button size="sm" variant="outline" onClick={onEdit} className="justify-start h-7 text-xs">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onEdit}
+                className="justify-start h-7 text-xs"
+              >
                 <Edit className="h-3 w-3 mr-1" />
                 编辑
               </Button>
               {course.status === "draft" && (
-                <Button size="sm" variant="outline" onClick={onPublish} className="justify-start h-7 text-xs text-green-600 hover:bg-green-50">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onPublish}
+                  className="justify-start h-7 text-xs text-green-600 hover:bg-green-50"
+                >
                   <Play className="h-3 w-3 mr-1" />
                   发布
                 </Button>
               )}
               {course.status === "published" && (
-                <Button size="sm" variant="outline" onClick={onArchive} className="justify-start h-7 text-xs text-orange-600 hover:bg-orange-50">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onArchive}
+                  className="justify-start h-7 text-xs text-orange-600 hover:bg-orange-50"
+                >
                   <Archive className="h-3 w-3 mr-1" />
                   下架
                 </Button>
               )}
               {course.status === "archived" && (
-                <Button size="sm" variant="outline" onClick={onPublish} className="justify-start h-7 text-xs text-green-600 hover:bg-green-50">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onPublish}
+                  className="justify-start h-7 text-xs text-green-600 hover:bg-green-50"
+                >
                   <Play className="h-3 w-3 mr-1" />
                   上线
                 </Button>
               )}
-              <Button size="sm" variant="outline" onClick={onDelete} className="justify-start h-7 text-xs text-red-600 hover:bg-red-50">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onDelete}
+                className="justify-start h-7 text-xs text-red-600 hover:bg-red-50"
+              >
                 <Trash2 className="h-3 w-3 mr-1" />
                 删除
               </Button>
@@ -1465,12 +1618,12 @@ export default function CourseManager() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  
+
   // UI State
   const [viewDensity, setViewDensity] = useState<"compact" | "comfortable">("comfortable");
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [showDetailPanel, setShowDetailPanel] = useState(true);
-  
+
   // Batch selection state
   const [batchMode, setBatchMode] = useState(false);
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<number>>(new Set());
@@ -1524,13 +1677,16 @@ export default function CourseManager() {
   }, [selectedCategory, fetchCourses]);
 
   // Group categories by subject
-  const categoriesBySubject = categories.reduce((acc, cat) => {
-    if (!acc[cat.subject]) {
-      acc[cat.subject] = [];
-    }
-    acc[cat.subject].push(cat);
-    return acc;
-  }, {} as Record<string, CourseCategory[]>);
+  const categoriesBySubject = categories.reduce(
+    (acc, cat) => {
+      if (!acc[cat.subject]) {
+        acc[cat.subject] = [];
+      }
+      acc[cat.subject].push(cat);
+      return acc;
+    },
+    {} as Record<string, CourseCategory[]>
+  );
 
   // Get total course count for subject
   const getSubjectCourseCount = (subject: Subject) => {
@@ -1668,19 +1824,37 @@ export default function CourseManager() {
   useLayoutEffect(() => {
     setToolbarContent(
       <>
-        <Button size="sm" variant="ghost" onClick={() => {
-          setBatchMode(prev => {
-            if (prev) setSelectedCourseIds(new Set());
-            return !prev;
-          });
-        }} className={`h-8 w-8 p-0 ${batchMode ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600' : ''}`}>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setBatchMode((prev) => {
+              if (prev) setSelectedCourseIds(new Set());
+              return !prev;
+            });
+          }}
+          className={`h-8 w-8 p-0 ${batchMode ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600" : ""}`}
+        >
           <CheckCheck className="h-3.5 w-3.5" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={handleRefresh} disabled={loading} className="h-8 w-8 p-0">
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleRefresh}
+          disabled={loading}
+          className="h-8 w-8 p-0"
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
         </Button>
-        <Button size="sm" onClick={() => setCreateDialogOpen(true)}
-          className="h-8 px-3 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-sm">
+        <Button
+          size="sm"
+          onClick={() => setCreateDialogOpen(true)}
+          className="h-8 px-3 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-sm"
+        >
           <Plus className="mr-1 h-3.5 w-3.5" />
           新建
         </Button>
@@ -1691,158 +1865,219 @@ export default function CourseManager() {
 
   return (
     <TooltipProvider delayDuration={300}>
-    <div className="h-full flex flex-col">
-      {/* Batch Action Bar */}
-      {batchMode && selectedCourseIds.size > 0 && (
-        <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-200 dark:border-blue-800">
-          <CheckCheck className="h-3.5 w-3.5 text-blue-600" />
-          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">已选 {selectedCourseIds.size} 门课程</span>
-          <div className="flex-1" />
-          <Button size="sm" variant="ghost" onClick={async () => {
-            if (!confirm(`确定要批量发布 ${selectedCourseIds.size} 门课程吗？`)) return;
-            let count = 0; for (const id of selectedCourseIds) { try { await courseApi.publishCourse(id); count++; } catch {} }
-            toast.success(`已发布 ${count} 门课程`);
-            setSelectedCourseIds(new Set());
-            if (selectedCategory) fetchCourses(selectedCategory.id);
-          }} className="h-7 text-xs text-green-600 hover:bg-green-100">
-            <Play className="h-3 w-3 mr-1" />发布
-          </Button>
-          <Button size="sm" variant="ghost" onClick={async () => {
-            if (!confirm(`确定要批量下架 ${selectedCourseIds.size} 门课程吗？`)) return;
-            let count = 0; for (const id of selectedCourseIds) { try { await courseApi.archiveCourse(id); count++; } catch {} }
-            toast.success(`已下架 ${count} 门课程`);
-            setSelectedCourseIds(new Set());
-            if (selectedCategory) fetchCourses(selectedCategory.id);
-          }} className="h-7 text-xs text-orange-600 hover:bg-orange-100">
-            <Archive className="h-3 w-3 mr-1" />下架
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelectedCourseIds(new Set())} className="h-7 text-xs">取消</Button>
-        </div>
-      )}
+      <div className="h-full flex flex-col">
+        {/* Batch Action Bar */}
+        {batchMode && selectedCourseIds.size > 0 && (
+          <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-200 dark:border-blue-800">
+            <CheckCheck className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+              已选 {selectedCourseIds.size} 门课程
+            </span>
+            <div className="flex-1" />
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={async () => {
+                if (!confirm(`确定要批量发布 ${selectedCourseIds.size} 门课程吗？`)) return;
+                let count = 0;
+                for (const id of selectedCourseIds) {
+                  try {
+                    await courseApi.publishCourse(id);
+                    count++;
+                  } catch {}
+                }
+                toast.success(`已发布 ${count} 门课程`);
+                setSelectedCourseIds(new Set());
+                if (selectedCategory) fetchCourses(selectedCategory.id);
+              }}
+              className="h-7 text-xs text-green-600 hover:bg-green-100"
+            >
+              <Play className="h-3 w-3 mr-1" />
+              发布
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={async () => {
+                if (!confirm(`确定要批量下架 ${selectedCourseIds.size} 门课程吗？`)) return;
+                let count = 0;
+                for (const id of selectedCourseIds) {
+                  try {
+                    await courseApi.archiveCourse(id);
+                    count++;
+                  } catch {}
+                }
+                toast.success(`已下架 ${count} 门课程`);
+                setSelectedCourseIds(new Set());
+                if (selectedCategory) fetchCourses(selectedCategory.id);
+              }}
+              className="h-7 text-xs text-orange-600 hover:bg-orange-100"
+            >
+              <Archive className="h-3 w-3 mr-1" />
+              下架
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedCourseIds(new Set())}
+              className="h-7 text-xs"
+            >
+              取消
+            </Button>
+          </div>
+        )}
 
-      {/* Main Content - Miller Columns */}
-      <div className="flex-1 flex flex-col overflow-hidden mx-4 my-3">
-        <Card className="flex-1 flex flex-col overflow-hidden shadow-sm border-border/50 rounded-xl">
-          <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b bg-muted/20">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1 text-xs overflow-x-auto">
-              <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              {selectedSubject ? (
-                <>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                  <button onClick={() => { setSelectedCategory(null); setSelectedCourse(null); }}
-                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${subjectThemes[selectedSubject].bgLight} ${subjectThemes[selectedSubject].bgDark} ${subjectThemes[selectedSubject].text} font-medium text-[11px]`}>
-                    <SubjectIcon subject={selectedSubject} className="h-3 w-3" />
-                    {getSubjectName(selectedSubject)}
-                  </button>
-                  {selectedCategory && <>
+        {/* Main Content - Miller Columns */}
+        <div className="flex-1 flex flex-col overflow-hidden mx-4 my-3">
+          <Card className="flex-1 flex flex-col overflow-hidden shadow-sm border-border/50 rounded-xl">
+            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b bg-muted/20">
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-1 text-xs overflow-x-auto">
+                <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                {selectedSubject ? (
+                  <>
                     <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                    <button onClick={() => setSelectedCourse(null)}
-                      className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] hover:bg-muted">{selectedCategory.name}</button>
-                  </>}
-                  {selectedCourse && <>
-                    <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                    <span className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] truncate max-w-[120px]">{selectedCourse.title}</span>
-                  </>}
-                </>
-              ) : (
-                <span className="text-muted-foreground text-[11px] ml-1">选择科目开始浏览</span>
+                    <button
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setSelectedCourse(null);
+                      }}
+                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${subjectThemes[selectedSubject].bgLight} ${subjectThemes[selectedSubject].bgDark} ${subjectThemes[selectedSubject].text} font-medium text-[11px]`}
+                    >
+                      <SubjectIcon subject={selectedSubject} className="h-3 w-3" />
+                      {getSubjectName(selectedSubject)}
+                    </button>
+                    {selectedCategory && (
+                      <>
+                        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                        <button
+                          onClick={() => setSelectedCourse(null)}
+                          className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] hover:bg-muted"
+                        >
+                          {selectedCategory.name}
+                        </button>
+                      </>
+                    )}
+                    {selectedCourse && (
+                      <>
+                        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                        <span className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] truncate max-w-[120px]">
+                          {selectedCourse.title}
+                        </span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-muted-foreground text-[11px] ml-1">选择科目开始浏览</span>
+                )}
+              </div>
+
+              <div className="ml-auto">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowDetailPanel(!showDetailPanel)}
+                      className="h-6 w-6 p-0"
+                    >
+                      {showDetailPanel ? (
+                        <PanelRightClose className="h-3.5 w-3.5 text-muted-foreground" />
+                      ) : (
+                        <PanelRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    {showDetailPanel ? "隐藏详情" : "显示详情"}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+
+            <div className="flex-1 flex overflow-x-auto overflow-y-hidden">
+              {/* Column 1: Subjects */}
+              <Column
+                title="科目"
+                items={subjectItems}
+                selectedId={selectedSubject}
+                onSelect={(id) => handleSelectSubject(id as Subject)}
+                loading={loading}
+                emptyText="暂无科目"
+              />
+
+              {/* Column 2: Categories */}
+              {selectedSubject && (
+                <Column
+                  title="分类"
+                  items={categoryItems}
+                  selectedId={selectedCategory?.id || null}
+                  onSelect={(_, data) => handleSelectCategory(data)}
+                  emptyText="暂无分类"
+                  searchable
+                  filterable
+                  sortable
+                />
+              )}
+
+              {/* Column 3: Courses */}
+              {selectedCategory && (
+                <Column
+                  title="课程"
+                  items={courseItems}
+                  selectedId={selectedCourse?.id || null}
+                  onSelect={(_, data) => handleSelectCourse(data)}
+                  onDoubleClick={(_, data) => {
+                    window.location.href = `/learning/courses/${data.id}`;
+                  }}
+                  onQuickEdit={(_, data) => {
+                    window.location.href = `/learning/courses/${data.id}`;
+                  }}
+                  onQuickDelete={handleDelete}
+                  onToggleActive={(_, data) => {
+                    if (data.status === "published") {
+                      handleArchive();
+                    } else {
+                      handlePublish();
+                    }
+                  }}
+                  onAdd={() => setCreateDialogOpen(true)}
+                  loading={coursesLoading}
+                  emptyText="暂无课程"
+                  searchable
+                  showQuickActions
+                  filterable
+                  sortable
+                  enableContextMenu
+                />
+              )}
+
+              {/* Detail Panel */}
+              {showDetailPanel && (
+                <CourseDetailPanel
+                  course={selectedCourse}
+                  onEdit={() =>
+                    selectedCourse &&
+                    (window.location.href = `/learning/courses/${selectedCourse.id}`)
+                  }
+                  onPublish={handlePublish}
+                  onArchive={handleArchive}
+                  onDelete={handleDelete}
+                />
               )}
             </div>
-            
-            <div className="ml-auto">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant="ghost" onClick={() => setShowDetailPanel(!showDetailPanel)} className="h-6 w-6 p-0">
-                    {showDetailPanel ? <PanelRightClose className="h-3.5 w-3.5 text-muted-foreground" /> : <PanelRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">{showDetailPanel ? "隐藏详情" : "显示详情"}</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
+          </Card>
+        </div>
 
-          <div className="flex-1 flex overflow-x-auto overflow-y-hidden">
-          {/* Column 1: Subjects */}
-          <Column
-            title="科目"
-            items={subjectItems}
-            selectedId={selectedSubject}
-            onSelect={(id) => handleSelectSubject(id as Subject)}
-            loading={loading}
-            emptyText="暂无科目"
-          />
-
-          {/* Column 2: Categories */}
-          {selectedSubject && (
-            <Column
-              title="分类"
-              items={categoryItems}
-              selectedId={selectedCategory?.id || null}
-              onSelect={(_, data) => handleSelectCategory(data)}
-              emptyText="暂无分类"
-              searchable
-              filterable
-              sortable
-            />
-          )}
-
-          {/* Column 3: Courses */}
-          {selectedCategory && (
-            <Column
-              title="课程"
-              items={courseItems}
-              selectedId={selectedCourse?.id || null}
-              onSelect={(_, data) => handleSelectCourse(data)}
-              onDoubleClick={(_, data) => {
-                window.location.href = `/learning/courses/${data.id}`;
-              }}
-              onQuickEdit={(_, data) => {
-                window.location.href = `/learning/courses/${data.id}`;
-              }}
-              onQuickDelete={handleDelete}
-              onToggleActive={(_, data) => {
-                if (data.status === "published") {
-                  handleArchive();
-                } else {
-                  handlePublish();
-                }
-              }}
-              onAdd={() => setCreateDialogOpen(true)}
-              loading={coursesLoading}
-              emptyText="暂无课程"
-              searchable
-              showQuickActions
-              filterable
-              sortable
-              enableContextMenu
-            />
-          )}
-
-          {/* Detail Panel */}
-          {showDetailPanel && (
-            <CourseDetailPanel
-              course={selectedCourse}
-              onEdit={() => selectedCourse && (window.location.href = `/learning/courses/${selectedCourse.id}`)}
-              onPublish={handlePublish}
-              onArchive={handleArchive}
-              onDelete={handleDelete}
-            />
-          )}
-          </div>
-        </Card>
+        {/* Dialog */}
+        <CourseFormDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          categories={categories}
+          defaultCategoryId={selectedCategory?.id}
+          onSubmit={handleCreateCourse}
+        />
       </div>
-
-      {/* Dialog */}
-      <CourseFormDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        categories={categories}
-        defaultCategoryId={selectedCategory?.id}
-        onSubmit={handleCreateCourse}
-      />
-
-    </div>
     </TooltipProvider>
   );
 }

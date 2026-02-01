@@ -59,10 +59,34 @@ const practiceFeatures = [
 
 // 快捷入口
 const quickActions = [
-  { icon: History, label: "练习历史", href: "/learn/practice/history", color: "text-blue-600", bg: "bg-blue-50" },
-  { icon: ListChecks, label: "专项练习", href: "/learn/practice/specialized", color: "text-violet-600", bg: "bg-violet-50" },
-  { icon: Trophy, label: "排行榜", href: "/learn/practice/leaderboard", color: "text-amber-600", bg: "bg-amber-50" },
-  { icon: Settings, label: "练习设置", href: "/learn/practice/settings", color: "text-stone-600", bg: "bg-stone-100" },
+  {
+    icon: History,
+    label: "练习历史",
+    href: "/learn/practice/history",
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+  },
+  {
+    icon: ListChecks,
+    label: "专项练习",
+    href: "/learn/practice/specialized",
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+  },
+  {
+    icon: Trophy,
+    label: "排行榜",
+    href: "/learn/practice/leaderboard",
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+  },
+  {
+    icon: Settings,
+    label: "练习设置",
+    href: "/learn/practice/settings",
+    color: "text-stone-600",
+    bg: "bg-stone-100",
+  },
 ];
 
 // 科目练习分类
@@ -118,24 +142,30 @@ const subjectPractices = [
 ];
 
 // 科目练习卡片组件
-function SubjectPracticeCard({ subject }: { subject: typeof subjectPractices[0] }) {
+function SubjectPracticeCard({ subject }: { subject: (typeof subjectPractices)[0] }) {
   const IconComponent = subject.icon;
-  
+
   return (
     <Link
       href={`/learn/practice/specialized?subject=${subject.id}`}
       className="group relative bg-white rounded-2xl border border-stone-200 hover:border-amber-300 hover:shadow-lg transition-all duration-300 overflow-hidden"
     >
       {/* 顶部渐变装饰 */}
-      <div className={`h-1 bg-gradient-to-r ${subject.gradient} opacity-0 group-hover:opacity-100 transition-opacity`} />
-      
+      <div
+        className={`h-1 bg-gradient-to-r ${subject.gradient} opacity-0 group-hover:opacity-100 transition-opacity`}
+      />
+
       <div className="p-5">
         {/* 头部 */}
         <div className="flex items-center gap-3 mb-4">
-          <div className={`relative w-12 h-12 rounded-xl ${subject.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+          <div
+            className={`relative w-12 h-12 rounded-xl ${subject.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
+          >
             <IconComponent className={`w-6 h-6 ${subject.textColor}`} />
             {/* 悬浮光效 */}
-            <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${subject.gradient} opacity-0 group-hover:opacity-20 transition-opacity`} />
+            <div
+              className={`absolute inset-0 rounded-xl bg-gradient-to-br ${subject.gradient} opacity-0 group-hover:opacity-20 transition-opacity`}
+            />
           </div>
           <div className="flex-1">
             <h3 className="text-base font-bold text-stone-800 group-hover:text-amber-600 transition-colors">
@@ -171,7 +201,7 @@ function SubjectPracticeCard({ subject }: { subject: typeof subjectPractices[0] 
             专项突破
           </span>
           <span className="flex items-center gap-1 text-sm font-medium text-amber-600 group-hover:gap-2 transition-all">
-            开始练习 
+            开始练习
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </span>
         </div>
@@ -182,12 +212,60 @@ function SubjectPracticeCard({ subject }: { subject: typeof subjectPractices[0] 
 
 // 成就徽章
 const achievementBadges = [
-  { id: "streak_7", name: "七日连胜", description: "连续打卡7天", icon: Flame, unlocked: true, color: "text-orange-500", bg: "bg-orange-100" },
-  { id: "streak_30", name: "月度达人", description: "连续打卡30天", icon: Award, unlocked: false, color: "text-amber-500", bg: "bg-amber-100" },
-  { id: "accuracy_90", name: "精准狙击", description: "正确率达到90%", icon: Target, unlocked: true, color: "text-emerald-500", bg: "bg-emerald-100" },
-  { id: "total_100", name: "百题斩", description: "累计完成100题", icon: Trophy, unlocked: true, color: "text-blue-500", bg: "bg-blue-100" },
-  { id: "total_500", name: "五百题王", description: "累计完成500题", icon: Star, unlocked: false, color: "text-violet-500", bg: "bg-violet-100" },
-  { id: "speed_master", name: "速度之星", description: "平均答题时间<30秒", icon: Zap, unlocked: false, color: "text-cyan-500", bg: "bg-cyan-100" },
+  {
+    id: "streak_7",
+    name: "七日连胜",
+    description: "连续打卡7天",
+    icon: Flame,
+    unlocked: true,
+    color: "text-orange-500",
+    bg: "bg-orange-100",
+  },
+  {
+    id: "streak_30",
+    name: "月度达人",
+    description: "连续打卡30天",
+    icon: Award,
+    unlocked: false,
+    color: "text-amber-500",
+    bg: "bg-amber-100",
+  },
+  {
+    id: "accuracy_90",
+    name: "精准狙击",
+    description: "正确率达到90%",
+    icon: Target,
+    unlocked: true,
+    color: "text-emerald-500",
+    bg: "bg-emerald-100",
+  },
+  {
+    id: "total_100",
+    name: "百题斩",
+    description: "累计完成100题",
+    icon: Trophy,
+    unlocked: true,
+    color: "text-blue-500",
+    bg: "bg-blue-100",
+  },
+  {
+    id: "total_500",
+    name: "五百题王",
+    description: "累计完成500题",
+    icon: Star,
+    unlocked: false,
+    color: "text-violet-500",
+    bg: "bg-violet-100",
+  },
+  {
+    id: "speed_master",
+    name: "速度之星",
+    description: "平均答题时间<30秒",
+    icon: Zap,
+    unlocked: false,
+    color: "text-cyan-500",
+    bg: "bg-cyan-100",
+  },
 ];
 
 // 热门练习模式
@@ -239,9 +317,9 @@ const popularPracticeModes = [
 ];
 
 // 热门练习模式卡片
-function PracticeModeCard({ mode }: { mode: typeof popularPracticeModes[0] }) {
+function PracticeModeCard({ mode }: { mode: (typeof popularPracticeModes)[0] }) {
   const IconComponent = mode.icon;
-  
+
   return (
     <Link
       href={`/learn/practice/${mode.id}`}
@@ -254,9 +332,12 @@ function PracticeModeCard({ mode }: { mode: typeof popularPracticeModes[0] }) {
           <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500" />
           <div className="absolute -bottom-2 -left-2 w-16 h-16 bg-white/20 rounded-full blur-lg group-hover:scale-150 transition-transform duration-500" />
         </div>
-        
+
         {/* 网格图案背景 */}
-        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          className="absolute inset-0 w-full h-full opacity-10"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <defs>
             <pattern id={`grid-${mode.id}`} width="16" height="16" patternUnits="userSpaceOnUse">
               <path d="M 16 0 L 0 0 0 16" fill="none" stroke="white" strokeWidth="0.5" />
@@ -264,7 +345,7 @@ function PracticeModeCard({ mode }: { mode: typeof popularPracticeModes[0] }) {
           </defs>
           <rect width="100%" height="100%" fill={`url(#grid-${mode.id})`} />
         </svg>
-        
+
         {/* 中心图标 */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
@@ -294,7 +375,7 @@ function PracticeModeCard({ mode }: { mode: typeof popularPracticeModes[0] }) {
           {mode.title}
         </h3>
         <p className="text-sm text-stone-500 mb-3 line-clamp-1">{mode.description}</p>
-        
+
         {/* 统计 */}
         <div className="flex items-center gap-4 text-xs text-stone-500">
           <span className="flex items-center gap-1">
@@ -372,7 +453,12 @@ function QuestionCard({
           <span className="px-2.5 py-1 text-xs bg-stone-100 text-stone-600 rounded-lg font-medium">
             {getQuestionTypeLabel(question.question_type)}
           </span>
-          <span className={cn("px-2.5 py-1 text-xs rounded-lg font-medium", getDifficultyColor(question.difficulty))}>
+          <span
+            className={cn(
+              "px-2.5 py-1 text-xs rounded-lg font-medium",
+              getDifficultyColor(question.difficulty)
+            )}
+          >
             {getDifficultyLabel(question.difficulty)}
           </span>
         </div>
@@ -426,10 +512,12 @@ function QuestionCard({
                   selectedAnswer === option.key && !isAnswered
                     ? "border-amber-400 text-amber-600 bg-amber-100"
                     : isAnswered && option.key === (question as any).answer
-                    ? "border-emerald-400 text-emerald-600 bg-emerald-100"
-                    : isAnswered && option.key === dailyQuestion.user_answer && !dailyQuestion.is_correct
-                    ? "border-red-400 text-red-600 bg-red-100"
-                    : "border-stone-300 text-stone-500 bg-stone-50"
+                      ? "border-emerald-400 text-emerald-600 bg-emerald-100"
+                      : isAnswered &&
+                          option.key === dailyQuestion.user_answer &&
+                          !dailyQuestion.is_correct
+                        ? "border-red-400 text-red-600 bg-red-100"
+                        : "border-stone-300 text-stone-500 bg-stone-50"
                 )}
               >
                 {option.key}
@@ -470,7 +558,10 @@ function QuestionCard({
             <div className="mt-4 p-3 bg-white/60 rounded-lg">
               <p className="text-sm text-blue-600 flex items-start gap-2">
                 <Zap className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" />
-                <span><strong className="text-amber-600">答题技巧：</strong>{(question as any).tips}</span>
+                <span>
+                  <strong className="text-amber-600">答题技巧：</strong>
+                  {(question as any).tips}
+                </span>
               </p>
             </div>
           )}
@@ -491,15 +582,16 @@ function ProgressIndicator({
   onSelect: (index: number) => void;
 }) {
   // 计算统计数据
-  const completedCount = questions.filter(q => q.is_correct !== undefined).length;
-  const correctCount = questions.filter(q => q.is_correct === true).length;
-  
+  const completedCount = questions.filter((q) => q.is_correct !== undefined).length;
+  const correctCount = questions.filter((q) => q.is_correct === true).length;
+
   return (
     <div className="space-y-4">
       {/* 统计摘要 */}
       <div className="flex items-center justify-between text-xs">
         <span className="text-stone-500">
-          已答 <span className="font-semibold text-stone-700">{completedCount}</span>/{questions.length}
+          已答 <span className="font-semibold text-stone-700">{completedCount}</span>/
+          {questions.length}
         </span>
         {completedCount > 0 && (
           <span className="flex items-center gap-1">
@@ -509,7 +601,7 @@ function ProgressIndicator({
           </span>
         )}
       </div>
-      
+
       {/* 题目按钮 */}
       <div className="grid grid-cols-5 gap-2">
         {questions.map((q, index) => {
@@ -525,10 +617,10 @@ function ProgressIndicator({
                 isActive
                   ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 scale-110 ring-2 ring-amber-300 ring-offset-2"
                   : isAnswered
-                  ? q.is_correct
-                    ? "bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 border-2 border-emerald-200 hover:shadow-md hover:scale-105"
-                    : "bg-gradient-to-br from-red-50 to-red-100 text-red-600 border-2 border-red-200 hover:shadow-md hover:scale-105"
-                  : "bg-stone-50 text-stone-500 border-2 border-stone-200 hover:bg-stone-100 hover:border-amber-300 hover:text-amber-600 hover:scale-105"
+                    ? q.is_correct
+                      ? "bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 border-2 border-emerald-200 hover:shadow-md hover:scale-105"
+                      : "bg-gradient-to-br from-red-50 to-red-100 text-red-600 border-2 border-red-200 hover:shadow-md hover:scale-105"
+                    : "bg-stone-50 text-stone-500 border-2 border-stone-200 hover:bg-stone-100 hover:border-amber-300 hover:text-amber-600 hover:scale-105"
               )}
             >
               {isAnswered ? (
@@ -585,7 +677,7 @@ function CompletionCelebration({
       <div className="bg-white rounded-3xl p-8 max-w-md mx-4 text-center shadow-2xl animate-in zoom-in-95 duration-300 relative">
         {/* 顶部装饰条 */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 rounded-t-3xl" />
-        
+
         {/* 庆祝图标 */}
         <div className="relative w-32 h-32 mx-auto mb-6 mt-2">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full animate-pulse" />
@@ -600,12 +692,8 @@ function CompletionCelebration({
         </div>
 
         {/* 标题 */}
-        <h2 className="text-2xl font-bold text-stone-800 mb-1">
-          太棒了！今日打卡完成！
-        </h2>
-        <p className="text-stone-500 mb-6">
-          坚持学习，每天进步一点点 {grade.emoji}
-        </p>
+        <h2 className="text-2xl font-bold text-stone-800 mb-1">太棒了！今日打卡完成！</h2>
+        <p className="text-stone-500 mb-6">坚持学习，每天进步一点点 {grade.emoji}</p>
 
         {/* 等级评价 */}
         <div className="mb-4 py-2 px-4 bg-stone-50 rounded-xl inline-flex items-center gap-2">
@@ -642,11 +730,11 @@ function CompletionCelebration({
           </div>
           <div className="text-left">
             <div className="text-sm text-amber-700 font-medium">连续打卡</div>
-            <div className="text-4xl font-bold text-amber-800">{streak} <span className="text-lg font-normal">天</span></div>
+            <div className="text-4xl font-bold text-amber-800">
+              {streak} <span className="text-lg font-normal">天</span>
+            </div>
           </div>
-          {streak >= 7 && (
-            <div className="ml-auto text-2xl">🔥</div>
-          )}
+          {streak >= 7 && <div className="ml-auto text-2xl">🔥</div>}
         </div>
 
         {/* 操作按钮 */}
@@ -679,17 +767,35 @@ function MiniCalendar({
   year: number;
   month: number;
 }) {
-  const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+  const monthNames = [
+    "一月",
+    "二月",
+    "三月",
+    "四月",
+    "五月",
+    "六月",
+    "七月",
+    "八月",
+    "九月",
+    "十月",
+    "十一月",
+    "十二月",
+  ];
   const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
-  
+
   // 获取该月第一天是星期几
   const firstDay = new Date(year, month - 1, 1).getDay();
-  
+
   // 计算本月打卡天数和平均正确率
-  const completedDays = calendar.filter(item => item.completed).length;
-  const avgCorrectRate = completedDays > 0 
-    ? Math.round(calendar.filter(item => item.completed && item.correct_rate).reduce((sum, item) => sum + (item.correct_rate || 0), 0) / completedDays)
-    : 0;
+  const completedDays = calendar.filter((item) => item.completed).length;
+  const avgCorrectRate =
+    completedDays > 0
+      ? Math.round(
+          calendar
+            .filter((item) => item.completed && item.correct_rate)
+            .reduce((sum, item) => sum + (item.correct_rate || 0), 0) / completedDays
+        )
+      : 0;
 
   // 获取正确率颜色
   const getCorrectRateColor = (rate?: number) => {
@@ -698,7 +804,7 @@ function MiniCalendar({
     if (rate >= 60) return "from-amber-100 to-amber-50 text-amber-600 border-amber-200";
     return "from-red-100 to-red-50 text-red-600 border-red-200";
   };
-  
+
   return (
     <div className="p-5">
       {/* 标题区 */}
@@ -725,21 +831,23 @@ function MiniCalendar({
       <div className="mb-4">
         <div className="flex items-center justify-between text-xs text-stone-500 mb-1">
           <span>本月进度</span>
-          <span>{completedDays}/{new Date(year, month, 0).getDate()} 天</span>
+          <span>
+            {completedDays}/{new Date(year, month, 0).getDate()} 天
+          </span>
         </div>
         <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500"
             style={{ width: `${(completedDays / new Date(year, month, 0).getDate()) * 100}%` }}
           />
         </div>
       </div>
-      
+
       {/* 星期表头 */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map((day, idx) => (
-          <div 
-            key={day} 
+          <div
+            key={day}
             className={cn(
               "text-center text-xs font-medium py-1.5",
               idx === 0 || idx === 6 ? "text-amber-600" : "text-stone-500"
@@ -749,21 +857,21 @@ function MiniCalendar({
           </div>
         ))}
       </div>
-      
+
       {/* 日期格子 */}
       <div className="grid grid-cols-7 gap-1">
         {/* 空白占位 */}
         {Array.from({ length: firstDay }).map((_, i) => (
           <div key={`empty-${i}`} className="aspect-square" />
         ))}
-        
+
         {/* 日期 */}
         {calendar.map((item) => {
           const day = parseInt(item.date.split("-")[2]);
           const today = new Date().toISOString().split("T")[0];
           const isToday = item.date === today;
           const correctRateColor = item.completed ? getCorrectRateColor(item.correct_rate) : "";
-          
+
           return (
             <div
               key={item.date}
@@ -773,16 +881,14 @@ function MiniCalendar({
                 item.completed
                   ? `bg-gradient-to-br ${correctRateColor || "from-emerald-100 to-emerald-50 text-emerald-600"} border hover:scale-110 hover:shadow-md`
                   : isToday
-                  ? "bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
-                  : "bg-stone-50 text-stone-400 hover:bg-stone-100"
+                    ? "bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
+                    : "bg-stone-50 text-stone-400 hover:bg-stone-100"
               )}
-              title={item.completed ? `${item.date}\n正确率: ${item.correct_rate || 0}%` : item.date}
+              title={
+                item.completed ? `${item.date}\n正确率: ${item.correct_rate || 0}%` : item.date
+              }
             >
-              {item.completed ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : (
-                day
-              )}
+              {item.completed ? <CheckCircle2 className="w-4 h-4" /> : day}
               {/* 悬停提示 */}
               {item.completed && item.correct_rate !== undefined && (
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-stone-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
@@ -801,7 +907,7 @@ function MiniCalendar({
 export default function DailyPracticePage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuthStore();
-  
+
   // Hooks
   const {
     loading: practiceLoading,
@@ -810,17 +916,17 @@ export default function DailyPracticePage() {
     fetchTodayPractice,
     submitAnswer,
   } = useDailyPractice();
-  
+
   const { streak, fetchStreak } = useStreak();
   const { calendar, fetchCalendar } = usePracticeCalendar();
-  
+
   // Local state
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const timerRef = useRef<NodeJS.Timeout>();
-  
+
   // 加载数据
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -829,7 +935,7 @@ export default function DailyPracticePage() {
       fetchCalendar();
     }
   }, [authLoading, isAuthenticated, fetchTodayPractice, fetchStreak, fetchCalendar]);
-  
+
   // 计时器
   useEffect(() => {
     if (isTimerRunning) {
@@ -847,14 +953,14 @@ export default function DailyPracticePage() {
       }
     };
   }, [isTimerRunning]);
-  
+
   // 开始计时
   useEffect(() => {
     if (practice && practice.status !== "completed") {
       setIsTimerRunning(true);
     }
   }, [practice]);
-  
+
   // 检查是否完成并显示庆祝
   useEffect(() => {
     if (practice && practice.status === "completed" && !showCelebration) {
@@ -867,36 +973,39 @@ export default function DailyPracticePage() {
       }
     }
   }, [practice, showCelebration, fetchStreak]);
-  
+
   // 提交答案处理
-  const handleAnswer = useCallback(async (questionId: number, answer: string) => {
-    try {
-      await submitAnswer({
-        question_id: questionId,
-        user_answer: answer,
-        time_spent: timer,
-      });
-      setTimer(0); // 重置计时器
-      
-      // 自动跳转到下一题
-      if (practice && currentIndex < practice.questions.length - 1) {
-        setTimeout(() => {
-          setCurrentIndex(currentIndex + 1);
-        }, 1500);
+  const handleAnswer = useCallback(
+    async (questionId: number, answer: string) => {
+      try {
+        await submitAnswer({
+          question_id: questionId,
+          user_answer: answer,
+          time_spent: timer,
+        });
+        setTimer(0); // 重置计时器
+
+        // 自动跳转到下一题
+        if (practice && currentIndex < practice.questions.length - 1) {
+          setTimeout(() => {
+            setCurrentIndex(currentIndex + 1);
+          }, 1500);
+        }
+      } catch (err) {
+        console.error("提交答案失败:", err);
       }
-    } catch (err) {
-      console.error("提交答案失败:", err);
-    }
-  }, [submitAnswer, timer, practice, currentIndex]);
+    },
+    [submitAnswer, timer, practice, currentIndex]
+  );
 
   // 键盘快捷键支持
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!practice) return;
-      
+
       // 忽略在输入框中的按键
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      
+
       switch (e.key) {
         case "ArrowLeft":
           e.preventDefault();
@@ -916,7 +1025,7 @@ export default function DailyPracticePage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [practice, currentIndex]);
-  
+
   // 未登录状态 - 显示欢迎页面
   if (!authLoading && !isAuthenticated) {
     return (
@@ -1155,7 +1264,7 @@ export default function DailyPracticePage() {
       </div>
     );
   }
-  
+
   // 加载中
   if (practiceLoading || authLoading) {
     return (
@@ -1175,9 +1284,7 @@ export default function DailyPracticePage() {
               <h1 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 mb-2">
                 今日练习
               </h1>
-              <p className="text-base text-stone-600">
-                正在加载今日练习...
-              </p>
+              <p className="text-base text-stone-600">正在加载今日练习...</p>
             </div>
             {/* 骨架屏进度条 */}
             <div className="bg-white rounded-2xl border border-stone-200 p-5 animate-pulse">
@@ -1200,7 +1307,10 @@ export default function DailyPracticePage() {
           <div className="mb-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-stone-200 animate-pulse">
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-4 bg-white rounded-xl border border-stone-200 animate-pulse"
+                >
                   <div className="w-10 h-10 rounded-lg bg-stone-200" />
                   <div className="h-5 w-20 bg-stone-200 rounded" />
                 </div>
@@ -1224,7 +1334,10 @@ export default function DailyPracticePage() {
               </div>
               <div className="space-y-3 mb-6">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-200">
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-200"
+                  >
                     <div className="w-8 h-8 rounded-lg bg-stone-200" />
                     <div className="h-4 flex-1 bg-stone-200 rounded" />
                   </div>
@@ -1260,7 +1373,7 @@ export default function DailyPracticePage() {
       </div>
     );
   }
-  
+
   // 错误状态
   if (practiceError) {
     return (
@@ -1305,12 +1418,12 @@ export default function DailyPracticePage() {
       </div>
     );
   }
-  
+
   if (!practice) return null;
 
   const currentQuestion = practice.questions[currentIndex];
   const questionDetail = currentQuestion?.question;
-  
+
   return (
     <div className="pb-20 lg:pb-0 bg-stone-50 min-h-screen">
       {/* 庆祝弹窗 */}
@@ -1352,17 +1465,19 @@ export default function DailyPracticePage() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* 计时器 */}
               <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-sm border border-stone-200">
                 <Timer className="w-4 h-4 text-amber-500" />
                 <span className="font-mono text-sm font-medium">
-                  {Math.floor(timer / 60).toString().padStart(2, "0")}:
-                  {(timer % 60).toString().padStart(2, "0")}
+                  {Math.floor(timer / 60)
+                    .toString()
+                    .padStart(2, "0")}
+                  :{(timer % 60).toString().padStart(2, "0")}
                 </span>
               </div>
-              
+
               {/* 连续打卡 */}
               {streak && (
                 <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
@@ -1381,7 +1496,7 @@ export default function DailyPracticePage() {
               今日练习
             </h1>
             <p className="text-base text-stone-600">
-              {practice.status === "completed" 
+              {practice.status === "completed"
                 ? "太棒了！今日练习已完成，可以查看解析或继续巩固"
                 : "完成今日10道题目，保持学习节奏"}
             </p>
@@ -1409,11 +1524,16 @@ export default function DailyPracticePage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-1.5 text-stone-600">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  已完成 <span className="font-semibold text-stone-800">{practice.completed_count}</span>/{practice.total_questions} 题
+                  已完成{" "}
+                  <span className="font-semibold text-stone-800">{practice.completed_count}</span>/
+                  {practice.total_questions} 题
                 </span>
                 <span className="flex items-center gap-1.5 text-stone-600">
                   <TrendingUp className="w-4 h-4 text-blue-500" />
-                  正确率 <span className="font-semibold text-stone-800">{Math.round(practice.correct_rate)}%</span>
+                  正确率{" "}
+                  <span className="font-semibold text-stone-800">
+                    {Math.round(practice.correct_rate)}%
+                  </span>
                 </span>
               </div>
             </div>
@@ -1437,8 +1557,8 @@ export default function DailyPracticePage() {
                       key={day}
                       className={cn(
                         "flex-1 h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-all",
-                        completed 
-                          ? "bg-gradient-to-br from-violet-500 to-purple-500 text-white" 
+                        completed
+                          ? "bg-gradient-to-br from-violet-500 to-purple-500 text-white"
                           : "bg-stone-100 text-stone-400"
                       )}
                     >
@@ -1448,8 +1568,8 @@ export default function DailyPracticePage() {
                 })}
               </div>
               <p className="text-xs text-stone-500 text-center">
-                {streak && streak.current_streak >= 7 
-                  ? "🎉 恭喜完成本周目标！" 
+                {streak && streak.current_streak >= 7
+                  ? "🎉 恭喜完成本周目标！"
                   : `再坚持 ${7 - (streak?.current_streak || 0)} 天完成本周目标`}
               </p>
             </div>
@@ -1480,9 +1600,13 @@ export default function DailyPracticePage() {
                 className="relative flex items-center gap-3 p-4 bg-white rounded-xl border border-stone-200 hover:border-amber-300 hover:shadow-lg transition-all duration-300 group overflow-hidden"
               >
                 {/* 悬浮时的背景渐变 */}
-                <div className={`absolute inset-0 ${action.bg} opacity-0 group-hover:opacity-30 transition-opacity`} />
-                
-                <div className={`relative w-10 h-10 rounded-xl ${action.bg} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                <div
+                  className={`absolute inset-0 ${action.bg} opacity-0 group-hover:opacity-30 transition-opacity`}
+                />
+
+                <div
+                  className={`relative w-10 h-10 rounded-xl ${action.bg} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}
+                >
                   <action.icon className={`w-5 h-5 ${action.color}`} />
                 </div>
                 <span className="relative font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
@@ -1493,7 +1617,7 @@ export default function DailyPracticePage() {
             ))}
           </div>
         </section>
-        
+
         {/* 主内容区 */}
         <section>
           <div className="flex items-center justify-between mb-5">
@@ -1509,7 +1633,7 @@ export default function DailyPracticePage() {
             </div>
           </div>
         </section>
-        
+
         <div className="grid lg:grid-cols-[1fr,320px] gap-6">
           {/* 左侧：题目卡片 */}
           <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
@@ -1523,7 +1647,7 @@ export default function DailyPracticePage() {
                 showAnswer={currentQuestion.is_correct !== undefined}
               />
             )}
-            
+
             {/* 底部导航 */}
             <div className="flex items-center justify-between mt-6 pt-6 border-t border-stone-100">
               <button
@@ -1539,38 +1663,49 @@ export default function DailyPracticePage() {
                 <ChevronLeft className="w-5 h-5" />
                 <span className="hidden sm:inline">上一题</span>
               </button>
-              
+
               <div className="flex items-center gap-2">
                 {/* 进度指示器 */}
                 <div className="hidden md:flex items-center gap-1">
-                  {practice.questions.slice(Math.max(0, currentIndex - 2), Math.min(practice.questions.length, currentIndex + 3)).map((q, idx) => {
-                    const actualIdx = Math.max(0, currentIndex - 2) + idx;
-                    const isActive = actualIdx === currentIndex;
-                    const isAnswered = q.is_correct !== undefined;
-                    return (
-                      <div 
-                        key={q.question_id}
-                        className={cn(
-                          "w-2 h-2 rounded-full transition-all",
-                          isActive 
-                            ? "w-6 bg-amber-500" 
-                            : isAnswered 
-                              ? q.is_correct ? "bg-emerald-400" : "bg-red-400"
-                              : "bg-stone-300"
-                        )}
-                      />
-                    );
-                  })}
+                  {practice.questions
+                    .slice(
+                      Math.max(0, currentIndex - 2),
+                      Math.min(practice.questions.length, currentIndex + 3)
+                    )
+                    .map((q, idx) => {
+                      const actualIdx = Math.max(0, currentIndex - 2) + idx;
+                      const isActive = actualIdx === currentIndex;
+                      const isAnswered = q.is_correct !== undefined;
+                      return (
+                        <div
+                          key={q.question_id}
+                          className={cn(
+                            "w-2 h-2 rounded-full transition-all",
+                            isActive
+                              ? "w-6 bg-amber-500"
+                              : isAnswered
+                                ? q.is_correct
+                                  ? "bg-emerald-400"
+                                  : "bg-red-400"
+                                : "bg-stone-300"
+                          )}
+                        />
+                      );
+                    })}
                 </div>
                 <div className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
                   <span className="text-sm font-bold text-amber-600">{currentIndex + 1}</span>
                   <span className="text-amber-400">/</span>
-                  <span className="text-sm font-medium text-amber-500">{practice.questions.length}</span>
+                  <span className="text-sm font-medium text-amber-500">
+                    {practice.questions.length}
+                  </span>
                 </div>
               </div>
-              
+
               <button
-                onClick={() => setCurrentIndex(Math.min(practice.questions.length - 1, currentIndex + 1))}
+                onClick={() =>
+                  setCurrentIndex(Math.min(practice.questions.length - 1, currentIndex + 1))
+                }
                 disabled={currentIndex === practice.questions.length - 1}
                 className={cn(
                   "flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200",
@@ -1612,20 +1747,32 @@ export default function DailyPracticePage() {
             {/* 键盘快捷键提示 - 仅桌面端显示 */}
             <div className="hidden lg:flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100 text-xs text-stone-400">
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">A</kbd>
-                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">B</kbd>
-                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">C</kbd>
-                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">D</kbd>
+                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">
+                  A
+                </kbd>
+                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">
+                  B
+                </kbd>
+                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">
+                  C
+                </kbd>
+                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">
+                  D
+                </kbd>
                 选择答案
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">←</kbd>
-                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">→</kbd>
+                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">
+                  ←
+                </kbd>
+                <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-500 font-mono text-[10px]">
+                  →
+                </kbd>
                 切换题目
               </span>
             </div>
           </div>
-          
+
           {/* 右侧：进度和统计 */}
           <div className="space-y-4">
             {/* 答题卡 */}
@@ -1640,14 +1787,14 @@ export default function DailyPracticePage() {
                 onSelect={setCurrentIndex}
               />
             </div>
-            
+
             {/* 今日统计 */}
             <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
               <h3 className="font-semibold text-stone-800 mb-4 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-amber-500" />
                 今日统计
               </h3>
-              
+
               {/* 正确率环形进度 */}
               <div className="flex items-center justify-center mb-4">
                 <div className="relative w-24 h-24">
@@ -1707,7 +1854,7 @@ export default function DailyPracticePage() {
                 </div>
               </div>
             </div>
-            
+
             {/* 连续打卡信息 */}
             {streak && (
               <div className="relative bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-5 text-white overflow-hidden group hover:shadow-lg hover:shadow-amber-500/30 transition-all">
@@ -1730,12 +1877,13 @@ export default function DailyPracticePage() {
                     {streak.current_streak >= 7 && <span className="text-xl">🔥</span>}
                   </div>
                   <p className="text-sm text-amber-100">
-                    累计做题 {streak.total_questions} 道，平均正确率 {Math.round(streak.avg_correct_rate)}%
+                    累计做题 {streak.total_questions} 道，平均正确率{" "}
+                    {Math.round(streak.avg_correct_rate)}%
                   </p>
                 </div>
               </div>
             )}
-            
+
             {/* 打卡日历 */}
             {calendar.length > 0 && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
@@ -1754,7 +1902,10 @@ export default function DailyPracticePage() {
                   <Trophy className="w-5 h-5 text-amber-500" />
                   成就徽章
                 </h3>
-                <Link href="/learn/practice/achievements" className="text-xs text-amber-600 hover:text-amber-700 flex items-center gap-0.5 group">
+                <Link
+                  href="/learn/practice/achievements"
+                  className="text-xs text-amber-600 hover:text-amber-700 flex items-center gap-0.5 group"
+                >
                   查看全部
                   <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
@@ -1767,21 +1918,25 @@ export default function DailyPracticePage() {
                       key={badge.id}
                       className={cn(
                         "relative aspect-square rounded-xl flex flex-col items-center justify-center p-2 transition-all duration-300 group cursor-pointer",
-                        badge.unlocked 
-                          ? `${badge.bg} hover:scale-110 hover:shadow-md hover:z-10` 
+                        badge.unlocked
+                          ? `${badge.bg} hover:scale-110 hover:shadow-md hover:z-10`
                           : "bg-stone-100"
                       )}
                       title={badge.description}
                       style={{ animationDelay: `${idx * 50}ms` }}
                     >
-                      <BadgeIcon className={cn(
-                        "w-6 h-6 mb-1 transition-transform",
-                        badge.unlocked ? `${badge.color} group-hover:scale-110` : "text-stone-400"
-                      )} />
-                      <span className={cn(
-                        "text-[10px] font-medium text-center leading-tight",
-                        badge.unlocked ? "text-stone-700" : "text-stone-400"
-                      )}>
+                      <BadgeIcon
+                        className={cn(
+                          "w-6 h-6 mb-1 transition-transform",
+                          badge.unlocked ? `${badge.color} group-hover:scale-110` : "text-stone-400"
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "text-[10px] font-medium text-center leading-tight",
+                          badge.unlocked ? "text-stone-700" : "text-stone-400"
+                        )}
+                      >
                         {badge.name}
                       </span>
                       {badge.unlocked && (
@@ -1803,7 +1958,11 @@ export default function DailyPracticePage() {
               {/* 徽章进度提示 */}
               <div className="mt-3 pt-3 border-t border-stone-100 text-center">
                 <p className="text-xs text-stone-500">
-                  已解锁 <span className="font-semibold text-amber-600">{achievementBadges.filter(b => b.unlocked).length}</span>/{achievementBadges.length} 个徽章
+                  已解锁{" "}
+                  <span className="font-semibold text-amber-600">
+                    {achievementBadges.filter((b) => b.unlocked).length}
+                  </span>
+                  /{achievementBadges.length} 个徽章
                 </p>
               </div>
             </div>
@@ -1819,11 +1978,11 @@ export default function DailyPracticePage() {
                 <div>
                   <h4 className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
                     今日学习小贴士
-                    <span className="text-xs font-normal bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">💡 每日更新</span>
+                    <span className="text-xs font-normal bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
+                      💡 每日更新
+                    </span>
                   </h4>
-                  <p className="text-sm text-blue-600 leading-relaxed">
-                    {getTodayTip()}
-                  </p>
+                  <p className="text-sm text-blue-600 leading-relaxed">{getTodayTip()}</p>
                 </div>
               </div>
             </div>
@@ -1931,7 +2090,7 @@ export default function DailyPracticePage() {
               </h2>
             </div>
             <p className="text-base text-amber-100 mb-6 max-w-lg mx-auto">
-              {practice.status === "completed" 
+              {practice.status === "completed"
                 ? "今日练习已完成！明天继续保持，连续打卡会有惊喜哦~"
                 : `还剩 ${practice.total_questions - practice.completed_count} 道题目，坚持完成今日任务！`}
             </p>
@@ -1969,6 +2128,8 @@ function getTodayTip(): string {
     "适当休息，学习效率比学习时长更重要。",
     "总结同类题型的解题规律，举一反三事半功倍。",
   ];
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)
+  );
   return tips[dayOfYear % tips.length];
 }

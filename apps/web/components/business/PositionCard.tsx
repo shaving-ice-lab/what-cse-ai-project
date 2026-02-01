@@ -62,9 +62,15 @@ function getScoreLabel(score: number) {
 }
 
 // 竞争热度颜色和标签
-function getCompetitionInfo(ratio?: number): { color: string; bgColor: string; label: string; icon: React.ReactNode } {
-  if (!ratio) return { color: "text-stone-500", bgColor: "bg-stone-100", label: "暂无", icon: null };
-  
+function getCompetitionInfo(ratio?: number): {
+  color: string;
+  bgColor: string;
+  label: string;
+  icon: React.ReactNode;
+} {
+  if (!ratio)
+    return { color: "text-stone-500", bgColor: "bg-stone-100", label: "暂无", icon: null };
+
   if (ratio <= 30) {
     return {
       color: "text-emerald-600",
@@ -109,18 +115,18 @@ function getCompetitionInfo(ratio?: number): { color: string; bgColor: string; l
 function useCountdown(endDateStr?: string) {
   return useMemo(() => {
     if (!endDateStr) return null;
-    
+
     const now = new Date();
     const endDate = new Date(endDateStr);
     const diffTime = endDate.getTime() - now.getTime();
-    
+
     if (diffTime < 0) {
       return { days: 0, hours: 0, isExpired: true, isUrgent: false };
     }
-    
+
     const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
     return {
       days,
       hours,
@@ -157,18 +163,18 @@ export function PositionCard({
 }: PositionCardProps) {
   const countdown = useCountdown(registrationEnd);
   const competitionInfo = getCompetitionInfo(competitionRatio);
-  
+
   // 构建地点显示
   const locationDisplay = workLocation || (province ? `${province}${city ? `·${city}` : ""}` : "");
-  
+
   // 判断报名状态
   const registrationStatus = useMemo(() => {
     if (!registrationEnd && !registrationStart) return null;
-    
+
     const now = new Date();
     const start = registrationStart ? new Date(registrationStart) : null;
     const end = registrationEnd ? new Date(registrationEnd) : null;
-    
+
     if (start && now < start) return "upcoming"; // 即将开始
     if (end && now > end) return "ended"; // 已结束
     return "ongoing"; // 报名中
@@ -195,7 +201,7 @@ export function PositionCard({
               >
                 {positionName}
               </Link>
-              
+
               {/* Position Tags */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {/* 考试类型 */}
@@ -214,7 +220,7 @@ export function PositionCard({
                     {examType}
                   </span>
                 )}
-                
+
                 {/* 热门标签 */}
                 {isHot && (
                   <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded-md">
@@ -222,7 +228,7 @@ export function PositionCard({
                     热门
                   </span>
                 )}
-                
+
                 {/* 不限专业 */}
                 {isUnlimitedMajor && (
                   <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-md">
@@ -230,7 +236,7 @@ export function PositionCard({
                     不限专业
                   </span>
                 )}
-                
+
                 {/* 应届可报 */}
                 {isForFreshGraduate && (
                   <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-md">
@@ -292,7 +298,7 @@ export function PositionCard({
                   <Scale className={`w-5 h-5 ${isInCompare ? "fill-emerald-100" : ""}`} />
                 </button>
               )}
-              
+
               {/* Favorite Button */}
               {onFavoriteClick && (
                 <button
@@ -333,27 +339,27 @@ export function PositionCard({
           <div className="flex items-center gap-4 text-sm">
             {/* Competition Ratio with Heat Indicator */}
             {competitionRatio !== undefined && (
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded ${competitionInfo.bgColor} ${competitionInfo.color}`}>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded ${competitionInfo.bgColor} ${competitionInfo.color}`}
+              >
                 {competitionInfo.icon}
                 <span className="font-medium">{competitionRatio}:1</span>
                 <span className="text-xs opacity-75">{competitionInfo.label}</span>
               </span>
             )}
-            
+
             {/* Applicant Count */}
             {applicantCount !== undefined && applicantCount > 0 && (
               <span className="text-stone-500">
                 报名 <span className="font-medium text-stone-700">{applicantCount}</span> 人
               </span>
             )}
-            
+
             {/* Registration Countdown */}
             {countdown && !countdown.isExpired && registrationStatus === "ongoing" && (
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded ${
-                  countdown.isUrgent
-                    ? "bg-red-100 text-red-600"
-                    : "bg-amber-100 text-amber-600"
+                  countdown.isUrgent ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
                 }`}
               >
                 {countdown.isUrgent ? (
@@ -368,7 +374,7 @@ export function PositionCard({
                 <span className="text-xs">截止</span>
               </span>
             )}
-            
+
             {/* Registration Status */}
             {registrationStatus === "ended" && (
               <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-500 rounded">

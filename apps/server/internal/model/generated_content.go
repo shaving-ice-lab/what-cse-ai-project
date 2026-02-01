@@ -370,6 +370,7 @@ type BatchGenerateChapterLessonsRequest struct {
 	Subject            string `json:"subject,omitempty"`
 	AutoApprove        bool   `json:"auto_approve,omitempty"`
 	AutoImport         bool   `json:"auto_import,omitempty"`
+	MaxConcurrency     int    `json:"max_concurrency,omitempty"`
 	// 从前端传入的 prompt（可选，如果不传则使用后端默认）
 	SystemPrompt       string `json:"system_prompt,omitempty"`
 	UserPromptTemplate string `json:"user_prompt_template,omitempty"`
@@ -382,6 +383,7 @@ type BatchGenerateCourseLessonsRequest struct {
 	AutoApprove        bool   `json:"auto_approve,omitempty"`
 	AutoImport         bool   `json:"auto_import,omitempty"`
 	SkipExisting       bool   `json:"skip_existing,omitempty"` // 跳过已有内容的章节
+	MaxConcurrency     int    `json:"max_concurrency,omitempty"`
 	SystemPrompt       string `json:"system_prompt,omitempty"`
 	UserPromptTemplate string `json:"user_prompt_template,omitempty"`
 }
@@ -394,6 +396,7 @@ type BatchGenerateCategoryLessonsRequest struct {
 	AutoImport           bool   `json:"auto_import,omitempty"`
 	SkipExisting         bool   `json:"skip_existing,omitempty"`
 	IncludeSubCategories bool   `json:"include_sub_categories,omitempty"` // 包含子分类
+	MaxConcurrency       int    `json:"max_concurrency,omitempty"`
 	SystemPrompt         string `json:"system_prompt,omitempty"`
 	UserPromptTemplate   string `json:"user_prompt_template,omitempty"`
 }

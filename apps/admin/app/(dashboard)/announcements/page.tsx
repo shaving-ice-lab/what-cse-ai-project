@@ -91,7 +91,8 @@ export default function AnnouncementsPage() {
     exam_type: searchParams.get("exam_type") || undefined,
     province: searchParams.get("province") || undefined,
     status: searchParams.get("status") ? Number(searchParams.get("status")) : undefined,
-    reg_status: (searchParams.get("reg_status") as AnnouncementQueryParams["reg_status"]) || undefined,
+    reg_status:
+      (searchParams.get("reg_status") as AnnouncementQueryParams["reg_status"]) || undefined,
     sort_by: (searchParams.get("sort_by") as AnnouncementQueryParams["sort_by"]) || "created_at",
     sort_order: (searchParams.get("sort_order") as AnnouncementQueryParams["sort_order"]) || "desc",
   });
@@ -326,7 +327,8 @@ export default function AnnouncementsPage() {
   // 状态徽章
   const getStatusBadge = (status: number) => {
     const name = AnnouncementStatusNames[status as AnnouncementStatus] || "未知";
-    const colorClass = AnnouncementStatusColors[status as AnnouncementStatus] || "bg-gray-100 text-gray-700";
+    const colorClass =
+      AnnouncementStatusColors[status as AnnouncementStatus] || "bg-gray-100 text-gray-700";
     return (
       <Badge variant="secondary" className={colorClass}>
         {name}
@@ -440,7 +442,8 @@ export default function AnnouncementsPage() {
                 onValueChange={(v) =>
                   setFilters((prev) => ({
                     ...prev,
-                    reg_status: v === "all" ? undefined : (v as AnnouncementQueryParams["reg_status"]),
+                    reg_status:
+                      v === "all" ? undefined : (v as AnnouncementQueryParams["reg_status"]),
                     page: 1,
                   }))
                 }
@@ -460,9 +463,7 @@ export default function AnnouncementsPage() {
             {/* 批量操作 */}
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  已选 {selectedIds.length} 项
-                </span>
+                <span className="text-sm text-muted-foreground">已选 {selectedIds.length} 项</span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -493,10 +494,7 @@ export default function AnnouncementsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]">
-                    <Checkbox
-                      checked={isAllSelected}
-                      onCheckedChange={handleSelectAll}
-                    />
+                    <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAll} />
                   </TableHead>
                   <TableHead>标题</TableHead>
                   <TableHead className="hidden md:table-cell">类型</TableHead>
@@ -511,14 +509,30 @@ export default function AnnouncementsPage() {
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
-                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-12" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                      <TableCell className="hidden xl:table-cell"><Skeleton className="h-5 w-20" /></TableCell>
-                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-48" />
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Skeleton className="h-5 w-16" />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Skeleton className="h-5 w-12" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-16" />
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        <Skeleton className="h-5 w-20" />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Skeleton className="h-5 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : announcements.length > 0 ? (
@@ -529,7 +543,9 @@ export default function AnnouncementsPage() {
                         <TableCell>
                           <Checkbox
                             checked={selectedIds.includes(item.id)}
-                            onCheckedChange={(checked) => handleSelectOne(item.id, checked as boolean)}
+                            onCheckedChange={(checked) =>
+                              handleSelectOne(item.id, checked as boolean)
+                            }
                           />
                         </TableCell>
                         <TableCell>
@@ -577,21 +593,31 @@ export default function AnnouncementsPage() {
                             <div className="text-sm">
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Calendar className="h-3 w-3" />
-                                {formatDate(item.registration_start)} ~ {formatDate(item.registration_end)}
+                                {formatDate(item.registration_start)} ~{" "}
+                                {formatDate(item.registration_end)}
                               </div>
                               {regStatus === "registering" && (
-                                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 mt-1">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs bg-green-100 text-green-700 mt-1"
+                                >
                                   <Clock className="h-3 w-3 mr-1" />
                                   报名中
                                 </Badge>
                               )}
                               {regStatus === "upcoming" && (
-                                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 mt-1">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs bg-blue-100 text-blue-700 mt-1"
+                                >
                                   即将开始
                                 </Badge>
                               )}
                               {regStatus === "ended" && (
-                                <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-500 mt-1">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs bg-gray-100 text-gray-500 mt-1"
+                                >
                                   已结束
                                 </Badge>
                               )}
@@ -624,14 +650,18 @@ export default function AnnouncementsPage() {
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleOpenPositionsModal({ id: item.id, title: item.title })}
+                                onClick={() =>
+                                  handleOpenPositionsModal({ id: item.id, title: item.title })
+                                }
                               >
                                 <Briefcase className="mr-2 h-4 w-4" />
                                 管理关联职位
                               </DropdownMenuItem>
                               {item.status === AnnouncementStatus.Draft && (
                                 <DropdownMenuItem
-                                  onClick={() => handleStatusChange(item.id, AnnouncementStatus.Published)}
+                                  onClick={() =>
+                                    handleStatusChange(item.id, AnnouncementStatus.Published)
+                                  }
                                 >
                                   <CheckCircle className="mr-2 h-4 w-4" />
                                   发布
@@ -639,7 +669,9 @@ export default function AnnouncementsPage() {
                               )}
                               {item.status === AnnouncementStatus.Published && (
                                 <DropdownMenuItem
-                                  onClick={() => handleStatusChange(item.id, AnnouncementStatus.Offline)}
+                                  onClick={() =>
+                                    handleStatusChange(item.id, AnnouncementStatus.Offline)
+                                  }
                                 >
                                   <XCircle className="mr-2 h-4 w-4" />
                                   下线

@@ -199,12 +199,7 @@ export function NotificationBell({
             )}
           </div>
           {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={handleMarkAllAsRead}
-            >
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleMarkAllAsRead}>
               <CheckCheck className="mr-1 h-3 w-3" />
               全部已读
             </Button>

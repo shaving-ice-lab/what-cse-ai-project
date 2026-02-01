@@ -263,12 +263,10 @@ func convertGenerationTaskToResponse(task *model.GenerationTask) *model.ContentG
 		taskType = model.TaskTypeChapter
 	}
 
-	// 计算进度
-	progress := float64(0)
-	if task.Status == model.GenerationTaskStatusCompleted {
+	// 计算进度（优先使用任务进度）
+	progress := task.Progress
+	if task.Status == model.GenerationTaskStatusCompleted && progress < 100 {
 		progress = 100
-	} else if task.Status == model.GenerationTaskStatusGenerating {
-		progress = 50 // 生成中默认50%
 	}
 
 	return &model.ContentGeneratorTaskResponse{
@@ -298,6 +296,7 @@ func convertGenerationTaskToResponse(task *model.GenerationTask) *model.ContentG
 			return 0
 		}(),
 		ErrorMessage: task.ErrorMessage,
+		CurrentStep:  task.CurrentStep,
 		Progress:     progress,
 		StartedAt:    &task.CreatedAt,
 		CompletedAt:  task.CompletedAt,
@@ -900,6 +899,7 @@ type BatchGenerateChapterLessonsRequest struct {
 	Subject     string `json:"subject,omitempty"`
 	AutoApprove bool   `json:"auto_approve,omitempty"`
 	AutoImport  bool   `json:"auto_import,omitempty"`
+	MaxConcurrency int `json:"max_concurrency,omitempty"`
 	// 从前端传入的 prompt（可选，如果不传则使用后端默认）
 	SystemPrompt       string `json:"system_prompt,omitempty"`
 	UserPromptTemplate string `json:"user_prompt_template,omitempty"`
@@ -933,6 +933,7 @@ func (h *ContentGeneratorHandler) BatchGenerateChapterLessons(c echo.Context) er
 		Subject:            req.Subject,
 		AutoApprove:        req.AutoApprove,
 		AutoImport:         req.AutoImport,
+		MaxConcurrency:     req.MaxConcurrency,
 		SystemPrompt:       req.SystemPrompt,
 		UserPromptTemplate: req.UserPromptTemplate,
 	})

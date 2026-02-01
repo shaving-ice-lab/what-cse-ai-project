@@ -74,7 +74,18 @@ function formatWeekRange(startStr: string, endStr: string): string {
 }
 
 // 每日趋势条形图
-function DailyTrendChart({ data }: { data: { date: string; day_of_week: string; minutes: number; question_count: number; correct_rate: number; is_goal_achieved: boolean }[] }) {
+function DailyTrendChart({
+  data,
+}: {
+  data: {
+    date: string;
+    day_of_week: string;
+    minutes: number;
+    question_count: number;
+    correct_rate: number;
+    is_goal_achieved: boolean;
+  }[];
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-stone-400">
@@ -84,7 +95,7 @@ function DailyTrendChart({ data }: { data: { date: string; day_of_week: string; 
     );
   }
 
-  const maxMinutes = Math.max(...data.map(d => d.minutes), 60);
+  const maxMinutes = Math.max(...data.map((d) => d.minutes), 60);
 
   return (
     <div className="flex items-end justify-between gap-2 h-48">
@@ -96,8 +107,8 @@ function DailyTrendChart({ data }: { data: { date: string; day_of_week: string; 
                 item.is_goal_achieved
                   ? "bg-gradient-to-t from-green-500 to-emerald-400"
                   : item.minutes > 0
-                  ? "bg-gradient-to-t from-amber-500 to-orange-400"
-                  : "bg-stone-200"
+                    ? "bg-gradient-to-t from-amber-500 to-orange-400"
+                    : "bg-stone-200"
               }`}
               style={{ height: `${Math.max((item.minutes / maxMinutes) * 100, 5)}%` }}
             />
@@ -160,9 +171,11 @@ function KnowledgePointCard({
   isStrong: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between p-3 rounded-xl ${
-      isStrong ? "bg-green-50" : "bg-red-50"
-    }`}>
+    <div
+      className={`flex items-center justify-between p-3 rounded-xl ${
+        isStrong ? "bg-green-50" : "bg-red-50"
+      }`}
+    >
       <div>
         <div className="font-medium text-stone-700">{name}</div>
         <div className="text-xs text-stone-500">{getSubjectLabel(subject)}</div>
@@ -200,7 +213,7 @@ export default function WeeklyReportPage() {
     if (report) {
       const totalHours = (report.overview.total_minutes / 60).toFixed(1);
       const improvement = report.overview.avg_correct_rate > 65 ? "提升了3.2%" : "下降了1.5%";
-      
+
       setAIAnalysis({
         summary: `本周您共学习了${report.overview.learning_days}天，总计${totalHours}小时，完成${report.overview.total_questions}道题目，平均正确率${formatPercent(report.overview.avg_correct_rate)}，相比上周${improvement}。`,
         highlights: [
@@ -266,7 +279,9 @@ export default function WeeklyReportPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 text-sm text-stone-500 mb-2">
-              <Link href="/learn" className="hover:text-amber-600">学习中心</Link>
+              <Link href="/learn" className="hover:text-amber-600">
+                学习中心
+              </Link>
               <span>/</span>
               <span>学习报告</span>
             </div>
@@ -393,14 +408,20 @@ export default function WeeklyReportPage() {
                 <div className="bg-white rounded-2xl p-6 border border-stone-200/50 shadow-sm">
                   <div className="space-y-4">
                     {report.subject_breakdown.map((item, idx) => {
-                      const totalMinutes = report.subject_breakdown.reduce((sum, s) => sum + s.minutes, 1);
+                      const totalMinutes = report.subject_breakdown.reduce(
+                        (sum, s) => sum + s.minutes,
+                        1
+                      );
                       const percent = (item.minutes / totalMinutes) * 100;
                       return (
                         <div key={idx} className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium text-stone-700">{getSubjectLabel(item.subject)}</span>
+                            <span className="font-medium text-stone-700">
+                              {getSubjectLabel(item.subject)}
+                            </span>
                             <span className="text-stone-500">
-                              {formatStudyTime(item.minutes)} · {item.question_count}题 · {formatPercent(item.correct_rate)}
+                              {formatStudyTime(item.minutes)} · {item.question_count}题 ·{" "}
+                              {formatPercent(item.correct_rate)}
                             </span>
                           </div>
                           <div className="h-3 bg-stone-100 rounded-full overflow-hidden">
@@ -418,7 +439,8 @@ export default function WeeklyReportPage() {
             )}
 
             {/* 知识点分析 */}
-            {(report.knowledge_points?.strong_points?.length > 0 || report.knowledge_points?.weak_points?.length > 0) && (
+            {(report.knowledge_points?.strong_points?.length > 0 ||
+              report.knowledge_points?.weak_points?.length > 0) && (
               <section className="mb-8">
                 <h2 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
                   <Star className="w-5 h-5 text-amber-500" />
@@ -610,7 +632,9 @@ export default function WeeklyReportPage() {
               <Calendar className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">日报告</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                日报告
+              </div>
               <div className="text-xs text-stone-400">查看今日学习详情</div>
             </div>
           </Link>
@@ -622,7 +646,9 @@ export default function WeeklyReportPage() {
               <Trophy className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
-              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">排行榜</div>
+              <div className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
+                排行榜
+              </div>
               <div className="text-xs text-stone-400">看看你的排名</div>
             </div>
           </Link>

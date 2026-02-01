@@ -38,7 +38,8 @@ generatorAxios.interceptors.response.use(
       logout();
       window.location.href = ADMIN_AUTH_CONFIG.loginPath;
     }
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || "请求失败";
+    const message =
+      error.response?.data?.message || error.response?.data?.error || error.message || "请求失败";
     return Promise.reject(new Error(message));
   }
 );
@@ -115,7 +116,7 @@ export const generatorApi = {
   // =====================================================
   // 分类描述生成
   // =====================================================
-  
+
   /**
    * 为分类生成 AI 描述
    * @param categoryId 分类 ID
@@ -131,7 +132,7 @@ export const generatorApi = {
   // =====================================================
   // 课程内容生成
   // =====================================================
-  
+
   /**
    * 为章节生成完整课程内容（异步任务）
    * @param chapterId 章节 ID
@@ -147,7 +148,7 @@ export const generatorApi = {
   // =====================================================
   // 题目批次生成
   // =====================================================
-  
+
   /**
    * 生成题目批次（异步任务）
    * @param params 请求参数
@@ -161,7 +162,7 @@ export const generatorApi = {
   // =====================================================
   // 素材批次生成
   // =====================================================
-  
+
   /**
    * 生成素材批次（异步任务）
    * @param params 请求参数
@@ -175,7 +176,7 @@ export const generatorApi = {
   // =====================================================
   // 任务管理
   // =====================================================
-  
+
   /**
    * 获取任务列表
    * @param params 查询参数
@@ -191,7 +192,7 @@ export const generatorApi = {
     if (params?.status) query.append("status", params.status);
     if (params?.page) query.append("page", String(params.page));
     if (params?.page_size) query.append("page_size", String(params.page_size));
-    
+
     const queryString = query.toString();
     const url = `/admin/generator/tasks${queryString ? `?${queryString}` : ""}`;
     return generatorAxios.get(url);
@@ -231,7 +232,7 @@ export const generatorApi = {
 
     while (attempts < maxAttempts) {
       const task = await generatorApi.getTask(taskId);
-      
+
       if (onProgress) {
         onProgress(task);
       }

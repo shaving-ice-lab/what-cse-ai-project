@@ -116,31 +116,16 @@ function TimePointItem({
       {/* 内容 */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-medium text-stone-400">
-            {formatTime(point.timestamp)}
-          </span>
-          <span
-            className={cn(
-              "text-xs px-1.5 py-0.5 rounded",
-              config.bgColor,
-              config.color
-            )}
-          >
+          <span className="text-xs font-medium text-stone-400">{formatTime(point.timestamp)}</span>
+          <span className={cn("text-xs px-1.5 py-0.5 rounded", config.bgColor, config.color)}>
             {config.label}
           </span>
         </div>
-        <h4
-          className={cn(
-            "text-sm font-medium",
-            isActive ? "text-amber-700" : "text-stone-700"
-          )}
-        >
+        <h4 className={cn("text-sm font-medium", isActive ? "text-amber-700" : "text-stone-700")}>
           {point.title}
         </h4>
         {point.description && (
-          <p className="text-xs text-stone-500 mt-1 line-clamp-2">
-            {point.description}
-          </p>
+          <p className="text-xs text-stone-500 mt-1 line-clamp-2">{point.description}</p>
         )}
       </div>
     </button>
@@ -194,10 +179,7 @@ export function VideoTimeline({
 
   // 过滤后的时间点
   const filteredPoints = useMemo(
-    () =>
-      filterType === "all"
-        ? sortedPoints
-        : sortedPoints.filter((p) => p.type === filterType),
+    () => (filterType === "all" ? sortedPoints : sortedPoints.filter((p) => p.type === filterType)),
     [sortedPoints, filterType]
   );
 

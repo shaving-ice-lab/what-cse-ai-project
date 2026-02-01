@@ -129,8 +129,18 @@ function getStatusBadge(status: CalendarEventStatus) {
 
 // 月份名称
 const MONTH_NAMES = [
-  "一月", "二月", "三月", "四月", "五月", "六月",
-  "七月", "八月", "九月", "十月", "十一月", "十二月",
+  "一月",
+  "二月",
+  "三月",
+  "四月",
+  "五月",
+  "六月",
+  "七月",
+  "八月",
+  "九月",
+  "十月",
+  "十一月",
+  "十二月",
 ];
 
 const WEEKDAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
@@ -140,7 +150,7 @@ function getWeekDays(date: Date): Date[] {
   const day = date.getDay();
   const start = new Date(date);
   start.setDate(date.getDate() - day);
-  
+
   const days: Date[] = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
@@ -421,7 +431,15 @@ export default function CalendarPage() {
           <p className="text-muted-foreground">管理考试时间、报名时间等重要日程</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => { fetchMonthData(); fetchStats(); fetchUpcomingEvents(); }} disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              fetchMonthData();
+              fetchStats();
+              fetchUpcomingEvents();
+            }}
+            disabled={loading}
+          >
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             刷新
           </Button>
@@ -482,587 +500,650 @@ export default function CalendarPage() {
 
       {/* 日历主体区域 */}
       <div className="flex gap-6">
-      {/* 视图切换和日历导航 */}
-      <Card className="flex-1">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={viewMode === "week" ? goToPrevWeek : goToPrevMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <h2 className="text-lg font-semibold min-w-[180px] text-center">
-                  {viewMode === "week" ? (
-                    <>
-                      {weekDays[0].getMonth() + 1}月{weekDays[0].getDate()}日 - {weekDays[6].getMonth() + 1}月{weekDays[6].getDate()}日
-                    </>
-                  ) : (
-                    <>
-                      {currentYear}年 {MONTH_NAMES[currentMonth]}
-                    </>
-                  )}
-                </h2>
-                <Button variant="outline" size="icon" onClick={viewMode === "week" ? goToNextWeek : goToNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
+        {/* 视图切换和日历导航 */}
+        <Card className="flex-1">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={viewMode === "week" ? goToPrevWeek : goToPrevMonth}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <h2 className="text-lg font-semibold min-w-[180px] text-center">
+                    {viewMode === "week" ? (
+                      <>
+                        {weekDays[0].getMonth() + 1}月{weekDays[0].getDate()}日 -{" "}
+                        {weekDays[6].getMonth() + 1}月{weekDays[6].getDate()}日
+                      </>
+                    ) : (
+                      <>
+                        {currentYear}年 {MONTH_NAMES[currentMonth]}
+                      </>
+                    )}
+                  </h2>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={viewMode === "week" ? goToNextWeek : goToNextMonth}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button variant="outline" size="sm" onClick={goToToday}>
+                  今天
                 </Button>
               </div>
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                今天
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === "month" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("month")}
+                >
+                  <Grid3X3 className="mr-2 h-4 w-4" />
+                  月视图
+                </Button>
+                <Button
+                  variant={viewMode === "week" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("week")}
+                >
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  周视图
+                </Button>
+                <Button
+                  variant={viewMode === "timeline" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("timeline")}
+                >
+                  <Timer className="mr-2 h-4 w-4" />
+                  时间线
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                >
+                  <List className="mr-2 h-4 w-4" />
+                  列表
+                </Button>
+                <div className="w-px h-6 bg-border mx-1" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSidebar(!showSidebar)}
+                  title={showSidebar ? "隐藏即将到来" : "显示即将到来"}
+                >
+                  {showSidebar ? (
+                    <PanelRightClose className="h-4 w-4" />
+                  ) : (
+                    <PanelRight className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "month" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("month")}
-              >
-                <Grid3X3 className="mr-2 h-4 w-4" />
-                月视图
-              </Button>
-              <Button
-                variant={viewMode === "week" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("week")}
-              >
-                <CalendarDays className="mr-2 h-4 w-4" />
-                周视图
-              </Button>
-              <Button
-                variant={viewMode === "timeline" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("timeline")}
-              >
-                <Timer className="mr-2 h-4 w-4" />
-                时间线
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="mr-2 h-4 w-4" />
-                列表
-              </Button>
-              <div className="w-px h-6 bg-border mx-1" />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSidebar(!showSidebar)}
-                title={showSidebar ? "隐藏即将到来" : "显示即将到来"}
-              >
-                {showSidebar ? <PanelRightClose className="h-4 w-4" /> : <PanelRight className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
-        <CardContent>
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              {error}
-            </div>
-          )}
+          <CardContent>
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2">
+                <XCircle className="h-4 w-4" />
+                {error}
+              </div>
+            )}
 
-          {loading ? (
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: 42 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-md" />
-              ))}
-            </div>
-          ) : viewMode === "month" ? (
-            /* 月视图 */
-            <div className="space-y-2">
-              {/* 星期标题 */}
+            {loading ? (
               <div className="grid grid-cols-7 gap-1">
-                {WEEKDAY_NAMES.map((day) => (
-                  <div
-                    key={day}
-                    className="text-center text-sm font-medium text-muted-foreground py-2"
-                  >
-                    {day}
-                  </div>
+                {Array.from({ length: 42 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 rounded-md" />
                 ))}
               </div>
-
-              {/* 日期网格 */}
-              <div className="grid grid-cols-7 gap-1">
-                {calendarDays.map((date, index) => {
-                  const dateKey = formatDate(date);
-                  const events = getEventsForDate(dateKey);
-                  const isInCurrentMonth = isCurrentMonth(date, currentYear, currentMonth);
-                  const isTodayDate = isToday(date);
-
-                  return (
+            ) : viewMode === "month" ? (
+              /* 月视图 */
+              <div className="space-y-2">
+                {/* 星期标题 */}
+                <div className="grid grid-cols-7 gap-1">
+                  {WEEKDAY_NAMES.map((day) => (
                     <div
-                      key={index}
-                      onClick={() => handleDateClick(date)}
-                      className={`min-h-24 p-1 border rounded-md cursor-pointer transition-colors ${
-                        isInCurrentMonth ? "bg-background" : "bg-muted/30"
-                      } ${isTodayDate ? "ring-2 ring-primary" : ""} ${
-                        selectedDate === dateKey ? "bg-primary/10" : ""
-                      } hover:bg-accent`}
+                      key={day}
+                      className="text-center text-sm font-medium text-muted-foreground py-2"
                     >
-                      <div
-                        className={`text-sm font-medium mb-1 ${
-                          isInCurrentMonth ? "" : "text-muted-foreground"
-                        } ${isTodayDate ? "text-primary" : ""}`}
-                      >
-                        {date.getDate()}
-                      </div>
-                      <div className="space-y-0.5">
-                        {events.slice(0, 3).map((event) => (
-                          <div
-                            key={event.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditDialog(event);
-                            }}
-                            className="text-xs px-1 py-0.5 rounded truncate"
-                            style={{ backgroundColor: event.color + "20", color: event.color }}
-                            title={event.event_title}
-                          >
-                            {event.event_title}
-                          </div>
-                        ))}
-                        {events.length > 3 && (
-                          <div className="text-xs text-muted-foreground px-1">
-                            +{events.length - 3} 更多
-                          </div>
-                        )}
-                      </div>
+                      {day}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : viewMode === "week" ? (
-            /* 周视图 */
-            <div className="space-y-2">
-              {/* 星期标题 */}
-              <div className="grid grid-cols-8 gap-1">
-                <div className="text-center text-sm font-medium text-muted-foreground py-2 w-16">
-                  时间
+                  ))}
                 </div>
-                {weekDays.map((date, i) => {
-                  const isTodayDate = isToday(date);
-                  return (
-                    <div
-                      key={i}
-                      className={`text-center text-sm font-medium py-2 ${
-                        isTodayDate ? "text-primary font-bold" : "text-muted-foreground"
-                      }`}
-                    >
-                      <div>{WEEKDAY_NAMES[i]}</div>
-                      <div className={`text-lg ${isTodayDate ? "bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center mx-auto" : ""}`}>
-                        {date.getDate()}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
 
-              {/* 时间网格 */}
-              <div className="border rounded-lg overflow-hidden max-h-[600px] overflow-y-auto">
-                {timeSlots.map((slot, slotIndex) => (
-                  <div key={slot} className="grid grid-cols-8 gap-px bg-border">
-                    <div className="bg-background text-xs text-muted-foreground p-1 w-16 text-right pr-2 sticky left-0">
-                      {slot}
-                    </div>
-                    {weekDays.map((date, dayIndex) => {
-                      const dateKey = formatDate(date);
-                      const events = getEventsForDate(dateKey).filter((event) => {
-                        if (event.all_day) return slotIndex === 0;
-                        if (!event.event_time) return slotIndex === 9; // 默认9点
-                        const hour = parseInt(event.event_time.split(":")[0], 10);
-                        return hour === slotIndex;
-                      });
+                {/* 日期网格 */}
+                <div className="grid grid-cols-7 gap-1">
+                  {calendarDays.map((date, index) => {
+                    const dateKey = formatDate(date);
+                    const events = getEventsForDate(dateKey);
+                    const isInCurrentMonth = isCurrentMonth(date, currentYear, currentMonth);
+                    const isTodayDate = isToday(date);
 
-                      return (
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => handleDateClick(date)}
+                        className={`min-h-24 p-1 border rounded-md cursor-pointer transition-colors ${
+                          isInCurrentMonth ? "bg-background" : "bg-muted/30"
+                        } ${isTodayDate ? "ring-2 ring-primary" : ""} ${
+                          selectedDate === dateKey ? "bg-primary/10" : ""
+                        } hover:bg-accent`}
+                      >
                         <div
-                          key={dayIndex}
-                          onClick={() => handleDateClick(date)}
-                          className={`bg-background min-h-[32px] p-0.5 hover:bg-accent/50 cursor-pointer ${
-                            isToday(date) ? "bg-primary/5" : ""
-                          }`}
+                          className={`text-sm font-medium mb-1 ${
+                            isInCurrentMonth ? "" : "text-muted-foreground"
+                          } ${isTodayDate ? "text-primary" : ""}`}
                         >
-                          {events.map((event) => (
+                          {date.getDate()}
+                        </div>
+                        <div className="space-y-0.5">
+                          {events.slice(0, 3).map((event) => (
                             <div
                               key={event.id}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 openEditDialog(event);
                               }}
-                              className="text-xs px-1 py-0.5 rounded truncate cursor-pointer"
-                              style={{ backgroundColor: event.color + "30", color: event.color, borderLeft: `3px solid ${event.color}` }}
+                              className="text-xs px-1 py-0.5 rounded truncate"
+                              style={{ backgroundColor: event.color + "20", color: event.color }}
                               title={event.event_title}
                             >
                               {event.event_title}
                             </div>
                           ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : viewMode === "timeline" ? (
-            /* 时间线视图 */
-            <div className="space-y-4">
-              {monthData?.events && monthData.events.length > 0 ? (
-                <div className="relative">
-                  {/* 时间线中轴 */}
-                  <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
-                  
-                  {/* 按日期分组 */}
-                  {Object.entries(
-                    monthData.events.reduce((acc, event) => {
-                      const date = event.event_date;
-                      if (!acc[date]) acc[date] = [];
-                      acc[date].push(event);
-                      return acc;
-                    }, {} as Record<string, CalendarEvent[]>)
-                  )
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([date, events]) => {
-                      const dateObj = new Date(date);
-                      const isTodayDate = isToday(dateObj);
-                      const isPast = dateObj < new Date(new Date().setHours(0, 0, 0, 0));
-
-                      return (
-                        <div key={date} className="relative pl-12 pb-6">
-                          {/* 日期节点 */}
-                          <div
-                            className={`absolute left-4 w-5 h-5 rounded-full border-2 ${
-                              isTodayDate
-                                ? "bg-primary border-primary"
-                                : isPast
-                                ? "bg-muted border-muted-foreground"
-                                : "bg-background border-primary"
-                            }`}
-                          />
-                          
-                          {/* 日期标题 */}
-                          <div className="flex items-center gap-3 mb-3">
-                            <span
-                              className={`text-sm font-medium ${
-                                isTodayDate ? "text-primary" : isPast ? "text-muted-foreground" : ""
-                              }`}
-                            >
-                              {dateObj.getMonth() + 1}月{dateObj.getDate()}日
-                              {isTodayDate && <Badge className="ml-2" variant="default">今天</Badge>}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {WEEKDAY_NAMES[dateObj.getDay()]}
-                            </span>
-                          </div>
-                          
-                          {/* 事件卡片 */}
-                          <div className="space-y-2">
-                            {events.map((event) => {
-                              const statusConfig = getStatusBadge(event.status);
-                              const StatusIcon = statusConfig.icon;
-                              
-                              return (
-                                <div
-                                  key={event.id}
-                                  onClick={() => openEditDialog(event)}
-                                  className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                                  style={{ borderLeftColor: event.color, borderLeftWidth: "3px" }}
-                                >
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="font-medium text-sm">{event.event_title}</h4>
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                        style={{ borderColor: event.color + "80", color: event.color }}
-                                      >
-                                        {event.event_type_name}
-                                      </Badge>
-                                    </div>
-                                    {event.event_description && (
-                                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                        {event.event_description}
-                                      </p>
-                                    )}
-                                    <div className="flex items-center gap-3 mt-2">
-                                      {event.event_time && (
-                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                          <Clock className="h-3 w-3" />
-                                          {event.event_time}
-                                        </span>
-                                      )}
-                                      <Badge variant={statusConfig.variant} className="text-xs">
-                                        <StatusIcon className="h-3 w-3 mr-1" />
-                                        {statusConfig.label}
-                                      </Badge>
-                                      {event.days_remaining >= 0 && event.status === "pending" && !isPast && (
-                                        <span
-                                          className={`text-xs font-medium ${
-                                            event.days_remaining === 0
-                                              ? "text-red-500"
-                                              : event.days_remaining <= 3
-                                              ? "text-amber-500"
-                                              : "text-muted-foreground"
-                                          }`}
-                                        >
-                                          {event.days_remaining === 0
-                                            ? "今天"
-                                            : `${event.days_remaining}天后`}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(event); }}>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        编辑
-                                      </DropdownMenuItem>
-                                      {event.status === "pending" && (
-                                        <>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMarkCompleted(event.id); }}>
-                                            <CheckCircle className="mr-2 h-4 w-4" />
-                                            标记完成
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMarkCancelled(event.id); }}>
-                                            <XCircle className="mr-2 h-4 w-4" />
-                                            取消事件
-                                          </DropdownMenuItem>
-                                        </>
-                                      )}
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        className="text-destructive"
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event.id); }}
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        删除
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>本月暂无事件</p>
-                  <Button variant="outline" className="mt-4" onClick={() => openCreateDialog()}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    添加第一个事件
-                  </Button>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* 列表视图 */
-            <div className="space-y-4">
-              {monthData?.events && monthData.events.length > 0 ? (
-                monthData.events.map((event) => {
-                  const statusConfig = getStatusBadge(event.status);
-                  const StatusIcon = statusConfig.icon;
-
-                  return (
-                    <div
-                      key={event.id}
-                      className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                    >
-                      <div
-                        className="w-1 h-full min-h-[60px] rounded-full"
-                        style={{ backgroundColor: event.color }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="font-medium">{event.event_title}</h3>
-                            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                              <CalendarDays className="h-4 w-4" />
-                              <span>{event.event_date}</span>
-                              {event.event_time && (
-                                <>
-                                  <Clock className="h-4 w-4 ml-2" />
-                                  <span>{event.event_time}</span>
-                                </>
-                              )}
+                          {events.length > 3 && (
+                            <div className="text-xs text-muted-foreground px-1">
+                              +{events.length - 3} 更多
                             </div>
-                            {event.event_description && (
-                              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                {event.event_description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" style={{ borderColor: event.color, color: event.color }}>
-                              {event.event_type_name}
-                            </Badge>
-                            <Badge variant={statusConfig.variant}>
-                              <StatusIcon className="h-3 w-3 mr-1" />
-                              {statusConfig.label}
-                            </Badge>
-                            {event.days_remaining >= 0 && event.status === "pending" && (
-                              <Badge
-                                variant={event.days_remaining <= 3 ? "destructive" : "secondary"}
-                              >
-                                {event.days_remaining === 0 ? "今天" : `${event.days_remaining}天后`}
-                              </Badge>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(event)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            编辑
-                          </DropdownMenuItem>
-                          {event.status === "pending" && (
-                            <>
-                              <DropdownMenuItem onClick={() => handleMarkCompleted(event.id)}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                标记完成
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleMarkCancelled(event.id)}>
-                                <XCircle className="mr-2 h-4 w-4" />
-                                取消事件
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => handleDeleteEvent(event.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            删除
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>本月暂无事件</p>
-                  <Button variant="outline" className="mt-4" onClick={() => openCreateDialog()}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    添加第一个事件
-                  </Button>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 即将到来事件侧边栏 */}
-      {showSidebar && (
-        <Card className="lg:w-80 flex-shrink-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Timer className="h-4 w-4 text-amber-500" />
-              即将到来
-            </CardTitle>
-            <CardDescription>未来7天内的事件</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {upcomingEvents.length > 0 ? (
-              <div className="space-y-3">
-                {upcomingEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    onClick={() => openEditDialog(event)}
-                    className="p-3 rounded-lg border cursor-pointer hover:bg-accent transition-colors"
-                  >
-                    <div className="flex items-start gap-2">
+              </div>
+            ) : viewMode === "week" ? (
+              /* 周视图 */
+              <div className="space-y-2">
+                {/* 星期标题 */}
+                <div className="grid grid-cols-8 gap-1">
+                  <div className="text-center text-sm font-medium text-muted-foreground py-2 w-16">
+                    时间
+                  </div>
+                  {weekDays.map((date, i) => {
+                    const isTodayDate = isToday(date);
+                    return (
                       <div
-                        className="w-1 h-full min-h-[40px] rounded-full flex-shrink-0"
-                        style={{ backgroundColor: event.color }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm line-clamp-1">{event.event_title}</h4>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <CalendarDays className="h-3 w-3" />
-                          <span>{event.event_date}</span>
-                        </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <Badge
-                            variant="outline"
-                            className="text-xs"
-                            style={{ borderColor: event.color + "80", color: event.color }}
-                          >
-                            {event.event_type_name}
-                          </Badge>
-                          {event.days_remaining >= 0 && (
-                            <span
-                              className={`text-xs font-medium ${
-                                event.days_remaining === 0
-                                  ? "text-red-500"
-                                  : event.days_remaining <= 3
-                                  ? "text-amber-500"
-                                  : "text-muted-foreground"
-                              }`}
-                            >
-                              {event.days_remaining === 0
-                                ? "今天"
-                                : event.days_remaining === 1
-                                ? "明天"
-                                : `${event.days_remaining}天后`}
-                            </span>
-                          )}
+                        key={i}
+                        className={`text-center text-sm font-medium py-2 ${
+                          isTodayDate ? "text-primary font-bold" : "text-muted-foreground"
+                        }`}
+                      >
+                        <div>{WEEKDAY_NAMES[i]}</div>
+                        <div
+                          className={`text-lg ${isTodayDate ? "bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center mx-auto" : ""}`}
+                        >
+                          {date.getDate()}
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+
+                {/* 时间网格 */}
+                <div className="border rounded-lg overflow-hidden max-h-[600px] overflow-y-auto">
+                  {timeSlots.map((slot, slotIndex) => (
+                    <div key={slot} className="grid grid-cols-8 gap-px bg-border">
+                      <div className="bg-background text-xs text-muted-foreground p-1 w-16 text-right pr-2 sticky left-0">
+                        {slot}
+                      </div>
+                      {weekDays.map((date, dayIndex) => {
+                        const dateKey = formatDate(date);
+                        const events = getEventsForDate(dateKey).filter((event) => {
+                          if (event.all_day) return slotIndex === 0;
+                          if (!event.event_time) return slotIndex === 9; // 默认9点
+                          const hour = parseInt(event.event_time.split(":")[0], 10);
+                          return hour === slotIndex;
+                        });
+
+                        return (
+                          <div
+                            key={dayIndex}
+                            onClick={() => handleDateClick(date)}
+                            className={`bg-background min-h-[32px] p-0.5 hover:bg-accent/50 cursor-pointer ${
+                              isToday(date) ? "bg-primary/5" : ""
+                            }`}
+                          >
+                            {events.map((event) => (
+                              <div
+                                key={event.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditDialog(event);
+                                }}
+                                className="text-xs px-1 py-0.5 rounded truncate cursor-pointer"
+                                style={{
+                                  backgroundColor: event.color + "30",
+                                  color: event.color,
+                                  borderLeft: `3px solid ${event.color}`,
+                                }}
+                                title={event.event_title}
+                              >
+                                {event.event_title}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </div>
+                  ))}
+                </div>
+              </div>
+            ) : viewMode === "timeline" ? (
+              /* 时间线视图 */
+              <div className="space-y-4">
+                {monthData?.events && monthData.events.length > 0 ? (
+                  <div className="relative">
+                    {/* 时间线中轴 */}
+                    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
+
+                    {/* 按日期分组 */}
+                    {Object.entries(
+                      monthData.events.reduce(
+                        (acc, event) => {
+                          const date = event.event_date;
+                          if (!acc[date]) acc[date] = [];
+                          acc[date].push(event);
+                          return acc;
+                        },
+                        {} as Record<string, CalendarEvent[]>
+                      )
+                    )
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([date, events]) => {
+                        const dateObj = new Date(date);
+                        const isTodayDate = isToday(dateObj);
+                        const isPast = dateObj < new Date(new Date().setHours(0, 0, 0, 0));
+
+                        return (
+                          <div key={date} className="relative pl-12 pb-6">
+                            {/* 日期节点 */}
+                            <div
+                              className={`absolute left-4 w-5 h-5 rounded-full border-2 ${
+                                isTodayDate
+                                  ? "bg-primary border-primary"
+                                  : isPast
+                                    ? "bg-muted border-muted-foreground"
+                                    : "bg-background border-primary"
+                              }`}
+                            />
+
+                            {/* 日期标题 */}
+                            <div className="flex items-center gap-3 mb-3">
+                              <span
+                                className={`text-sm font-medium ${
+                                  isTodayDate
+                                    ? "text-primary"
+                                    : isPast
+                                      ? "text-muted-foreground"
+                                      : ""
+                                }`}
+                              >
+                                {dateObj.getMonth() + 1}月{dateObj.getDate()}日
+                                {isTodayDate && (
+                                  <Badge className="ml-2" variant="default">
+                                    今天
+                                  </Badge>
+                                )}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {WEEKDAY_NAMES[dateObj.getDay()]}
+                              </span>
+                            </div>
+
+                            {/* 事件卡片 */}
+                            <div className="space-y-2">
+                              {events.map((event) => {
+                                const statusConfig = getStatusBadge(event.status);
+                                const StatusIcon = statusConfig.icon;
+
+                                return (
+                                  <div
+                                    key={event.id}
+                                    onClick={() => openEditDialog(event)}
+                                    className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                                    style={{ borderLeftColor: event.color, borderLeftWidth: "3px" }}
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-medium text-sm">{event.event_title}</h4>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs"
+                                          style={{
+                                            borderColor: event.color + "80",
+                                            color: event.color,
+                                          }}
+                                        >
+                                          {event.event_type_name}
+                                        </Badge>
+                                      </div>
+                                      {event.event_description && (
+                                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                          {event.event_description}
+                                        </p>
+                                      )}
+                                      <div className="flex items-center gap-3 mt-2">
+                                        {event.event_time && (
+                                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            {event.event_time}
+                                          </span>
+                                        )}
+                                        <Badge variant={statusConfig.variant} className="text-xs">
+                                          <StatusIcon className="h-3 w-3 mr-1" />
+                                          {statusConfig.label}
+                                        </Badge>
+                                        {event.days_remaining >= 0 &&
+                                          event.status === "pending" &&
+                                          !isPast && (
+                                            <span
+                                              className={`text-xs font-medium ${
+                                                event.days_remaining === 0
+                                                  ? "text-red-500"
+                                                  : event.days_remaining <= 3
+                                                    ? "text-amber-500"
+                                                    : "text-muted-foreground"
+                                              }`}
+                                            >
+                                              {event.days_remaining === 0
+                                                ? "今天"
+                                                : `${event.days_remaining}天后`}
+                                            </span>
+                                          )}
+                                      </div>
+                                    </div>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            openEditDialog(event);
+                                          }}
+                                        >
+                                          <Edit className="mr-2 h-4 w-4" />
+                                          编辑
+                                        </DropdownMenuItem>
+                                        {event.status === "pending" && (
+                                          <>
+                                            <DropdownMenuItem
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleMarkCompleted(event.id);
+                                              }}
+                                            >
+                                              <CheckCircle className="mr-2 h-4 w-4" />
+                                              标记完成
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleMarkCancelled(event.id);
+                                              }}
+                                            >
+                                              <XCircle className="mr-2 h-4 w-4" />
+                                              取消事件
+                                            </DropdownMenuItem>
+                                          </>
+                                        )}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          className="text-destructive"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteEvent(event.id);
+                                          }}
+                                        >
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          删除
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
-                ))}
-                {upcomingEvents.length >= 5 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-muted-foreground"
-                    onClick={() => setViewMode("list")}
-                  >
-                    查看全部
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>本月暂无事件</p>
+                    <Button variant="outline" className="mt-4" onClick={() => openCreateDialog()}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加第一个事件
+                    </Button>
+                  </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Bell className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">暂无即将到来的事件</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => openCreateDialog()}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  添加事件
-                </Button>
+              /* 列表视图 */
+              <div className="space-y-4">
+                {monthData?.events && monthData.events.length > 0 ? (
+                  monthData.events.map((event) => {
+                    const statusConfig = getStatusBadge(event.status);
+                    const StatusIcon = statusConfig.icon;
+
+                    return (
+                      <div
+                        key={event.id}
+                        className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                      >
+                        <div
+                          className="w-1 h-full min-h-[60px] rounded-full"
+                          style={{ backgroundColor: event.color }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="font-medium">{event.event_title}</h3>
+                              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                                <CalendarDays className="h-4 w-4" />
+                                <span>{event.event_date}</span>
+                                {event.event_time && (
+                                  <>
+                                    <Clock className="h-4 w-4 ml-2" />
+                                    <span>{event.event_time}</span>
+                                  </>
+                                )}
+                              </div>
+                              {event.event_description && (
+                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                  {event.event_description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                style={{ borderColor: event.color, color: event.color }}
+                              >
+                                {event.event_type_name}
+                              </Badge>
+                              <Badge variant={statusConfig.variant}>
+                                <StatusIcon className="h-3 w-3 mr-1" />
+                                {statusConfig.label}
+                              </Badge>
+                              {event.days_remaining >= 0 && event.status === "pending" && (
+                                <Badge
+                                  variant={event.days_remaining <= 3 ? "destructive" : "secondary"}
+                                >
+                                  {event.days_remaining === 0
+                                    ? "今天"
+                                    : `${event.days_remaining}天后`}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditDialog(event)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              编辑
+                            </DropdownMenuItem>
+                            {event.status === "pending" && (
+                              <>
+                                <DropdownMenuItem onClick={() => handleMarkCompleted(event.id)}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  标记完成
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMarkCancelled(event.id)}>
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                  取消事件
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDeleteEvent(event.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              删除
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>本月暂无事件</p>
+                    <Button variant="outline" className="mt-4" onClick={() => openCreateDialog()}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加第一个事件
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
-      )}
+
+        {/* 即将到来事件侧边栏 */}
+        {showSidebar && (
+          <Card className="lg:w-80 flex-shrink-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Timer className="h-4 w-4 text-amber-500" />
+                即将到来
+              </CardTitle>
+              <CardDescription>未来7天内的事件</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {upcomingEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      onClick={() => openEditDialog(event)}
+                      className="p-3 rounded-lg border cursor-pointer hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-start gap-2">
+                        <div
+                          className="w-1 h-full min-h-[40px] rounded-full flex-shrink-0"
+                          style={{ backgroundColor: event.color }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm line-clamp-1">{event.event_title}</h4>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <CalendarDays className="h-3 w-3" />
+                            <span>{event.event_date}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <Badge
+                              variant="outline"
+                              className="text-xs"
+                              style={{ borderColor: event.color + "80", color: event.color }}
+                            >
+                              {event.event_type_name}
+                            </Badge>
+                            {event.days_remaining >= 0 && (
+                              <span
+                                className={`text-xs font-medium ${
+                                  event.days_remaining === 0
+                                    ? "text-red-500"
+                                    : event.days_remaining <= 3
+                                      ? "text-amber-500"
+                                      : "text-muted-foreground"
+                                }`}
+                              >
+                                {event.days_remaining === 0
+                                  ? "今天"
+                                  : event.days_remaining === 1
+                                    ? "明天"
+                                    : `${event.days_remaining}天后`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {upcomingEvents.length >= 5 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-muted-foreground"
+                      onClick={() => setViewMode("list")}
+                    >
+                      查看全部
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Bell className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">暂无即将到来的事件</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => openCreateDialog()}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    添加事件
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* 创建/编辑事件对话框 */}
@@ -1184,7 +1265,10 @@ export default function CalendarPage() {
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveEvent} disabled={!formData.event_title || !formData.event_date}>
+            <Button
+              onClick={handleSaveEvent}
+              disabled={!formData.event_title || !formData.event_date}
+            >
               {editingEvent ? "保存" : "创建"}
             </Button>
           </DialogFooter>

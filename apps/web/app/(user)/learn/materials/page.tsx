@@ -137,18 +137,42 @@ function saveRecentViewed(id: number) {
 // 骨架屏卡片
 function SkeletonCard({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={cn("bg-white rounded-2xl border border-stone-200 overflow-hidden", compact && "rounded-xl")}>
-      <div className={cn("bg-gradient-to-r from-stone-200 to-stone-100 animate-shimmer", compact ? "h-10" : "h-12")} />
+    <div
+      className={cn(
+        "bg-white rounded-2xl border border-stone-200 overflow-hidden",
+        compact && "rounded-xl"
+      )}
+    >
+      <div
+        className={cn(
+          "bg-gradient-to-r from-stone-200 to-stone-100 animate-shimmer",
+          compact ? "h-10" : "h-12"
+        )}
+      />
       <div className={cn("space-y-3", compact ? "p-3" : "p-4")}>
         <div className={cn("bg-stone-200 rounded w-3/4 animate-pulse", compact ? "h-4" : "h-5")} />
         <div className="space-y-2">
-          <div className="h-4 bg-stone-100 rounded w-full animate-pulse" style={{ animationDelay: "100ms" }} />
-          <div className="h-4 bg-stone-100 rounded w-full animate-pulse" style={{ animationDelay: "200ms" }} />
-          {!compact && <div className="h-4 bg-stone-100 rounded w-2/3 animate-pulse" style={{ animationDelay: "300ms" }} />}
+          <div
+            className="h-4 bg-stone-100 rounded w-full animate-pulse"
+            style={{ animationDelay: "100ms" }}
+          />
+          <div
+            className="h-4 bg-stone-100 rounded w-full animate-pulse"
+            style={{ animationDelay: "200ms" }}
+          />
+          {!compact && (
+            <div
+              className="h-4 bg-stone-100 rounded w-2/3 animate-pulse"
+              style={{ animationDelay: "300ms" }}
+            />
+          )}
         </div>
         <div className="flex gap-2 pt-2">
           <div className="h-5 w-14 bg-stone-100 rounded-full animate-pulse" />
-          <div className="h-5 w-14 bg-stone-100 rounded-full animate-pulse" style={{ animationDelay: "100ms" }} />
+          <div
+            className="h-5 w-14 bg-stone-100 rounded-full animate-pulse"
+            style={{ animationDelay: "100ms" }}
+          />
         </div>
       </div>
     </div>
@@ -188,16 +212,29 @@ function SharePopover({ material, onClose }: { material: MaterialBrief; onClose:
       <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-xl border border-stone-200 shadow-xl p-3 min-w-48 animate-in fade-in slide-in-from-top-2 duration-200">
         <p className="text-xs font-medium text-stone-500 mb-2 px-1">分享到</p>
         <div className="space-y-1">
-          <button onClick={handleShareTwitter} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-stone-700 hover:bg-stone-50 transition-colors">
+          <button
+            onClick={handleShareTwitter}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+          >
             <Twitter className="w-4 h-4 text-blue-400" />
             Twitter
           </button>
-          <button onClick={handleShareWeibo} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-stone-700 hover:bg-stone-50 transition-colors">
+          <button
+            onClick={handleShareWeibo}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+          >
             <Send className="w-4 h-4 text-red-500" />
             微博
           </button>
-          <button onClick={handleCopyLink} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-stone-700 hover:bg-stone-50 transition-colors">
-            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Link2 className="w-4 h-4 text-stone-400" />}
+          <button
+            onClick={handleCopyLink}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            {copied ? (
+              <Check className="w-4 h-4 text-emerald-500" />
+            ) : (
+              <Link2 className="w-4 h-4 text-stone-400" />
+            )}
             {copied ? "已复制" : "复制链接"}
           </button>
         </div>
@@ -253,28 +290,76 @@ function FocusModeView({
   const colors = materialTypeColors[material.type];
 
   return (
-    <div className={cn("fixed inset-0 z-50 transition-colors duration-500", darkMode ? "bg-stone-900" : "bg-amber-50/95")}>
+    <div
+      className={cn(
+        "fixed inset-0 z-50 transition-colors duration-500",
+        darkMode ? "bg-stone-900" : "bg-amber-50/95"
+      )}
+    >
       {/* Header */}
-      <div className={cn("absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 transition-colors", darkMode ? "bg-stone-900/80" : "bg-white/80 border-b border-stone-200")} style={{ backdropFilter: "blur(8px)" }}>
+      <div
+        className={cn(
+          "absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 transition-colors",
+          darkMode ? "bg-stone-900/80" : "bg-white/80 border-b border-stone-200"
+        )}
+        style={{ backdropFilter: "blur(8px)" }}
+      >
         <div className="flex items-center gap-3">
-          <button onClick={onClose} className={cn("p-2 rounded-lg transition-colors", darkMode ? "hover:bg-stone-800 text-stone-400" : "hover:bg-stone-100 text-stone-500")}>
+          <button
+            onClick={onClose}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              darkMode ? "hover:bg-stone-800 text-stone-400" : "hover:bg-stone-100 text-stone-500"
+            )}
+          >
             <X className="w-5 h-5" />
           </button>
-          <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium", colors.bg, colors.text)}>
+          <div
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium",
+              colors.bg,
+              colors.text
+            )}
+          >
             {typeIcons[material.type]}
             {materialTypeNames[material.type]}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setFontSize((s) => Math.max(14, s - 2))} className={cn("p-2 rounded-lg transition-colors text-sm font-bold", darkMode ? "hover:bg-stone-800 text-stone-400" : "hover:bg-stone-100 text-stone-500")}>
+          <button
+            onClick={() => setFontSize((s) => Math.max(14, s - 2))}
+            className={cn(
+              "p-2 rounded-lg transition-colors text-sm font-bold",
+              darkMode ? "hover:bg-stone-800 text-stone-400" : "hover:bg-stone-100 text-stone-500"
+            )}
+          >
             A-
           </button>
-          <span className={cn("text-sm w-8 text-center", darkMode ? "text-stone-400" : "text-stone-500")}>{fontSize}</span>
-          <button onClick={() => setFontSize((s) => Math.min(28, s + 2))} className={cn("p-2 rounded-lg transition-colors text-sm font-bold", darkMode ? "hover:bg-stone-800 text-stone-400" : "hover:bg-stone-100 text-stone-500")}>
+          <span
+            className={cn(
+              "text-sm w-8 text-center",
+              darkMode ? "text-stone-400" : "text-stone-500"
+            )}
+          >
+            {fontSize}
+          </span>
+          <button
+            onClick={() => setFontSize((s) => Math.min(28, s + 2))}
+            className={cn(
+              "p-2 rounded-lg transition-colors text-sm font-bold",
+              darkMode ? "hover:bg-stone-800 text-stone-400" : "hover:bg-stone-100 text-stone-500"
+            )}
+          >
             A+
           </button>
           <div className="w-px h-6 bg-stone-300 mx-2" />
-          <button onClick={() => setDarkMode(!darkMode)} className={cn("p-2 rounded-lg transition-colors", darkMode ? "hover:bg-stone-800 text-amber-400" : "hover:bg-stone-100 text-stone-500")}>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              darkMode ? "hover:bg-stone-800 text-amber-400" : "hover:bg-stone-100 text-stone-500"
+            )}
+          >
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
         </div>
@@ -283,22 +368,51 @@ function FocusModeView({
       {/* Content */}
       <div className="h-full pt-20 pb-24 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-6 py-12">
-          <h1 className={cn("text-2xl font-bold mb-8 transition-colors", darkMode ? "text-white" : "text-stone-800")} style={{ fontSize: fontSize + 6 }}>
+          <h1
+            className={cn(
+              "text-2xl font-bold mb-8 transition-colors",
+              darkMode ? "text-white" : "text-stone-800"
+            )}
+            style={{ fontSize: fontSize + 6 }}
+          >
             {material.title}
           </h1>
 
-          <div className={cn("relative pl-6 border-l-4 transition-colors", darkMode ? "border-amber-500/50" : "border-amber-400")}>
-            <Quote className={cn("absolute -left-4 -top-2 w-8 h-8 transition-colors", darkMode ? "text-amber-500/30 bg-stone-900" : "text-amber-300 bg-amber-50")} />
-            <p className={cn("leading-loose whitespace-pre-wrap transition-colors", darkMode ? "text-stone-300" : "text-stone-700")} style={{ fontSize }}>
+          <div
+            className={cn(
+              "relative pl-6 border-l-4 transition-colors",
+              darkMode ? "border-amber-500/50" : "border-amber-400"
+            )}
+          >
+            <Quote
+              className={cn(
+                "absolute -left-4 -top-2 w-8 h-8 transition-colors",
+                darkMode ? "text-amber-500/30 bg-stone-900" : "text-amber-300 bg-amber-50"
+              )}
+            />
+            <p
+              className={cn(
+                "leading-loose whitespace-pre-wrap transition-colors",
+                darkMode ? "text-stone-300" : "text-stone-700"
+              )}
+              style={{ fontSize }}
+            >
               {material.content}
             </p>
           </div>
 
           {(material.author || material.source) && (
-            <div className={cn("mt-10 flex items-center gap-3 transition-colors", darkMode ? "text-stone-500" : "text-stone-400")}>
+            <div
+              className={cn(
+                "mt-10 flex items-center gap-3 transition-colors",
+                darkMode ? "text-stone-500" : "text-stone-400"
+              )}
+            >
               <span className="w-12 h-px bg-current opacity-30" />
               <p style={{ fontSize: fontSize - 2 }}>
-                <span className={cn("font-medium", darkMode ? "text-stone-400" : "text-stone-600")}>{material.author}</span>
+                <span className={cn("font-medium", darkMode ? "text-stone-400" : "text-stone-600")}>
+                  {material.author}
+                </span>
                 {material.source && <span className="ml-2">《{material.source}》</span>}
               </p>
             </div>
@@ -307,17 +421,29 @@ function FocusModeView({
           {material.tags && material.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-8">
               {material.tags.map((tag, idx) => (
-                <span key={idx} className={cn("px-3 py-1.5 rounded-full text-sm transition-colors", darkMode ? "bg-stone-800 text-stone-400" : "bg-white text-stone-600 border border-stone-200")}>
+                <span
+                  key={idx}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-sm transition-colors",
+                    darkMode
+                      ? "bg-stone-800 text-stone-400"
+                      : "bg-white text-stone-600 border border-stone-200"
+                  )}
+                >
                   #{tag}
                 </span>
               ))}
             </div>
           )}
 
-          <div className={cn("flex items-center gap-6 mt-10 pt-6 border-t text-sm transition-colors", darkMode ? "border-stone-800 text-stone-500" : "border-stone-200 text-stone-400")}>
+          <div
+            className={cn(
+              "flex items-center gap-6 mt-10 pt-6 border-t text-sm transition-colors",
+              darkMode ? "border-stone-800 text-stone-500" : "border-stone-200 text-stone-400"
+            )}
+          >
             <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              约 {estimateReadTime(material.content)} 分钟
+              <Clock className="w-4 h-4" />约 {estimateReadTime(material.content)} 分钟
             </span>
             <span className="flex items-center gap-1.5">
               <Eye className="w-4 h-4" />
@@ -332,11 +458,24 @@ function FocusModeView({
       </div>
 
       {/* Footer Navigation */}
-      <div className={cn("absolute bottom-0 inset-x-0 flex items-center justify-between px-6 py-4 transition-colors", darkMode ? "bg-stone-900/80" : "bg-white/80 border-t border-stone-200")} style={{ backdropFilter: "blur(8px)" }}>
+      <div
+        className={cn(
+          "absolute bottom-0 inset-x-0 flex items-center justify-between px-6 py-4 transition-colors",
+          darkMode ? "bg-stone-900/80" : "bg-white/80 border-t border-stone-200"
+        )}
+        style={{ backdropFilter: "blur(8px)" }}
+      >
         <button
           onClick={onPrev}
           disabled={!hasPrev}
-          className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all", hasPrev ? (darkMode ? "text-stone-300 hover:bg-stone-800" : "text-stone-600 hover:bg-stone-100") : "text-stone-300 cursor-not-allowed")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+            hasPrev
+              ? darkMode
+                ? "text-stone-300 hover:bg-stone-800"
+                : "text-stone-600 hover:bg-stone-100"
+              : "text-stone-300 cursor-not-allowed"
+          )}
         >
           <ChevronLeft className="w-4 h-4" />
           上一条
@@ -344,7 +483,14 @@ function FocusModeView({
 
         <button
           onClick={() => onCollect(material.id)}
-          className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all", isCollected ? "bg-red-500 text-white" : (darkMode ? "bg-stone-800 text-stone-300 hover:bg-red-500 hover:text-white" : "bg-stone-100 text-stone-600 hover:bg-red-500 hover:text-white"))}
+          className={cn(
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
+            isCollected
+              ? "bg-red-500 text-white"
+              : darkMode
+                ? "bg-stone-800 text-stone-300 hover:bg-red-500 hover:text-white"
+                : "bg-stone-100 text-stone-600 hover:bg-red-500 hover:text-white"
+          )}
         >
           <Heart className={cn("w-4 h-4", isCollected && "fill-current")} />
           {isCollected ? "已收藏" : "收藏"}
@@ -353,7 +499,14 @@ function FocusModeView({
         <button
           onClick={onNext}
           disabled={!hasNext}
-          className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all", hasNext ? (darkMode ? "text-stone-300 hover:bg-stone-800" : "text-stone-600 hover:bg-stone-100") : "text-stone-300 cursor-not-allowed")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+            hasNext
+              ? darkMode
+                ? "text-stone-300 hover:bg-stone-800"
+                : "text-stone-600 hover:bg-stone-100"
+              : "text-stone-300 cursor-not-allowed"
+          )}
         >
           下一条
           <ChevronRight className="w-4 h-4" />
@@ -407,7 +560,9 @@ function MaterialDetailModal({
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   const handleCopy = () => {
@@ -429,7 +584,10 @@ function MaterialDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={onClose}
+      />
 
       <div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
@@ -456,10 +614,17 @@ function MaterialDetailModal({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={onEnterFocusMode} className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors" title="沉浸阅读 (F)">
+              <button
+                onClick={onEnterFocusMode}
+                className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors"
+                title="沉浸阅读 (F)"
+              >
                 <Focus className="w-5 h-5" />
               </button>
-              <button onClick={onClose} className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors">
+              <button
+                onClick={onClose}
+                className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -471,8 +636,7 @@ function MaterialDetailModal({
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-xl font-bold text-stone-800 flex-1">{material.title}</h2>
             <span className="flex items-center gap-1 text-xs text-stone-400 flex-shrink-0">
-              <Clock className="w-3.5 h-3.5" />
-              约 {readTime} 分钟
+              <Clock className="w-3.5 h-3.5" />约 {readTime} 分钟
             </span>
           </div>
 
@@ -488,7 +652,9 @@ function MaterialDetailModal({
               <span className="w-12 h-px bg-stone-300" />
               <p className="text-base">
                 <span className="font-medium text-stone-700">{material.author}</span>
-                {material.source && <span className="ml-2 text-stone-400">《{material.source}》</span>}
+                {material.source && (
+                  <span className="ml-2 text-stone-400">《{material.source}》</span>
+                )}
               </p>
             </div>
           )}
@@ -496,7 +662,10 @@ function MaterialDetailModal({
           {material.tags && material.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-6">
               {material.tags.map((tag, idx) => (
-                <span key={idx} className="px-3 py-1.5 text-sm bg-stone-100 text-stone-600 rounded-full hover:bg-amber-100 hover:text-amber-700 transition-colors cursor-pointer">
+                <span
+                  key={idx}
+                  className="px-3 py-1.5 text-sm bg-stone-100 text-stone-600 rounded-full hover:bg-amber-100 hover:text-amber-700 transition-colors cursor-pointer"
+                >
                   #{tag}
                 </span>
               ))}
@@ -517,11 +686,29 @@ function MaterialDetailModal({
         <div className="px-6 py-4 border-t border-stone-100 bg-stone-50/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <button onClick={onPrev} disabled={!hasPrev} className={cn("flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all", hasPrev ? "text-stone-600 hover:bg-stone-100" : "text-stone-300 cursor-not-allowed")}>
+              <button
+                onClick={onPrev}
+                disabled={!hasPrev}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                  hasPrev
+                    ? "text-stone-600 hover:bg-stone-100"
+                    : "text-stone-300 cursor-not-allowed"
+                )}
+              >
                 <ChevronLeft className="w-4 h-4" />
                 上一条
               </button>
-              <button onClick={onNext} disabled={!hasNext} className={cn("flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all", hasNext ? "text-stone-600 hover:bg-stone-100" : "text-stone-300 cursor-not-allowed")}>
+              <button
+                onClick={onNext}
+                disabled={!hasNext}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                  hasNext
+                    ? "text-stone-600 hover:bg-stone-100"
+                    : "text-stone-300 cursor-not-allowed"
+                )}
+              >
                 下一条
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -529,17 +716,38 @@ function MaterialDetailModal({
 
             <div className="flex items-center gap-2">
               <div className="relative">
-                <button onClick={() => setShowShare(!showShare)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-all">
+                <button
+                  onClick={() => setShowShare(!showShare)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-all"
+                >
                   <Share2 className="w-4 h-4" />
                   分享
                 </button>
-                {showShare && <SharePopover material={material} onClose={() => setShowShare(false)} />}
+                {showShare && (
+                  <SharePopover material={material} onClose={() => setShowShare(false)} />
+                )}
               </div>
-              <button onClick={() => onCollect(material.id)} className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all", isCollected ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-stone-100 text-stone-600 hover:bg-red-50 hover:text-red-600")}>
+              <button
+                onClick={() => onCollect(material.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+                  isCollected
+                    ? "bg-red-50 text-red-600 hover:bg-red-100"
+                    : "bg-stone-100 text-stone-600 hover:bg-red-50 hover:text-red-600"
+                )}
+              >
                 <Heart className={cn("w-4 h-4", isCollected && "fill-current")} />
                 {isCollected ? "已收藏" : "收藏"}
               </button>
-              <button onClick={handleCopy} className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all", copied ? "bg-emerald-50 text-emerald-600" : "bg-amber-500 text-white hover:bg-amber-600")}>
+              <button
+                onClick={handleCopy}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+                  copied
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "bg-amber-500 text-white hover:bg-amber-600"
+                )}
+              >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copied ? "已复制" : "复制"}
               </button>
@@ -568,9 +776,15 @@ function MaterialDetailModal({
 }
 
 // 每日金句横幅
-function DailyQuoteBanner({ material, onView }: { material: MaterialBrief | null; onView: () => void }) {
+function DailyQuoteBanner({
+  material,
+  onView,
+}: {
+  material: MaterialBrief | null;
+  onView: () => void;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const quotes = useMemo(() => material ? [material] : [], [material]);
+  const quotes = useMemo(() => (material ? [material] : []), [material]);
 
   if (!material) return null;
 
@@ -586,17 +800,18 @@ function DailyQuoteBanner({ material, onView }: { material: MaterialBrief | null
           <Zap className="w-5 h-5 text-yellow-200 animate-pulse" />
           <span className="text-white/90 text-sm font-medium">每日金句</span>
           <span className="flex items-center gap-1 text-white/60 text-xs ml-auto">
-            <Clock className="w-3 h-3" />
-            约 {estimateReadTime(material.content)} 分钟
+            <Clock className="w-3 h-3" />约 {estimateReadTime(material.content)} 分钟
           </span>
         </div>
         <p className="text-white text-lg lg:text-xl font-medium leading-relaxed line-clamp-2 mb-3">
-          「{material.content.slice(0, 80)}{material.content.length > 80 ? "..." : ""}」
+          「{material.content.slice(0, 80)}
+          {material.content.length > 80 ? "..." : ""}」
         </p>
-        {material.author && (
-          <p className="text-white/80 text-sm mb-4">—— {material.author}</p>
-        )}
-        <button onClick={onView} className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-white text-sm font-medium transition-all hover:translate-x-1">
+        {material.author && <p className="text-white/80 text-sm mb-4">—— {material.author}</p>}
+        <button
+          onClick={onView}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-white text-sm font-medium transition-all hover:translate-x-1"
+        >
           查看详情
           <ArrowRight className="w-4 h-4" />
         </button>
@@ -624,7 +839,9 @@ function QuickTypeFilter({
           onClick={() => onSelect(null)}
           className={cn(
             "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-            !selectedType ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25" : "bg-white border border-stone-200 text-stone-600 hover:border-amber-300"
+            !selectedType
+              ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25"
+              : "bg-white border border-stone-200 text-stone-600 hover:border-amber-300"
           )}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -645,7 +862,12 @@ function QuickTypeFilter({
             >
               {typeIcons[type]}
               {materialTypeNames[type]}
-              <span className={cn("text-xs", selectedType === type ? "text-white/80" : "text-stone-400")}>
+              <span
+                className={cn(
+                  "text-xs",
+                  selectedType === type ? "text-white/80" : "text-stone-400"
+                )}
+              >
                 {count}
               </span>
             </button>
@@ -667,7 +889,10 @@ function RecentViewedSection({
   onView: (material: MaterialBrief) => void;
 }) {
   const recentMaterials = useMemo(() => {
-    return recentIds.slice(0, 5).map((id) => materials.find((m) => m.id === id)).filter(Boolean) as MaterialBrief[];
+    return recentIds
+      .slice(0, 5)
+      .map((id) => materials.find((m) => m.id === id))
+      .filter(Boolean) as MaterialBrief[];
   }, [recentIds, materials]);
 
   if (recentMaterials.length === 0) return null;
@@ -687,7 +912,12 @@ function RecentViewedSection({
               onClick={() => onView(material)}
               className="flex-shrink-0 flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-stone-200 hover:border-amber-300 hover:shadow-md transition-all max-w-48"
             >
-              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", colors.bg)}>
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                  colors.bg
+                )}
+              >
                 <span className={colors.text}>{typeIcons[material.type]}</span>
               </div>
               <span className="text-sm text-stone-700 truncate">{material.title}</span>
@@ -729,7 +959,9 @@ function MaterialCard({
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
+      ([entry]) => {
+        if (entry.isIntersecting) setIsVisible(true);
+      },
       { threshold: 0.1, rootMargin: "50px" }
     );
     if (cardRef.current) observer.observe(cardRef.current);
@@ -766,7 +998,12 @@ function MaterialCard({
         onMouseLeave={() => setIsHovered(false)}
         onClick={onViewDetail}
       >
-        <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br transition-opacity duration-500", colors.gradient)} />
+        <div
+          className={cn(
+            "absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br transition-opacity duration-500",
+            colors.gradient
+          )}
+        />
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-100/50 to-transparent" />
 
         <div className="absolute top-4 right-4 z-10">
@@ -777,7 +1014,14 @@ function MaterialCard({
         </div>
 
         <div className="relative p-6">
-          <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mb-4 transition-transform duration-300", colors.bg, colors.text, isHovered && "scale-105")}>
+          <div
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mb-4 transition-transform duration-300",
+              colors.bg,
+              colors.text,
+              isHovered && "scale-105"
+            )}
+          >
             {typeIcons[material.type]}
             {materialTypeNames[material.type]}
           </div>
@@ -787,13 +1031,31 @@ function MaterialCard({
           </h3>
 
           <div className="relative pl-4 border-l-4 border-amber-300">
-            <p className={cn("text-stone-600 leading-relaxed italic", expanded ? "" : "line-clamp-4")}>{material.content}</p>
+            <p
+              className={cn(
+                "text-stone-600 leading-relaxed italic",
+                expanded ? "" : "line-clamp-4"
+              )}
+            >
+              {material.content}
+            </p>
           </div>
 
           {material.content.length > 200 && (
-            <button onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="mt-3 text-sm text-amber-600 hover:text-amber-700 flex items-center gap-1 font-medium">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
+              className="mt-3 text-sm text-amber-600 hover:text-amber-700 flex items-center gap-1 font-medium"
+            >
               {expanded ? "收起内容" : "展开全文"}
-              <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", expanded && "rotate-180")} />
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform duration-300",
+                  expanded && "rotate-180"
+                )}
+              />
             </button>
           )}
 
@@ -808,7 +1070,12 @@ function MaterialCard({
           {material.tags && material.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-5">
               {material.tags.slice(0, 5).map((tag, idx) => (
-                <span key={idx} className="px-3 py-1 text-xs bg-stone-100 text-stone-600 rounded-full">{tag}</span>
+                <span
+                  key={idx}
+                  className="px-3 py-1 text-xs bg-stone-100 text-stone-600 rounded-full"
+                >
+                  {tag}
+                </span>
               ))}
             </div>
           )}
@@ -829,10 +1096,26 @@ function MaterialCard({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={handleCollect} className={cn("p-2.5 rounded-xl transition-all duration-200 transform active:scale-95", isCollected ? "bg-red-50 text-red-500" : "bg-stone-100 text-stone-500 hover:bg-red-50 hover:text-red-500")}>
+              <button
+                onClick={handleCollect}
+                className={cn(
+                  "p-2.5 rounded-xl transition-all duration-200 transform active:scale-95",
+                  isCollected
+                    ? "bg-red-50 text-red-500"
+                    : "bg-stone-100 text-stone-500 hover:bg-red-50 hover:text-red-500"
+                )}
+              >
                 <Heart className={cn("h-5 w-5", isCollected && "fill-current")} />
               </button>
-              <button onClick={handleCopy} className={cn("p-2.5 rounded-xl transition-all duration-200 transform active:scale-95", copied ? "bg-emerald-50 text-emerald-600" : "bg-stone-100 text-stone-500 hover:bg-emerald-50 hover:text-emerald-600")}>
+              <button
+                onClick={handleCopy}
+                className={cn(
+                  "p-2.5 rounded-xl transition-all duration-200 transform active:scale-95",
+                  copied
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "bg-stone-100 text-stone-500 hover:bg-emerald-50 hover:text-emerald-600"
+                )}
+              >
                 {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
               </button>
             </div>
@@ -857,23 +1140,41 @@ function MaterialCard({
       onMouseLeave={() => setIsHovered(false)}
       onClick={onViewDetail}
     >
-      <div className={cn("bg-gradient-to-r relative overflow-hidden", colors.gradient, compact ? "px-3 py-2" : "px-4 py-2.5")}>
+      <div
+        className={cn(
+          "bg-gradient-to-r relative overflow-hidden",
+          colors.gradient,
+          compact ? "px-3 py-2" : "px-4 py-2.5"
+        )}
+      >
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
 
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2">
             <span className="text-white/90">{typeIcons[material.type]}</span>
-            <span className={cn("font-medium text-white", compact ? "text-xs" : "text-sm")}>{materialTypeNames[material.type]}</span>
+            <span className={cn("font-medium text-white", compact ? "text-xs" : "text-sm")}>
+              {materialTypeNames[material.type]}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             {material.is_hot && (
-              <span className={cn("flex items-center gap-0.5 bg-white/25 backdrop-blur-sm rounded-full text-white font-medium", compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]")}>
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 bg-white/25 backdrop-blur-sm rounded-full text-white font-medium",
+                  compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]"
+                )}
+              >
                 <Flame className="h-3 w-3" />
                 {!compact && "热门"}
               </span>
             )}
             {material.is_featured && (
-              <span className={cn("flex items-center gap-0.5 bg-white/25 backdrop-blur-sm rounded-full text-white font-medium", compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]")}>
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 bg-white/25 backdrop-blur-sm rounded-full text-white font-medium",
+                  compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]"
+                )}
+              >
                 <Star className="h-3 w-3 fill-current" />
                 {!compact && "精选"}
               </span>
@@ -883,8 +1184,22 @@ function MaterialCard({
       </div>
 
       <div className={compact ? "p-3" : "p-4"}>
-        <h3 className={cn("font-semibold text-stone-800 line-clamp-1 group-hover:text-amber-700 transition-colors", compact ? "text-sm mb-1.5" : "mb-2")}>{material.title}</h3>
-        <p className={cn("text-stone-600 leading-relaxed", compact ? "text-xs line-clamp-2" : "text-sm line-clamp-3")}>{material.content}</p>
+        <h3
+          className={cn(
+            "font-semibold text-stone-800 line-clamp-1 group-hover:text-amber-700 transition-colors",
+            compact ? "text-sm mb-1.5" : "mb-2"
+          )}
+        >
+          {material.title}
+        </h3>
+        <p
+          className={cn(
+            "text-stone-600 leading-relaxed",
+            compact ? "text-xs line-clamp-2" : "text-sm line-clamp-3"
+          )}
+        >
+          {material.content}
+        </p>
 
         {(material.author || material.source) && (
           <p className={cn("text-stone-500 mt-2", compact ? "text-[10px]" : "text-xs")}>
@@ -896,16 +1211,33 @@ function MaterialCard({
         {!compact && material.tags && material.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {material.tags.slice(0, 3).map((tag, idx) => (
-              <span key={idx} className="px-2 py-0.5 text-[10px] bg-stone-100 text-stone-500 rounded-full">{tag}</span>
+              <span
+                key={idx}
+                className="px-2 py-0.5 text-[10px] bg-stone-100 text-stone-500 rounded-full"
+              >
+                {tag}
+              </span>
             ))}
             {material.tags.length > 3 && (
-              <span className="px-2 py-0.5 text-[10px] bg-stone-100 text-stone-400 rounded-full">+{material.tags.length - 3}</span>
+              <span className="px-2 py-0.5 text-[10px] bg-stone-100 text-stone-400 rounded-full">
+                +{material.tags.length - 3}
+              </span>
             )}
           </div>
         )}
 
-        <div className={cn("flex items-center justify-between border-t border-stone-100", compact ? "mt-3 pt-2" : "mt-4 pt-3")}>
-          <div className={cn("flex items-center gap-3 text-stone-400", compact ? "text-[10px]" : "text-xs")}>
+        <div
+          className={cn(
+            "flex items-center justify-between border-t border-stone-100",
+            compact ? "mt-3 pt-2" : "mt-4 pt-3"
+          )}
+        >
+          <div
+            className={cn(
+              "flex items-center gap-3 text-stone-400",
+              compact ? "text-[10px]" : "text-xs"
+            )}
+          >
             <span className="flex items-center gap-1">
               <Eye className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
               {material.view_count}
@@ -915,12 +1247,41 @@ function MaterialCard({
               {material.collect_count}
             </span>
           </div>
-          <div className={cn("flex items-center gap-1.5 transition-opacity duration-200", isHovered ? "opacity-100" : "lg:opacity-0")}>
-            <button onClick={handleCollect} className={cn("rounded-lg transition-all duration-200 transform active:scale-90", compact ? "p-1.5" : "p-2", isCollected ? "bg-red-50 text-red-500" : "bg-stone-100 text-stone-400 hover:bg-red-50 hover:text-red-500")}>
-              <Heart className={cn(isCollected && "fill-current", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
+          <div
+            className={cn(
+              "flex items-center gap-1.5 transition-opacity duration-200",
+              isHovered ? "opacity-100" : "lg:opacity-0"
+            )}
+          >
+            <button
+              onClick={handleCollect}
+              className={cn(
+                "rounded-lg transition-all duration-200 transform active:scale-90",
+                compact ? "p-1.5" : "p-2",
+                isCollected
+                  ? "bg-red-50 text-red-500"
+                  : "bg-stone-100 text-stone-400 hover:bg-red-50 hover:text-red-500"
+              )}
+            >
+              <Heart
+                className={cn(isCollected && "fill-current", compact ? "h-3.5 w-3.5" : "h-4 w-4")}
+              />
             </button>
-            <button onClick={handleCopy} className={cn("rounded-lg transition-all duration-200 transform active:scale-90", compact ? "p-1.5" : "p-2", copied ? "bg-emerald-50 text-emerald-600" : "bg-stone-100 text-stone-400 hover:bg-emerald-50 hover:text-emerald-600")}>
-              {copied ? <Check className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} /> : <Copy className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />}
+            <button
+              onClick={handleCopy}
+              className={cn(
+                "rounded-lg transition-all duration-200 transform active:scale-90",
+                compact ? "p-1.5" : "p-2",
+                copied
+                  ? "bg-emerald-50 text-emerald-600"
+                  : "bg-stone-100 text-stone-400 hover:bg-emerald-50 hover:text-emerald-600"
+              )}
+            >
+              {copied ? (
+                <Check className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+              ) : (
+                <Copy className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+              )}
             </button>
           </div>
         </div>
@@ -930,15 +1291,45 @@ function MaterialCard({
 }
 
 // 类型统计卡片
-function TypeStatCard({ type, count, isSelected, onClick }: { type: MaterialType; count: number; isSelected: boolean; onClick: () => void }) {
+function TypeStatCard({
+  type,
+  count,
+  isSelected,
+  onClick,
+}: {
+  type: MaterialType;
+  count: number;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
   const colors = materialTypeColors[type];
   return (
-    <button onClick={onClick} className={cn("flex items-center gap-3 p-3 rounded-xl transition-all duration-300 w-full text-left group/card", isSelected ? `bg-gradient-to-r ${colors.gradient} text-white shadow-lg` : "bg-white border border-stone-200 hover:border-amber-300 hover:shadow-md")}>
-      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover/card:scale-110", isSelected ? "bg-white/20" : colors.bg)}>
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-xl transition-all duration-300 w-full text-left group/card",
+        isSelected
+          ? `bg-gradient-to-r ${colors.gradient} text-white shadow-lg`
+          : "bg-white border border-stone-200 hover:border-amber-300 hover:shadow-md"
+      )}
+    >
+      <div
+        className={cn(
+          "w-9 h-9 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover/card:scale-110",
+          isSelected ? "bg-white/20" : colors.bg
+        )}
+      >
         <span className={isSelected ? "text-white" : colors.text}>{typeLargeIcons[type]}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn("text-sm font-medium truncate", isSelected ? "text-white" : "text-stone-700")}>{materialTypeNames[type]}</p>
+        <p
+          className={cn(
+            "text-sm font-medium truncate",
+            isSelected ? "text-white" : "text-stone-700"
+          )}
+        >
+          {materialTypeNames[type]}
+        </p>
         <p className={cn("text-xs", isSelected ? "text-white/80" : "text-stone-400")}>{count} 条</p>
       </div>
     </button>
@@ -958,7 +1349,10 @@ function BackToTopButton() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className={cn("fixed bottom-24 lg:bottom-8 right-4 lg:right-8 z-40 p-3 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-500/30 transition-all duration-300 hover:bg-amber-600 hover:scale-110", visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none")}
+      className={cn(
+        "fixed bottom-24 lg:bottom-8 right-4 lg:right-8 z-40 p-3 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-500/30 transition-all duration-300 hover:bg-amber-600 hover:scale-110",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
+      )}
     >
       <ArrowUp className="w-5 h-5" />
     </button>
@@ -966,16 +1360,37 @@ function BackToTopButton() {
 }
 
 // 移动端侧边栏
-function MobileSidebar({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) {
+function MobileSidebar({
+  isOpen,
+  onClose,
+  children,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   return (
     <>
-      <div className={cn("lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 pointer-events-none")} onClick={onClose} />
-      <div className={cn("lg:hidden fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-white shadow-2xl transition-transform duration-300 overflow-y-auto", isOpen ? "translate-x-0" : "-translate-x-full")}>
+      <div
+        className={cn(
+          "lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
+      />
+      <div
+        className={cn(
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-white shadow-2xl transition-transform duration-300 overflow-y-auto",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
         <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-white z-10">
           <h3 className="font-semibold text-stone-800">筛选</h3>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-stone-100">
@@ -1004,14 +1419,18 @@ function ScrollProgressBar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-stone-200/50">
-      <div className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150" style={{ width: `${progress}%` }} />
+      <div
+        className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150"
+        style={{ width: `${progress}%` }}
+      />
     </div>
   );
 }
 
 export default function MaterialsPage() {
   const { isAuthenticated } = useAuthStore();
-  const { loading, materials, total, page, pageSize, setPage, fetchMaterials, searchMaterials } = useMaterials();
+  const { loading, materials, total, page, pageSize, setPage, fetchMaterials, searchMaterials } =
+    useMaterials();
   const { categories, fetchCategoryTree, flattenCategories } = useMaterialCategories();
   const { stats, fetchStats } = useMaterialStats();
   const { topics, fetchThemeTopics } = useThemeTopics();
@@ -1073,7 +1492,15 @@ export default function MaterialsPage() {
     } else {
       fetchMaterials(params);
     }
-  }, [selectedType, selectedCategoryId, selectedTopic, showOnlyHot, showOnlyFeatured, sortBy, page]);
+  }, [
+    selectedType,
+    selectedCategoryId,
+    selectedTopic,
+    showOnlyHot,
+    showOnlyFeatured,
+    sortBy,
+    page,
+  ]);
 
   const handleSearchInput = (value: string) => {
     setSearchQuery(value);
@@ -1161,7 +1588,13 @@ export default function MaterialsPage() {
   }, [materials]);
 
   const flatCategories = flattenCategories(categories);
-  const hasFilters = selectedType || selectedCategoryId || selectedTopic || searchQuery || showOnlyHot || showOnlyFeatured;
+  const hasFilters =
+    selectedType ||
+    selectedCategoryId ||
+    selectedTopic ||
+    searchQuery ||
+    showOnlyHot ||
+    showOnlyFeatured;
   const totalPages = Math.ceil(total / pageSize);
   const typeStats = stats?.type_stats || [];
   const dailyQuote = featuredMaterials[0] || null;
@@ -1174,30 +1607,75 @@ export default function MaterialsPage() {
         素材分类
       </h3>
 
-      <button onClick={() => handleTypeSelect(null)} className={cn("flex items-center gap-3 p-3 rounded-xl transition-all duration-300 w-full text-left mb-2 group/all", !selectedType ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg" : "bg-stone-50 hover:bg-stone-100")}>
-        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover/all:scale-110", !selectedType ? "bg-white/20" : "bg-amber-100")}>
+      <button
+        onClick={() => handleTypeSelect(null)}
+        className={cn(
+          "flex items-center gap-3 p-3 rounded-xl transition-all duration-300 w-full text-left mb-2 group/all",
+          !selectedType
+            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg"
+            : "bg-stone-50 hover:bg-stone-100"
+        )}
+      >
+        <div
+          className={cn(
+            "w-9 h-9 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover/all:scale-110",
+            !selectedType ? "bg-white/20" : "bg-amber-100"
+          )}
+        >
           <LayoutGrid className={cn("w-5 h-5", !selectedType ? "text-white" : "text-amber-600")} />
         </div>
         <div className="flex-1">
-          <p className={cn("text-sm font-medium", !selectedType ? "text-white" : "text-stone-700")}>全部素材</p>
-          <p className={cn("text-xs", !selectedType ? "text-white/80" : "text-stone-400")}>{stats?.published_count || 0} 条</p>
+          <p className={cn("text-sm font-medium", !selectedType ? "text-white" : "text-stone-700")}>
+            全部素材
+          </p>
+          <p className={cn("text-xs", !selectedType ? "text-white/80" : "text-stone-400")}>
+            {stats?.published_count || 0} 条
+          </p>
         </div>
       </button>
 
       <div className="space-y-2">
         {typeStats.map((item) => (
-          <TypeStatCard key={item.type} type={item.type} count={item.count} isSelected={selectedType === item.type} onClick={() => handleTypeSelect(selectedType === item.type ? null : item.type)} />
+          <TypeStatCard
+            key={item.type}
+            type={item.type}
+            count={item.count}
+            isSelected={selectedType === item.type}
+            onClick={() => handleTypeSelect(selectedType === item.type ? null : item.type)}
+          />
         ))}
       </div>
 
       <div className="mt-6 pt-4 border-t border-stone-100">
         <h4 className="text-xs font-medium text-stone-500 mb-3">快捷筛选</h4>
         <div className="space-y-2">
-          <button onClick={() => { setShowOnlyHot(!showOnlyHot); setMobileSidebarOpen(false); }} className={cn("flex items-center gap-2 w-full p-2.5 rounded-lg text-sm font-medium transition-all duration-200", showOnlyHot ? "bg-red-500 text-white shadow-lg" : "bg-red-50 text-red-600 hover:bg-red-100")}>
+          <button
+            onClick={() => {
+              setShowOnlyHot(!showOnlyHot);
+              setMobileSidebarOpen(false);
+            }}
+            className={cn(
+              "flex items-center gap-2 w-full p-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+              showOnlyHot
+                ? "bg-red-500 text-white shadow-lg"
+                : "bg-red-50 text-red-600 hover:bg-red-100"
+            )}
+          >
             <Flame className="w-4 h-4" />
             只看热门
           </button>
-          <button onClick={() => { setShowOnlyFeatured(!showOnlyFeatured); setMobileSidebarOpen(false); }} className={cn("flex items-center gap-2 w-full p-2.5 rounded-lg text-sm font-medium transition-all duration-200", showOnlyFeatured ? "bg-emerald-500 text-white shadow-lg" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100")}>
+          <button
+            onClick={() => {
+              setShowOnlyFeatured(!showOnlyFeatured);
+              setMobileSidebarOpen(false);
+            }}
+            className={cn(
+              "flex items-center gap-2 w-full p-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+              showOnlyFeatured
+                ? "bg-emerald-500 text-white shadow-lg"
+                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+            )}
+          >
             <Star className="w-4 h-4" />
             只看精选
           </button>
@@ -1209,7 +1687,19 @@ export default function MaterialsPage() {
           <h4 className="text-xs font-medium text-stone-500 mb-3">热点主题</h4>
           <div className="flex flex-wrap gap-2">
             {topics.slice(0, 8).map((topic) => (
-              <button key={topic} onClick={() => { setSelectedTopic(selectedTopic === topic ? null : topic); setMobileSidebarOpen(false); }} className={cn("px-2.5 py-1 rounded-full text-xs font-medium transition-all", selectedTopic === topic ? "bg-blue-500 text-white" : "bg-blue-50 text-blue-600 hover:bg-blue-100")}>
+              <button
+                key={topic}
+                onClick={() => {
+                  setSelectedTopic(selectedTopic === topic ? null : topic);
+                  setMobileSidebarOpen(false);
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                  selectedTopic === topic
+                    ? "bg-blue-500 text-white"
+                    : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                )}
+              >
                 {topic}
               </button>
             ))}
@@ -1236,7 +1726,9 @@ export default function MaterialsPage() {
               </div>
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-stone-800">素材库</h1>
-                <p className="text-sm lg:text-base text-stone-500 mt-0.5">申论写作与面试答题的秘密武器</p>
+                <p className="text-sm lg:text-base text-stone-500 mt-0.5">
+                  申论写作与面试答题的秘密武器
+                </p>
               </div>
             </div>
 
@@ -1247,9 +1739,19 @@ export default function MaterialsPage() {
                   { icon: Flame, value: stats.hot_count, label: "热门", color: "red" },
                   { icon: Star, value: stats.featured_count, label: "精选", color: "emerald" },
                 ].map((stat, idx) => (
-                  <div key={idx} className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 bg-white rounded-xl border border-stone-200 shadow-sm flex-shrink-0">
-                    <div className={cn("w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center", `bg-${stat.color}-100`)}>
-                      <stat.icon className={cn("w-3.5 h-3.5 lg:w-4 lg:h-4", `text-${stat.color}-600`)} />
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 bg-white rounded-xl border border-stone-200 shadow-sm flex-shrink-0"
+                  >
+                    <div
+                      className={cn(
+                        "w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center",
+                        `bg-${stat.color}-100`
+                      )}
+                    >
+                      <stat.icon
+                        className={cn("w-3.5 h-3.5 lg:w-4 lg:h-4", `text-${stat.color}-600`)}
+                      />
                     </div>
                     <div>
                       <p className="text-base lg:text-lg font-bold text-stone-800">{stat.value}</p>
@@ -1274,7 +1776,12 @@ export default function MaterialsPage() {
         <RecentViewedSection
           recentIds={recentViewedIds}
           materials={[...materials, ...featuredMaterials]}
-          onView={(m) => openDetailModal(m, materials.findIndex((x) => x.id === m.id))}
+          onView={(m) =>
+            openDetailModal(
+              m,
+              materials.findIndex((x) => x.id === m.id)
+            )
+          }
         />
 
         {/* Featured Section */}
@@ -1287,15 +1794,38 @@ export default function MaterialsPage() {
                 </div>
                 精选推荐
               </h2>
-              <button onClick={handleShuffle} disabled={isShuffling} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-all", isShuffling && "opacity-50")}>
+              <button
+                onClick={handleShuffle}
+                disabled={isShuffling}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-all",
+                  isShuffling && "opacity-50"
+                )}
+              >
                 <RefreshCw className={cn("w-4 h-4", isShuffling && "animate-spin")} />
                 换一批
               </button>
             </div>
-            <div className={cn("grid md:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity duration-300", isShuffling && "opacity-50")}>
-              {(randomMaterials.length > 0 ? randomMaterials.slice(0, 3) : featuredMaterials).map((material, idx) => (
-                <MaterialCard key={material.id} material={material} isCollected={collectedIds.has(material.id)} onCollect={handleCollect} onCopy={handleCopy} onViewDetail={() => openDetailModal(material, idx)} variant="featured" index={idx} />
-              ))}
+            <div
+              className={cn(
+                "grid md:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity duration-300",
+                isShuffling && "opacity-50"
+              )}
+            >
+              {(randomMaterials.length > 0 ? randomMaterials.slice(0, 3) : featuredMaterials).map(
+                (material, idx) => (
+                  <MaterialCard
+                    key={material.id}
+                    material={material}
+                    isCollected={collectedIds.has(material.id)}
+                    onCollect={handleCollect}
+                    onCopy={handleCopy}
+                    onViewDetail={() => openDetailModal(material, idx)}
+                    variant="featured"
+                    index={idx}
+                  />
+                )
+              )}
             </div>
           </section>
         )}
@@ -1317,13 +1847,20 @@ export default function MaterialsPage() {
           <main className="flex-1 min-w-0">
             {/* Quick Type Filter */}
             {typeStats.length > 0 && (
-              <QuickTypeFilter types={typeStats} selectedType={selectedType} onSelect={handleTypeSelect} />
+              <QuickTypeFilter
+                types={typeStats}
+                selectedType={selectedType}
+                onSelect={handleTypeSelect}
+              />
             )}
 
             {/* Search & Filter Bar */}
             <div className="bg-white rounded-2xl border border-stone-200 p-3 lg:p-4 mb-4 lg:mb-6">
               <div className="flex gap-2 lg:gap-3">
-                <button onClick={() => setMobileSidebarOpen(true)} className="lg:hidden p-2.5 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50">
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="lg:hidden p-2.5 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50"
+                >
                   <Menu className="w-5 h-5" />
                 </button>
 
@@ -1341,17 +1878,35 @@ export default function MaterialsPage() {
 
                 <div className="hidden sm:flex items-center gap-2">
                   <div className="relative">
-                    <button onClick={() => setShowSortDropdown(!showSortDropdown)} className="flex items-center gap-2 px-3 py-2.5 border border-stone-200 rounded-xl text-sm text-stone-600 hover:bg-stone-50">
+                    <button
+                      onClick={() => setShowSortDropdown(!showSortDropdown)}
+                      className="flex items-center gap-2 px-3 py-2.5 border border-stone-200 rounded-xl text-sm text-stone-600 hover:bg-stone-50"
+                    >
                       <SortAsc className="w-4 h-4" />
-                      <span className="hidden md:inline">{sortOptions.find((o) => o.value === sortBy)?.label}</span>
+                      <span className="hidden md:inline">
+                        {sortOptions.find((o) => o.value === sortBy)?.label}
+                      </span>
                       <ChevronDown className="w-4 h-4" />
                     </button>
                     {showSortDropdown && (
                       <>
-                        <div className="fixed inset-0 z-10" onClick={() => setShowSortDropdown(false)} />
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowSortDropdown(false)}
+                        />
                         <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-xl border border-stone-200 shadow-lg py-1 min-w-36">
                           {sortOptions.map((option) => (
-                            <button key={option.value} onClick={() => { setSortBy(option.value); setShowSortDropdown(false); }} className={cn("flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-stone-50", sortBy === option.value && "text-amber-600 bg-amber-50")}>
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                setSortBy(option.value);
+                                setShowSortDropdown(false);
+                              }}
+                              className={cn(
+                                "flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-stone-50",
+                                sortBy === option.value && "text-amber-600 bg-amber-50"
+                              )}
+                            >
                               <option.icon className="w-4 h-4" />
                               {option.label}
                             </button>
@@ -1361,11 +1916,23 @@ export default function MaterialsPage() {
                     )}
                   </div>
 
-                  <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className={cn("gap-2", showFilters && "bg-amber-50 border-amber-300 text-amber-700")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={cn(
+                      "gap-2",
+                      showFilters && "bg-amber-50 border-amber-300 text-amber-700"
+                    )}
+                  >
                     <Filter className="w-4 h-4" />
                     <span className="hidden md:inline">筛选</span>
                   </Button>
-                  <Button onClick={handleSearch} size="sm" className="bg-amber-500 hover:bg-amber-600">
+                  <Button
+                    onClick={handleSearch}
+                    size="sm"
+                    className="bg-amber-500 hover:bg-amber-600"
+                  >
                     <Search className="w-4 h-4 md:mr-1.5" />
                     <span className="hidden md:inline">搜索</span>
                   </Button>
@@ -1379,29 +1946,42 @@ export default function MaterialsPage() {
                     {selectedType && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs">
                         {materialTypeNames[selectedType]}
-                        <button onClick={() => setSelectedType(null)}><X className="w-3 h-3" /></button>
+                        <button onClick={() => setSelectedType(null)}>
+                          <X className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                     {showOnlyHot && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
                         热门
-                        <button onClick={() => setShowOnlyHot(false)}><X className="w-3 h-3" /></button>
+                        <button onClick={() => setShowOnlyHot(false)}>
+                          <X className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                     {showOnlyFeatured && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs">
                         精选
-                        <button onClick={() => setShowOnlyFeatured(false)}><X className="w-3 h-3" /></button>
+                        <button onClick={() => setShowOnlyFeatured(false)}>
+                          <X className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                     {selectedTopic && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
                         {selectedTopic}
-                        <button onClick={() => setSelectedTopic(null)}><X className="w-3 h-3" /></button>
+                        <button onClick={() => setSelectedTopic(null)}>
+                          <X className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                   </div>
-                  <button onClick={clearFilters} className="text-xs text-stone-500 hover:text-stone-700 ml-auto flex-shrink-0">清除全部</button>
+                  <button
+                    onClick={clearFilters}
+                    className="text-xs text-stone-500 hover:text-stone-700 ml-auto flex-shrink-0"
+                  >
+                    清除全部
+                  </button>
                 </div>
               )}
 
@@ -1409,10 +1989,21 @@ export default function MaterialsPage() {
                 <div className="mt-4 pt-4 border-t border-stone-100 space-y-4">
                   {topics.length > 0 && (
                     <div>
-                      <label className="text-xs font-medium text-stone-500 mb-2 block">热点主题</label>
+                      <label className="text-xs font-medium text-stone-500 mb-2 block">
+                        热点主题
+                      </label>
                       <div className="flex flex-wrap gap-2">
                         {topics.slice(0, 12).map((topic) => (
-                          <button key={topic} onClick={() => setSelectedTopic(selectedTopic === topic ? null : topic)} className={cn("flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all", selectedTopic === topic ? "bg-blue-500 text-white" : "bg-blue-50 text-blue-600 hover:bg-blue-100")}>
+                          <button
+                            key={topic}
+                            onClick={() => setSelectedTopic(selectedTopic === topic ? null : topic)}
+                            className={cn(
+                              "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                              selectedTopic === topic
+                                ? "bg-blue-500 text-white"
+                                : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            )}
+                          >
                             <Flame className="w-3 h-3" />
                             {topic}
                           </button>
@@ -1426,7 +2017,20 @@ export default function MaterialsPage() {
                       <label className="text-xs font-medium text-stone-500 mb-2 block">分类</label>
                       <div className="flex flex-wrap gap-2">
                         {flatCategories.slice(0, 8).map(({ category }) => (
-                          <button key={category.id} onClick={() => setSelectedCategoryId(selectedCategoryId === category.id ? null : category.id)} className={cn("px-3 py-1.5 rounded-full text-sm font-medium transition-all", selectedCategoryId === category.id ? "bg-violet-500 text-white" : "bg-violet-50 text-violet-600 hover:bg-violet-100")}>
+                          <button
+                            key={category.id}
+                            onClick={() =>
+                              setSelectedCategoryId(
+                                selectedCategoryId === category.id ? null : category.id
+                              )
+                            }
+                            className={cn(
+                              "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                              selectedCategoryId === category.id
+                                ? "bg-violet-500 text-white"
+                                : "bg-violet-50 text-violet-600 hover:bg-violet-100"
+                            )}
+                          >
                             {category.name}
                           </button>
                         ))}
@@ -1444,13 +2048,42 @@ export default function MaterialsPage() {
                 {hasFilters && <span className="text-amber-600 ml-1">(已筛选)</span>}
               </p>
               <div className="flex items-center gap-1">
-                <button onClick={() => setCompactMode(!compactMode)} className={cn("p-2 rounded-lg transition-all", compactMode ? "bg-violet-100 text-violet-600" : "text-stone-400 hover:text-stone-600 hover:bg-stone-100")} title={compactMode ? "舒适视图" : "紧凑视图"}>
-                  {compactMode ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+                <button
+                  onClick={() => setCompactMode(!compactMode)}
+                  className={cn(
+                    "p-2 rounded-lg transition-all",
+                    compactMode
+                      ? "bg-violet-100 text-violet-600"
+                      : "text-stone-400 hover:text-stone-600 hover:bg-stone-100"
+                  )}
+                  title={compactMode ? "舒适视图" : "紧凑视图"}
+                >
+                  {compactMode ? (
+                    <Maximize2 className="w-4 h-4" />
+                  ) : (
+                    <Minimize2 className="w-4 h-4" />
+                  )}
                 </button>
-                <button onClick={() => setViewMode("grid")} className={cn("p-2 rounded-lg transition-all", viewMode === "grid" ? "bg-amber-100 text-amber-600" : "text-stone-400 hover:text-stone-600 hover:bg-stone-100")}>
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "p-2 rounded-lg transition-all",
+                    viewMode === "grid"
+                      ? "bg-amber-100 text-amber-600"
+                      : "text-stone-400 hover:text-stone-600 hover:bg-stone-100"
+                  )}
+                >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
-                <button onClick={() => setViewMode("list")} className={cn("p-2 rounded-lg transition-all", viewMode === "list" ? "bg-amber-100 text-amber-600" : "text-stone-400 hover:text-stone-600 hover:bg-stone-100")}>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "p-2 rounded-lg transition-all",
+                    viewMode === "list"
+                      ? "bg-amber-100 text-amber-600"
+                      : "text-stone-400 hover:text-stone-600 hover:bg-stone-100"
+                  )}
+                >
                   <List className="w-4 h-4" />
                 </button>
               </div>
@@ -1458,7 +2091,16 @@ export default function MaterialsPage() {
 
             {/* Materials Grid */}
             {loading ? (
-              <div className={cn("gap-4", viewMode === "grid" ? (compactMode ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid md:grid-cols-2 xl:grid-cols-3") : "space-y-4")}>
+              <div
+                className={cn(
+                  "gap-4",
+                  viewMode === "grid"
+                    ? compactMode
+                      ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+                      : "grid md:grid-cols-2 xl:grid-cols-3"
+                    : "space-y-4"
+                )}
+              >
                 {Array.from({ length: compactMode ? 8 : 6 }).map((_, i) => (
                   <SkeletonCard key={i} compact={compactMode} />
                 ))}
@@ -1470,7 +2112,9 @@ export default function MaterialsPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-stone-700 mb-2">暂无素材</h3>
                 <p className="text-stone-500 mb-6 max-w-sm mx-auto px-4">
-                  {hasFilters ? "没有符合筛选条件的素材，试试调整筛选条件" : "素材库正在建设中，敬请期待"}
+                  {hasFilters
+                    ? "没有符合筛选条件的素材，试试调整筛选条件"
+                    : "素材库正在建设中，敬请期待"}
                 </p>
                 {hasFilters && (
                   <Button onClick={clearFilters} variant="outline" className="gap-2">
@@ -1481,15 +2125,38 @@ export default function MaterialsPage() {
               </div>
             ) : (
               <>
-                <div className={cn("gap-4", viewMode === "grid" ? (compactMode ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid md:grid-cols-2 xl:grid-cols-3") : "flex flex-col")}>
+                <div
+                  className={cn(
+                    "gap-4",
+                    viewMode === "grid"
+                      ? compactMode
+                        ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+                        : "grid md:grid-cols-2 xl:grid-cols-3"
+                      : "flex flex-col"
+                  )}
+                >
                   {materials.map((material, idx) => (
-                    <MaterialCard key={material.id} material={material} isCollected={collectedIds.has(material.id)} onCollect={handleCollect} onCopy={handleCopy} onViewDetail={() => openDetailModal(material, idx)} compact={compactMode} index={idx} />
+                    <MaterialCard
+                      key={material.id}
+                      material={material}
+                      isCollected={collectedIds.has(material.id)}
+                      onCollect={handleCollect}
+                      onCopy={handleCopy}
+                      onViewDetail={() => openDetailModal(material, idx)}
+                      compact={compactMode}
+                      index={idx}
+                    />
                   ))}
                 </div>
 
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-6 lg:mt-8">
-                    <Button variant="outline" size="sm" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                    >
                       <ChevronLeft className="w-4 h-4 mr-1" />
                       上一页
                     </Button>
@@ -1501,13 +2168,27 @@ export default function MaterialsPage() {
                         else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
                         else pageNum = page - 2 + i;
                         return (
-                          <button key={pageNum} onClick={() => setPage(pageNum)} className={cn("w-9 h-9 rounded-lg text-sm font-medium transition-all", page === pageNum ? "bg-amber-500 text-white shadow-lg" : "bg-white border border-stone-200 text-stone-600 hover:bg-stone-50")}>
+                          <button
+                            key={pageNum}
+                            onClick={() => setPage(pageNum)}
+                            className={cn(
+                              "w-9 h-9 rounded-lg text-sm font-medium transition-all",
+                              page === pageNum
+                                ? "bg-amber-500 text-white shadow-lg"
+                                : "bg-white border border-stone-200 text-stone-600 hover:bg-stone-50"
+                            )}
+                          >
                             {pageNum}
                           </button>
                         );
                       })}
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(Math.min(totalPages, page + 1))}
+                      disabled={page === totalPages}
+                    >
                       下一页
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>

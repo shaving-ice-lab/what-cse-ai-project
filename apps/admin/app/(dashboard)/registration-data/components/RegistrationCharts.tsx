@@ -14,12 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@what-cse/ui";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartConfig,
-} from "@what-cse/ui";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@what-cse/ui";
 import {
   LineChart,
   Line,
@@ -77,7 +72,7 @@ export function RegistrationCharts() {
         registrationDataApi.getStatsByProvince(),
         registrationDataApi.getStatsByExamType(),
       ]);
-      
+
       setTrends(trendsRes.trends || []);
       setProvinceStats(provinceRes.stats || []);
       setExamTypeStats(examTypeRes.stats || []);
@@ -195,23 +190,10 @@ export function RegistrationCharts() {
           ) : provinceStats.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={provinceStats.slice(0, 10)}
-                  layout="vertical"
-                  margin={{ left: 60 }}
-                >
+                <BarChart data={provinceStats.slice(0, 10)} layout="vertical" margin={{ left: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    type="number"
-                    tickFormatter={formatNumber}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="province"
-                    tick={{ fontSize: 12 }}
-                    width={50}
-                  />
+                  <XAxis type="number" tickFormatter={formatNumber} tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="province" tick={{ fontSize: 12 }} width={50} />
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
@@ -247,23 +229,10 @@ export function RegistrationCharts() {
           ) : examTypeStats.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={examTypeStats.slice(0, 10)}
-                  layout="vertical"
-                  margin={{ left: 80 }}
-                >
+                <BarChart data={examTypeStats.slice(0, 10)} layout="vertical" margin={{ left: 80 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    type="number"
-                    tickFormatter={formatNumber}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="exam_type"
-                    tick={{ fontSize: 12 }}
-                    width={70}
-                  />
+                  <XAxis type="number" tickFormatter={formatNumber} tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="exam_type" tick={{ fontSize: 12 }} width={70} />
                   <ChartTooltip
                     content={
                       <ChartTooltipContent

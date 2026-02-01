@@ -78,14 +78,17 @@ export function Calculator({ isOpen, onClose, position }: CalculatorProps) {
     };
   }, [isDragging, dragOffset]);
 
-  const inputDigit = useCallback((digit: string) => {
-    if (waitingForOperand) {
-      setDisplay(digit);
-      setWaitingForOperand(false);
-    } else {
-      setDisplay(display === "0" ? digit : display + digit);
-    }
-  }, [display, waitingForOperand]);
+  const inputDigit = useCallback(
+    (digit: string) => {
+      if (waitingForOperand) {
+        setDisplay(digit);
+        setWaitingForOperand(false);
+      } else {
+        setDisplay(display === "0" ? digit : display + digit);
+      }
+    },
+    [display, waitingForOperand]
+  );
 
   const inputDot = useCallback(() => {
     if (waitingForOperand) {
@@ -125,41 +128,44 @@ export function Calculator({ isOpen, onClose, position }: CalculatorProps) {
     setDisplay(String(value / 100));
   }, [display]);
 
-  const performOperation = useCallback((nextOperator: string) => {
-    const inputValue = parseFloat(display);
+  const performOperation = useCallback(
+    (nextOperator: string) => {
+      const inputValue = parseFloat(display);
 
-    if (previousValue === null) {
-      setPreviousValue(inputValue);
-    } else if (operator) {
-      const currentValue = previousValue;
-      let newValue: number;
+      if (previousValue === null) {
+        setPreviousValue(inputValue);
+      } else if (operator) {
+        const currentValue = previousValue;
+        let newValue: number;
 
-      switch (operator) {
-        case "+":
-          newValue = currentValue + inputValue;
-          break;
-        case "-":
-          newValue = currentValue - inputValue;
-          break;
-        case "*":
-          newValue = currentValue * inputValue;
-          break;
-        case "/":
-          newValue = inputValue !== 0 ? currentValue / inputValue : 0;
-          break;
-        default:
-          newValue = inputValue;
+        switch (operator) {
+          case "+":
+            newValue = currentValue + inputValue;
+            break;
+          case "-":
+            newValue = currentValue - inputValue;
+            break;
+          case "*":
+            newValue = currentValue * inputValue;
+            break;
+          case "/":
+            newValue = inputValue !== 0 ? currentValue / inputValue : 0;
+            break;
+          default:
+            newValue = inputValue;
+        }
+
+        // Format the result to avoid floating point issues
+        const formattedValue = Math.round(newValue * 1000000000) / 1000000000;
+        setDisplay(String(formattedValue));
+        setPreviousValue(formattedValue);
       }
 
-      // Format the result to avoid floating point issues
-      const formattedValue = Math.round(newValue * 1000000000) / 1000000000;
-      setDisplay(String(formattedValue));
-      setPreviousValue(formattedValue);
-    }
-
-    setWaitingForOperand(true);
-    setOperator(nextOperator === "=" ? null : nextOperator);
-  }, [display, operator, previousValue]);
+      setWaitingForOperand(true);
+      setOperator(nextOperator === "=" ? null : nextOperator);
+    },
+    [display, operator, previousValue]
+  );
 
   // Memory functions
   const memoryClear = () => setMemory(0);
@@ -169,30 +175,29 @@ export function Calculator({ isOpen, onClose, position }: CalculatorProps) {
 
   if (!isOpen) return null;
 
-  const Button = ({ 
-    children, 
-    onClick, 
-    className = "", 
-    variant = "default" 
-  }: { 
-    children: React.ReactNode; 
-    onClick: () => void; 
-    className?: string; 
+  const Button = ({
+    children,
+    onClick,
+    className = "",
+    variant = "default",
+  }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    className?: string;
     variant?: "default" | "operator" | "action" | "equal";
   }) => {
-    const baseStyle = "h-12 rounded-lg font-medium transition-all active:scale-95 flex items-center justify-center";
+    const baseStyle =
+      "h-12 rounded-lg font-medium transition-all active:scale-95 flex items-center justify-center";
     const variants = {
       default: "bg-white hover:bg-stone-100 text-stone-800 border border-stone-200",
       operator: "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200",
       action: "bg-stone-100 hover:bg-stone-200 text-stone-600 border border-stone-200",
-      equal: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md",
+      equal:
+        "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md",
     };
 
     return (
-      <button
-        onClick={onClick}
-        className={cn(baseStyle, variants[variant], className)}
-      >
+      <button onClick={onClick} className={cn(baseStyle, variants[variant], className)}>
         {children}
       </button>
     );
@@ -209,10 +214,7 @@ export function Calculator({ isOpen, onClose, position }: CalculatorProps) {
         onMouseDown={handleMouseDown}
       >
         <span className="text-white font-medium">计算器</span>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-white/20 rounded-lg transition-colors"
-        >
+        <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
           <X className="w-4 h-4 text-white" />
         </button>
       </div>
@@ -231,37 +233,66 @@ export function Calculator({ isOpen, onClose, position }: CalculatorProps) {
 
       {/* Memory buttons */}
       <div className="grid grid-cols-4 gap-1 px-3 pb-1">
-        <button onClick={memoryClear} className="text-xs py-1 text-stone-500 hover:text-amber-600">MC</button>
-        <button onClick={memoryRecall} className="text-xs py-1 text-stone-500 hover:text-amber-600">MR</button>
-        <button onClick={memoryAdd} className="text-xs py-1 text-stone-500 hover:text-amber-600">M+</button>
-        <button onClick={memorySubtract} className="text-xs py-1 text-stone-500 hover:text-amber-600">M-</button>
+        <button onClick={memoryClear} className="text-xs py-1 text-stone-500 hover:text-amber-600">
+          MC
+        </button>
+        <button onClick={memoryRecall} className="text-xs py-1 text-stone-500 hover:text-amber-600">
+          MR
+        </button>
+        <button onClick={memoryAdd} className="text-xs py-1 text-stone-500 hover:text-amber-600">
+          M+
+        </button>
+        <button
+          onClick={memorySubtract}
+          className="text-xs py-1 text-stone-500 hover:text-amber-600"
+        >
+          M-
+        </button>
       </div>
 
       {/* Buttons */}
       <div className="grid grid-cols-4 gap-2 p-3">
-        <Button onClick={clearAll} variant="action">AC</Button>
-        <Button onClick={toggleSign} variant="action">±</Button>
-        <Button onClick={percentage} variant="action"><Percent className="w-4 h-4" /></Button>
-        <Button onClick={() => performOperation("/")} variant="operator"><Divide className="w-4 h-4" /></Button>
+        <Button onClick={clearAll} variant="action">
+          AC
+        </Button>
+        <Button onClick={toggleSign} variant="action">
+          ±
+        </Button>
+        <Button onClick={percentage} variant="action">
+          <Percent className="w-4 h-4" />
+        </Button>
+        <Button onClick={() => performOperation("/")} variant="operator">
+          <Divide className="w-4 h-4" />
+        </Button>
 
         <Button onClick={() => inputDigit("7")}>7</Button>
         <Button onClick={() => inputDigit("8")}>8</Button>
         <Button onClick={() => inputDigit("9")}>9</Button>
-        <Button onClick={() => performOperation("*")} variant="operator">×</Button>
+        <Button onClick={() => performOperation("*")} variant="operator">
+          ×
+        </Button>
 
         <Button onClick={() => inputDigit("4")}>4</Button>
         <Button onClick={() => inputDigit("5")}>5</Button>
         <Button onClick={() => inputDigit("6")}>6</Button>
-        <Button onClick={() => performOperation("-")} variant="operator"><Minus className="w-4 h-4" /></Button>
+        <Button onClick={() => performOperation("-")} variant="operator">
+          <Minus className="w-4 h-4" />
+        </Button>
 
         <Button onClick={() => inputDigit("1")}>1</Button>
         <Button onClick={() => inputDigit("2")}>2</Button>
         <Button onClick={() => inputDigit("3")}>3</Button>
-        <Button onClick={() => performOperation("+")} variant="operator"><Plus className="w-4 h-4" /></Button>
+        <Button onClick={() => performOperation("+")} variant="operator">
+          <Plus className="w-4 h-4" />
+        </Button>
 
-        <Button onClick={() => inputDigit("0")} className="col-span-2">0</Button>
+        <Button onClick={() => inputDigit("0")} className="col-span-2">
+          0
+        </Button>
         <Button onClick={inputDot}>.</Button>
-        <Button onClick={() => performOperation("=")} variant="equal"><Equal className="w-4 h-4" /></Button>
+        <Button onClick={() => performOperation("=")} variant="equal">
+          <Equal className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* Footer tip */}

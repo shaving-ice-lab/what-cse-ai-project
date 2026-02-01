@@ -34,7 +34,7 @@ export const ExamTypeOptions = [
   "其他",
 ] as const;
 
-export type ExamType = typeof ExamTypeOptions[number];
+export type ExamType = (typeof ExamTypeOptions)[number];
 
 // 公告简要信息
 export interface AnnouncementBrief {
@@ -95,22 +95,22 @@ export interface AnnouncementQueryParams {
   province?: string;
   city?: string;
   source?: string;
-  
+
   // 状态筛选
   status?: number;
-  
+
   // 时间筛选
   start_date?: string;
   end_date?: string;
   reg_status?: "registering" | "upcoming" | "ended";
-  
+
   // 关键词搜索
   keyword?: string;
-  
+
   // 排序
   sort_by?: "created_at" | "publish_date" | "registration_end" | "position_count";
   sort_order?: "asc" | "desc";
-  
+
   // 分页
   page?: number;
   page_size?: number;

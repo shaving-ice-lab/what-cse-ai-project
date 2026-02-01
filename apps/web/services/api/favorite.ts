@@ -63,16 +63,14 @@ export const favoriteApi = {
     request.get("/favorites", { params }),
 
   // 添加收藏
-  add: (data: AddFavoriteRequest): Promise<void> =>
-    request.post("/favorites", data),
+  add: (data: AddFavoriteRequest): Promise<void> => request.post("/favorites", data),
 
   // 移除收藏 (by type and id)
   remove: (favoriteType: FavoriteType, targetId: string): Promise<void> =>
     request.delete(`/favorites/${favoriteType}/${targetId}`),
 
   // 批量移除收藏
-  batchRemove: (ids: number[]): Promise<void> =>
-    request.post("/favorites/batch-remove", { ids }),
+  batchRemove: (ids: number[]): Promise<void> => request.post("/favorites/batch-remove", { ids }),
 
   // 批量检查收藏状态
   checkFavorites: (
@@ -84,7 +82,9 @@ export const favoriteApi = {
     }),
 
   // 导出收藏
-  export: (favoriteType?: FavoriteType): Promise<{
+  export: (
+    favoriteType?: FavoriteType
+  ): Promise<{
     favorites: FavoriteResponse[];
     export_at: string;
   }> =>
@@ -93,8 +93,7 @@ export const favoriteApi = {
     }),
 
   // 获取收藏统计
-  getStats: (): Promise<{ stats: Record<string, number> }> =>
-    request.get("/favorites/stats"),
+  getStats: (): Promise<{ stats: Record<string, number> }> => request.get("/favorites/stats"),
 
   // 更新收藏备注
   updateNote: (favoriteId: number, note: string): Promise<void> =>
@@ -107,8 +106,7 @@ export const favoriteApi = {
   // 收藏夹操作
   folders: {
     // 获取所有收藏夹
-    list: (): Promise<{ folders: FavoriteFolder[] }> =>
-      request.get("/favorites/folders"),
+    list: (): Promise<{ folders: FavoriteFolder[] }> => request.get("/favorites/folders"),
 
     // 创建收藏夹
     create: (data: {
@@ -124,7 +122,6 @@ export const favoriteApi = {
     ): Promise<void> => request.put(`/favorites/folders/${folderId}`, data),
 
     // 删除收藏夹
-    delete: (folderId: number): Promise<void> =>
-      request.delete(`/favorites/folders/${folderId}`),
+    delete: (folderId: number): Promise<void> => request.delete(`/favorites/folders/${folderId}`),
   },
 };

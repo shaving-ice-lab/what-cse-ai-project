@@ -134,13 +134,13 @@ import { toast } from "sonner";
 // Utility: Highlight search terms in text
 function HighlightText({ text, searchQuery }: { text: string; searchQuery: string }) {
   if (!searchQuery.trim()) return <>{text}</>;
-  
-  const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+
+  const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
   const parts = text.split(regex);
-  
+
   return (
     <>
-      {parts.map((part, i) => 
+      {parts.map((part, i) =>
         regex.test(part) ? (
           <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 text-inherit rounded-sm px-0.5">
             {part}
@@ -156,9 +156,9 @@ function HighlightText({ text, searchQuery }: { text: string; searchQuery: strin
 // Utility: Export data as JSON file
 function exportToJson(data: any, filename: string) {
   const jsonStr = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const blob = new Blob([jsonStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(link);
@@ -168,15 +168,18 @@ function exportToJson(data: any, filename: string) {
 }
 
 // Subject color themes - each subject has a unique identity
-const subjectThemes: Record<Subject, {
-  icon: LucideIcon;
-  gradient: string;
-  bgLight: string;
-  bgDark: string;
-  text: string;
-  border: string;
-  ring: string;
-}> = {
+const subjectThemes: Record<
+  Subject,
+  {
+    icon: LucideIcon;
+    gradient: string;
+    bgLight: string;
+    bgDark: string;
+    text: string;
+    border: string;
+    ring: string;
+  }
+> = {
   xingce: {
     icon: BarChart3,
     gradient: "from-blue-500 to-cyan-500",
@@ -308,7 +311,9 @@ function CategoryFormDialog({
           <div className={`absolute inset-0 bg-gradient-to-r ${theme.gradient} opacity-10`} />
           <DialogHeader className="relative">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm`}>
+              <div
+                className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm`}
+              >
                 <SubjectIcon subject={formData.subject} className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -317,8 +322,8 @@ function CategoryFormDialog({
                   {isEdit
                     ? "修改课程分类信息"
                     : parentName
-                    ? `在「${parentName}」下创建子分类`
-                    : "创建新的课程分类"}
+                      ? `在「${parentName}」下创建子分类`
+                      : "创建新的课程分类"}
                 </DialogDescription>
               </div>
             </div>
@@ -334,7 +339,9 @@ function CategoryFormDialog({
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-xs">分类编码 <span className="text-red-500">*</span></Label>
+                <Label className="text-xs">
+                  分类编码 <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
@@ -344,7 +351,9 @@ function CategoryFormDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">分类名称 <span className="text-red-500">*</span></Label>
+                <Label className="text-xs">
+                  分类名称 <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -376,7 +385,10 @@ function CategoryFormDialog({
                     {(["xingce", "shenlun", "mianshi", "gongji"] as Subject[]).map((s) => (
                       <SelectItem key={s} value={s}>
                         <span className="flex items-center gap-2">
-                          <SubjectIcon subject={s} className={`h-3.5 w-3.5 ${subjectThemes[s].text}`} />
+                          <SubjectIcon
+                            subject={s}
+                            className={`h-3.5 w-3.5 ${subjectThemes[s].text}`}
+                          />
                           {getSubjectName(s)}
                         </span>
                       </SelectItem>
@@ -442,9 +454,13 @@ function CategoryFormDialog({
               />
             </div>
 
-            <div className={`flex items-center justify-between p-3 rounded-lg ${theme.bgLight} ${theme.bgDark} border ${theme.border}`}>
+            <div
+              className={`flex items-center justify-between p-3 rounded-lg ${theme.bgLight} ${theme.bgDark} border ${theme.border}`}
+            >
               <div className="flex items-center gap-2">
-                <Power className={`h-4 w-4 ${formData.is_active ? 'text-emerald-500' : 'text-muted-foreground'}`} />
+                <Power
+                  className={`h-4 w-4 ${formData.is_active ? "text-emerald-500" : "text-muted-foreground"}`}
+                />
                 <div>
                   <Label className="text-sm font-medium">启用状态</Label>
                   <p className="text-xs text-muted-foreground">启用后将在前端显示</p>
@@ -462,8 +478,8 @@ function CategoryFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} className="h-9">
             取消
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             className={`h-9 bg-gradient-to-r ${theme.gradient} hover:opacity-90 transition-opacity`}
           >
             {isEdit ? "保存更改" : "创建分类"}
@@ -491,7 +507,7 @@ interface ColumnItemProps {
   onQuickDelete?: () => void;
   onToggleActive?: () => void;
   onCopyCode?: () => void;
-  colorTheme?: typeof subjectThemes[Subject];
+  colorTheme?: (typeof subjectThemes)[Subject];
   showQuickActions?: boolean;
   enableContextMenu?: boolean;
   searchQuery?: string; // For highlighting search matches
@@ -516,7 +532,7 @@ function ColumnItem({
   searchQuery = "",
 }: ColumnItemProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  
+
   const itemContent = (
     <div
       onClick={onClick}
@@ -524,11 +540,12 @@ function ColumnItem({
       className={`
         group relative flex items-center gap-1.5 px-2 py-1.5 cursor-pointer 
         transition-all duration-150 ease-out rounded mx-0.5 my-px
-        ${isSelected 
-          ? colorTheme 
-            ? `bg-gradient-to-r ${colorTheme.gradient} text-white shadow-sm` 
-            : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm"
-          : "hover:bg-muted/60"
+        ${
+          isSelected
+            ? colorTheme
+              ? `bg-gradient-to-r ${colorTheme.gradient} text-white shadow-sm`
+              : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm"
+            : "hover:bg-muted/60"
         }
         ${!isActive ? "opacity-50" : ""}
       `}
@@ -539,7 +556,9 @@ function ColumnItem({
           <HighlightText text={name} searchQuery={searchQuery} />
         </div>
         {subtitle && (
-          <div className={`text-[10px] truncate transition-colors leading-tight ${isSelected ? "text-white/70" : "text-muted-foreground"}`}>
+          <div
+            className={`text-[10px] truncate transition-colors leading-tight ${isSelected ? "text-white/70" : "text-muted-foreground"}`}
+          >
             <HighlightText text={subtitle} searchQuery={searchQuery} />
           </div>
         )}
@@ -550,7 +569,10 @@ function ColumnItem({
         <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-px bg-background/95 backdrop-blur-sm rounded shadow-sm border px-0.5 py-0.5 animate-in fade-in-0 zoom-in-95 duration-150">
           {onQuickEdit && (
             <button
-              onClick={(e) => { e.stopPropagation(); onQuickEdit(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickEdit();
+              }}
               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
               title="编辑"
             >
@@ -559,7 +581,10 @@ function ColumnItem({
           )}
           {onQuickDelete && (
             <button
-              onClick={(e) => { e.stopPropagation(); onQuickDelete(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickDelete();
+              }}
               className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50 text-muted-foreground hover:text-red-600 transition-colors"
               title="删除"
             >
@@ -573,10 +598,8 @@ function ColumnItem({
       {count !== undefined && count > 0 && (
         <span
           className={`text-[10px] px-1 py-px rounded font-medium transition-all flex-shrink-0 ${
-            isSelected 
-              ? "bg-white/20 text-white" 
-              : "bg-muted/60 text-muted-foreground"
-          } ${showQuickActions && !isSelected ? 'group-hover:opacity-0' : ''}`}
+            isSelected ? "bg-white/20 text-white" : "bg-muted/60 text-muted-foreground"
+          } ${showQuickActions && !isSelected ? "group-hover:opacity-0" : ""}`}
         >
           {count}
         </span>
@@ -584,17 +607,19 @@ function ColumnItem({
 
       {/* Inactive indicator - simplified */}
       {!isActive && (
-        <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${isSelected ? "bg-white/50" : "bg-orange-400"}`} />
+        <div
+          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${isSelected ? "bg-white/50" : "bg-orange-400"}`}
+        />
       )}
 
       {/* Arrow for items with children */}
       {hasChildren && (
-        <ChevronRight 
+        <ChevronRight
           className={`h-3 w-3 flex-shrink-0 transition-all duration-200 ${
-            isSelected 
-              ? "text-white/60" 
+            isSelected
+              ? "text-white/60"
               : "text-muted-foreground/50 group-hover:text-muted-foreground"
-          }`} 
+          }`}
         />
       )}
     </div>
@@ -603,59 +628,62 @@ function ColumnItem({
   // Wrap with context menu if enabled (only opens on right-click)
   if (enableContextMenu) {
     return (
-      <div 
+      <div
         className="relative"
-        onContextMenu={(e) => { 
-          e.preventDefault(); 
+        onContextMenu={(e) => {
+          e.preventDefault();
           setContextMenuOpen(true);
         }}
       >
         {itemContent}
         <DropdownMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
           <DropdownMenuTrigger className="sr-only" />
-        <DropdownMenuContent align="start" className="w-48">
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-            操作
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {onQuickEdit && (
-            <DropdownMenuItem onClick={onQuickEdit} className="text-sm">
-              <Edit className="h-3.5 w-3.5 mr-2" />
-              编辑
-              <span className="ml-auto text-xs text-muted-foreground">双击</span>
-            </DropdownMenuItem>
-          )}
-          {onCopyCode && subtitle && (
-            <DropdownMenuItem onClick={onCopyCode} className="text-sm">
-              <Copy className="h-3.5 w-3.5 mr-2" />
-              复制编码
-            </DropdownMenuItem>
-          )}
-          {onToggleActive && (
-            <DropdownMenuItem onClick={onToggleActive} className="text-sm">
-              {isActive ? (
-                <>
-                  <EyeOff className="h-3.5 w-3.5 mr-2" />
-                  禁用
-                </>
-              ) : (
-                <>
-                  <Eye className="h-3.5 w-3.5 mr-2" />
-                  启用
-                </>
-              )}
-            </DropdownMenuItem>
-          )}
-          {onQuickDelete && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onQuickDelete} className="text-sm text-red-600 focus:text-red-600">
-                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                删除
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              操作
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {onQuickEdit && (
+              <DropdownMenuItem onClick={onQuickEdit} className="text-sm">
+                <Edit className="h-3.5 w-3.5 mr-2" />
+                编辑
+                <span className="ml-auto text-xs text-muted-foreground">双击</span>
               </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
+            )}
+            {onCopyCode && subtitle && (
+              <DropdownMenuItem onClick={onCopyCode} className="text-sm">
+                <Copy className="h-3.5 w-3.5 mr-2" />
+                复制编码
+              </DropdownMenuItem>
+            )}
+            {onToggleActive && (
+              <DropdownMenuItem onClick={onToggleActive} className="text-sm">
+                {isActive ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5 mr-2" />
+                    禁用
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 mr-2" />
+                    启用
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+            {onQuickDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={onQuickDelete}
+                  className="text-sm text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                  删除
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
         </DropdownMenu>
       </div>
     );
@@ -681,7 +709,7 @@ interface ColumnProps {
     isActive?: boolean;
     hasChildren: boolean;
     data?: any;
-    colorTheme?: typeof subjectThemes[Subject];
+    colorTheme?: (typeof subjectThemes)[Subject];
   }>;
   selectedId: string | number | null;
   onSelect: (id: string | number, data?: any) => void;
@@ -731,16 +759,17 @@ function Column({
 
   // Apply status filter
   if (statusFilter !== "all") {
-    processedItems = processedItems.filter(item => 
+    processedItems = processedItems.filter((item) =>
       statusFilter === "active" ? item.isActive !== false : item.isActive === false
     );
   }
 
   // Apply search filter
   if (searchQuery.trim()) {
-    processedItems = processedItems.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
+    processedItems = processedItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
 
@@ -762,35 +791,35 @@ function Column({
     });
   }
 
-  const activeCount = items.filter(i => i.isActive !== false).length;
-  const inactiveCount = items.filter(i => i.isActive === false).length;
+  const activeCount = items.filter((i) => i.isActive !== false).length;
+  const inactiveCount = items.filter((i) => i.isActive === false).length;
   const hasFilters = statusFilter !== "all" || sortOrder !== "default";
 
   // 根据 wide 属性决定列宽
-  const widthClass = wide 
+  const widthClass = wide
     ? "min-w-[260px] w-[260px] md:min-w-[300px] md:w-[300px] lg:min-w-[340px] lg:w-[340px]"
     : "min-w-[180px] w-[180px] md:min-w-[200px] md:w-[200px] lg:min-w-[220px] lg:w-[220px]";
 
   return (
-    <div className={`flex flex-col h-full ${widthClass} flex-shrink-0 border-r border-border/40 bg-background/95`}>
+    <div
+      className={`flex flex-col h-full ${widthClass} flex-shrink-0 border-r border-border/40 bg-background/95`}
+    >
       {/* Column Header - 更紧凑 */}
       <div className="flex items-center justify-between px-2.5 py-2 border-b border-border/40 bg-muted/20">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-[11px] font-semibold text-foreground/70 tracking-wide truncate">
             {title}
           </span>
-          {hasFilters && (
-            <div className="h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-          )}
+          {hasFilters && <div className="h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
         </div>
         <div className="flex items-center gap-0.5 flex-shrink-0">
           {(filterable || sortable) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={`h-5 w-5 transition-colors ${hasFilters ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600' : 'hover:bg-muted/80'}`}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-5 w-5 transition-colors ${hasFilters ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600" : "hover:bg-muted/80"}`}
                 >
                   <Filter className="h-3 w-3" />
                 </Button>
@@ -799,14 +828,14 @@ function Column({
                 {filterable && (
                   <>
                     <DropdownMenuLabel className="text-[11px] py-1">状态</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={statusFilter === "all"}
                       onCheckedChange={() => setStatusFilter("all")}
                       className="text-xs py-1"
                     >
                       全部 ({items.length})
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={statusFilter === "active"}
                       onCheckedChange={() => setStatusFilter("active")}
                       className="text-xs py-1"
@@ -814,7 +843,7 @@ function Column({
                       <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5" />
                       已启用 ({activeCount})
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={statusFilter === "inactive"}
                       onCheckedChange={() => setStatusFilter("inactive")}
                       className="text-xs py-1"
@@ -828,28 +857,28 @@ function Column({
                 {sortable && (
                   <>
                     <DropdownMenuLabel className="text-[11px] py-1">排序</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={sortOrder === "default"}
                       onCheckedChange={() => setSortOrder("default")}
                       className="text-xs py-1"
                     >
                       默认
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={sortOrder === "name-asc"}
                       onCheckedChange={() => setSortOrder("name-asc")}
                       className="text-xs py-1"
                     >
                       名称 A→Z
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={sortOrder === "name-desc"}
                       onCheckedChange={() => setSortOrder("name-desc")}
                       className="text-xs py-1"
                     >
                       名称 Z→A
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
+                    <DropdownMenuCheckboxItem
                       checked={sortOrder === "count-desc"}
                       onCheckedChange={() => setSortOrder("count-desc")}
                       className="text-xs py-1"
@@ -861,8 +890,11 @@ function Column({
                 {hasFilters && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => { setStatusFilter("all"); setSortOrder("default"); }}
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setStatusFilter("all");
+                        setSortOrder("default");
+                      }}
                       className="text-xs py-1 text-blue-600"
                     >
                       <RefreshCw className="h-3 w-3 mr-1.5" />
@@ -874,10 +906,10 @@ function Column({
             </DropdownMenu>
           )}
           {searchable && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-5 w-5 transition-colors ${isSearching ? 'bg-muted text-foreground' : 'hover:bg-muted/80'}`}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-5 w-5 transition-colors ${isSearching ? "bg-muted text-foreground" : "hover:bg-muted/80"}`}
               onClick={() => {
                 setIsSearching(!isSearching);
                 if (isSearching) setSearchQuery("");
@@ -888,11 +920,11 @@ function Column({
             </Button>
           )}
           {onAdd && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-5 w-5 hover:bg-amber-500/10 hover:text-amber-600 transition-colors" 
-              onClick={onAdd} 
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 hover:bg-amber-500/10 hover:text-amber-600 transition-colors"
+              onClick={onAdd}
               title="新建"
             >
               <Plus className="h-3 w-3" />
@@ -935,8 +967,8 @@ function Column({
         {loading ? (
           <div className="p-1 space-y-0.5">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="flex flex-col gap-1 px-2 py-1.5 mx-0.5 rounded bg-muted/30"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
@@ -948,25 +980,33 @@ function Column({
         ) : processedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 px-3 text-muted-foreground">
             <div className="h-10 w-10 rounded-lg bg-muted/40 flex items-center justify-center mb-2">
-              {searchQuery || hasFilters ? <Filter className="h-4 w-4 opacity-40" /> : <Folder className="h-4 w-4 opacity-40" />}
+              {searchQuery || hasFilters ? (
+                <Filter className="h-4 w-4 opacity-40" />
+              ) : (
+                <Folder className="h-4 w-4 opacity-40" />
+              )}
             </div>
             <span className="text-[11px] text-center">
               {searchQuery ? `未找到` : hasFilters ? "无匹配项" : emptyText}
             </span>
             {hasFilters && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="mt-2 h-6 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                onClick={() => { setStatusFilter("all"); setSortOrder("default"); setSearchQuery(""); }}
+                onClick={() => {
+                  setStatusFilter("all");
+                  setSortOrder("default");
+                  setSearchQuery("");
+                }}
               >
                 重置
               </Button>
             )}
             {!searchQuery && !hasFilters && onAdd && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="mt-2 h-6 text-[11px] text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                 onClick={onAdd}
               >
@@ -989,8 +1029,12 @@ function Column({
                   onClick={() => onSelect(item.id, item.data)}
                   onDoubleClick={() => onDoubleClick?.(item.id, item.data)}
                   onQuickEdit={onQuickEdit ? () => onQuickEdit(item.id, item.data) : undefined}
-                  onQuickDelete={onQuickDelete ? () => onQuickDelete(item.id, item.data) : undefined}
-                  onToggleActive={onToggleActive ? () => onToggleActive(item.id, item.data) : undefined}
+                  onQuickDelete={
+                    onQuickDelete ? () => onQuickDelete(item.id, item.data) : undefined
+                  }
+                  onToggleActive={
+                    onToggleActive ? () => onToggleActive(item.id, item.data) : undefined
+                  }
                   onCopyCode={onCopyCode ? () => onCopyCode(item.id, item.data) : undefined}
                   colorTheme={item.colorTheme}
                   showQuickActions={showQuickActions}
@@ -1006,11 +1050,16 @@ function Column({
       {/* Column Footer - 更紧凑 */}
       <div className="flex items-center gap-1 px-2.5 py-1.5 border-t border-border/40 bg-muted/15 text-[10px] text-muted-foreground">
         <span className="font-medium tabular-nums">{processedItems.length}</span>
-        {(searchQuery || hasFilters) && <span className="text-muted-foreground/50">/{items.length}</span>}
+        {(searchQuery || hasFilters) && (
+          <span className="text-muted-foreground/50">/{items.length}</span>
+        )}
         <span className="text-muted-foreground/50">项</span>
         {hasFilters && (
           <button
-            onClick={() => { setStatusFilter("all"); setSortOrder("default"); }}
+            onClick={() => {
+              setStatusFilter("all");
+              setSortOrder("default");
+            }}
             className="ml-auto text-blue-500 hover:text-blue-600 transition-colors"
           >
             <RefreshCw className="h-2.5 w-2.5" />
@@ -1035,7 +1084,15 @@ interface DetailPanelProps {
   onRefresh: () => void;
 }
 
-function DetailPanel({ category, onEdit, onDelete, onToggleActive, onAddChild, onDuplicate, onRefresh }: DetailPanelProps) {
+function DetailPanel({
+  category,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  onAddChild,
+  onDuplicate,
+  onRefresh,
+}: DetailPanelProps) {
   const [generatingDescription, setGeneratingDescription] = useState(false);
 
   const handleGenerateDescription = async () => {
@@ -1072,7 +1129,9 @@ function DetailPanel({ category, onEdit, onDelete, onToggleActive, onAddChild, o
       {/* 头部 */}
       <div className={`px-4 py-4 border-b bg-gradient-to-r ${theme.bgLight} ${theme.bgDark}`}>
         <div className="flex items-start gap-3">
-          <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm flex-shrink-0`}>
+          <div
+            className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm flex-shrink-0`}
+          >
             <SubjectIcon subject={category.subject} className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -1131,7 +1190,11 @@ function DetailPanel({ category, onEdit, onDelete, onToggleActive, onAddChild, o
             </div>
             <div className="p-3 rounded-lg bg-muted/30 min-h-[60px]">
               <p className="text-xs leading-relaxed text-foreground/80">
-                {category.description || <span className="text-muted-foreground italic">暂无描述，点击"AI生成"自动生成</span>}
+                {category.description || (
+                  <span className="text-muted-foreground italic">
+                    暂无描述，点击"AI生成"自动生成
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -1150,12 +1213,20 @@ function DetailPanel({ category, onEdit, onDelete, onToggleActive, onAddChild, o
               <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-muted/30">
                 <span className="text-xs text-muted-foreground">考试类型</span>
                 <span className="text-xs font-medium">
-                  {category.exam_type === "national" ? "国考" : category.exam_type === "provincial" ? "省考" : category.exam_type === "institution" ? "事业单位" : "通用"}
+                  {category.exam_type === "national"
+                    ? "国考"
+                    : category.exam_type === "provincial"
+                      ? "省考"
+                      : category.exam_type === "institution"
+                        ? "事业单位"
+                        : "通用"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-muted/30">
                 <span className="text-xs text-muted-foreground">状态</span>
-                <span className={`text-xs font-medium ${category.is_active ? "text-emerald-600" : "text-orange-600"}`}>
+                <span
+                  className={`text-xs font-medium ${category.is_active ? "text-emerald-600" : "text-orange-600"}`}
+                >
                   {category.is_active ? "已启用" : "已禁用"}
                 </span>
               </div>
@@ -1171,24 +1242,39 @@ function DetailPanel({ category, onEdit, onDelete, onToggleActive, onAddChild, o
       {/* 底部操作栏 */}
       <div className="p-3 border-t bg-muted/20">
         <div className="grid grid-cols-4 gap-1.5">
-          <Button size="sm" variant="ghost" onClick={onEdit} className="h-8 flex-col gap-0.5 text-muted-foreground hover:text-foreground">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onEdit}
+            className="h-8 flex-col gap-0.5 text-muted-foreground hover:text-foreground"
+          >
             <Edit className="h-4 w-4" />
             <span className="text-[10px]">编辑</span>
           </Button>
-          <Button size="sm" variant="ghost" onClick={onAddChild} className="h-8 flex-col gap-0.5 text-muted-foreground hover:text-foreground">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onAddChild}
+            className="h-8 flex-col gap-0.5 text-muted-foreground hover:text-foreground"
+          >
             <Plus className="h-4 w-4" />
             <span className="text-[10px]">子分类</span>
           </Button>
-          <Button 
-            size="sm" 
-            variant="ghost" 
-            onClick={onToggleActive} 
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onToggleActive}
             className={`h-8 flex-col gap-0.5 ${category.is_active ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"}`}
           >
             {category.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
             <span className="text-[10px]">{category.is_active ? "禁用" : "启用"}</span>
           </Button>
-          <Button size="sm" variant="ghost" onClick={onDelete} className="h-8 flex-col gap-0.5 text-red-500 hover:text-red-600 hover:bg-red-50">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onDelete}
+            className="h-8 flex-col gap-0.5 text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
             <Trash2 className="h-4 w-4" />
             <span className="text-[10px]">删除</span>
           </Button>
@@ -1211,7 +1297,14 @@ interface CourseDetailPanelProps {
   onManageChapters: () => void;
 }
 
-function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete, onManageChapters }: CourseDetailPanelProps) {
+function CourseDetailPanel({
+  course,
+  onEdit,
+  onPublish,
+  onArchive,
+  onDelete,
+  onManageChapters,
+}: CourseDetailPanelProps) {
   // 空状态
   if (!course) {
     return (
@@ -1246,11 +1339,15 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete, onM
           <div className={`w-full h-full bg-gradient-to-br ${theme.gradient} opacity-30`} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        
+
         {/* 状态标签 */}
         <div className="absolute top-3 right-3">
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${status.color} bg-background/90 backdrop-blur-sm`}>
-            {status.dot && <span className={`h-1.5 w-1.5 rounded-full ${status.bg} animate-pulse`} />}
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${status.color} bg-background/90 backdrop-blur-sm`}
+          >
+            {status.dot && (
+              <span className={`h-1.5 w-1.5 rounded-full ${status.bg} animate-pulse`} />
+            )}
             {status.label}
           </span>
         </div>
@@ -1258,11 +1355,15 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete, onM
 
       {/* 标题区域 */}
       <div className="px-4 -mt-6 relative z-10">
-        <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-lg mb-2`}>
+        <div
+          className={`h-12 w-12 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-lg mb-2`}
+        >
           <BookOpen className="h-6 w-6 text-white" />
         </div>
         <h2 className="text-base font-semibold leading-tight">{course.title}</h2>
-        {course.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{course.subtitle}</p>}
+        {course.subtitle && (
+          <p className="text-xs text-muted-foreground mt-0.5">{course.subtitle}</p>
+        )}
       </div>
 
       {/* 内容 */}
@@ -1279,11 +1380,15 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete, onM
               <p className="text-[10px] text-muted-foreground">学习</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-muted/40">
-              <p className="text-base font-bold text-foreground">{course.rating?.toFixed(1) || "-"}</p>
+              <p className="text-base font-bold text-foreground">
+                {course.rating?.toFixed(1) || "-"}
+              </p>
               <p className="text-[10px] text-muted-foreground">评分</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-muted/40">
-              <p className="text-base font-bold text-foreground">{course.duration ? Math.floor(course.duration / 60) : 0}</p>
+              <p className="text-base font-bold text-foreground">
+                {course.duration ? Math.floor(course.duration / 60) : 0}
+              </p>
               <p className="text-[10px] text-muted-foreground">分钟</p>
             </div>
           </div>
@@ -1320,10 +1425,15 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete, onM
               </div>
               <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-muted/30">
                 <span className="text-xs text-muted-foreground">难度</span>
-                <span className={`text-xs font-medium ${
-                  course.difficulty === "beginner" ? "text-green-600" :
-                  course.difficulty === "intermediate" ? "text-blue-600" : "text-red-600"
-                }`}>
+                <span
+                  className={`text-xs font-medium ${
+                    course.difficulty === "beginner"
+                      ? "text-green-600"
+                      : course.difficulty === "intermediate"
+                        ? "text-blue-600"
+                        : "text-red-600"
+                  }`}
+                >
                   {getDifficultyLabel(course.difficulty)}
                 </span>
               </div>
@@ -1349,7 +1459,9 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete, onM
             <div className="space-y-2">
               <h3 className="text-xs font-medium text-muted-foreground">描述</h3>
               <div className="p-3 rounded-lg bg-muted/30">
-                <p className="text-xs leading-relaxed text-foreground/80 line-clamp-3">{course.description}</p>
+                <p className="text-xs leading-relaxed text-foreground/80 line-clamp-3">
+                  {course.description}
+                </p>
               </div>
             </div>
           )}
@@ -1359,41 +1471,66 @@ function CourseDetailPanel({ course, onEdit, onPublish, onArchive, onDelete, onM
       {/* 底部操作栏 */}
       <div className="p-3 border-t bg-muted/20">
         <div className="grid grid-cols-4 gap-1.5">
-          <Button size="sm" variant="ghost" onClick={onEdit} className="h-8 flex-col gap-0.5 text-muted-foreground hover:text-foreground">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onEdit}
+            className="h-8 flex-col gap-0.5 text-muted-foreground hover:text-foreground"
+          >
             <Edit className="h-4 w-4" />
             <span className="text-[10px]">编辑</span>
           </Button>
           {course.status === "draft" && (
-            <Button size="sm" variant="ghost" onClick={onPublish} className="h-8 flex-col gap-0.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onPublish}
+              className="h-8 flex-col gap-0.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
+            >
               <CheckCheck className="h-4 w-4" />
               <span className="text-[10px]">发布</span>
             </Button>
           )}
           {course.status === "published" && (
-            <Button size="sm" variant="ghost" onClick={onArchive} className="h-8 flex-col gap-0.5 text-orange-500 hover:text-orange-600 hover:bg-orange-50">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onArchive}
+              className="h-8 flex-col gap-0.5 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+            >
               <EyeOff className="h-4 w-4" />
               <span className="text-[10px]">下架</span>
             </Button>
           )}
           {course.status === "archived" && (
-            <Button size="sm" variant="ghost" onClick={onPublish} className="h-8 flex-col gap-0.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onPublish}
+              className="h-8 flex-col gap-0.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
+            >
               <Eye className="h-4 w-4" />
               <span className="text-[10px]">上线</span>
             </Button>
           )}
-          <Button 
-            size="sm" 
-            variant="ghost" 
+          <Button
+            size="sm"
+            variant="ghost"
             onClick={() => {
               navigator.clipboard.writeText(course.id.toString());
               toast.success("已复制课程ID");
-            }} 
+            }}
             className="h-8 flex-col gap-0.5 text-muted-foreground hover:text-foreground"
           >
             <Copy className="h-4 w-4" />
             <span className="text-[10px]">复制ID</span>
           </Button>
-          <Button size="sm" variant="ghost" onClick={onDelete} className="h-8 flex-col gap-0.5 text-red-500 hover:text-red-600 hover:bg-red-50">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onDelete}
+            className="h-8 flex-col gap-0.5 text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
             <Trash2 className="h-4 w-4" />
             <span className="text-[10px]">删除</span>
           </Button>
@@ -1417,10 +1554,14 @@ interface ChapterManagerModalProps {
 // 内容类型图标
 function ContentTypeIcon({ type, className }: { type: ContentType; className?: string }) {
   switch (type) {
-    case "video": return <Video className={className} />;
-    case "audio": return <Headphones className={className} />;
-    case "document": return <FileText className={className} />;
-    default: return <BookOpen className={className} />;
+    case "video":
+      return <Video className={className} />;
+    case "audio":
+      return <Headphones className={className} />;
+    case "document":
+      return <FileText className={className} />;
+    default:
+      return <BookOpen className={className} />;
   }
 }
 
@@ -1434,7 +1575,14 @@ interface ChapterFormDialogProps {
   onSubmit: (data: CreateChapterRequest | UpdateChapterRequest, isEdit: boolean) => void;
 }
 
-function ChapterFormDialog({ open, onOpenChange, courseId, chapter, parentId, onSubmit }: ChapterFormDialogProps) {
+function ChapterFormDialog({
+  open,
+  onOpenChange,
+  courseId,
+  chapter,
+  parentId,
+  onSubmit,
+}: ChapterFormDialogProps) {
   const [formData, setFormData] = useState<CreateChapterRequest>({
     course_id: courseId,
     parent_id: parentId,
@@ -1525,7 +1673,9 @@ function ChapterFormDialog({ open, onOpenChange, courseId, chapter, parentId, on
               <Input
                 type="number"
                 value={formData.duration_minutes}
-                onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 0 })
+                }
                 className="h-9"
               />
             </div>
@@ -1559,8 +1709,12 @@ function ChapterFormDialog({ open, onOpenChange, courseId, chapter, parentId, on
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">取消</Button>
-          <Button onClick={handleSubmit} size="sm">{chapter ? "保存" : "创建"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">
+            取消
+          </Button>
+          <Button onClick={handleSubmit} size="sm">
+            {chapter ? "保存" : "创建"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1590,12 +1744,19 @@ function ChapterTreeNode({ chapter, level, onEdit, onDelete, onAddChild }: Chapt
           className={`w-5 h-5 flex items-center justify-center rounded ${hasChildren ? "hover:bg-muted" : ""}`}
         >
           {hasChildren ? (
-            expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
+            expanded ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )
           ) : (
             <span className="w-3.5" />
           )}
         </button>
-        <ContentTypeIcon type={chapter.content_type} className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <ContentTypeIcon
+          type={chapter.content_type}
+          className="h-4 w-4 text-muted-foreground flex-shrink-0"
+        />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{chapter.title}</p>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -1607,7 +1768,9 @@ function ChapterTreeNode({ chapter, level, onEdit, onDelete, onAddChild }: Chapt
               </>
             )}
             {chapter.is_free_preview && (
-              <Badge variant="secondary" className="h-4 px-1 text-[9px]">试看</Badge>
+              <Badge variant="secondary" className="h-4 px-1 text-[9px]">
+                试看
+              </Badge>
             )}
           </div>
         </div>
@@ -1616,11 +1779,21 @@ function ChapterTreeNode({ chapter, level, onEdit, onDelete, onAddChild }: Chapt
             <Edit className="h-3.5 w-3.5" />
           </Button>
           {level < 2 && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onAddChild(chapter.id)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onAddChild(chapter.id)}
+            >
               <Plus className="h-3.5 w-3.5" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600" onClick={() => onDelete(chapter)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-red-500 hover:text-red-600"
+            onClick={() => onDelete(chapter)}
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -1647,17 +1820,17 @@ function ChapterTreeNode({ chapter, level, onEdit, onDelete, onAddChild }: Chapt
 function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterManagerModalProps) {
   const [activeTab, setActiveTab] = useState("basic");
   const [saving, setSaving] = useState(false);
-  
+
   // 课程表单数据
   const [formData, setFormData] = useState<UpdateCourseRequest>({});
-  
+
   // 章节相关状态
   const [chapters, setChapters] = useState<CourseChapter[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
   const [chapterFormOpen, setChapterFormOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<CourseChapter | null>(null);
   const [parentChapterId, setParentChapterId] = useState<number | undefined>(undefined);
-  
+
   // 分类数据
   const [categories, setCategories] = useState<CourseCategory[]>([]);
 
@@ -1697,7 +1870,10 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
   };
 
   // 扁平化分类用于下拉选择
-  const flattenCategories = (cats: CourseCategory[], level = 0): { id: number; name: string; level: number }[] => {
+  const flattenCategories = (
+    cats: CourseCategory[],
+    level = 0
+  ): { id: number; name: string; level: number }[] => {
     const result: { id: number; name: string; level: number }[] = [];
     for (const cat of cats) {
       result.push({ id: cat.id, name: cat.name, level });
@@ -1802,7 +1978,10 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
     }
   };
 
-  const handleChapterSubmit = async (data: CreateChapterRequest | UpdateChapterRequest, isEdit: boolean) => {
+  const handleChapterSubmit = async (
+    data: CreateChapterRequest | UpdateChapterRequest,
+    isEdit: boolean
+  ) => {
     try {
       if (isEdit && editingChapter) {
         await courseApi.updateChapter(editingChapter.id, data as UpdateChapterRequest);
@@ -1824,7 +2003,10 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
     return chs.reduce((sum, ch) => sum + 1 + (ch.children ? countChapters(ch.children) : 0), 0);
   };
   const totalDuration = (chs: CourseChapter[]): number => {
-    return chs.reduce((sum, ch) => sum + ch.duration_minutes + (ch.children ? totalDuration(ch.children) : 0), 0);
+    return chs.reduce(
+      (sum, ch) => sum + ch.duration_minutes + (ch.children ? totalDuration(ch.children) : 0),
+      0
+    );
   };
 
   if (!course) return null;
@@ -1840,19 +2022,36 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
           <div className={`px-5 py-4 border-b bg-gradient-to-r ${theme.bgLight} ${theme.bgDark}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm`}>
+                <div
+                  className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-sm`}
+                >
                   <BookOpen className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h2 className="text-base font-semibold">编辑课程</h2>
-                  <p className="text-xs text-muted-foreground truncate max-w-[500px]">{course.title}</p>
+                  <p className="text-xs text-muted-foreground truncate max-w-[500px]">
+                    {course.title}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={course.status === "published" ? "default" : course.status === "archived" ? "secondary" : "outline"}>
+                <Badge
+                  variant={
+                    course.status === "published"
+                      ? "default"
+                      : course.status === "archived"
+                        ? "secondary"
+                        : "outline"
+                  }
+                >
                   {getStatusLabel(course.status)}
                 </Badge>
-                <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onOpenChange(false)}
+                  className="h-8 w-8"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -1863,13 +2062,22 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
             <div className="px-5 pt-3 border-b bg-muted/20">
               <TabsList className="h-9 bg-transparent p-0 gap-4">
-                <TabsTrigger value="basic" className="h-9 px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm">
+                <TabsTrigger
+                  value="basic"
+                  className="h-9 px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm"
+                >
                   基本信息
                 </TabsTrigger>
-                <TabsTrigger value="chapters" className="h-9 px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm">
+                <TabsTrigger
+                  value="chapters"
+                  className="h-9 px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm"
+                >
                   章节管理 ({countChapters(chapters)})
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="h-9 px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm">
+                <TabsTrigger
+                  value="settings"
+                  className="h-9 px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm"
+                >
                   发布设置
                 </TabsTrigger>
               </TabsList>
@@ -1927,7 +2135,8 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                         <SelectContent>
                           {flatCategories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
-                              {"　".repeat(cat.level)}{cat.name}
+                              {"　".repeat(cat.level)}
+                              {cat.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1937,7 +2146,9 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                       <Label className="text-xs font-medium">内容类型</Label>
                       <Select
                         value={formData.content_type}
-                        onValueChange={(v) => setFormData({ ...formData, content_type: v as ContentType })}
+                        onValueChange={(v) =>
+                          setFormData({ ...formData, content_type: v as ContentType })
+                        }
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />
@@ -1954,7 +2165,9 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                       <Label className="text-xs font-medium">难度级别</Label>
                       <Select
                         value={formData.difficulty}
-                        onValueChange={(v) => setFormData({ ...formData, difficulty: v as Difficulty })}
+                        onValueChange={(v) =>
+                          setFormData({ ...formData, difficulty: v as Difficulty })
+                        }
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />
@@ -1976,7 +2189,11 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                     <div className="flex items-start gap-4">
                       <div className="w-40 h-24 rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden bg-muted/50 flex-shrink-0">
                         {formData.cover_image ? (
-                          <img src={formData.cover_image} alt="封面" className="w-full h-full object-cover" />
+                          <img
+                            src={formData.cover_image}
+                            alt="封面"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="text-center text-muted-foreground">
                             <ImagePlus className="h-6 w-6 mx-auto mb-1 opacity-40" />
@@ -1987,11 +2204,15 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                       <div className="flex-1 space-y-1.5">
                         <Input
                           value={formData.cover_image || ""}
-                          onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, cover_image: e.target.value })
+                          }
                           placeholder="https://..."
                           className="h-9"
                         />
-                        <p className="text-[10px] text-muted-foreground">推荐尺寸：16:9 比例，至少 1280x720 像素</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          推荐尺寸：16:9 比例，至少 1280x720 像素
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -2006,7 +2227,9 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                         <Label className="text-[10px] text-muted-foreground">讲师名称</Label>
                         <Input
                           value={formData.author_name || ""}
-                          onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, author_name: e.target.value })
+                          }
                           placeholder="讲师名称"
                           className="h-9"
                         />
@@ -2015,7 +2238,9 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                         <Label className="text-[10px] text-muted-foreground">讲师头像URL</Label>
                         <Input
                           value={formData.author_avatar || ""}
-                          onChange={(e) => setFormData({ ...formData, author_avatar: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, author_avatar: e.target.value })
+                          }
                           placeholder="https://..."
                           className="h-9"
                         />
@@ -2051,12 +2276,16 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                   <span className="text-xs text-muted-foreground">分钟</span>
                 </div>
                 <div className="flex-1" />
-                <Button size="sm" onClick={() => handleAddChapter()} className={`h-8 bg-gradient-to-r ${theme.gradient} hover:opacity-90`}>
+                <Button
+                  size="sm"
+                  onClick={() => handleAddChapter()}
+                  className={`h-8 bg-gradient-to-r ${theme.gradient} hover:opacity-90`}
+                >
                   <Plus className="h-3.5 w-3.5 mr-1" />
                   添加章节
                 </Button>
               </div>
-              
+
               {/* 章节列表 */}
               <ScrollArea className="flex-1 h-[400px]">
                 {chaptersLoading ? (
@@ -2069,7 +2298,9 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                       <FileText className="h-7 w-7 opacity-40" />
                     </div>
                     <p className="text-sm font-medium">暂无章节</p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">点击上方按钮添加第一个章节</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">
+                      点击上方按钮添加第一个章节
+                    </p>
                   </div>
                 ) : (
                   <div className="p-3 space-y-0.5">
@@ -2103,11 +2334,13 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                         </div>
                         <Switch
                           checked={formData.is_free}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            is_free: checked,
-                            vip_only: checked ? false : formData.vip_only,
-                          })}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              is_free: checked,
+                              vip_only: checked ? false : formData.vip_only,
+                            })
+                          }
                         />
                       </div>
                       <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
@@ -2117,11 +2350,13 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                         </div>
                         <Switch
                           checked={formData.vip_only}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            vip_only: checked,
-                            is_free: checked ? false : formData.is_free,
-                          })}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              vip_only: checked,
+                              is_free: checked ? false : formData.is_free,
+                            })
+                          }
                         />
                       </div>
                       {!formData.is_free && !formData.vip_only && (
@@ -2130,7 +2365,12 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                           <Input
                             type="number"
                             value={formData.price || ""}
-                            onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || undefined })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                price: parseFloat(e.target.value) || undefined,
+                              })
+                            }
                             placeholder="0.00"
                             className="h-9 w-32 mt-2"
                           />
@@ -2174,7 +2414,9 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                   <div className="space-y-3">
                     <Label className="text-xs font-medium text-destructive">危险操作</Label>
                     <div className="p-3 border border-destructive/30 rounded-lg bg-destructive/5">
-                      <p className="text-xs text-muted-foreground mb-3">以下操作不可撤销，请谨慎操作</p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        以下操作不可撤销，请谨慎操作
+                      </p>
                       <Button variant="destructive" size="sm" onClick={handleDelete}>
                         <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                         删除课程
@@ -2204,7 +2446,12 @@ function ChapterManagerModal({ open, onOpenChange, course, onUpdate }: ChapterMa
                   下架
                 </Button>
               )}
-              <Button size="sm" onClick={handleSave} disabled={saving} className={`bg-gradient-to-r ${theme.gradient} hover:opacity-90`}>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving}
+                className={`bg-gradient-to-r ${theme.gradient} hover:opacity-90`}
+              >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
                 {saving ? "保存中..." : "保存"}
               </Button>
@@ -2261,7 +2508,7 @@ export default function CategoryManager() {
   const [showDetailPanel, setShowDetailPanel] = useState(true);
   // 详情面板显示模式：category 或 course
   const [detailPanelMode, setDetailPanelMode] = useState<"category" | "course">("category");
-  
+
   // Batch selection state
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -2320,13 +2567,16 @@ export default function CategoryManager() {
   }, [selectedLevel1, selectedLevel2, selectedLevel3, fetchCourses]);
 
   // Group categories by subject
-  const categoriesBySubject = categories.reduce((acc, cat) => {
-    if (!acc[cat.subject]) {
-      acc[cat.subject] = [];
-    }
-    acc[cat.subject].push(cat);
-    return acc;
-  }, {} as Record<string, CourseCategory[]>);
+  const categoriesBySubject = categories.reduce(
+    (acc, cat) => {
+      if (!acc[cat.subject]) {
+        acc[cat.subject] = [];
+      }
+      acc[cat.subject].push(cat);
+      return acc;
+    },
+    {} as Record<string, CourseCategory[]>
+  );
 
   // Get counts
   const getSubjectCount = (subject: Subject) => {
@@ -2596,16 +2846,31 @@ export default function CategoryManager() {
   useLayoutEffect(() => {
     setToolbarContent(
       <>
-        <Button size="sm" variant="ghost" onClick={() => {
-          setBatchMode(prev => {
-            if (prev) setSelectedIds(new Set());
-            return !prev;
-          });
-        }} className={`h-8 w-8 p-0 ${batchMode ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600' : ''}`}>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setBatchMode((prev) => {
+              if (prev) setSelectedIds(new Set());
+              return !prev;
+            });
+          }}
+          className={`h-8 w-8 p-0 ${batchMode ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600" : ""}`}
+        >
           <CheckCheck className="h-3.5 w-3.5" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={fetchCategories} disabled={loading} className="h-8 w-8 p-0">
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={fetchCategories}
+          disabled={loading}
+          className="h-8 w-8 p-0"
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
         </Button>
         <Button
           size="sm"
@@ -2622,257 +2887,321 @@ export default function CategoryManager() {
 
   return (
     <TooltipProvider delayDuration={300}>
-    <div className="h-full flex flex-col">
-      {/* Batch Action Bar */}
-      {batchMode && selectedIds.size > 0 && (
-        <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-200 dark:border-blue-800">
-          <CheckCheck className="h-3.5 w-3.5 text-blue-600" />
-          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">已选 {selectedIds.size} 项</span>
-          <div className="flex-1" />
-          <Button size="sm" variant="ghost" onClick={async () => {
-            if (!confirm(`确定要批量启用 ${selectedIds.size} 个分类吗？`)) return;
-            for (const id of selectedIds) { try { await courseApi.updateCategory(id, { is_active: true }); } catch {} }
-            toast.success(`已启用 ${selectedIds.size} 个分类`);
-            setSelectedIds(new Set());
-            fetchCategories();
-          }} className="h-7 text-xs text-green-600 hover:bg-green-100">
-            <Power className="h-3 w-3 mr-1" />启用
-          </Button>
-          <Button size="sm" variant="ghost" onClick={async () => {
-            if (!confirm(`确定要批量禁用 ${selectedIds.size} 个分类吗？`)) return;
-            for (const id of selectedIds) { try { await courseApi.updateCategory(id, { is_active: false }); } catch {} }
-            toast.success(`已禁用 ${selectedIds.size} 个分类`);
-            setSelectedIds(new Set());
-            fetchCategories();
-          }} className="h-7 text-xs text-orange-600 hover:bg-orange-100">
-            <PowerOff className="h-3 w-3 mr-1" />禁用
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())} className="h-7 text-xs">取消</Button>
-        </div>
-      )}
+      <div className="h-full flex flex-col">
+        {/* Batch Action Bar */}
+        {batchMode && selectedIds.size > 0 && (
+          <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-200 dark:border-blue-800">
+            <CheckCheck className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+              已选 {selectedIds.size} 项
+            </span>
+            <div className="flex-1" />
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={async () => {
+                if (!confirm(`确定要批量启用 ${selectedIds.size} 个分类吗？`)) return;
+                for (const id of selectedIds) {
+                  try {
+                    await courseApi.updateCategory(id, { is_active: true });
+                  } catch {}
+                }
+                toast.success(`已启用 ${selectedIds.size} 个分类`);
+                setSelectedIds(new Set());
+                fetchCategories();
+              }}
+              className="h-7 text-xs text-green-600 hover:bg-green-100"
+            >
+              <Power className="h-3 w-3 mr-1" />
+              启用
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={async () => {
+                if (!confirm(`确定要批量禁用 ${selectedIds.size} 个分类吗？`)) return;
+                for (const id of selectedIds) {
+                  try {
+                    await courseApi.updateCategory(id, { is_active: false });
+                  } catch {}
+                }
+                toast.success(`已禁用 ${selectedIds.size} 个分类`);
+                setSelectedIds(new Set());
+                fetchCategories();
+              }}
+              className="h-7 text-xs text-orange-600 hover:bg-orange-100"
+            >
+              <PowerOff className="h-3 w-3 mr-1" />
+              禁用
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedIds(new Set())}
+              className="h-7 text-xs"
+            >
+              取消
+            </Button>
+          </div>
+        )}
 
-      {/* Main Content - 两栏布局：左侧多栏 + 右侧详情 */}
-      <div className="flex-1 flex gap-3 overflow-hidden mx-4 my-3">
-        {/* 左侧 Card：多栏区域 */}
-        <Card className="flex-1 flex flex-col overflow-hidden shadow-sm border-border/50 rounded-xl">
-          <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b bg-muted/20">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1 text-xs overflow-x-auto">
-              <Layers className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              {selectedSubject ? (
-                <>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                  <button onClick={() => { setSelectedLevel1(null); setSelectedLevel2(null); setSelectedLevel3(null); }}
-                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${subjectThemes[selectedSubject].bgLight} ${subjectThemes[selectedSubject].bgDark} ${subjectThemes[selectedSubject].text} font-medium text-[11px]`}>
-                    <SubjectIcon subject={selectedSubject} className="h-3 w-3" />
-                    {getSubjectName(selectedSubject)}
-                  </button>
-                  {selectedLevel1 && <>
+        {/* Main Content - 两栏布局：左侧多栏 + 右侧详情 */}
+        <div className="flex-1 flex gap-3 overflow-hidden mx-4 my-3">
+          {/* 左侧 Card：多栏区域 */}
+          <Card className="flex-1 flex flex-col overflow-hidden shadow-sm border-border/50 rounded-xl">
+            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b bg-muted/20">
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-1 text-xs overflow-x-auto">
+                <Layers className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                {selectedSubject ? (
+                  <>
                     <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                    <button onClick={() => { setSelectedLevel2(null); setSelectedLevel3(null); }}
-                      className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] hover:bg-muted">{selectedLevel1.name}</button>
-                  </>}
-                  {selectedLevel2 && <>
-                    <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                    <button onClick={() => setSelectedLevel3(null)}
-                      className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] hover:bg-muted">{selectedLevel2.name}</button>
-                  </>}
-                  {selectedLevel3 && <>
-                    <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                    <span className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px]">{selectedLevel3.name}</span>
-                  </>}
-                </>
-              ) : (
-                <span className="text-muted-foreground text-[11px] ml-1">选择科目开始浏览</span>
+                    <button
+                      onClick={() => {
+                        setSelectedLevel1(null);
+                        setSelectedLevel2(null);
+                        setSelectedLevel3(null);
+                      }}
+                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${subjectThemes[selectedSubject].bgLight} ${subjectThemes[selectedSubject].bgDark} ${subjectThemes[selectedSubject].text} font-medium text-[11px]`}
+                    >
+                      <SubjectIcon subject={selectedSubject} className="h-3 w-3" />
+                      {getSubjectName(selectedSubject)}
+                    </button>
+                    {selectedLevel1 && (
+                      <>
+                        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                        <button
+                          onClick={() => {
+                            setSelectedLevel2(null);
+                            setSelectedLevel3(null);
+                          }}
+                          className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] hover:bg-muted"
+                        >
+                          {selectedLevel1.name}
+                        </button>
+                      </>
+                    )}
+                    {selectedLevel2 && (
+                      <>
+                        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                        <button
+                          onClick={() => setSelectedLevel3(null)}
+                          className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px] hover:bg-muted"
+                        >
+                          {selectedLevel2.name}
+                        </button>
+                      </>
+                    )}
+                    {selectedLevel3 && (
+                      <>
+                        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                        <span className="px-1.5 py-0.5 rounded bg-muted/50 font-medium text-[11px]">
+                          {selectedLevel3.name}
+                        </span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-muted-foreground text-[11px] ml-1">选择科目开始浏览</span>
+                )}
+              </div>
+
+              <div className="ml-auto">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowDetailPanel(!showDetailPanel)}
+                      className="h-6 w-6 p-0"
+                    >
+                      {showDetailPanel ? (
+                        <PanelRightClose className="h-3.5 w-3.5 text-muted-foreground" />
+                      ) : (
+                        <PanelRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    {showDetailPanel ? "隐藏详情" : "显示详情"}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+
+            <div className="flex-1 flex overflow-x-auto overflow-y-hidden">
+              {/* Column 1: Subjects */}
+              <Column
+                title="科目"
+                items={subjectItems}
+                selectedId={selectedSubject}
+                onSelect={(id) => handleSelectSubject(id as Subject)}
+                loading={loading}
+                emptyText="暂无科目"
+              />
+
+              {/* Column 2: Level 1 Categories */}
+              {selectedSubject && (
+                <Column
+                  title="一级分类"
+                  items={level1Items}
+                  selectedId={selectedLevel1?.id || null}
+                  onSelect={(_, data) => handleSelectLevel1(data)}
+                  onDoubleClick={(_, data) => handleEdit(data)}
+                  onQuickEdit={(_, data) => handleEdit(data)}
+                  onQuickDelete={(_, data) => handleDelete(data)}
+                  onToggleActive={(_, data) => handleToggleActive(data)}
+                  onCopyCode={(_, data) => {
+                    navigator.clipboard.writeText(data.code);
+                    toast.success("已复制编码", { description: data.code });
+                  }}
+                  onAdd={() => handleAddInSubject(selectedSubject)}
+                  emptyText="暂无分类"
+                  searchable
+                  showQuickActions
+                  filterable
+                  sortable
+                  enableContextMenu
+                />
+              )}
+
+              {/* Column 3: Level 2 Categories */}
+              {selectedLevel1 && level2Items.length > 0 && (
+                <Column
+                  title="二级分类（本级课程）"
+                  items={level2Items}
+                  selectedId={selectedLevel2?.id || null}
+                  onSelect={(_, data) => handleSelectLevel2(data)}
+                  onDoubleClick={(_, data) => handleEdit(data)}
+                  onQuickEdit={(_, data) => handleEdit(data)}
+                  onQuickDelete={(_, data) => handleDelete(data)}
+                  onToggleActive={(_, data) => handleToggleActive(data)}
+                  onCopyCode={(_, data) => {
+                    navigator.clipboard.writeText(data.code);
+                    toast.success("已复制编码", { description: data.code });
+                  }}
+                  onAdd={() => handleAddChild(selectedLevel1)}
+                  emptyText="暂无子分类"
+                  searchable
+                  showQuickActions
+                  filterable
+                  sortable
+                  enableContextMenu
+                />
+              )}
+
+              {/* Column 4: Level 3 Categories */}
+              {selectedLevel2 && level3Items.length > 0 && (
+                <Column
+                  title="三级分类（本级课程）"
+                  items={level3Items}
+                  selectedId={selectedLevel3?.id || null}
+                  onSelect={(_, data) => handleSelectLevel3(data)}
+                  onDoubleClick={(_, data) => handleEdit(data)}
+                  onQuickEdit={(_, data) => handleEdit(data)}
+                  onQuickDelete={(_, data) => handleDelete(data)}
+                  onToggleActive={(_, data) => handleToggleActive(data)}
+                  onCopyCode={(_, data) => {
+                    navigator.clipboard.writeText(data.code);
+                    toast.success("已复制编码", { description: data.code });
+                  }}
+                  onAdd={() => handleAddChild(selectedLevel2)}
+                  emptyText="暂无子分类"
+                  searchable
+                  showQuickActions
+                  filterable
+                  sortable
+                  enableContextMenu
+                />
+              )}
+
+              {/* Column 5: Courses - 课程列 */}
+              {selectedCategory && (
+                <Column
+                  title="课程"
+                  items={courseItems}
+                  selectedId={selectedCourse?.id || null}
+                  onSelect={(_, data) => handleSelectCourse(data)}
+                  onDoubleClick={(_, data) => {
+                    window.location.href = `/learning/courses/${data.id}`;
+                  }}
+                  onQuickEdit={(_, data) => {
+                    window.location.href = `/learning/courses/${data.id}`;
+                  }}
+                  onQuickDelete={() => handleDeleteCourse()}
+                  onToggleActive={(_, data) => {
+                    if (data.status === "published") {
+                      handleArchiveCourse();
+                    } else {
+                      handlePublishCourse();
+                    }
+                  }}
+                  loading={coursesLoading}
+                  emptyText="暂无课程"
+                  searchable
+                  showQuickActions
+                  filterable
+                  sortable
+                  enableContextMenu
+                  wide
+                />
               )}
             </div>
-            
-            <div className="ml-auto">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant="ghost" onClick={() => setShowDetailPanel(!showDetailPanel)} className="h-6 w-6 p-0">
-                    {showDetailPanel ? <PanelRightClose className="h-3.5 w-3.5 text-muted-foreground" /> : <PanelRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">{showDetailPanel ? "隐藏详情" : "显示详情"}</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-
-          <div className="flex-1 flex overflow-x-auto overflow-y-hidden">
-            {/* Column 1: Subjects */}
-            <Column
-              title="科目"
-              items={subjectItems}
-              selectedId={selectedSubject}
-              onSelect={(id) => handleSelectSubject(id as Subject)}
-              loading={loading}
-              emptyText="暂无科目"
-            />
-
-            {/* Column 2: Level 1 Categories */}
-            {selectedSubject && (
-              <Column
-                title="一级分类"
-                items={level1Items}
-                selectedId={selectedLevel1?.id || null}
-                onSelect={(_, data) => handleSelectLevel1(data)}
-                onDoubleClick={(_, data) => handleEdit(data)}
-                onQuickEdit={(_, data) => handleEdit(data)}
-                onQuickDelete={(_, data) => handleDelete(data)}
-                onToggleActive={(_, data) => handleToggleActive(data)}
-                onCopyCode={(_, data) => {
-                  navigator.clipboard.writeText(data.code);
-                  toast.success("已复制编码", { description: data.code });
-                }}
-                onAdd={() => handleAddInSubject(selectedSubject)}
-                emptyText="暂无分类"
-                searchable
-                showQuickActions
-                filterable
-                sortable
-                enableContextMenu
-              />
-            )}
-
-            {/* Column 3: Level 2 Categories */}
-            {selectedLevel1 && level2Items.length > 0 && (
-              <Column
-                title="二级分类（本级课程）"
-                items={level2Items}
-                selectedId={selectedLevel2?.id || null}
-                onSelect={(_, data) => handleSelectLevel2(data)}
-                onDoubleClick={(_, data) => handleEdit(data)}
-                onQuickEdit={(_, data) => handleEdit(data)}
-                onQuickDelete={(_, data) => handleDelete(data)}
-                onToggleActive={(_, data) => handleToggleActive(data)}
-                onCopyCode={(_, data) => {
-                  navigator.clipboard.writeText(data.code);
-                  toast.success("已复制编码", { description: data.code });
-                }}
-                onAdd={() => handleAddChild(selectedLevel1)}
-                emptyText="暂无子分类"
-                searchable
-                showQuickActions
-                filterable
-                sortable
-                enableContextMenu
-              />
-            )}
-
-            {/* Column 4: Level 3 Categories */}
-            {selectedLevel2 && level3Items.length > 0 && (
-              <Column
-                title="三级分类（本级课程）"
-                items={level3Items}
-                selectedId={selectedLevel3?.id || null}
-                onSelect={(_, data) => handleSelectLevel3(data)}
-                onDoubleClick={(_, data) => handleEdit(data)}
-                onQuickEdit={(_, data) => handleEdit(data)}
-                onQuickDelete={(_, data) => handleDelete(data)}
-                onToggleActive={(_, data) => handleToggleActive(data)}
-                onCopyCode={(_, data) => {
-                  navigator.clipboard.writeText(data.code);
-                  toast.success("已复制编码", { description: data.code });
-                }}
-                onAdd={() => handleAddChild(selectedLevel2)}
-                emptyText="暂无子分类"
-                searchable
-                showQuickActions
-                filterable
-                sortable
-                enableContextMenu
-              />
-            )}
-
-            {/* Column 5: Courses - 课程列 */}
-            {selectedCategory && (
-              <Column
-                title="课程"
-                items={courseItems}
-                selectedId={selectedCourse?.id || null}
-                onSelect={(_, data) => handleSelectCourse(data)}
-                onDoubleClick={(_, data) => {
-                  window.location.href = `/learning/courses/${data.id}`;
-                }}
-                onQuickEdit={(_, data) => {
-                  window.location.href = `/learning/courses/${data.id}`;
-                }}
-                onQuickDelete={() => handleDeleteCourse()}
-                onToggleActive={(_, data) => {
-                  if (data.status === "published") {
-                    handleArchiveCourse();
-                  } else {
-                    handlePublishCourse();
-                  }
-                }}
-                loading={coursesLoading}
-                emptyText="暂无课程"
-                searchable
-                showQuickActions
-                filterable
-                sortable
-                enableContextMenu
-                wide
-              />
-            )}
-          </div>
-        </Card>
-
-        {/* 右侧 Card：详情面板 */}
-        {showDetailPanel && (
-          <Card className="w-[340px] lg:w-[380px] flex-shrink-0 flex flex-col overflow-hidden shadow-sm border-border/50 rounded-xl">
-            {detailPanelMode === "course" && selectedCourse ? (
-              <CourseDetailPanel
-                course={selectedCourse}
-                onEdit={() => setChapterModalOpen(true)}
-                onPublish={handlePublishCourse}
-                onArchive={handleArchiveCourse}
-                onDelete={handleDeleteCourse}
-                onManageChapters={() => setChapterModalOpen(true)}
-              />
-            ) : (
-              <DetailPanel
-                category={selectedCategory}
-                onEdit={() => selectedCategory && handleEdit(selectedCategory)}
-                onDelete={() => selectedCategory && handleDelete(selectedCategory)}
-                onToggleActive={() => selectedCategory && handleToggleActive(selectedCategory)}
-                onAddChild={() => selectedCategory && handleAddChild(selectedCategory)}
-                onDuplicate={() => selectedCategory && handleDuplicate(selectedCategory)}
-                onRefresh={fetchCategories}
-              />
-            )}
           </Card>
-        )}
+
+          {/* 右侧 Card：详情面板 */}
+          {showDetailPanel && (
+            <Card className="w-[340px] lg:w-[380px] flex-shrink-0 flex flex-col overflow-hidden shadow-sm border-border/50 rounded-xl">
+              {detailPanelMode === "course" && selectedCourse ? (
+                <CourseDetailPanel
+                  course={selectedCourse}
+                  onEdit={() => setChapterModalOpen(true)}
+                  onPublish={handlePublishCourse}
+                  onArchive={handleArchiveCourse}
+                  onDelete={handleDeleteCourse}
+                  onManageChapters={() => setChapterModalOpen(true)}
+                />
+              ) : (
+                <DetailPanel
+                  category={selectedCategory}
+                  onEdit={() => selectedCategory && handleEdit(selectedCategory)}
+                  onDelete={() => selectedCategory && handleDelete(selectedCategory)}
+                  onToggleActive={() => selectedCategory && handleToggleActive(selectedCategory)}
+                  onAddChild={() => selectedCategory && handleAddChild(selectedCategory)}
+                  onDuplicate={() => selectedCategory && handleDuplicate(selectedCategory)}
+                  onRefresh={fetchCategories}
+                />
+              )}
+            </Card>
+          )}
+        </div>
+
+        {/* Dialog */}
+        <CategoryFormDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          category={editingCategory}
+          parentId={parentIdForNew}
+          parentName={parentNameForNew}
+          defaultSubject={defaultSubjectForNew}
+          onSubmit={handleSubmit}
+        />
+
+        {/* 章节管理 Modal */}
+        <ChapterManagerModal
+          open={chapterModalOpen}
+          onOpenChange={setChapterModalOpen}
+          course={selectedCourse}
+          onUpdate={() => {
+            // 刷新课程数据
+            const currentCategory = selectedLevel3 || selectedLevel2 || selectedLevel1;
+            if (currentCategory) {
+              fetchCourses(currentCategory.id);
+            }
+            fetchCategories();
+          }}
+        />
       </div>
-
-      {/* Dialog */}
-      <CategoryFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        category={editingCategory}
-        parentId={parentIdForNew}
-        parentName={parentNameForNew}
-        defaultSubject={defaultSubjectForNew}
-        onSubmit={handleSubmit}
-      />
-
-      {/* 章节管理 Modal */}
-      <ChapterManagerModal
-        open={chapterModalOpen}
-        onOpenChange={setChapterModalOpen}
-        course={selectedCourse}
-        onUpdate={() => {
-          // 刷新课程数据
-          const currentCategory = selectedLevel3 || selectedLevel2 || selectedLevel1;
-          if (currentCategory) {
-            fetchCourses(currentCategory.id);
-          }
-          fetchCategories();
-        }}
-      />
-
-    </div>
     </TooltipProvider>
   );
 }

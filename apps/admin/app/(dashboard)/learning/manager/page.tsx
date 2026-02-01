@@ -2,14 +2,7 @@
 
 import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  LayoutGrid,
-  Brain,
-  FileText,
-  Palette,
-  FileQuestion,
-  FileStack,
-} from "lucide-react";
+import { LayoutGrid, Brain, FileText, Palette, FileQuestion, FileStack } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@what-cse/ui";
 import { Skeleton } from "@what-cse/ui";
 import { cn } from "@what-cse/ui";
@@ -33,7 +26,7 @@ const tabs = [
   { value: "papers", label: "试卷", icon: FileStack },
 ] as const;
 
-type TabValue = typeof tabs[number]["value"];
+type TabValue = (typeof tabs)[number]["value"];
 
 // Loading skeleton for lazy loaded components
 function TabLoadingSkeleton() {
@@ -53,7 +46,7 @@ function ToolbarDisplay() {
 export default function UnifiedLearningManagementPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   // Get initial tab from URL or default to "categories"
   const initialTab = (searchParams.get("tab") as TabValue) || "categories";
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
@@ -71,7 +64,7 @@ export default function UnifiedLearningManagementPage() {
   // Update tab when URL changes
   useEffect(() => {
     const tab = searchParams.get("tab") as TabValue;
-    if (tab && tabs.some(t => t.value === tab)) {
+    if (tab && tabs.some((t) => t.value === tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -83,9 +76,9 @@ export default function UnifiedLearningManagementPage() {
   return (
     <ToolbarProvider>
       <div className="h-full flex flex-col overflow-hidden bg-background">
-        <Tabs 
-          value={activeTab} 
-          onValueChange={handleTabChange} 
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
           className="flex-1 flex flex-col overflow-hidden"
         >
           {/* Tab Navigation Bar with integrated toolbar */}
@@ -103,7 +96,7 @@ export default function UnifiedLearningManagementPage() {
                       "relative h-full flex items-center gap-1.5 px-3 text-sm font-medium rounded-none transition-colors",
                       "focus-visible:outline-none focus-visible:bg-muted/50",
                       "data-[state=active]:shadow-none",
-                      isActive 
+                      isActive
                         ? "text-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                     )}

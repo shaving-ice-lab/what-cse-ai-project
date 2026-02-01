@@ -606,16 +606,16 @@ export default function HomePage() {
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-radial from-amber-200/40 via-amber-100/20 to-transparent rounded-full blur-3xl translate-x-1/3 -translate-y-1/3" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-radial from-orange-200/30 via-orange-100/10 to-transparent rounded-full blur-3xl -translate-x-1/3 translate-y-1/3" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-amber-100/20 to-transparent rounded-full blur-3xl" />
-        
+
         {/* 网格背景 */}
-        <div 
+        <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
-            backgroundSize: '60px 60px'
+            backgroundSize: "60px 60px",
           }}
         />
-        
+
         <FloatingParticles />
 
         <div className="container relative mx-auto px-4 lg:px-6 pt-8 pb-16">
@@ -623,12 +623,12 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
             <div className="flex items-center gap-3">
               <span className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all cursor-pointer">
-                <Sparkles className="w-4 h-4 animate-pulse" /> 
+                <Sparkles className="w-4 h-4 animate-pulse" />
                 2024国考报名进行中
                 <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </span>
               <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/80 backdrop-blur-sm border border-red-200 text-sm font-semibold text-red-600 shadow-sm">
-                <Timer className="w-4 h-4 animate-pulse" /> 
+                <Timer className="w-4 h-4 animate-pulse" />
                 <span className="tabular-nums">截止还剩 3天12时</span>
               </span>
             </div>
@@ -652,7 +652,7 @@ export default function HomePage() {
               <Compass className="w-4 h-4" />
               一站式公考信息服务平台
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-stone-900 mb-6 leading-tight">
               找到你的
               <span className="relative inline-block mx-2">
@@ -662,19 +662,25 @@ export default function HomePage() {
                 <span className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-amber-200 to-orange-200 rounded-full -z-0 opacity-60" />
               </span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-stone-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              覆盖全国 <span className="font-semibold text-amber-600">24,690+</span> 职位 · 
-              智能匹配精准定位 · 
-              <span className="font-semibold text-amber-600">128,000+</span> 考生的选择
+              覆盖全国 <span className="font-semibold text-amber-600">24,690+</span> 职位 ·
+              智能匹配精准定位 ·<span className="font-semibold text-amber-600">128,000+</span>{" "}
+              考生的选择
             </p>
 
             {/* 搜索框 - 玻璃态设计 */}
-            <div className={`relative max-w-2xl mx-auto transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
-              <div className={`absolute -inset-1 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 rounded-2xl opacity-0 blur-lg transition-opacity duration-300 ${isSearchFocused ? 'opacity-70' : ''}`} />
+            <div
+              className={`relative max-w-2xl mx-auto transition-all duration-300 ${isSearchFocused ? "scale-[1.02]" : ""}`}
+            >
+              <div
+                className={`absolute -inset-1 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 rounded-2xl opacity-0 blur-lg transition-opacity duration-300 ${isSearchFocused ? "opacity-70" : ""}`}
+              />
               <div className="relative flex items-center bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-stone-200/50 border border-white p-2">
                 <div className="flex items-center gap-3 pl-4">
-                  <Search className={`w-5 h-5 transition-colors duration-300 ${isSearchFocused ? 'text-amber-500' : 'text-stone-400'}`} />
+                  <Search
+                    className={`w-5 h-5 transition-colors duration-300 ${isSearchFocused ? "text-amber-500" : "text-stone-400"}`}
+                  />
                 </div>
                 <input
                   type="text"
@@ -704,7 +710,9 @@ export default function HomePage() {
                   href={`/positions?q=${item.word}`}
                   className="group inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-white/80 backdrop-blur-sm rounded-full border border-stone-200/80 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all shadow-sm hover:shadow-md"
                 >
-                  {i < 3 && <Flame className="w-4 h-4 text-orange-500 group-hover:animate-bounce" />}
+                  {i < 3 && (
+                    <Flame className="w-4 h-4 text-orange-500 group-hover:animate-bounce" />
+                  )}
                   {item.word}
                   <span className="text-emerald-600 text-xs font-medium">{item.trend}</span>
                 </Link>
@@ -722,14 +730,20 @@ export default function HomePage() {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 {/* 悬浮时的渐变背景 */}
-                <div className={`absolute inset-0 ${f.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                
-                <div className={`relative z-10 w-14 h-14 rounded-2xl ${f.bg} flex items-center justify-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg ${f.bg.replace('bg-', 'shadow-')}/30`}>
+                <div
+                  className={`absolute inset-0 ${f.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                />
+
+                <div
+                  className={`relative z-10 w-14 h-14 rounded-2xl ${f.bg} flex items-center justify-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg ${f.bg.replace("bg-", "shadow-")}/30`}
+                >
                   <f.icon className={`w-7 h-7 ${f.color}`} />
                 </div>
-                <span className="relative z-10 text-sm font-semibold text-stone-800 group-hover:text-stone-900">{f.title}</span>
+                <span className="relative z-10 text-sm font-semibold text-stone-800 group-hover:text-stone-900">
+                  {f.title}
+                </span>
                 <span className="relative z-10 text-sm text-stone-500 font-medium">{f.count}</span>
-                
+
                 {/* 角标装饰 */}
                 {f.title === "智能匹配" && (
                   <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md">
@@ -755,7 +769,9 @@ export default function HomePage() {
                 <Activity className="w-4 h-4 text-emerald-600" />
               </div>
               <span className="text-lg font-semibold text-stone-800">今日实时数据</span>
-              <span className="text-sm text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md">更新于 10:25</span>
+              <span className="text-sm text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md">
+                更新于 10:25
+              </span>
             </div>
             <button className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors">
               <RefreshCw className="w-4 h-4" /> 自动刷新
@@ -763,12 +779,16 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {todayStats.map((s, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className={`group relative flex items-center gap-4 p-5 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-default overflow-hidden`}
-                style={{ background: `linear-gradient(135deg, ${s.bg === 'bg-blue-50' ? '#eff6ff, #dbeafe' : s.bg === 'bg-emerald-50' ? '#ecfdf5, #d1fae5' : s.bg === 'bg-violet-50' ? '#f5f3ff, #ede9fe' : '#fffbeb, #fef3c7'})` }}
+                style={{
+                  background: `linear-gradient(135deg, ${s.bg === "bg-blue-50" ? "#eff6ff, #dbeafe" : s.bg === "bg-emerald-50" ? "#ecfdf5, #d1fae5" : s.bg === "bg-violet-50" ? "#f5f3ff, #ede9fe" : "#fffbeb, #fef3c7"})`,
+                }}
               >
-                <div className={`w-14 h-14 rounded-2xl ${s.bg} flex items-center justify-center shadow-lg ${s.bg.replace('bg-', 'shadow-')}/30 group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`w-14 h-14 rounded-2xl ${s.bg} flex items-center justify-center shadow-lg ${s.bg.replace("bg-", "shadow-")}/30 group-hover:scale-110 transition-transform`}
+                >
                   <s.icon className={`w-7 h-7 ${s.color}`} />
                 </div>
                 <div>
@@ -776,7 +796,7 @@ export default function HomePage() {
                     {s.value.toLocaleString()}
                   </p>
                   <p className="text-sm text-stone-600 flex items-center gap-2">
-                    {s.label} 
+                    {s.label}
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-semibold text-xs">
                       <TrendingUp className="w-3 h-3 mr-0.5" />
                       {s.change}
@@ -794,25 +814,25 @@ export default function HomePage() {
         <div className="relative rounded-3xl p-10 overflow-hidden">
           {/* 渐变背景 */}
           <div className="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900" />
-          
+
           {/* 装饰元素 */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/20 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-60 h-60 bg-orange-500/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-radial from-amber-500/10 to-transparent rounded-full" />
-          
+
           {/* 网格背景 */}
-          <div 
+          <div
             className="absolute inset-0 opacity-5"
             style={{
               backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
-              backgroundSize: '40px 40px'
+              backgroundSize: "40px 40px",
             }}
           />
 
           <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((s, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="group text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all duration-300"
               >
                 <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -821,9 +841,7 @@ export default function HomePage() {
                 <p className="text-4xl lg:text-5xl text-transparent bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text font-display font-bold mb-2">
                   <AnimatedCounter value={s.value} suffix={s.suffix} />
                 </p>
-                <p className="text-sm text-stone-400 font-medium">
-                  {s.label}
-                </p>
+                <p className="text-sm text-stone-400 font-medium">{s.label}</p>
               </div>
             ))}
           </div>
@@ -972,7 +990,7 @@ export default function HomePage() {
             href="/positions"
             className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-full transition-all"
           >
-            查看全部 
+            查看全部
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -988,10 +1006,10 @@ export default function HomePage() {
               <div
                 className={`h-1.5 ${p.score >= 90 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : p.score >= 85 ? "bg-gradient-to-r from-amber-400 to-amber-500" : "bg-gradient-to-r from-orange-400 to-orange-500"}`}
               />
-              
+
               {/* 悬浮时的背景渐变 */}
               <div className="absolute inset-0 bg-gradient-to-br from-amber-50/0 to-orange-50/0 group-hover:from-amber-50/50 group-hover:to-orange-50/30 transition-all duration-300" />
-              
+
               <div className="relative p-5">
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="flex-1 min-w-0">
@@ -1010,7 +1028,7 @@ export default function HomePage() {
                       {p.dept}
                     </p>
                   </div>
-                  
+
                   {/* 匹配度圆环 */}
                   <div className="relative">
                     <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
@@ -1032,15 +1050,23 @@ export default function HomePage() {
                         strokeWidth="2"
                         strokeDasharray={`${p.score}, 100`}
                         strokeLinecap="round"
-                        className={p.score >= 90 ? "text-emerald-500" : p.score >= 85 ? "text-amber-500" : "text-orange-500"}
+                        className={
+                          p.score >= 90
+                            ? "text-emerald-500"
+                            : p.score >= 85
+                              ? "text-amber-500"
+                              : "text-orange-500"
+                        }
                       />
                     </svg>
-                    <span className={`absolute inset-0 flex items-center justify-center text-sm font-bold ${p.score >= 90 ? "text-emerald-600" : p.score >= 85 ? "text-amber-600" : "text-orange-600"}`}>
+                    <span
+                      className={`absolute inset-0 flex items-center justify-center text-sm font-bold ${p.score >= 90 ? "text-emerald-600" : p.score >= 85 ? "text-amber-600" : "text-orange-600"}`}
+                    >
                       {p.score}
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm bg-stone-100/80 rounded-lg text-stone-600 font-medium">
                     <MapPin className="w-3.5 h-3.5" />
@@ -1051,15 +1077,16 @@ export default function HomePage() {
                     {p.edu}
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm bg-stone-100/80 rounded-lg text-stone-600 font-medium">
-                    <Users className="w-3.5 h-3.5" />
-                    招{p.num}人
+                    <Users className="w-3.5 h-3.5" />招{p.num}人
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between text-sm border-t border-stone-100 pt-4">
                   <div className="flex items-center gap-1.5">
                     <span className="text-stone-500">竞争比</span>
-                    <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">{p.ratio}</span>
+                    <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                      {p.ratio}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-stone-500">已报名</span>
@@ -1068,7 +1095,7 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* 查看详情箭头 */}
               <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
                 <ArrowUpRight className="w-4 h-4 text-amber-600" />
@@ -1366,13 +1393,17 @@ export default function HomePage() {
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-800 mb-3">
               为什么选择
               <span className="relative inline-block mx-2">
-                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">公考智选</span>
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                  公考智选
+                </span>
                 <span className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-amber-300 to-orange-300 rounded-full opacity-50" />
               </span>
             </h2>
-            <p className="text-lg text-stone-500 max-w-xl mx-auto">一站式公务员考试信息服务平台，助力您的公考之路</p>
+            <p className="text-lg text-stone-500 max-w-xl mx-auto">
+              一站式公务员考试信息服务平台，助力您的公考之路
+            </p>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
             {features.map((f, i) => (
               <div
@@ -1381,12 +1412,14 @@ export default function HomePage() {
               >
                 {/* 悬浮时的渐变背景 */}
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 <div className="relative z-10">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-amber-200/30">
                     <f.icon className="w-8 h-8 text-amber-600" />
                   </div>
-                  <h3 className="text-base font-bold text-stone-800 mb-1.5 group-hover:text-amber-700 transition-colors">{f.title}</h3>
+                  <h3 className="text-base font-bold text-stone-800 mb-1.5 group-hover:text-amber-700 transition-colors">
+                    {f.title}
+                  </h3>
                   <p className="text-sm text-stone-500 leading-relaxed">{f.desc}</p>
                 </div>
               </div>
@@ -1407,44 +1440,47 @@ export default function HomePage() {
           </h2>
           <p className="text-lg text-stone-500">听听已上岸的小伙伴怎么说</p>
         </div>
-        
+
         <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((t, index) => (
-            <div 
-              key={t.id} 
+            <div
+              key={t.id}
               className="group relative bg-white rounded-2xl border border-stone-200/80 p-7 hover:border-transparent hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* 悬浮背景 */}
               <div className="absolute inset-0 bg-gradient-to-br from-amber-50/0 to-orange-50/0 group-hover:from-amber-50/50 group-hover:to-orange-50/30 transition-all duration-300" />
-              
+
               {/* 引号装饰 */}
               <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-amber-100/50 flex items-center justify-center">
                 <Quote className="w-6 h-6 text-amber-400/60" />
               </div>
-              
+
               <div className="relative z-10">
                 {/* 星级评分 */}
                 <div className="flex gap-1 mb-5">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400 drop-shadow-sm" />
+                    <Star
+                      key={i}
+                      className="w-5 h-5 text-amber-400 fill-amber-400 drop-shadow-sm"
+                    />
                   ))}
                 </div>
-                
+
                 {/* 评价内容 */}
                 <p className="text-base text-stone-700 mb-6 leading-relaxed font-medium">
                   "{t.content}"
                 </p>
-                
+
                 {/* 用户信息 */}
                 <div className="flex items-center gap-4 pt-4 border-t border-stone-100">
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg ${
-                      t.type === "国考" 
-                        ? "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/30" 
-                        : t.type === "省考" 
-                        ? "bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/30" 
-                        : "bg-gradient-to-br from-violet-500 to-violet-600 shadow-violet-500/30"
+                      t.type === "国考"
+                        ? "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/30"
+                        : t.type === "省考"
+                          ? "bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/30"
+                          : "bg-gradient-to-br from-violet-500 to-violet-600 shadow-violet-500/30"
                     }`}
                   >
                     {t.avatar}
@@ -1535,25 +1571,34 @@ export default function HomePage() {
         <div className="relative rounded-[2rem] overflow-hidden">
           {/* 背景渐变 */}
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500" />
-          
+
           {/* 装饰元素 */}
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
           <div className="absolute bottom-0 right-0 w-80 h-80 bg-orange-300/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
-          
+
           {/* 浮动圆环 */}
           <div className="absolute inset-0 overflow-hidden opacity-20">
             <div className="absolute top-10 left-10 w-32 h-32 border-2 border-white rounded-full animate-float" />
-            <div className="absolute top-20 right-20 w-20 h-20 border-2 border-white rounded-full animate-float" style={{ animationDelay: '1s' }} />
-            <div className="absolute bottom-16 left-1/4 w-16 h-16 border-2 border-white rounded-full animate-float" style={{ animationDelay: '0.5s' }} />
-            <div className="absolute bottom-10 right-1/3 w-24 h-24 border-2 border-white rounded-full animate-float" style={{ animationDelay: '1.5s' }} />
+            <div
+              className="absolute top-20 right-20 w-20 h-20 border-2 border-white rounded-full animate-float"
+              style={{ animationDelay: "1s" }}
+            />
+            <div
+              className="absolute bottom-16 left-1/4 w-16 h-16 border-2 border-white rounded-full animate-float"
+              style={{ animationDelay: "0.5s" }}
+            />
+            <div
+              className="absolute bottom-10 right-1/3 w-24 h-24 border-2 border-white rounded-full animate-float"
+              style={{ animationDelay: "1.5s" }}
+            />
           </div>
-          
+
           {/* 网格背景 */}
-          <div 
+          <div
             className="absolute inset-0 opacity-5"
             style={{
               backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
-              backgroundSize: '40px 40px'
+              backgroundSize: "40px 40px",
             }}
           />
 
@@ -1563,7 +1608,7 @@ export default function HomePage() {
               <Sparkles className="w-4 h-4" />
               128,000+ 考生的选择
             </div>
-            
+
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-white mb-5 leading-tight">
               开始您的
               <span className="relative inline-block mx-2">
@@ -1571,11 +1616,11 @@ export default function HomePage() {
                 <span className="absolute -bottom-1 left-0 right-0 h-1 bg-white/50 rounded-full" />
               </span>
             </h2>
-            
+
             <p className="text-lg md:text-xl text-white/90 mb-10 max-w-xl mx-auto leading-relaxed">
               注册账号完善个人信息，立即获取个性化的职位推荐
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
@@ -1592,7 +1637,7 @@ export default function HomePage() {
                 立即匹配
               </Link>
             </div>
-            
+
             {/* 底部信息 */}
             <div className="mt-10 flex items-center justify-center gap-6 text-white/70 text-sm">
               <span className="flex items-center gap-1.5">

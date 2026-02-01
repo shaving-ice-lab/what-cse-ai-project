@@ -77,9 +77,24 @@ const navItems: NavItem[] = [
       { href: "/learn/mianshi", label: "面试", icon: Mic, description: "结构化面试训练" },
       { href: "/learn/gongji", label: "公基", icon: FileText, description: "公共基础知识" },
       // 分隔 - 练习模块
-      { href: "/practice", label: "刷题练习", icon: ClipboardList, description: "快速练习与专项训练" },
-      { href: "/practice/papers", label: "真题试卷", icon: FileCheck, description: "历年真题模拟考" },
-      { href: "/learn/mistakes", label: "错题本", icon: AlertCircle, description: "错题回顾与分析" },
+      {
+        href: "/practice",
+        label: "刷题练习",
+        icon: ClipboardList,
+        description: "快速练习与专项训练",
+      },
+      {
+        href: "/practice/papers",
+        label: "真题试卷",
+        icon: FileCheck,
+        description: "历年真题模拟考",
+      },
+      {
+        href: "/learn/mistakes",
+        label: "错题本",
+        icon: AlertCircle,
+        description: "错题回顾与分析",
+      },
       { href: "/learn/materials", label: "素材库", icon: Palette, description: "名言案例写作素材" },
     ],
   },
@@ -89,7 +104,12 @@ const navItems: NavItem[] = [
     icon: FileText,
     children: [
       { href: "/announcements", label: "考试公告", icon: FileText, description: "最新招考公告" },
-      { href: "/learn/report/leaderboard", label: "排行榜", icon: TrendingUp, description: "学习成绩排名" },
+      {
+        href: "/learn/report/leaderboard",
+        label: "排行榜",
+        icon: TrendingUp,
+        description: "学习成绩排名",
+      },
     ],
   },
   {
@@ -100,7 +120,12 @@ const navItems: NavItem[] = [
       { href: "/tools", label: "工具箱", icon: Wrench, description: "实用备考工具" },
       { href: "/learn/path", label: "学习路径", icon: Route, description: "个性化学习计划" },
       { href: "/learn/notes", label: "我的笔记", icon: StickyNote, description: "学习笔记管理" },
-      { href: "/learn/report/weekly", label: "学习报告", icon: BarChart3, description: "数据分析统计" },
+      {
+        href: "/learn/report/weekly",
+        label: "学习报告",
+        icon: BarChart3,
+        description: "数据分析统计",
+      },
     ],
   },
 ];
@@ -139,11 +164,7 @@ function NavDropdown({
   onClose: () => void;
 }) {
   return (
-    <div
-      className="relative"
-      onMouseEnter={onOpen}
-      onMouseLeave={onClose}
-    >
+    <div className="relative" onMouseEnter={onOpen} onMouseLeave={onClose}>
       <button
         onClick={onOpen}
         className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
@@ -164,26 +185,26 @@ function NavDropdown({
         <div className="absolute top-full left-0 pt-2 z-50">
           {/* 透明桥接区域，防止鼠标移动时菜单消失 */}
           <div className="w-64 bg-white rounded-2xl shadow-warm-lg border border-stone-200/50 py-2 animate-scale-in">
-          {item.children?.map((child) => (
-            <Link
-              key={child.href}
-              href={child.href}
-              onClick={onClose}
-              className="flex items-start gap-3 px-4 py-3 hover:bg-stone-50 transition-colors group"
-            >
-              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                <child.icon className="w-4 h-4 text-amber-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-stone-800 group-hover:text-amber-700 transition-colors">
-                  {child.label}
-                </p>
-                {child.description && (
-                  <p className="text-xs text-stone-500 mt-0.5 truncate">{child.description}</p>
-                )}
-              </div>
-            </Link>
-          ))}
+            {item.children?.map((child) => (
+              <Link
+                key={child.href}
+                href={child.href}
+                onClick={onClose}
+                className="flex items-start gap-3 px-4 py-3 hover:bg-stone-50 transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                  <child.icon className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-stone-800 group-hover:text-amber-700 transition-colors">
+                    {child.label}
+                  </p>
+                  {child.description && (
+                    <p className="text-xs text-stone-500 mt-0.5 truncate">{child.description}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}
@@ -212,9 +233,7 @@ function MobileNavItem({
         <button
           onClick={() => setExpanded(!expanded)}
           className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-            isActive(item.href)
-              ? "text-amber-700 bg-amber-50"
-              : "text-stone-600 hover:bg-stone-100"
+            isActive(item.href) ? "text-amber-700 bg-amber-50" : "text-stone-600 hover:bg-stone-100"
           }`}
           style={{ paddingLeft: `${16 + level * 12}px` }}
         >
@@ -222,9 +241,7 @@ function MobileNavItem({
             <item.icon className="w-5 h-5" />
             {item.label}
           </span>
-          <ChevronRight
-            className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`}
-          />
+          <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`} />
         </button>
         {expanded && (
           <div className="mt-1 space-y-1 animate-fade-in">
@@ -248,9 +265,7 @@ function MobileNavItem({
       href={item.href}
       onClick={onClose}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-        isActive(item.href)
-          ? "text-amber-700 bg-amber-50"
-          : "text-stone-600 hover:bg-stone-100"
+        isActive(item.href) ? "text-amber-700 bg-amber-50" : "text-stone-600 hover:bg-stone-100"
       }`}
       style={{ paddingLeft: `${16 + level * 12}px` }}
     >
@@ -294,14 +309,14 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   // 键盘快捷键：⌘K / Ctrl+K 打开搜索
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearchExpanded(true);
         setTimeout(() => searchInputRef.current?.focus(), 100);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // 关闭移动菜单时锁定/解锁body滚动
@@ -402,7 +417,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                   // 展开的搜索框 - 使用固定定位覆盖，不影响布局
                   <div className="fixed inset-0 z-50">
                     {/* 背景遮罩 */}
-                    <div 
+                    <div
                       className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-fade-in"
                       onClick={() => setSearchExpanded(false)}
                     />
@@ -419,7 +434,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                             className="flex-1 py-3.5 pl-3 pr-4 bg-transparent text-sm text-stone-700 placeholder-stone-400 outline-none"
                             autoFocus
                             onKeyDown={(e) => {
-                              if (e.key === 'Escape') setSearchExpanded(false);
+                              if (e.key === "Escape") setSearchExpanded(false);
                             }}
                           />
                           <div className="flex items-center gap-1 px-2.5 py-1.5 mr-3 bg-stone-100 rounded-lg text-xs text-stone-400 font-medium">
@@ -452,7 +467,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                   </button>
                 )}
               </div>
-              
+
               {/* Search Button - Mobile */}
               <button className="md:hidden p-2.5 rounded-xl hover:bg-stone-100 active:bg-stone-200 transition-colors text-stone-600 hover:text-stone-900">
                 <Search className="w-5 h-5" />
@@ -520,17 +535,19 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                             <ChevronRight className="w-4 h-4 text-amber-400" />
                           </Link>
                           <div className="py-1">
-                            {userMenuItems.filter(item => item.href !== "/vip").map((item) => (
-                              <Link
-                                key={item.href}
-                                href={item.href}
-                                onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors"
-                              >
-                                <item.icon className="w-4 h-4 text-stone-400" />
-                                {item.label}
-                              </Link>
-                            ))}
+                            {userMenuItems
+                              .filter((item) => item.href !== "/vip")
+                              .map((item) => (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors"
+                                >
+                                  <item.icon className="w-4 h-4 text-stone-400" />
+                                  {item.label}
+                                </Link>
+                              ))}
                           </div>
                           <div className="border-t border-stone-100 pt-2 mt-1">
                             <Link
@@ -799,9 +816,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                isActive(item.href)
-                  ? "text-amber-600"
-                  : "text-stone-400 active:text-stone-600"
+                isActive(item.href) ? "text-amber-600" : "text-stone-400 active:text-stone-600"
               }`}
             >
               <div

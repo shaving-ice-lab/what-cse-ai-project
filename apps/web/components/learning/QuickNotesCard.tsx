@@ -57,9 +57,7 @@ export function QuickNotesCard({
   defaultExpanded = ["formulas", "key_points", "mistakes", "tips"],
 }: QuickNotesCardProps) {
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(defaultExpanded)
-  );
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(defaultExpanded));
 
   // Check if data is valid
   const hasContent =
@@ -126,13 +124,9 @@ export function QuickNotesCard({
                   className="bg-white rounded-xl p-4 border border-indigo-100 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="font-semibold text-indigo-700 text-sm">
-                      {formula.name}
-                    </span>
+                    <span className="font-semibold text-indigo-700 text-sm">{formula.name}</span>
                     <button
-                      onClick={() =>
-                        handleCopy(formula.content, `formula-${idx}`)
-                      }
+                      onClick={() => handleCopy(formula.content, `formula-${idx}`)}
                       className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                       title="复制口诀"
                     >
@@ -149,9 +143,7 @@ export function QuickNotesCard({
                     </p>
                   </div>
                   {formula.explanation && (
-                    <p className="text-xs text-stone-500 leading-relaxed">
-                      {formula.explanation}
-                    </p>
+                    <p className="text-xs text-stone-500 leading-relaxed">{formula.explanation}</p>
                   )}
                 </div>
               ))}
@@ -177,9 +169,7 @@ export function QuickNotesCard({
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
                     {idx + 1}
                   </span>
-                  <span className="text-sm text-stone-700 leading-relaxed">
-                    {point}
-                  </span>
+                  <span className="text-sm text-stone-700 leading-relaxed">{point}</span>
                 </li>
               ))}
             </ul>
@@ -205,17 +195,13 @@ export function QuickNotesCard({
                     <span className="flex-shrink-0 w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
                       <span className="text-xs">✗</span>
                     </span>
-                    <span className="text-sm text-rose-700 font-medium">
-                      {item.mistake}
-                    </span>
+                    <span className="text-sm text-rose-700 font-medium">{item.mistake}</span>
                   </div>
                   <div className="flex items-start gap-3 px-4 py-3 border-t border-rose-100">
                     <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
                       <span className="text-xs">✓</span>
                     </span>
-                    <span className="text-sm text-emerald-700">
-                      {item.correction}
-                    </span>
+                    <span className="text-sm text-emerald-700">{item.correction}</span>
                   </div>
                 </div>
               ))}
@@ -262,14 +248,7 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
-function Section({
-  title,
-  icon,
-  color,
-  isExpanded,
-  onToggle,
-  children,
-}: SectionProps) {
+function Section({ title, icon, color, isExpanded, onToggle, children }: SectionProps) {
   const colorClasses = {
     indigo: {
       bg: "bg-indigo-50",
@@ -307,9 +286,7 @@ function Section({
       >
         <div className="flex items-center gap-2">
           <span className={classes.icon}>{icon}</span>
-          <span className={`font-semibold text-sm ${classes.text}`}>
-            {title}
-          </span>
+          <span className={`font-semibold text-sm ${classes.text}`}>{title}</span>
         </div>
         {isExpanded ? (
           <ChevronUp className="w-4 h-4 text-stone-400" />
@@ -317,9 +294,7 @@ function Section({
           <ChevronDown className="w-4 h-4 text-stone-400" />
         )}
       </button>
-      {isExpanded && (
-        <div className="p-4 bg-white/50">{children}</div>
-      )}
+      {isExpanded && <div className="p-4 bg-white/50">{children}</div>}
     </div>
   );
 }

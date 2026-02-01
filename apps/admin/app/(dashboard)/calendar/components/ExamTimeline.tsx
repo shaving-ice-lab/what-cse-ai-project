@@ -51,7 +51,12 @@ interface ExamTimelineProps {
   compact?: boolean;
 }
 
-export function ExamTimeline({ events, positionId, onEventClick, compact = false }: ExamTimelineProps) {
+export function ExamTimeline({
+  events,
+  positionId,
+  onEventClick,
+  compact = false,
+}: ExamTimelineProps) {
   // 过滤并排序事件
   const sortedEvents = useMemo(() => {
     let filtered = events;
@@ -110,10 +115,10 @@ export function ExamTimeline({ events, positionId, onEventClick, compact = false
                   isCompleted
                     ? "bg-green-100 text-green-700"
                     : isCurrent
-                    ? "bg-blue-100 text-blue-700 ring-2 ring-blue-500 ring-offset-1"
-                    : isPast
-                    ? "bg-red-100 text-red-700"
-                    : "bg-muted text-muted-foreground"
+                      ? "bg-blue-100 text-blue-700 ring-2 ring-blue-500 ring-offset-1"
+                      : isPast
+                        ? "bg-red-100 text-red-700"
+                        : "bg-muted text-muted-foreground"
                 }`}
                 title={`${event.event_type_name}: ${event.event_date}`}
               >
@@ -153,9 +158,7 @@ export function ExamTimeline({ events, positionId, onEventClick, compact = false
             <div
               key={event.id}
               onClick={() => onEventClick?.(event)}
-              className={`relative pl-10 cursor-pointer group ${
-                isCancelled ? "opacity-50" : ""
-              }`}
+              className={`relative pl-10 cursor-pointer group ${isCancelled ? "opacity-50" : ""}`}
             >
               {/* 节点 */}
               <div
@@ -163,27 +166,22 @@ export function ExamTimeline({ events, positionId, onEventClick, compact = false
                   isCompleted
                     ? "bg-green-500 text-white"
                     : isCancelled
-                    ? "bg-muted text-muted-foreground"
-                    : isCurrent
-                    ? "bg-blue-500 text-white ring-4 ring-blue-100"
-                    : isPast
-                    ? "bg-red-500 text-white"
-                    : "bg-muted text-muted-foreground"
+                      ? "bg-muted text-muted-foreground"
+                      : isCurrent
+                        ? "bg-blue-500 text-white ring-4 ring-blue-100"
+                        : isPast
+                          ? "bg-red-500 text-white"
+                          : "bg-muted text-muted-foreground"
                 }`}
               >
-                {isCompleted ? (
-                  <CheckCircle className="h-3 w-3" />
-                ) : (
-                  <Icon className="h-3 w-3" />
-                )}
+                {isCompleted ? <CheckCircle className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
               </div>
 
               {/* 连接线高亮（已完成部分） */}
-              {index > 0 && (index <= currentStageIndex || (currentStageIndex === -1 && isCompleted)) && (
-                <div
-                  className="absolute left-[17px] -top-4 w-0.5 h-4 bg-green-500"
-                />
-              )}
+              {index > 0 &&
+                (index <= currentStageIndex || (currentStageIndex === -1 && isCompleted)) && (
+                  <div className="absolute left-[17px] -top-4 w-0.5 h-4 bg-green-500" />
+                )}
 
               {/* 内容 */}
               <div
@@ -201,7 +199,10 @@ export function ExamTimeline({ events, positionId, onEventClick, compact = false
                         </Badge>
                       )}
                       {isCompleted && (
-                        <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                        <Badge
+                          variant="outline"
+                          className="text-xs text-green-600 border-green-200"
+                        >
                           已完成
                         </Badge>
                       )}
@@ -216,9 +217,7 @@ export function ExamTimeline({ events, positionId, onEventClick, compact = false
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {event.event_title}
-                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">{event.event_title}</p>
                   </div>
                   <div className="text-right text-sm">
                     <div className="font-medium">{event.event_date}</div>
@@ -234,8 +233,8 @@ export function ExamTimeline({ events, positionId, onEventClick, compact = false
                         {event.days_remaining === 0
                           ? "今天"
                           : event.days_remaining === 1
-                          ? "明天"
-                          : `${event.days_remaining}天后`}
+                            ? "明天"
+                            : `${event.days_remaining}天后`}
                       </div>
                     )}
                   </div>
@@ -254,7 +253,7 @@ export function ExamTimeline({ events, positionId, onEventClick, compact = false
               当前进度：{currentStageIndex + 1}/{sortedEvents.length}
             </span>
             <span className="text-blue-600 font-medium">
-              {Math.round(((currentStageIndex) / sortedEvents.length) * 100)}%
+              {Math.round((currentStageIndex / sortedEvents.length) * 100)}%
             </span>
           </div>
           <div className="mt-2 h-2 bg-blue-200 rounded-full overflow-hidden">

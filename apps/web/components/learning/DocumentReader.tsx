@@ -272,9 +272,7 @@ export function DocumentReader({
           style={{ paddingLeft: `${level * 16 + 12}px` }}
         >
           <span className="line-clamp-1">{item.title}</span>
-          {item.page && (
-            <span className="text-xs text-stone-400 ml-2">P.{item.page}</span>
-          )}
+          {item.page && <span className="text-xs text-stone-400 ml-2">P.{item.page}</span>}
         </button>
         {item.children && renderOutlineTree(item.children, level + 1)}
       </div>
@@ -388,19 +386,14 @@ export function DocumentReader({
                 {highlights.length > 0 ? (
                   <div className="space-y-2">
                     {highlights.map((highlight) => (
-                      <div
-                        key={highlight.id}
-                        className="p-3 bg-stone-50 rounded-lg group"
-                      >
+                      <div key={highlight.id} className="p-3 bg-stone-50 rounded-lg group">
                         <div className="flex items-start gap-2">
                           <div
                             className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
                             style={{ backgroundColor: highlight.color }}
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-stone-700 line-clamp-2">
-                              {highlight.text}
-                            </p>
+                            <p className="text-sm text-stone-700 line-clamp-2">{highlight.text}</p>
                             {highlight.note && (
                               <p className="text-xs text-stone-500 mt-1 line-clamp-1">
                                 📝 {highlight.note}
@@ -470,9 +463,7 @@ export function DocumentReader({
               onClick={() => setShowOutline(!showOutline)}
               className={cn(
                 "p-2 rounded-lg transition-colors",
-                showOutline
-                  ? "bg-amber-100 text-amber-600"
-                  : "hover:bg-stone-100 text-stone-500"
+                showOutline ? "bg-amber-100 text-amber-600" : "hover:bg-stone-100 text-stone-500"
               )}
               title="显示/隐藏大纲"
             >
@@ -508,11 +499,7 @@ export function DocumentReader({
           </div>
 
           {/* 标题 */}
-          {title && (
-            <h3 className="text-sm font-medium text-stone-700 truncate px-4">
-              {title}
-            </h3>
-          )}
+          {title && <h3 className="text-sm font-medium text-stone-700 truncate px-4">{title}</h3>}
 
           <div className="flex items-center gap-2">
             {/* 缩放控制 */}
@@ -548,24 +535,15 @@ export function DocumentReader({
               onClick={toggleFullscreen}
               className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors"
             >
-              {isFullscreen ? (
-                <Minimize2 className="w-5 h-5" />
-              ) : (
-                <Maximize2 className="w-5 h-5" />
-              )}
+              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
         {/* 文档内容 */}
-        <div
-          ref={contentRef}
-          className="flex-1 overflow-auto bg-stone-100"
-        >
+        <div ref={contentRef} className="flex-1 overflow-auto bg-stone-100">
           <div className="min-h-full flex justify-center p-4">
-            <div className="bg-white shadow-lg max-w-4xl w-full">
-              {renderContent()}
-            </div>
+            <div className="bg-white shadow-lg max-w-4xl w-full">{renderContent()}</div>
           </div>
         </div>
 

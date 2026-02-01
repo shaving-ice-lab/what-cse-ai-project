@@ -78,9 +78,7 @@ function QuestionCard({
             <span
               className={cn(
                 "px-2 py-1 rounded-lg text-xs font-medium",
-                isCorrect
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
+                isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
               )}
             >
               {isCorrect ? "回答正确" : "回答错误"}
@@ -128,10 +126,10 @@ function QuestionCard({
                     showResult && isCorrectOption
                       ? "bg-green-500 text-white"
                       : showResult && isSelected && !isCorrectOption
-                      ? "bg-red-500 text-white"
-                      : isSelected
-                      ? "bg-amber-500 text-white"
-                      : "bg-stone-200 text-stone-600"
+                        ? "bg-red-500 text-white"
+                        : isSelected
+                          ? "bg-amber-500 text-white"
+                          : "bg-stone-200 text-stone-600"
                   )}
                 >
                   {label}
@@ -159,9 +157,7 @@ function QuestionCard({
             {question.knowledge && (
               <div className="mt-3 flex items-center gap-2">
                 <Brain className="w-4 h-4 text-blue-500" />
-                <span className="text-xs text-blue-600">
-                  相关知识点: {question.knowledge}
-                </span>
+                <span className="text-xs text-blue-600">相关知识点: {question.knowledge}</span>
               </div>
             )}
           </div>
@@ -200,8 +196,8 @@ function PracticeResult({
           isExcellent
             ? "bg-gradient-to-br from-green-500 to-emerald-600"
             : isGood
-            ? "bg-gradient-to-br from-amber-500 to-orange-500"
-            : "bg-gradient-to-br from-red-500 to-rose-600"
+              ? "bg-gradient-to-br from-amber-500 to-orange-500"
+              : "bg-gradient-to-br from-red-500 to-rose-600"
         )}
       >
         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
@@ -230,10 +226,7 @@ function PracticeResult({
         </h4>
         <div className="flex flex-wrap gap-2">
           {["概念理解", "公式运用", "计算技巧", "逻辑推理"].map((point, idx) => (
-            <span
-              key={idx}
-              className="px-3 py-1.5 bg-stone-100 text-stone-600 text-sm rounded-lg"
-            >
+            <span key={idx} className="px-3 py-1.5 bg-stone-100 text-stone-600 text-sm rounded-lg">
               {point}
             </span>
           ))}
@@ -272,9 +265,7 @@ function PracticeResult({
         <div className="space-y-3">
           {wrongQuestions.length > 0 ? (
             <>
-              <p className="text-sm text-stone-600">
-                建议您先复习错题，再进行针对性练习。
-              </p>
+              <p className="text-sm text-stone-600">建议您先复习错题，再进行针对性练习。</p>
               <button
                 onClick={onReviewWrong}
                 className="w-full py-3 bg-amber-500 text-white font-medium rounded-lg hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
@@ -284,9 +275,7 @@ function PracticeResult({
               </button>
             </>
           ) : (
-            <p className="text-sm text-stone-600">
-              太棒了！您已全部答对，可以继续下一章节的学习。
-            </p>
+            <p className="text-sm text-stone-600">太棒了！您已全部答对，可以继续下一章节的学习。</p>
           )}
         </div>
       </div>
@@ -326,30 +315,18 @@ export function ChapterPractice({
     {
       id: 1,
       content: "关于本章知识点，下列说法正确的是：",
-      options: [
-        "选项A的内容描述",
-        "选项B的内容描述",
-        "选项C的内容描述",
-        "选项D的内容描述",
-      ],
+      options: ["选项A的内容描述", "选项B的内容描述", "选项C的内容描述", "选项D的内容描述"],
       correctAnswer: "B",
-      analysis:
-        "本题考查对核心概念的理解。选项B正确地描述了相关概念，其他选项存在理解偏差。",
+      analysis: "本题考查对核心概念的理解。选项B正确地描述了相关概念，其他选项存在理解偏差。",
       knowledge: "核心概念理解",
       difficulty: 2,
     },
     {
       id: 2,
       content: "在实际应用中，以下哪种方法最为有效？",
-      options: [
-        "方法一：直接计算",
-        "方法二：公式代入",
-        "方法三：逆向推导",
-        "方法四：排除法",
-      ],
+      options: ["方法一：直接计算", "方法二：公式代入", "方法三：逆向推导", "方法四：排除法"],
       correctAnswer: "C",
-      analysis:
-        "逆向推导是解决此类问题的最佳方法，可以有效避免计算错误并节省时间。",
+      analysis: "逆向推导是解决此类问题的最佳方法，可以有效避免计算错误并节省时间。",
       knowledge: "解题方法",
       difficulty: 3,
     },
@@ -373,13 +350,16 @@ export function ChapterPractice({
   const progress = ((currentIndex + 1) / questions.length) * 100;
 
   // 选择答案
-  const handleSelect = useCallback((answer: string) => {
-    setAnswers((prev) => {
-      const next = new Map(prev);
-      next.set(currentQuestion.id, answer);
-      return next;
-    });
-  }, [currentQuestion?.id]);
+  const handleSelect = useCallback(
+    (answer: string) => {
+      setAnswers((prev) => {
+        const next = new Map(prev);
+        next.set(currentQuestion.id, answer);
+        return next;
+      });
+    },
+    [currentQuestion?.id]
+  );
 
   // 提交当前题目
   const handleSubmit = useCallback(() => {
@@ -466,9 +446,7 @@ export function ChapterPractice({
           onRetry={handleRetry}
           onReviewWrong={() => {
             // 跳转到第一道错题
-            const wrongIdx = questions.findIndex(
-              (q) => answers.get(q.id) !== q.correctAnswer
-            );
+            const wrongIdx = questions.findIndex((q) => answers.get(q.id) !== q.correctAnswer);
             if (wrongIdx !== -1) {
               setCurrentIndex(wrongIdx);
               setShowResult(true);

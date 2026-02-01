@@ -41,10 +41,10 @@ export function useCourseCategories() {
     }
   }, []);
 
-  const fetchCategoriesBySubject = useCallback(async (subject: string, status?: string) => {
+  const fetchCategoriesBySubject = useCallback(async (subject: string) => {
     setLoading(true);
     try {
-      const result = await courseApi.getCategoriesBySubject(subject, status);
+      const result = await courseApi.getCategoriesBySubject(subject);
       setCategories(result.categories || []);
       return result.categories;
     } catch (error) {
@@ -146,33 +146,43 @@ export function useCourse() {
     }
   }, []);
 
-  const collectCourse = useCallback(async (courseId: number) => {
-    try {
-      await courseApi.collectCourse(courseId);
-      toast.success("收藏成功");
-      // Update local state
-      if (course && course.id === courseId) {
-        setCourse({ ...course, is_collected: true, collect_count: course.collect_count + 1 });
+  const collectCourse = useCallback(
+    async (courseId: number) => {
+      try {
+        await courseApi.collectCourse(courseId);
+        toast.success("收藏成功");
+        // Update local state
+        if (course && course.id === courseId) {
+          setCourse({ ...course, is_collected: true, collect_count: course.collect_count + 1 });
+        }
+      } catch (error) {
+        toast.error("收藏失败");
+        throw error;
       }
-    } catch (error) {
-      toast.error("收藏失败");
-      throw error;
-    }
-  }, [course]);
+    },
+    [course]
+  );
 
-  const uncollectCourse = useCallback(async (courseId: number) => {
-    try {
-      await courseApi.uncollectCourse(courseId);
-      toast.success("已取消收藏");
-      // Update local state
-      if (course && course.id === courseId) {
-        setCourse({ ...course, is_collected: false, collect_count: Math.max(0, course.collect_count - 1) });
+  const uncollectCourse = useCallback(
+    async (courseId: number) => {
+      try {
+        await courseApi.uncollectCourse(courseId);
+        toast.success("已取消收藏");
+        // Update local state
+        if (course && course.id === courseId) {
+          setCourse({
+            ...course,
+            is_collected: false,
+            collect_count: Math.max(0, course.collect_count - 1),
+          });
+        }
+      } catch (error) {
+        toast.error("取消收藏失败");
+        throw error;
       }
-    } catch (error) {
-      toast.error("取消收藏失败");
-      throw error;
-    }
-  }, [course]);
+    },
+    [course]
+  );
 
   return {
     loading,
@@ -232,13 +242,15 @@ export function useChapter() {
   const hasModuleContent = fullContent?.modules && fullContent.modules.length > 0;
 
   // 解析内容为 LessonContent 格式
-  const parsedLessonContent = fullContent?.content ? {
-    exam_analysis: fullContent.content.exam_analysis as any,
-    lesson_content: fullContent.content.lesson_content as any,
-    lesson_sections: fullContent.content.lesson_sections as any,
-    practice_problems: fullContent.content.practice_problems as any,
-    homework: fullContent.content.homework as any,
-  } : null;
+  const parsedLessonContent = fullContent?.content
+    ? {
+        exam_analysis: fullContent.content.exam_analysis as any,
+        lesson_content: fullContent.content.lesson_content as any,
+        lesson_sections: fullContent.content.lesson_sections as any,
+        practice_problems: fullContent.content.practice_problems as any,
+        homework: fullContent.content.homework as any,
+      }
+    : null;
 
   return {
     loading,
@@ -389,25 +401,28 @@ export function useLearningContent() {
   const [modules, setModules] = useState<LearningContentFilterOption[]>([]);
 
   // 按类型获取学习内容
-  const fetchByType = useCallback(async (
-    contentType: LearningContentType,
-    params?: Omit<LearningContentQueryParams, 'content_type'>
-  ) => {
-    setLoading(true);
-    try {
-      const result = await courseApi.getLearningContent(contentType, params);
-      setContents(result.contents || []);
-      setTotal(result.total || 0);
-      return result.contents || [];
-    } catch (error) {
-      // Return empty array on error, don't show toast
-      setContents([]);
-      setTotal(0);
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchByType = useCallback(
+    async (
+      contentType: LearningContentType,
+      params?: Omit<LearningContentQueryParams, "content_type">
+    ) => {
+      setLoading(true);
+      try {
+        const result = await courseApi.getLearningContent(contentType, params);
+        setContents(result.contents || []);
+        setTotal(result.total || 0);
+        return result.contents || [];
+      } catch (error) {
+        // Return empty array on error, don't show toast
+        setContents([]);
+        setTotal(0);
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // 获取所有学习内容
   const fetchAll = useCallback(async (params?: LearningContentQueryParams) => {
@@ -465,34 +480,52 @@ export function useLearningContent() {
   }, []);
 
   // 获取学习技巧
-  const fetchTips = useCallback(async (subject?: string, module?: string) => {
-    return fetchByType('tips', { subject, module });
-  }, [fetchByType]);
+  const fetchTips = useCallback(
+    async (subject?: string, module?: string) => {
+      return fetchByType("tips", { subject, module });
+    },
+    [fetchByType]
+  );
 
   // 获取公式口诀
-  const fetchFormulas = useCallback(async (subject?: string, module?: string) => {
-    return fetchByType('formulas', { subject, module });
-  }, [fetchByType]);
+  const fetchFormulas = useCallback(
+    async (subject?: string, module?: string) => {
+      return fetchByType("formulas", { subject, module });
+    },
+    [fetchByType]
+  );
 
   // 获取学习指南
-  const fetchGuides = useCallback(async (subject?: string, module?: string) => {
-    return fetchByType('guides', { subject, module });
-  }, [fetchByType]);
+  const fetchGuides = useCallback(
+    async (subject?: string, module?: string) => {
+      return fetchByType("guides", { subject, module });
+    },
+    [fetchByType]
+  );
 
   // 获取热点话题
-  const fetchHotTopics = useCallback(async (subject?: string, module?: string) => {
-    return fetchByType('hot_topics', { subject, module });
-  }, [fetchByType]);
+  const fetchHotTopics = useCallback(
+    async (subject?: string, module?: string) => {
+      return fetchByType("hot_topics", { subject, module });
+    },
+    [fetchByType]
+  );
 
   // 获取图形规律
-  const fetchPatterns = useCallback(async (subject?: string, module?: string) => {
-    return fetchByType('patterns', { subject, module });
-  }, [fetchByType]);
+  const fetchPatterns = useCallback(
+    async (subject?: string, module?: string) => {
+      return fetchByType("patterns", { subject, module });
+    },
+    [fetchByType]
+  );
 
   // 获取学习方法
-  const fetchMethods = useCallback(async (subject?: string, module?: string) => {
-    return fetchByType('methods', { subject, module });
-  }, [fetchByType]);
+  const fetchMethods = useCallback(
+    async (subject?: string, module?: string) => {
+      return fetchByType("methods", { subject, module });
+    },
+    [fetchByType]
+  );
 
   return {
     loading,

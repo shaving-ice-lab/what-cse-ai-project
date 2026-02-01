@@ -116,7 +116,7 @@ function PaperCard({ paper }: { paper: ExamPaper }) {
     <div className="bg-white rounded-2xl border border-stone-200/50 shadow-card hover:shadow-warm-lg transition-all group overflow-hidden">
       {/* 顶部色带 */}
       <div className={`h-1.5 bg-gradient-to-r ${getTypeColor(paper.paper_type)}`} />
-      
+
       <div className="p-5">
         {/* 标题和标签 */}
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -125,7 +125,9 @@ function PaperCard({ paper }: { paper: ExamPaper }) {
               {paper.title}
             </h3>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className={`px-2 py-0.5 text-xs rounded-lg font-medium ${getTypeBgColor(paper.paper_type)}`}>
+              <span
+                className={`px-2 py-0.5 text-xs rounded-lg font-medium ${getTypeBgColor(paper.paper_type)}`}
+              >
                 {getPaperTypeName(paper.paper_type)}
               </span>
               {paper.subject && (
@@ -138,9 +140,7 @@ function PaperCard({ paper }: { paper: ExamPaper }) {
                   {getRegionName(paper.region)}
                 </span>
               )}
-              {paper.year && (
-                <span className="text-xs text-stone-400">{paper.year}年</span>
-              )}
+              {paper.year && <span className="text-xs text-stone-400">{paper.year}年</span>}
               {paper.is_free && (
                 <span className="px-2 py-0.5 bg-green-50 text-green-600 text-xs rounded-lg">
                   免费
@@ -179,7 +179,8 @@ function PaperCard({ paper }: { paper: ExamPaper }) {
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4 text-amber-500" />
               <span className="text-sm text-stone-600">
-                平均分：<span className="font-bold text-stone-800">{paper.avg_score.toFixed(1)}</span>
+                平均分：
+                <span className="font-bold text-stone-800">{paper.avg_score.toFixed(1)}</span>
                 <span className="text-stone-400">/{paper.total_score}</span>
               </span>
             </div>
@@ -270,7 +271,7 @@ function PapersContent() {
     if (yearFilter !== "all") params.set("year", yearFilter);
     if (regionFilter !== "all") params.set("region", regionFilter);
     if (keyword) params.set("keyword", keyword);
-    
+
     const query = params.toString();
     router.replace(query ? `?${query}` : "", { scroll: false });
   }, [typeFilter, subjectFilter, yearFilter, regionFilter, keyword, router]);
@@ -397,7 +398,10 @@ function PapersContent() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-white rounded-2xl border border-stone-200/50 p-5 animate-pulse">
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-stone-200/50 p-5 animate-pulse"
+              >
                 <div className="h-4 bg-stone-200 rounded w-3/4 mb-3" />
                 <div className="h-3 bg-stone-100 rounded w-1/2 mb-4" />
                 <div className="flex gap-4 mb-4">
@@ -454,11 +458,13 @@ function PapersContent() {
 
 export default function PapersPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        </div>
+      }
+    >
       <PapersContent />
     </Suspense>
   );

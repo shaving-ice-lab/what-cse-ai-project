@@ -51,25 +51,21 @@ function SectionCard({
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <section id={id} className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+    <section
+      id={id}
+      className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden"
+    >
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-4 p-5 hover:bg-stone-50 transition-colors"
       >
-        <div className={cn("p-2.5 rounded-xl text-white", iconBg)}>
-          {icon}
-        </div>
-        <h2 className="flex-1 text-lg font-bold text-stone-800 text-left">
-          {title}
-        </h2>
-        <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <div className={cn("p-2.5 rounded-xl text-white", iconBg)}>{icon}</div>
+        <h2 className="flex-1 text-lg font-bold text-stone-800 text-left">{title}</h2>
+        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="w-5 h-5 text-stone-400" />
         </motion.div>
       </button>
-      
+
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -79,9 +75,7 @@ function SectionCard({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="p-5 pt-0 border-t border-stone-100">
-              {children}
-            </div>
+            <div className="p-5 pt-0 border-t border-stone-100">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -108,11 +102,11 @@ function SimpleQuiz({ questions }: SimpleQuizProps) {
 
   const handleSelect = (qIdx: number, option: string) => {
     if (revealed[qIdx]) return;
-    setAnswers(prev => ({ ...prev, [qIdx]: option }));
+    setAnswers((prev) => ({ ...prev, [qIdx]: option }));
   };
 
   const handleReveal = (qIdx: number) => {
-    setRevealed(prev => ({ ...prev, [qIdx]: true }));
+    setRevealed((prev) => ({ ...prev, [qIdx]: true }));
   };
 
   return (
@@ -158,16 +152,18 @@ function SimpleQuiz({ questions }: SimpleQuizProps) {
                       style
                     )}
                   >
-                    <span className={cn(
-                      "w-6 h-6 rounded flex items-center justify-center text-xs font-bold",
-                      isRevealed && isCorrectOpt
-                        ? "bg-emerald-500 text-white"
-                        : isRevealed && isThis
-                        ? "bg-red-500 text-white"
-                        : isThis
-                        ? "bg-violet-500 text-white"
-                        : "bg-stone-200 text-stone-600"
-                    )}>
+                    <span
+                      className={cn(
+                        "w-6 h-6 rounded flex items-center justify-center text-xs font-bold",
+                        isRevealed && isCorrectOpt
+                          ? "bg-emerald-500 text-white"
+                          : isRevealed && isThis
+                            ? "bg-red-500 text-white"
+                            : isThis
+                              ? "bg-violet-500 text-white"
+                              : "bg-stone-200 text-stone-600"
+                      )}
+                    >
                       {letter}
                     </span>
                     <span className="flex-1">{opt}</span>
@@ -197,19 +193,21 @@ function SimpleQuiz({ questions }: SimpleQuizProps) {
                   确认答案
                 </button>
               ) : (
-                <div className={cn(
-                  "p-4 rounded-lg text-sm",
-                  isCorrect ? "bg-emerald-50" : "bg-amber-50"
-                )}>
-                  <p className={cn(
-                    "font-medium mb-1",
-                    isCorrect ? "text-emerald-700" : "text-amber-700"
-                  )}>
+                <div
+                  className={cn(
+                    "p-4 rounded-lg text-sm",
+                    isCorrect ? "bg-emerald-50" : "bg-amber-50"
+                  )}
+                >
+                  <p
+                    className={cn(
+                      "font-medium mb-1",
+                      isCorrect ? "text-emerald-700" : "text-amber-700"
+                    )}
+                  >
                     {isCorrect ? "✓ 回答正确！" : `✗ 正确答案是 ${q.answer}`}
                   </p>
-                  {q.analysis && (
-                    <p className="text-stone-600 mt-2">{q.analysis}</p>
-                  )}
+                  {q.analysis && <p className="text-stone-600 mt-2">{q.analysis}</p>}
                 </div>
               )}
             </div>
@@ -273,7 +271,7 @@ function TableOfContents({ sections, activeSection }: TableOfContentsProps) {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
@@ -283,11 +281,7 @@ function TableOfContents({ sections, activeSection }: TableOfContentsProps) {
             : "bg-white text-stone-600 hover:bg-stone-50 border border-stone-200"
         )}
       >
-        {isExpanded ? (
-          <X className="w-5 h-5" />
-        ) : (
-          <Menu className="w-5 h-5" />
-        )}
+        {isExpanded ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
     </div>
   );
@@ -329,10 +323,7 @@ interface SimpleClassroomRendererProps {
   className?: string;
 }
 
-export function SimpleClassroomRenderer({
-  content,
-  className,
-}: SimpleClassroomRendererProps) {
+export function SimpleClassroomRenderer({ content, className }: SimpleClassroomRendererProps) {
   const [activeSection, setActiveSection] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -343,10 +334,18 @@ export function SimpleClassroomRenderer({
     const result: { id: string; title: string; icon: React.ReactNode }[] = [];
 
     if (exam_analysis) {
-      result.push({ id: "exam-analysis", title: "考情分析", icon: <TrendingUp className="w-4 h-4" /> });
+      result.push({
+        id: "exam-analysis",
+        title: "考情分析",
+        icon: <TrendingUp className="w-4 h-4" />,
+      });
     }
     if (lesson_content?.introduction) {
-      result.push({ id: "introduction", title: "课程导入", icon: <BookOpen className="w-4 h-4" /> });
+      result.push({
+        id: "introduction",
+        title: "课程导入",
+        icon: <BookOpen className="w-4 h-4" />,
+      });
     }
     if (lesson_content?.learning_goals?.length) {
       result.push({ id: "goals", title: "学习目标", icon: <Target className="w-4 h-4" /> });
@@ -361,10 +360,18 @@ export function SimpleClassroomRenderer({
       result.push({ id: "formulas", title: "记忆口诀", icon: <Brain className="w-4 h-4" /> });
     }
     if (lesson_content?.common_mistakes?.length) {
-      result.push({ id: "mistakes", title: "易错陷阱", icon: <AlertTriangle className="w-4 h-4" /> });
+      result.push({
+        id: "mistakes",
+        title: "易错陷阱",
+        icon: <AlertTriangle className="w-4 h-4" />,
+      });
     }
     if (practice_problems?.length) {
-      result.push({ id: "practice", title: "随堂练习", icon: <ClipboardList className="w-4 h-4" /> });
+      result.push({
+        id: "practice",
+        title: "随堂练习",
+        icon: <ClipboardList className="w-4 h-4" />,
+      });
     }
     if (lesson_content?.summary_points?.length) {
       result.push({ id: "summary", title: "课程总结", icon: <CheckCircle className="w-4 h-4" /> });
@@ -377,7 +384,7 @@ export function SimpleClassroomRenderer({
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY + 200;
-      
+
       for (let i = sections.length - 1; i >= 0; i--) {
         const element = document.getElementById(sections[i].id);
         if (element && element.offsetTop <= scrollY) {
@@ -393,9 +400,7 @@ export function SimpleClassroomRenderer({
   }, [sections]);
 
   if (!content) {
-    return (
-      <div className="text-center py-12 text-stone-500">暂无课程内容</div>
-    );
+    return <div className="text-center py-12 text-stone-500">暂无课程内容</div>;
   }
 
   return (
@@ -593,7 +598,7 @@ export function SimpleClassroomRenderer({
             title={`随堂练习 (${practice_problems.length} 道题)`}
           >
             <SimpleQuiz
-              questions={practice_problems.map(p => ({
+              questions={practice_problems.map((p) => ({
                 problem: p.problem,
                 options: p.options,
                 answer: p.answer,

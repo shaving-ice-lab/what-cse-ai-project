@@ -76,13 +76,16 @@ interface KnowledgeGraphProps {
 // =====================================================
 
 // 掌握度配置
-const MASTERY_CONFIG: Record<MasteryStatus, {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon: React.ComponentType<{ className?: string }>;
-}> = {
+const MASTERY_CONFIG: Record<
+  MasteryStatus,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
   mastered: {
     label: "已掌握",
     color: "#10b981",
@@ -157,13 +160,13 @@ export function KnowledgeGraph({
     const centerY = height / 2;
 
     // 如果节点已有位置，直接使用
-    if (nodes.some(n => n.x !== undefined && n.y !== undefined)) {
+    if (nodes.some((n) => n.x !== undefined && n.y !== undefined)) {
       return nodes;
     }
 
     // 按科目分组
     const subjects = new Map<string, KnowledgeNode[]>();
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       const subject = node.subject || "default";
       if (!subjects.has(subject)) {
         subjects.set(subject, []);
@@ -179,11 +182,11 @@ export function KnowledgeGraph({
     subjects.forEach((subjectNodes, subject) => {
       const angleStart = (2 * Math.PI * subjectIndex) / subjectCount;
       const angleRange = (2 * Math.PI) / subjectCount;
-      
+
       subjectNodes.forEach((node, nodeIndex) => {
         const radius = 150 + (nodeIndex % 3) * 80;
         const angle = angleStart + (angleRange * (nodeIndex + 0.5)) / subjectNodes.length;
-        
+
         result.push({
           ...node,
           x: centerX + radius * Math.cos(angle),
@@ -203,16 +206,17 @@ export function KnowledgeGraph({
 
     // 按掌握度过滤
     if (filter !== "all") {
-      filtered = filtered.filter(n => n.mastery === filter);
+      filtered = filtered.filter((n) => n.mastery === filter);
     }
 
     // 按搜索词过滤
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(n => 
-        n.label.toLowerCase().includes(query) ||
-        n.subject?.toLowerCase().includes(query) ||
-        n.category?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (n) =>
+          n.label.toLowerCase().includes(query) ||
+          n.subject?.toLowerCase().includes(query) ||
+          n.category?.toLowerCase().includes(query)
       );
     }
 
@@ -221,8 +225,8 @@ export function KnowledgeGraph({
 
   // 过滤边
   const filteredEdges = useMemo(() => {
-    const nodeIds = new Set(filteredNodes.map(n => n.id));
-    return edges.filter(e => nodeIds.has(e.source) && nodeIds.has(e.target));
+    const nodeIds = new Set(filteredNodes.map((n) => n.id));
+    return edges.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
   }, [edges, filteredNodes]);
 
   // 推荐路径上的节点
@@ -233,7 +237,7 @@ export function KnowledgeGraph({
   // 获取节点位置映射
   const nodePositions = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
-    positionedNodes.forEach(node => {
+    positionedNodes.forEach((node) => {
       if (node.x !== undefined && node.y !== undefined) {
         map.set(node.id, { x: node.x, y: node.y });
       }
@@ -243,11 +247,11 @@ export function KnowledgeGraph({
 
   // 缩放控制
   const handleZoomIn = useCallback(() => {
-    setScale(prev => Math.min(2, prev + 0.2));
+    setScale((prev) => Math.min(2, prev + 0.2));
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setScale(prev => Math.max(0.3, prev - 0.2));
+    setScale((prev) => Math.max(0.3, prev - 0.2));
   }, []);
 
   const handleZoomReset = useCallback(() => {
@@ -256,19 +260,25 @@ export function KnowledgeGraph({
   }, []);
 
   // 拖拽控制
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
-  }, [offset]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
+    },
+    [offset]
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setOffset({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
-  }, [isDragging, dragStart]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isDragging) return;
+      setOffset({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      });
+    },
+    [isDragging, dragStart]
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -278,7 +288,7 @@ export function KnowledgeGraph({
   const handleWheel = useCallback((e: React.WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
-      setScale(prev => {
+      setScale((prev) => {
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
         return Math.max(0.3, Math.min(2, prev + delta));
       });
@@ -300,142 +310,142 @@ export function KnowledgeGraph({
   }, []);
 
   // 节点点击
-  const handleNodeClick = useCallback((node: KnowledgeNode) => {
-    setSelectedNode(node.id);
-    onNodeClick?.(node);
-  }, [onNodeClick]);
+  const handleNodeClick = useCallback(
+    (node: KnowledgeNode) => {
+      setSelectedNode(node.id);
+      onNodeClick?.(node);
+    },
+    [onNodeClick]
+  );
 
   // 渲染边
-  const renderEdge = useCallback((edge: KnowledgeEdge) => {
-    const sourcePos = nodePositions.get(edge.source);
-    const targetPos = nodePositions.get(edge.target);
-    if (!sourcePos || !targetPos) return null;
+  const renderEdge = useCallback(
+    (edge: KnowledgeEdge) => {
+      const sourcePos = nodePositions.get(edge.source);
+      const targetPos = nodePositions.get(edge.target);
+      if (!sourcePos || !targetPos) return null;
 
-    const config = EDGE_CONFIG[edge.strength || "medium"];
-    const isOnPath = pathNodeIds.has(edge.source) && pathNodeIds.has(edge.target);
-    const isHighlighted = 
-      hoveredNode === edge.source || 
-      hoveredNode === edge.target ||
-      selectedNode === edge.source ||
-      selectedNode === edge.target;
+      const config = EDGE_CONFIG[edge.strength || "medium"];
+      const isOnPath = pathNodeIds.has(edge.source) && pathNodeIds.has(edge.target);
+      const isHighlighted =
+        hoveredNode === edge.source ||
+        hoveredNode === edge.target ||
+        selectedNode === edge.source ||
+        selectedNode === edge.target;
 
-    return (
-      <line
-        key={`${edge.source}-${edge.target}`}
-        x1={sourcePos.x}
-        y1={sourcePos.y}
-        x2={targetPos.x}
-        y2={targetPos.y}
-        stroke={isOnPath ? "#f59e0b" : "#94a3b8"}
-        strokeWidth={isOnPath ? config.width + 1 : config.width}
-        strokeDasharray={config.dasharray}
-        opacity={isHighlighted ? 1 : config.opacity}
-        className="transition-all duration-200"
-      />
-    );
-  }, [nodePositions, pathNodeIds, hoveredNode, selectedNode]);
-
-  // 渲染节点
-  const renderNode = useCallback((node: KnowledgeNode) => {
-    if (node.x === undefined || node.y === undefined) return null;
-
-    const mastery = node.mastery || "unknown";
-    const config = MASTERY_CONFIG[mastery];
-    const Icon = config.icon;
-    const isOnPath = pathNodeIds.has(node.id);
-    const isHovered = hoveredNode === node.id;
-    const isSelected = selectedNode === node.id;
-    const isSearchMatch = searchQuery && node.label.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const nodeSize = isOnPath ? 60 : 50;
-    const radius = nodeSize / 2;
-
-    return (
-      <g
-        key={node.id}
-        transform={`translate(${node.x}, ${node.y})`}
-        className="cursor-pointer"
-        onClick={() => handleNodeClick(node)}
-        onMouseEnter={() => setHoveredNode(node.id)}
-        onMouseLeave={() => setHoveredNode(null)}
-      >
-        {/* 选中/悬停外圈 */}
-        {(isHovered || isSelected || isOnPath) && (
-          <circle
-            r={radius + 8}
-            fill="none"
-            stroke={isOnPath ? "#f59e0b" : config.color}
-            strokeWidth={2}
-            strokeDasharray={isOnPath ? "" : "4,4"}
-            opacity={0.6}
-            className="animate-pulse"
-          />
-        )}
-
-        {/* 搜索匹配高亮 */}
-        {isSearchMatch && (
-          <circle
-            r={radius + 12}
-            fill="none"
-            stroke="#fbbf24"
-            strokeWidth={3}
-            opacity={0.8}
-          />
-        )}
-
-        {/* 节点主体 */}
-        <circle
-          r={radius}
-          fill={config.bgColor}
-          stroke={config.borderColor}
-          strokeWidth={2}
+      return (
+        <line
+          key={`${edge.source}-${edge.target}`}
+          x1={sourcePos.x}
+          y1={sourcePos.y}
+          x2={targetPos.x}
+          y2={targetPos.y}
+          stroke={isOnPath ? "#f59e0b" : "#94a3b8"}
+          strokeWidth={isOnPath ? config.width + 1 : config.width}
+          strokeDasharray={config.dasharray}
+          opacity={isHighlighted ? 1 : config.opacity}
           className="transition-all duration-200"
         />
+      );
+    },
+    [nodePositions, pathNodeIds, hoveredNode, selectedNode]
+  );
 
-        {/* 掌握度进度圈 */}
-        {node.masteryLevel !== undefined && node.masteryLevel > 0 && (
-          <circle
-            r={radius - 3}
-            fill="none"
-            stroke={config.color}
-            strokeWidth={3}
-            strokeDasharray={`${(2 * Math.PI * (radius - 3) * node.masteryLevel) / 100} ${2 * Math.PI * (radius - 3)}`}
-            strokeLinecap="round"
-            transform="rotate(-90)"
-            opacity={0.6}
-          />
-        )}
+  // 渲染节点
+  const renderNode = useCallback(
+    (node: KnowledgeNode) => {
+      if (node.x === undefined || node.y === undefined) return null;
 
-        {/* 节点标签 */}
-        <text
-          y={4}
-          textAnchor="middle"
-          className="text-xs font-medium fill-stone-700 pointer-events-none"
+      const mastery = node.mastery || "unknown";
+      const config = MASTERY_CONFIG[mastery];
+      const Icon = config.icon;
+      const isOnPath = pathNodeIds.has(node.id);
+      const isHovered = hoveredNode === node.id;
+      const isSelected = selectedNode === node.id;
+      const isSearchMatch =
+        searchQuery && node.label.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const nodeSize = isOnPath ? 60 : 50;
+      const radius = nodeSize / 2;
+
+      return (
+        <g
+          key={node.id}
+          transform={`translate(${node.x}, ${node.y})`}
+          className="cursor-pointer"
+          onClick={() => handleNodeClick(node)}
+          onMouseEnter={() => setHoveredNode(node.id)}
+          onMouseLeave={() => setHoveredNode(null)}
         >
-          {node.label.length > 6 ? node.label.slice(0, 6) + "..." : node.label}
-        </text>
+          {/* 选中/悬停外圈 */}
+          {(isHovered || isSelected || isOnPath) && (
+            <circle
+              r={radius + 8}
+              fill="none"
+              stroke={isOnPath ? "#f59e0b" : config.color}
+              strokeWidth={2}
+              strokeDasharray={isOnPath ? "" : "4,4"}
+              opacity={0.6}
+              className="animate-pulse"
+            />
+          )}
 
-        {/* 路径标记 */}
-        {isOnPath && (
-          <g transform={`translate(${radius - 8}, ${-radius + 8})`}>
-            <circle r={10} fill="#f59e0b" />
-            <text
-              textAnchor="middle"
-              y={4}
-              className="text-[10px] font-bold fill-white"
-            >
-              {(recommendedPath?.nodes.indexOf(node.id) ?? -1) + 1}
-            </text>
+          {/* 搜索匹配高亮 */}
+          {isSearchMatch && (
+            <circle r={radius + 12} fill="none" stroke="#fbbf24" strokeWidth={3} opacity={0.8} />
+          )}
+
+          {/* 节点主体 */}
+          <circle
+            r={radius}
+            fill={config.bgColor}
+            stroke={config.borderColor}
+            strokeWidth={2}
+            className="transition-all duration-200"
+          />
+
+          {/* 掌握度进度圈 */}
+          {node.masteryLevel !== undefined && node.masteryLevel > 0 && (
+            <circle
+              r={radius - 3}
+              fill="none"
+              stroke={config.color}
+              strokeWidth={3}
+              strokeDasharray={`${(2 * Math.PI * (radius - 3) * node.masteryLevel) / 100} ${2 * Math.PI * (radius - 3)}`}
+              strokeLinecap="round"
+              transform="rotate(-90)"
+              opacity={0.6}
+            />
+          )}
+
+          {/* 节点标签 */}
+          <text
+            y={4}
+            textAnchor="middle"
+            className="text-xs font-medium fill-stone-700 pointer-events-none"
+          >
+            {node.label.length > 6 ? node.label.slice(0, 6) + "..." : node.label}
+          </text>
+
+          {/* 路径标记 */}
+          {isOnPath && (
+            <g transform={`translate(${radius - 8}, ${-radius + 8})`}>
+              <circle r={10} fill="#f59e0b" />
+              <text textAnchor="middle" y={4} className="text-[10px] font-bold fill-white">
+                {(recommendedPath?.nodes.indexOf(node.id) ?? -1) + 1}
+              </text>
+            </g>
+          )}
+
+          {/* 掌握度图标 */}
+          <g transform={`translate(${-radius + 8}, ${radius - 8})`}>
+            <circle r={8} fill={config.color} />
           </g>
-        )}
-
-        {/* 掌握度图标 */}
-        <g transform={`translate(${-radius + 8}, ${radius - 8})`}>
-          <circle r={8} fill={config.color} />
         </g>
-      </g>
-    );
-  }, [pathNodeIds, hoveredNode, selectedNode, searchQuery, handleNodeClick, recommendedPath]);
+      );
+    },
+    [pathNodeIds, hoveredNode, selectedNode, searchQuery, handleNodeClick, recommendedPath]
+  );
 
   return (
     <div
@@ -459,18 +469,22 @@ export function KnowledgeGraph({
               onClick={() => setFilter("all")}
               className={cn(
                 "px-2 py-1 text-xs rounded transition-colors",
-                filter === "all" ? "bg-stone-100 text-stone-700" : "text-stone-500 hover:bg-stone-50"
+                filter === "all"
+                  ? "bg-stone-100 text-stone-700"
+                  : "text-stone-500 hover:bg-stone-50"
               )}
             >
               全部
             </button>
-            {(Object.keys(MASTERY_CONFIG) as MasteryStatus[]).map(status => (
+            {(Object.keys(MASTERY_CONFIG) as MasteryStatus[]).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
                 className={cn(
                   "px-2 py-1 text-xs rounded transition-colors flex items-center gap-1",
-                  filter === status ? "bg-stone-100 text-stone-700" : "text-stone-500 hover:bg-stone-50"
+                  filter === status
+                    ? "bg-stone-100 text-stone-700"
+                    : "text-stone-500 hover:bg-stone-50"
                 )}
               >
                 <span
@@ -563,7 +577,7 @@ export function KnowledgeGraph({
         <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-sm p-3 z-10">
           <p className="text-xs font-medium text-stone-600 mb-2">图例</p>
           <div className="space-y-1.5">
-            {(Object.keys(MASTERY_CONFIG) as MasteryStatus[]).map(status => {
+            {(Object.keys(MASTERY_CONFIG) as MasteryStatus[]).map((status) => {
               const config = MASTERY_CONFIG[status];
               return (
                 <div key={status} className="flex items-center gap-2">
@@ -603,17 +617,17 @@ export function KnowledgeGraph({
               <X className="w-4 h-4 text-stone-400" />
             </button>
           </div>
-          
+
           <p className="text-xs text-stone-500 mb-3">{recommendedPath.description}</p>
-          
+
           <div className="space-y-2">
             {recommendedPath.nodes.map((nodeId, index) => {
-              const node = positionedNodes.find(n => n.id === nodeId);
+              const node = positionedNodes.find((n) => n.id === nodeId);
               if (!node) return null;
-              
+
               const mastery = node.mastery || "unknown";
               const config = MASTERY_CONFIG[mastery];
-              
+
               return (
                 <button
                   key={nodeId}
@@ -625,7 +639,9 @@ export function KnowledgeGraph({
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-stone-700 truncate">{node.label}</p>
-                    <p className="text-xs" style={{ color: config.color }}>{config.label}</p>
+                    <p className="text-xs" style={{ color: config.color }}>
+                      {config.label}
+                    </p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-stone-400" />
                 </button>
@@ -677,9 +693,7 @@ export function KnowledgeGraph({
           }}
         >
           {/* 渲染边 */}
-          <g className="edges">
-            {filteredEdges.map(edge => renderEdge(edge))}
-          </g>
+          <g className="edges">{filteredEdges.map((edge) => renderEdge(edge))}</g>
 
           {/* 推荐路径连线 */}
           {recommendedPath && (
@@ -722,16 +736,14 @@ export function KnowledgeGraph({
           </defs>
 
           {/* 渲染节点 */}
-          <g className="nodes">
-            {filteredNodes.map(node => renderNode(node))}
-          </g>
+          <g className="nodes">{filteredNodes.map((node) => renderNode(node))}</g>
         </svg>
       </div>
 
       {/* 节点详情悬浮卡 */}
       {hoveredNode && (
         <NodeTooltip
-          node={positionedNodes.find(n => n.id === hoveredNode)!}
+          node={positionedNodes.find((n) => n.id === hoveredNode)!}
           isOnPath={pathNodeIds.has(hoveredNode)}
         />
       )}
@@ -740,13 +752,7 @@ export function KnowledgeGraph({
 }
 
 // 节点悬浮提示
-function NodeTooltip({
-  node,
-  isOnPath,
-}: {
-  node: KnowledgeNode;
-  isOnPath: boolean;
-}) {
+function NodeTooltip({ node, isOnPath }: { node: KnowledgeNode; isOnPath: boolean }) {
   const mastery = node.mastery || "unknown";
   const config = MASTERY_CONFIG[mastery];
 
@@ -761,9 +767,7 @@ function NodeTooltip({
         </div>
         <div className="flex-1">
           <h4 className="font-bold text-stone-800">{node.label}</h4>
-          {node.category && (
-            <p className="text-xs text-stone-500">{node.category}</p>
-          )}
+          {node.category && <p className="text-xs text-stone-500">{node.category}</p>}
         </div>
       </div>
 

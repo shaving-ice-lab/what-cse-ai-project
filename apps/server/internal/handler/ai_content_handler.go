@@ -141,6 +141,7 @@ type GenerateCourseLessonsRequest struct {
 	AutoApprove        bool   `json:"auto_approve,omitempty"`
 	AutoImport         bool   `json:"auto_import,omitempty"`
 	SkipExisting       bool   `json:"skip_existing,omitempty"`
+	MaxConcurrency     int    `json:"max_concurrency,omitempty"`
 	SystemPrompt       string `json:"system_prompt,omitempty"`
 	UserPromptTemplate string `json:"user_prompt_template,omitempty"`
 }
@@ -175,6 +176,7 @@ func (h *AIContentV2Handler) GenerateCourseLessons(c echo.Context) error {
 		AutoApprove:        req.AutoApprove,
 		AutoImport:         req.AutoImport,
 		SkipExisting:       req.SkipExisting,
+		MaxConcurrency:     req.MaxConcurrency,
 		SystemPrompt:       req.SystemPrompt,
 		UserPromptTemplate: req.UserPromptTemplate,
 	})
@@ -205,6 +207,7 @@ type GenerateCategoryLessonsRequest struct {
 	AutoImport           bool   `json:"auto_import,omitempty"`
 	SkipExisting         bool   `json:"skip_existing,omitempty"`
 	IncludeSubCategories bool   `json:"include_sub_categories,omitempty"`
+	MaxConcurrency       int    `json:"max_concurrency,omitempty"`
 	SystemPrompt         string `json:"system_prompt,omitempty"`
 	UserPromptTemplate   string `json:"user_prompt_template,omitempty"`
 }
@@ -240,6 +243,7 @@ func (h *AIContentV2Handler) GenerateCategoryLessons(c echo.Context) error {
 		AutoImport:           req.AutoImport,
 		SkipExisting:         req.SkipExisting,
 		IncludeSubCategories: req.IncludeSubCategories,
+		MaxConcurrency:       req.MaxConcurrency,
 		SystemPrompt:         req.SystemPrompt,
 		UserPromptTemplate:   req.UserPromptTemplate,
 	})

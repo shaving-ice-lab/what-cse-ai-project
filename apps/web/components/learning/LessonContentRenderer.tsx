@@ -214,14 +214,9 @@ interface LessonContentRendererProps {
 // 主渲染组件
 // =====================================================
 
-export function LessonContentRenderer({
-  content,
-  className,
-}: LessonContentRendererProps) {
+export function LessonContentRenderer({ content, className }: LessonContentRendererProps) {
   if (!content) {
-    return (
-      <div className="text-center py-12 text-stone-500">暂无课程内容</div>
-    );
+    return <div className="text-center py-12 text-stone-500">暂无课程内容</div>;
   }
 
   const { exam_analysis, lesson_content, lesson_sections, practice_problems, homework } = content;
@@ -267,9 +262,11 @@ export function LessonContentRenderer({
       )}
 
       {/* 9. 精讲例题 */}
-      {lesson_sections?.filter(s => s.section_type === "example").map((section, idx) => (
-        <ExampleQuestions key={idx} section={section} />
-      ))}
+      {lesson_sections
+        ?.filter((s) => s.section_type === "example")
+        .map((section, idx) => (
+          <ExampleQuestions key={idx} section={section} />
+        ))}
 
       {/* 10. 易错陷阱 */}
       {lesson_content?.common_mistakes && lesson_content.common_mistakes.length > 0 && (
@@ -282,9 +279,11 @@ export function LessonContentRenderer({
       )}
 
       {/* 12. 真题演练 */}
-      {lesson_sections?.filter(s => s.section_type === "drill").map((section, idx) => (
-        <RealExamDrills key={idx} section={section} />
-      ))}
+      {lesson_sections
+        ?.filter((s) => s.section_type === "drill")
+        .map((section, idx) => (
+          <RealExamDrills key={idx} section={section} />
+        ))}
 
       {/* 13. 练习题目 */}
       {practice_problems && practice_problems.length > 0 && (
@@ -312,9 +311,7 @@ export function LessonContentRenderer({
       )}
 
       {/* 18. 快速笔记 */}
-      {lesson_content?.quick_notes && (
-        <QuickNotesSection data={lesson_content.quick_notes} />
-      )}
+      {lesson_content?.quick_notes && <QuickNotesSection data={lesson_content.quick_notes} />}
 
       {/* 19. 分段内容补充 */}
       {lesson_sections && lesson_sections.length > 0 && (
@@ -363,7 +360,7 @@ function ExamAnalysisCard({ data }: { data: ExamAnalysis }) {
           )}
         </div>
       )}
-      
+
       {data.exam_forms && data.exam_forms.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="text-sm text-stone-500">考查形式：</span>
@@ -385,7 +382,7 @@ function ExamAnalysisCard({ data }: { data: ExamAnalysis }) {
           ))}
         </div>
       )}
-      
+
       {data.recent_trends && (
         <div className="mt-4 p-3 bg-white/50 rounded-lg">
           <span className="text-sm font-medium text-blue-800">近年趋势：</span>
@@ -521,7 +518,10 @@ function CoreConceptsGrid({ concepts }: { concepts: CoreConcept[] }) {
                 <p className="text-xs text-purple-700 font-medium mb-1">常见搭配</p>
                 <div className="flex flex-wrap gap-2">
                   {concept.common_pairs.map((pair, pIdx) => (
-                    <span key={pIdx} className="px-2 py-1 bg-white/70 text-purple-700 rounded text-xs">
+                    <span
+                      key={pIdx}
+                      className="px-2 py-1 bg-white/70 text-purple-700 rounded text-xs"
+                    >
                       {pair}
                     </span>
                   ))}
@@ -583,7 +583,10 @@ function MethodStepsFlow({ steps }: { steps: MethodStep[] }) {
                   <p className="text-xs text-stone-500 mb-1">核查清单</p>
                   <div className="flex flex-wrap gap-2">
                     {step.verification_checklist.map((item, vIdx) => (
-                      <span key={vIdx} className="px-2 py-1 bg-stone-100 text-stone-600 rounded text-xs">
+                      <span
+                        key={vIdx}
+                        className="px-2 py-1 bg-stone-100 text-stone-600 rounded text-xs"
+                      >
                         {item}
                       </span>
                     ))}
@@ -593,7 +596,10 @@ function MethodStepsFlow({ steps }: { steps: MethodStep[] }) {
               {step.key_signals && step.key_signals.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {step.key_signals.map((signal, sIdx) => (
-                    <span key={sIdx} className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded text-xs">
+                    <span
+                      key={sIdx}
+                      className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded text-xs"
+                    >
                       {signal}
                     </span>
                   ))}
@@ -685,7 +691,10 @@ function MemoryTipsSection({ tips }: { tips: MemoryTip[] }) {
             {tip.word_pairs && tip.word_pairs.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {tip.word_pairs.map((pair, pIdx) => (
-                  <span key={pIdx} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">
+                  <span
+                    key={pIdx}
+                    className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs"
+                  >
                     {pair}
                   </span>
                 ))}
@@ -725,22 +734,20 @@ function ExampleQuestions({ section }: { section: LessonSection }) {
               <span className="px-2 py-1 bg-indigo-500 text-white rounded text-sm font-medium">
                 例题 {idx + 1}
               </span>
-              {example.source && (
-                <span className="text-sm text-indigo-600">{example.source}</span>
-              )}
+              {example.source && <span className="text-sm text-indigo-600">{example.source}</span>}
               {example.difficulty && (
                 <span className="ml-auto text-sm text-stone-500">{example.difficulty}</span>
               )}
             </div>
             <p className="text-stone-800 mb-4">{example.problem}</p>
-            
+
             {example.context_analysis && (
               <div className="p-3 bg-white rounded mb-3">
                 <span className="text-sm font-medium text-indigo-700">语境分析：</span>
                 <p className="text-sm text-stone-600 mt-1">{example.context_analysis}</p>
               </div>
             )}
-            
+
             {example.thinking_process && (
               <div className="p-3 bg-white rounded mb-3">
                 <span className="text-sm font-medium text-indigo-700">解题思路：</span>
@@ -775,14 +782,16 @@ function ExampleQuestions({ section }: { section: LessonSection }) {
                 <span className="ml-1">{example.extension}</span>
               </div>
             )}
-            
+
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-indigo-200">
               <span className="text-sm font-medium text-indigo-700">答案：</span>
               <span className="px-3 py-1 bg-indigo-500 text-white rounded font-bold">
                 {example.answer}
               </span>
               {example.time_spent && (
-                <span className="ml-auto text-xs text-stone-500">建议用时：{example.time_spent}</span>
+                <span className="ml-auto text-xs text-stone-500">
+                  建议用时：{example.time_spent}
+                </span>
               )}
             </div>
           </div>
@@ -1028,7 +1037,10 @@ function VocabularyList({ vocabulary }: { vocabulary: VocabularyAccumulation }) 
             <h4 className="font-medium text-pink-700 mb-2">必须掌握</h4>
             <div className="flex flex-wrap gap-2">
               {vocabulary.must_know.map((word, idx) => (
-                <span key={idx} className="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm">
+                <span
+                  key={idx}
+                  className="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm"
+                >
                   {word}
                 </span>
               ))}
@@ -1040,7 +1052,10 @@ function VocabularyList({ vocabulary }: { vocabulary: VocabularyAccumulation }) 
             <h4 className="font-medium text-orange-700 mb-2">应该了解</h4>
             <div className="flex flex-wrap gap-2">
               {vocabulary.should_know.map((word, idx) => (
-                <span key={idx} className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                <span
+                  key={idx}
+                  className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm"
+                >
                   {word}
                 </span>
               ))}
@@ -1052,7 +1067,10 @@ function VocabularyList({ vocabulary }: { vocabulary: VocabularyAccumulation }) 
             <h4 className="font-medium text-stone-600 mb-2">可以了解</h4>
             <div className="flex flex-wrap gap-2">
               {vocabulary.nice_to_know.map((word, idx) => (
-                <span key={idx} className="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">
+                <span
+                  key={idx}
+                  className="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm"
+                >
                   {word}
                 </span>
               ))}

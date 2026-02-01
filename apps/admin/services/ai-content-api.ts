@@ -26,21 +26,11 @@ export type AIContentType =
   | "progress_evaluation"
   | "ability_report";
 
-export type AIRelatedType =
-  | "question"
-  | "course"
-  | "chapter"
-  | "knowledge_point"
-  | "user";
+export type AIRelatedType = "question" | "course" | "chapter" | "knowledge_point" | "user";
 
 export type AIContentStatus = "pending" | "approved" | "rejected" | "expired";
 
-export type AIBatchTaskStatus =
-  | "pending"
-  | "processing"
-  | "completed"
-  | "failed"
-  | "cancelled";
+export type AIBatchTaskStatus = "pending" | "processing" | "completed" | "failed" | "cancelled";
 
 export interface AIGeneratedContent {
   id: number;
@@ -476,24 +466,16 @@ export const aiContentApi = {
 
   // 获取单个内容
   getContent: async (id: number): Promise<AIGeneratedContent> => {
-    const res = await apiRequest<{ data: AIGeneratedContent }>(
-      `/admin/ai/contents/${id}`
-    );
+    const res = await apiRequest<{ data: AIGeneratedContent }>(`/admin/ai/contents/${id}`);
     return res.data;
   },
 
   // 更新内容
-  updateContent: async (
-    id: number,
-    data: UpdateAIContentRequest
-  ): Promise<AIGeneratedContent> => {
-    const res = await apiRequest<{ data: AIGeneratedContent }>(
-      `/admin/ai/contents/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }
-    );
+  updateContent: async (id: number, data: UpdateAIContentRequest): Promise<AIGeneratedContent> => {
+    const res = await apiRequest<{ data: AIGeneratedContent }>(`/admin/ai/contents/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
     return res.data;
   },
 
@@ -532,10 +514,7 @@ export const aiContentApi = {
   },
 
   // 批量审核拒绝
-  batchReject: async (
-    ids: number[],
-    reason?: string
-  ): Promise<{ success_count: number }> => {
+  batchReject: async (ids: number[], reason?: string): Promise<{ success_count: number }> => {
     const res = await apiRequest<{ data: { success_count: number } }>(
       `/admin/ai/contents/batch-reject`,
       {
@@ -623,21 +602,16 @@ export const aiContentApi = {
 
   // 获取单个任务
   getTask: async (id: number): Promise<AIBatchTask> => {
-    const res = await apiRequest<{ data: AIBatchTask }>(
-      `/admin/ai/tasks/${id}`
-    );
+    const res = await apiRequest<{ data: AIBatchTask }>(`/admin/ai/tasks/${id}`);
     return res.data;
   },
 
   // 创建批量任务
   createTask: async (data: CreateAIBatchTaskRequest): Promise<AIBatchTask> => {
-    const res = await apiRequest<{ data: AIBatchTask }>(
-      `/admin/ai/tasks`,
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+    const res = await apiRequest<{ data: AIBatchTask }>(`/admin/ai/tasks`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
     return res.data;
   },
 
@@ -650,12 +624,9 @@ export const aiContentApi = {
 
   // 重试任务
   retryTask: async (id: number): Promise<AIBatchTask> => {
-    const res = await apiRequest<{ data: AIBatchTask }>(
-      `/admin/ai/tasks/${id}/retry`,
-      {
-        method: "POST",
-      }
-    );
+    const res = await apiRequest<{ data: AIBatchTask }>(`/admin/ai/tasks/${id}/retry`, {
+      method: "POST",
+    });
     return res.data;
   },
 
@@ -665,9 +636,7 @@ export const aiContentApi = {
 
   // 获取质量统计
   getQualityStats: async (): Promise<AIQualityStats> => {
-    const res = await apiRequest<{ data: AIQualityStats }>(
-      `/admin/ai/quality/stats`
-    );
+    const res = await apiRequest<{ data: AIQualityStats }>(`/admin/ai/quality/stats`);
     return res.data;
   },
 
@@ -718,23 +687,16 @@ export const aiContentApi = {
 
   // 获取单个模板
   getPromptTemplate: async (id: number): Promise<PromptTemplate> => {
-    const res = await apiRequest<{ data: PromptTemplate }>(
-      `/admin/ai/prompts/${id}`
-    );
+    const res = await apiRequest<{ data: PromptTemplate }>(`/admin/ai/prompts/${id}`);
     return res.data;
   },
 
   // 创建模板
-  createPromptTemplate: async (
-    data: CreatePromptTemplateRequest
-  ): Promise<PromptTemplate> => {
-    const res = await apiRequest<{ data: PromptTemplate }>(
-      `/admin/ai/prompts`,
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+  createPromptTemplate: async (data: CreatePromptTemplateRequest): Promise<PromptTemplate> => {
+    const res = await apiRequest<{ data: PromptTemplate }>(`/admin/ai/prompts`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
     return res.data;
   },
 
@@ -743,13 +705,10 @@ export const aiContentApi = {
     id: number,
     data: UpdatePromptTemplateRequest
   ): Promise<PromptTemplate> => {
-    const res = await apiRequest<{ data: PromptTemplate }>(
-      `/admin/ai/prompts/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }
-    );
+    const res = await apiRequest<{ data: PromptTemplate }>(`/admin/ai/prompts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
     return res.data;
   },
 
@@ -761,9 +720,7 @@ export const aiContentApi = {
   },
 
   // 获取模板版本历史
-  getPromptTemplateVersions: async (
-    id: number
-  ): Promise<PromptTemplateVersion[]> => {
+  getPromptTemplateVersions: async (id: number): Promise<PromptTemplateVersion[]> => {
     const res = await apiRequest<{ data: { versions: PromptTemplateVersion[] } }>(
       `/admin/ai/prompts/${id}/versions`
     );
@@ -771,17 +728,11 @@ export const aiContentApi = {
   },
 
   // 回滚到指定版本
-  rollbackPromptTemplate: async (
-    id: number,
-    versionId: number
-  ): Promise<PromptTemplate> => {
-    const res = await apiRequest<{ data: PromptTemplate }>(
-      `/admin/ai/prompts/${id}/rollback`,
-      {
-        method: "POST",
-        body: JSON.stringify({ version_id: versionId }),
-      }
-    );
+  rollbackPromptTemplate: async (id: number, versionId: number): Promise<PromptTemplate> => {
+    const res = await apiRequest<{ data: PromptTemplate }>(`/admin/ai/prompts/${id}/rollback`, {
+      method: "POST",
+      body: JSON.stringify({ version_id: versionId }),
+    });
     return res.data;
   },
 
@@ -804,23 +755,16 @@ export const aiContentApi = {
 
   // 获取配置
   getConfig: async (): Promise<AIGenerationConfig> => {
-    const res = await apiRequest<{ data: AIGenerationConfig }>(
-      `/admin/ai/config`
-    );
+    const res = await apiRequest<{ data: AIGenerationConfig }>(`/admin/ai/config`);
     return res.data;
   },
 
   // 更新配置
-  updateConfig: async (
-    data: UpdateAIConfigRequest
-  ): Promise<AIGenerationConfig> => {
-    const res = await apiRequest<{ data: AIGenerationConfig }>(
-      `/admin/ai/config`,
-      {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }
-    );
+  updateConfig: async (data: UpdateAIConfigRequest): Promise<AIGenerationConfig> => {
+    const res = await apiRequest<{ data: AIGenerationConfig }>(`/admin/ai/config`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
     return res.data;
   },
 
@@ -927,10 +871,7 @@ export const getContentStatusLabel = (status: AIContentStatus): string => {
 export const getContentStatusColor = (
   status: AIContentStatus
 ): "default" | "secondary" | "destructive" | "outline" => {
-  const colors: Record<
-    AIContentStatus,
-    "default" | "secondary" | "destructive" | "outline"
-  > = {
+  const colors: Record<AIContentStatus, "default" | "secondary" | "destructive" | "outline"> = {
     pending: "outline",
     approved: "default",
     rejected: "destructive",
@@ -953,10 +894,7 @@ export const getTaskStatusLabel = (status: AIBatchTaskStatus): string => {
 export const getTaskStatusColor = (
   status: AIBatchTaskStatus
 ): "default" | "secondary" | "destructive" | "outline" => {
-  const colors: Record<
-    AIBatchTaskStatus,
-    "default" | "secondary" | "destructive" | "outline"
-  > = {
+  const colors: Record<AIBatchTaskStatus, "default" | "secondary" | "destructive" | "outline"> = {
     pending: "outline",
     processing: "secondary",
     completed: "default",

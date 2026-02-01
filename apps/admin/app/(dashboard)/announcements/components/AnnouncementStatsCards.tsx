@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  FileText,
-  Clock,
-  CalendarPlus,
-  CheckCircle,
-  Users,
-  Briefcase,
-} from "lucide-react";
+import { FileText, Clock, CalendarPlus, CheckCircle, Users, Briefcase } from "lucide-react";
 import { Card, CardContent, Skeleton } from "@what-cse/ui";
 import { announcementApi } from "@/services/announcement-api";
 import type { AnnouncementStats } from "@/types/announcement";
@@ -46,9 +39,7 @@ function StatsCard({ title, value, icon, loading, onClick, variant = "default" }
     >
       <CardContent className="pt-6">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg bg-background ${iconClasses[variant]}`}>
-            {icon}
-          </div>
+          <div className={`p-2 rounded-lg bg-background ${iconClasses[variant]}`}>{icon}</div>
           <div>
             <p className="text-sm text-muted-foreground">{title}</p>
             {loading ? (

@@ -202,6 +202,9 @@ func (s *CourseCategoryService) buildCategoryTree(categories []model.CourseCateg
 		} else {
 			if parent, exists := categoryMap[*cat.ParentID]; exists {
 				parent.Children = append(parent.Children, resp)
+			} else {
+				// 如果父分类不在当前集合中，作为根节点返回，避免丢失分类
+				roots = append(roots, resp)
 			}
 		}
 	}
@@ -541,7 +544,7 @@ func (s *CourseService) GetSubjectsOverview() []SubjectOverview {
 			}
 		}
 
-		// 实时计算课程数量（只统计已发布的课程）
+		// 实时计算课程数量（统计全部课程）
 		courseCount := 0
 		categories, err := s.categoryRepo.GetBySubject(subjectID)
 		if err == nil && len(categories) > 0 {
@@ -550,9 +553,8 @@ func (s *CourseService) GetSubjectsOverview() []SubjectOverview {
 			for _, cat := range categories {
 				categoryIDs = append(categoryIDs, cat.ID)
 			}
-			// 实时统计已发布课程数量
-			publishedStatus := model.CourseStatusPublished
-			counts, countErr := s.courseRepo.CountByCategoryIDs(categoryIDs, &publishedStatus)
+			// 实时统计全部课程数量
+			counts, countErr := s.courseRepo.CountByCategoryIDs(categoryIDs, nil)
 			if countErr == nil {
 				for _, count := range counts {
 					courseCount += int(count)

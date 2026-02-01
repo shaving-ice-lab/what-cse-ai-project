@@ -32,22 +32,25 @@ import { useAuthStore } from "@/stores/authStore";
 import { toast } from "@what-cse/ui";
 
 // 科目配置
-const subjectConfig: Record<string, {
-  name: string;
-  icon: any;
-  color: string;
-  bgColor: string;
-  textColor: string;
-  gradient: string;
-  description: string;
-  categories: {
-    key: string;
+const subjectConfig: Record<
+  string,
+  {
     name: string;
+    icon: any;
+    color: string;
+    bgColor: string;
+    textColor: string;
+    gradient: string;
     description: string;
-    questionCount?: number;
-    children?: { key: string; name: string; questionCount?: number }[];
-  }[];
-}> = {
+    categories: {
+      key: string;
+      name: string;
+      description: string;
+      questionCount?: number;
+      children?: { key: string; name: string; questionCount?: number }[];
+    }[];
+  }
+> = {
   xingce: {
     name: "行测",
     icon: Brain,
@@ -318,13 +321,21 @@ const regionOptions = [
 ];
 
 // 进度条组件
-function ProgressBar({ done, total, correctRate }: { done: number; total: number; correctRate?: number }) {
+function ProgressBar({
+  done,
+  total,
+  correctRate,
+}: {
+  done: number;
+  total: number;
+  correctRate?: number;
+}) {
   const percentage = total > 0 ? (done / total) * 100 : 0;
-  
+
   return (
     <div className="flex items-center gap-2 min-w-[140px]">
       <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all"
           style={{ width: `${percentage}%` }}
         />
@@ -348,7 +359,7 @@ function CategoryCard({
   progress,
   childProgress,
 }: {
-  category: typeof subjectConfig.xingce.categories[0];
+  category: (typeof subjectConfig.xingce.categories)[0];
   subject: string;
   isExpanded: boolean;
   onToggle: () => void;
@@ -374,13 +385,17 @@ function CategoryCard({
           </div>
           <p className="text-sm text-stone-500 mt-1">{category.description}</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* 进度统计 */}
           {progress && progress.total > 0 && (
-            <ProgressBar done={progress.done} total={progress.total} correctRate={progress.correctRate} />
+            <ProgressBar
+              done={progress.done}
+              total={progress.total}
+              correctRate={progress.correctRate}
+            />
           )}
-          
+
           {!hasChildren && (
             <Link
               href={`/practice/do?subject=${subject}&category=${category.key}`}
@@ -421,7 +436,11 @@ function CategoryCard({
                 <div className="flex items-center gap-3">
                   {/* 子分类进度 */}
                   {childProg && childProg.total > 0 && (
-                    <ProgressBar done={childProg.done} total={childProg.total} correctRate={childProg.correctRate} />
+                    <ProgressBar
+                      done={childProg.done}
+                      total={childProg.total}
+                      correctRate={childProg.correctRate}
+                    />
                   )}
                   <Link
                     href={`/practice/do?subject=${subject}&category=${child.key}`}
@@ -440,11 +459,7 @@ function CategoryCard({
   );
 }
 
-export default function SubjectPracticePage({
-  params,
-}: {
-  params: Promise<{ subject: string }>;
-}) {
+export default function SubjectPracticePage({ params }: { params: Promise<{ subject: string }> }) {
   const { subject } = use(params);
   const { isAuthenticated } = useAuthStore();
 
@@ -456,34 +471,39 @@ export default function SubjectPracticePage({
   const [practiceMode, setPracticeMode] = useState("practice");
   const [questionCount, setQuestionCount] = useState("20");
   const [loading, setLoading] = useState(false);
-  
+
   // 练习进度统计
-  const [categoryProgress, setCategoryProgress] = useState<Map<string, { done: number; total: number; correctRate?: number }>>(new Map());
+  const [categoryProgress, setCategoryProgress] = useState<
+    Map<string, { done: number; total: number; correctRate?: number }>
+  >(new Map());
   const [totalDone, setTotalDone] = useState(0);
   const [totalCorrectRate, setTotalCorrectRate] = useState(0);
 
   const config = subjectConfig[subject];
-  
+
   // 获取进度统计
   useEffect(() => {
     const fetchProgress = async () => {
       if (!isAuthenticated) return;
-      
+
       try {
         const res = await practiceApi.getCategoryProgress(subject);
         if (res.data?.progress) {
-          const progressMap = new Map<string, { done: number; total: number; correctRate?: number }>();
+          const progressMap = new Map<
+            string,
+            { done: number; total: number; correctRate?: number }
+          >();
           let totalDoneCount = 0;
           let totalQuestionCount = 0;
           let totalCorrectCount = 0;
-          
+
           res.data.progress.forEach((stat: CategoryProgressStat) => {
             // Map category_id to category_key based on config
             // For now, we'll use category_name to match
             const categoryName = stat.category_name;
-            
+
             // Find matching category by name
-            config?.categories.forEach(cat => {
+            config?.categories.forEach((cat) => {
               if (cat.name === categoryName || cat.key === categoryName.toLowerCase()) {
                 progressMap.set(cat.key, {
                   done: stat.done_count,
@@ -492,7 +512,7 @@ export default function SubjectPracticePage({
                 });
               }
               // Check children
-              cat.children?.forEach(child => {
+              cat.children?.forEach((child) => {
                 if (child.name === categoryName || child.key === categoryName.toLowerCase()) {
                   progressMap.set(child.key, {
                     done: stat.done_count,
@@ -502,23 +522,23 @@ export default function SubjectPracticePage({
                 }
               });
             });
-            
+
             totalDoneCount += stat.done_count;
             totalQuestionCount += stat.total_questions;
             totalCorrectCount += stat.correct_count;
           });
-          
+
           setCategoryProgress(progressMap);
           setTotalDone(totalDoneCount);
           if (totalDoneCount > 0) {
-            setTotalCorrectRate(totalCorrectCount / totalDoneCount * 100);
+            setTotalCorrectRate((totalCorrectCount / totalDoneCount) * 100);
           }
         }
       } catch (error) {
         console.error("Failed to fetch progress:", error);
       }
     };
-    
+
     fetchProgress();
   }, [isAuthenticated, subject, config]);
 
@@ -543,10 +563,8 @@ export default function SubjectPracticePage({
   };
 
   // 计算总题数
-  const totalQuestions = config?.categories.reduce(
-    (sum, cat) => sum + (cat.questionCount || 0),
-    0
-  ) || 0;
+  const totalQuestions =
+    config?.categories.reduce((sum, cat) => sum + (cat.questionCount || 0), 0) || 0;
 
   if (!config) {
     return (
@@ -614,7 +632,7 @@ export default function SubjectPracticePage({
             <Target className="w-5 h-5 text-amber-500" />
             快速练习
           </h2>
-          
+
           {/* 筛选选项 */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
             <div>
@@ -702,7 +720,7 @@ export default function SubjectPracticePage({
               </select>
             </div>
           </div>
-          
+
           {/* 模式说明 */}
           <div className="flex items-center justify-between">
             <div className="text-xs text-stone-500">
@@ -714,7 +732,17 @@ export default function SubjectPracticePage({
               ) : (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-amber-500" />
-                  计时模式：限时{questionCount === "10" ? "15" : questionCount === "20" ? "30" : questionCount === "30" ? "45" : questionCount === "50" ? "75" : "150"}分钟完成
+                  计时模式：限时
+                  {questionCount === "10"
+                    ? "15"
+                    : questionCount === "20"
+                      ? "30"
+                      : questionCount === "30"
+                        ? "45"
+                        : questionCount === "50"
+                          ? "75"
+                          : "150"}
+                  分钟完成
                 </span>
               )}
             </div>
@@ -735,17 +763,11 @@ export default function SubjectPracticePage({
             知识点分类
           </h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={expandAll}
-              className="text-sm text-stone-500 hover:text-stone-700"
-            >
+            <button onClick={expandAll} className="text-sm text-stone-500 hover:text-stone-700">
               全部展开
             </button>
             <span className="text-stone-300">|</span>
-            <button
-              onClick={collapseAll}
-              className="text-sm text-stone-500 hover:text-stone-700"
-            >
+            <button onClick={collapseAll} className="text-sm text-stone-500 hover:text-stone-700">
               全部收起
             </button>
           </div>
@@ -754,14 +776,17 @@ export default function SubjectPracticePage({
         <div className="space-y-3">
           {config.categories.map((category) => {
             const progress = categoryProgress.get(category.key);
-            const childProgressMap = new Map<string, { done: number; total: number; correctRate?: number }>();
-            category.children?.forEach(child => {
+            const childProgressMap = new Map<
+              string,
+              { done: number; total: number; correctRate?: number }
+            >();
+            category.children?.forEach((child) => {
               const childProg = categoryProgress.get(child.key);
               if (childProg) {
                 childProgressMap.set(child.key, childProg);
               }
             });
-            
+
             return (
               <CategoryCard
                 key={category.key}

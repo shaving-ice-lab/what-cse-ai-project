@@ -199,27 +199,23 @@ export const positionApi = {
     request.get("/positions/search", { params: { keyword, ...params } }),
 
   // 获取职位详情
-  detail: (id: number): Promise<PositionDetail> =>
-    request.get(`/positions/${id}`),
+  detail: (id: number): Promise<PositionDetail> => request.get(`/positions/${id}`),
 
   // 获取统计信息
   getStats: (): Promise<PositionStats> => request.get("/positions/stats"),
 
   // 按省份统计
-  getStatsByProvince: (): Promise<ProvinceStats[]> =>
-    request.get("/positions/stats/province"),
+  getStatsByProvince: (): Promise<ProvinceStats[]> => request.get("/positions/stats/province"),
 
   // 按考试类型统计
-  getStatsByExamType: (): Promise<ExamTypeStats[]> =>
-    request.get("/positions/stats/exam-type"),
+  getStatsByExamType: (): Promise<ExamTypeStats[]> => request.get("/positions/stats/exam-type"),
 
   // 获取趋势数据
   getTrends: (days?: number): Promise<PositionTrendsResponse> =>
     request.get("/positions/trends", { params: { days } }),
 
   // 获取筛选选项
-  getFilterOptions: (): Promise<FilterOptions> =>
-    request.get("/positions/filter-options"),
+  getFilterOptions: (): Promise<FilterOptions> => request.get("/positions/filter-options"),
 
   // 获取级联地区
   getCascadeRegions: (): Promise<CascadeRegionsResponse> =>
@@ -241,8 +237,7 @@ export const positionApi = {
   getRecommendedPositions: (params?: {
     limit?: number;
     min_score?: number;
-  }): Promise<RecommendedPositionsResponse> =>
-    request.get("/positions/recommended", { params }),
+  }): Promise<RecommendedPositionsResponse> => request.get("/positions/recommended", { params }),
 
   // 职位对比（基础版）
   compare: (ids: number[]): Promise<{ positions: Position[] }> =>

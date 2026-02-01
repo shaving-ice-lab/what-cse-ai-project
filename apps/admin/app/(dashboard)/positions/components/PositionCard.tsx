@@ -69,7 +69,8 @@ export function PositionCard({
   // 状态徽章
   const getStatusBadge = (status: number) => {
     const name = PositionStatusNames[status as PositionStatus] || "未知";
-    const colorClass = PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
+    const colorClass =
+      PositionStatusColors[status as PositionStatus] || "bg-gray-100 text-gray-700";
     return (
       <Badge variant="secondary" className={colorClass}>
         {name}
@@ -85,11 +86,7 @@ export function PositionCard({
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             {onSelect && (
-              <Checkbox
-                checked={selected}
-                onCheckedChange={onSelect}
-                className="mt-1"
-              />
+              <Checkbox checked={selected} onCheckedChange={onSelect} className="mt-1" />
             )}
             <div className="flex-1 min-w-0">
               <Link
@@ -180,20 +177,18 @@ export function PositionCard({
           {position.department_level && (
             <Badge variant="outline">{position.department_level}</Badge>
           )}
-          {position.exam_type && (
-            <Badge variant="outline">{position.exam_type}</Badge>
-          )}
+          {position.exam_type && <Badge variant="outline">{position.exam_type}</Badge>}
         </div>
 
         {/* 底部信息 */}
         <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center gap-2">
-            {getStatusBadge(position.status)}
-          </div>
+          <div className="flex items-center gap-2">{getStatusBadge(position.status)}</div>
           {position.registration_end && (
             <div className="flex items-center gap-1.5 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">截止 {formatDate(position.registration_end)}</span>
+              <span className="text-muted-foreground">
+                截止 {formatDate(position.registration_end)}
+              </span>
               {daysLeft !== null && daysLeft >= 0 && daysLeft <= 7 && (
                 <Badge
                   variant="secondary"

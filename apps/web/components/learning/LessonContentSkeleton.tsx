@@ -8,14 +8,7 @@ import { cn } from "@/lib/utils";
 // =====================================================
 
 function Skeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "animate-pulse bg-stone-200/70 rounded",
-        className
-      )}
-    />
-  );
+  return <div className={cn("animate-pulse bg-stone-200/70 rounded", className)} />;
 }
 
 // =====================================================
@@ -337,7 +330,7 @@ export function KnowledgeDetailSkeleton() {
           <Skeleton className="h-4 w-11/12" />
           <Skeleton className="h-4 w-4/5" />
         </div>
-        
+
         <div className="mt-6">
           <Skeleton className="h-6 w-28 mb-4" />
           <div className="space-y-2">

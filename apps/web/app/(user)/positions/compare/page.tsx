@@ -23,8 +23,18 @@ import {
   Clock,
   TrendingUp,
 } from "lucide-react";
-import { useComparePositionsEnhanced, useAddFavorite, useRemoveFavorite } from "@/hooks/usePosition";
-import type { Position, CompareResponse, CompareItem, Recommendation, CompareSummary } from "@/services/api/position";
+import {
+  useComparePositionsEnhanced,
+  useAddFavorite,
+  useRemoveFavorite,
+} from "@/hooks/usePosition";
+import type {
+  Position,
+  CompareResponse,
+  CompareItem,
+  Recommendation,
+  CompareSummary,
+} from "@/services/api/position";
 
 export default function ComparePositionsPage() {
   const searchParams = useSearchParams();
@@ -289,10 +299,7 @@ export default function ComparePositionsPage() {
                     操作
                   </td>
                   {positions.map((position) => (
-                    <td
-                      key={position.id}
-                      className="p-4 border-r border-stone-200 last:border-r-0"
-                    >
+                    <td key={position.id} className="p-4 border-r border-stone-200 last:border-r-0">
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/positions/${position.id}`}
@@ -317,7 +324,7 @@ export default function ComparePositionsPage() {
               <Sparkles className="h-5 w-5 text-amber-500" />
               AI 综合建议
             </h3>
-            
+
             {/* 总体分析 */}
             <div className="mb-4 p-4 bg-white/60 rounded-xl">
               <p className="text-stone-700">{summary.overview}</p>
@@ -332,7 +339,10 @@ export default function ComparePositionsPage() {
                 </h4>
                 <ul className="space-y-1.5">
                   {summary.highlights.map((highlight, idx) => (
-                    <li key={idx} className="text-sm text-stone-600 flex items-start gap-2 bg-white/40 rounded-lg px-3 py-2">
+                    <li
+                      key={idx}
+                      className="text-sm text-stone-600 flex items-start gap-2 bg-white/40 rounded-lg px-3 py-2"
+                    >
                       <span className="text-orange-500 shrink-0">•</span>
                       {highlight}
                     </li>
@@ -350,7 +360,10 @@ export default function ComparePositionsPage() {
                 </h4>
                 <ul className="space-y-1.5">
                   {summary.suggestions.map((suggestion, idx) => (
-                    <li key={idx} className="text-sm text-stone-600 flex items-start gap-2 bg-white/40 rounded-lg px-3 py-2">
+                    <li
+                      key={idx}
+                      className="text-sm text-stone-600 flex items-start gap-2 bg-white/40 rounded-lg px-3 py-2"
+                    >
                       <span className="text-amber-500 shrink-0">💡</span>
                       {suggestion}
                     </li>
@@ -370,8 +383,12 @@ export default function ComparePositionsPage() {
                   <Users className="h-4 w-4 text-blue-600" />
                   <span className="text-sm font-medium text-blue-600">招录人数最多</span>
                 </div>
-                <p className="font-semibold text-stone-800 line-clamp-1">{recommendation.most_recruit.position_name}</p>
-                <p className="text-2xl font-bold text-blue-700 mt-1">{recommendation.most_recruit.value}</p>
+                <p className="font-semibold text-stone-800 line-clamp-1">
+                  {recommendation.most_recruit.position_name}
+                </p>
+                <p className="text-2xl font-bold text-blue-700 mt-1">
+                  {recommendation.most_recruit.value}
+                </p>
               </div>
             )}
 
@@ -381,8 +398,12 @@ export default function ComparePositionsPage() {
                   <Check className="h-4 w-4 text-green-600" />
                   <span className="text-sm font-medium text-green-600">条件最宽松</span>
                 </div>
-                <p className="font-semibold text-stone-800 line-clamp-1">{recommendation.lowest_requirement.position_name}</p>
-                <p className="text-sm text-green-600 mt-1 line-clamp-2">{recommendation.lowest_requirement.reason}</p>
+                <p className="font-semibold text-stone-800 line-clamp-1">
+                  {recommendation.lowest_requirement.position_name}
+                </p>
+                <p className="text-sm text-green-600 mt-1 line-clamp-2">
+                  {recommendation.lowest_requirement.reason}
+                </p>
               </div>
             )}
 
@@ -392,8 +413,12 @@ export default function ComparePositionsPage() {
                   <GraduationCap className="h-4 w-4 text-purple-600" />
                   <span className="text-sm font-medium text-purple-600">适合应届生</span>
                 </div>
-                <p className="font-semibold text-stone-800 line-clamp-1">{recommendation.best_for_fresh_grad.position_name}</p>
-                <p className="text-sm text-purple-600 mt-1">{recommendation.best_for_fresh_grad.reason}</p>
+                <p className="font-semibold text-stone-800 line-clamp-1">
+                  {recommendation.best_for_fresh_grad.position_name}
+                </p>
+                <p className="text-sm text-purple-600 mt-1">
+                  {recommendation.best_for_fresh_grad.reason}
+                </p>
               </div>
             )}
 
@@ -403,8 +428,12 @@ export default function ComparePositionsPage() {
                   <Clock className="h-4 w-4 text-amber-600" />
                   <span className="text-sm font-medium text-amber-600">即将截止</span>
                 </div>
-                <p className="font-semibold text-stone-800 line-clamp-1">{recommendation.soonest_deadline.position_name}</p>
-                <p className="text-lg font-bold text-amber-700 mt-1">{recommendation.soonest_deadline.value}</p>
+                <p className="font-semibold text-stone-800 line-clamp-1">
+                  {recommendation.soonest_deadline.position_name}
+                </p>
+                <p className="text-lg font-bold text-amber-700 mt-1">
+                  {recommendation.soonest_deadline.value}
+                </p>
               </div>
             )}
 
@@ -414,8 +443,12 @@ export default function ComparePositionsPage() {
                   <TrendingUp className="h-4 w-4 text-teal-600" />
                   <span className="text-sm font-medium text-teal-600">竞争最小</span>
                 </div>
-                <p className="font-semibold text-stone-800 line-clamp-1">{recommendation.lowest_competition.position_name}</p>
-                <p className="text-lg font-bold text-teal-700 mt-1">{recommendation.lowest_competition.value}</p>
+                <p className="font-semibold text-stone-800 line-clamp-1">
+                  {recommendation.lowest_competition.position_name}
+                </p>
+                <p className="text-lg font-bold text-teal-700 mt-1">
+                  {recommendation.lowest_competition.value}
+                </p>
               </div>
             )}
           </div>

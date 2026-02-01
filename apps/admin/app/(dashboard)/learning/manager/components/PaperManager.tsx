@@ -86,9 +86,8 @@ function StatsCards({ papers, loading }: StatsCardsProps) {
   const totalPapers = papers.length;
   const publishedPapers = papers.filter((p) => p.status === 1).length;
   const totalAttempts = papers.reduce((sum, p) => sum + p.attempt_count, 0);
-  const avgScore = papers.length > 0
-    ? papers.reduce((sum, p) => sum + p.avg_score, 0) / papers.length
-    : 0;
+  const avgScore =
+    papers.length > 0 ? papers.reduce((sum, p) => sum + p.avg_score, 0) / papers.length : 0;
 
   const cards = [
     {
@@ -170,11 +169,7 @@ interface PaperFormDialogProps {
   onSubmit: (data: CreatePaperRequest) => void;
 }
 
-function PaperFormDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-}: PaperFormDialogProps) {
+function PaperFormDialog({ open, onOpenChange, onSubmit }: PaperFormDialogProps) {
   const [formData, setFormData] = useState<CreatePaperRequest>({
     title: "",
     paper_type: "mock",
@@ -220,9 +215,7 @@ function PaperFormDialog({
             <Label className="text-xs text-muted-foreground">试卷标题 *</Label>
             <Input
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="输入试卷标题"
               className="h-9 text-sm"
             />
@@ -233,9 +226,7 @@ function PaperFormDialog({
               <Label className="text-xs text-muted-foreground">试卷类型</Label>
               <Select
                 value={formData.paper_type}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, paper_type: v as PaperType })
-                }
+                onValueChange={(v) => setFormData({ ...formData, paper_type: v as PaperType })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -253,9 +244,7 @@ function PaperFormDialog({
               <Label className="text-xs text-muted-foreground">考试类型</Label>
               <Select
                 value={formData.exam_type || ""}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, exam_type: v })
-                }
+                onValueChange={(v) => setFormData({ ...formData, exam_type: v })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="选择考试类型" />
@@ -276,9 +265,7 @@ function PaperFormDialog({
               <Label className="text-xs text-muted-foreground">科目</Label>
               <Select
                 value={formData.subject || ""}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, subject: v })
-                }
+                onValueChange={(v) => setFormData({ ...formData, subject: v })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="选择科目" />
@@ -297,9 +284,7 @@ function PaperFormDialog({
               <Label className="text-xs text-muted-foreground">年份</Label>
               <Select
                 value={formData.year?.toString() || ""}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, year: v ? Number(v) : undefined })
-                }
+                onValueChange={(v) => setFormData({ ...formData, year: v ? Number(v) : undefined })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="选择年份" />
@@ -321,9 +306,7 @@ function PaperFormDialog({
               <Input
                 type="number"
                 value={formData.total_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, total_score: Number(e.target.value) })
-                }
+                onChange={(e) => setFormData({ ...formData, total_score: Number(e.target.value) })}
                 placeholder="100"
                 className="h-9 text-sm"
               />
@@ -334,9 +317,7 @@ function PaperFormDialog({
               <Input
                 type="number"
                 value={formData.time_limit}
-                onChange={(e) =>
-                  setFormData({ ...formData, time_limit: Number(e.target.value) })
-                }
+                onChange={(e) => setFormData({ ...formData, time_limit: Number(e.target.value) })}
                 placeholder="120"
                 className="h-9 text-sm"
               />
@@ -347,9 +328,7 @@ function PaperFormDialog({
             <Label className="text-xs text-muted-foreground">试卷描述</Label>
             <Textarea
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="输入试卷描述..."
               rows={2}
               className="text-sm resize-none"
@@ -360,18 +339,14 @@ function PaperFormDialog({
             <div className="flex items-center gap-2">
               <Switch
                 checked={formData.is_free}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_free: checked })
-                }
+                onCheckedChange={(checked) => setFormData({ ...formData, is_free: checked })}
               />
               <Label className="text-sm">免费试卷</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
                 checked={formData.status === 1}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, status: checked ? 1 : 0 })
-                }
+                onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? 1 : 0 })}
               />
               <Label className="text-sm">立即发布</Label>
             </div>
@@ -382,7 +357,9 @@ function PaperFormDialog({
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button size="sm" onClick={handleSubmit}>创建试卷</Button>
+          <Button size="sm" onClick={handleSubmit}>
+            创建试卷
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -507,9 +484,8 @@ export default function PaperManager() {
   const totalPapers = papers.length;
   const publishedPapers = papers.filter((p) => p.status === 1).length;
   const totalAttempts = papers.reduce((sum, p) => sum + p.attempt_count, 0);
-  const avgScore = papers.length > 0
-    ? papers.reduce((sum, p) => sum + p.avg_score, 0) / papers.length
-    : 0;
+  const avgScore =
+    papers.length > 0 ? papers.reduce((sum, p) => sum + p.avg_score, 0) / papers.length : 0;
 
   // Register toolbar content
   useLayoutEffect(() => {
@@ -527,14 +503,28 @@ export default function PaperManager() {
             className="h-8 w-40 pl-8 pr-3 text-sm bg-muted/40 border-transparent focus:border-border focus:bg-background transition-colors"
           />
         </div>
-        <Button size="sm" variant="ghost" onClick={() => setImportDialogOpen(true)} className="h-8 w-8 p-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setImportDialogOpen(true)}
+          className="h-8 w-8 p-0"
+        >
           <FileUp className="h-3.5 w-3.5" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={handleRefresh} disabled={isRefreshing} className="h-8 w-8 p-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="h-8 w-8 p-0"
+        >
           <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
         </Button>
-        <Button size="sm" onClick={() => setCreateDialogOpen(true)}
-          className="h-8 px-3 text-xs bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 shadow-sm">
+        <Button
+          size="sm"
+          onClick={() => setCreateDialogOpen(true)}
+          className="h-8 px-3 text-xs bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 shadow-sm"
+        >
           <Plus className="mr-1 h-3.5 w-3.5" />
           新建
         </Button>
@@ -649,27 +639,30 @@ export default function PaperManager() {
 
           {/* Table Content */}
           <div className="flex-1 overflow-auto">
-          {loading ? (
-            <div className="space-y-1 p-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2.5 border-b border-transparent">
-                  <Skeleton className="h-3.5 w-10" />
-                  <Skeleton className="h-3.5 w-40 flex-1" />
-                  <Skeleton className="h-5 w-14 rounded-full" />
-                  <Skeleton className="h-3.5 w-20" />
-                  <Skeleton className="h-3.5 w-12" />
-                  <Skeleton className="h-5 w-12 rounded-full" />
-                  <Skeleton className="h-6 w-6 rounded" />
-                </div>
-              ))}
-            </div>
-          ) : papers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <FileStack className="h-10 w-10 mb-3 opacity-40" />
-              <p className="text-sm">暂无试卷</p>
-              <p className="text-xs mt-1 opacity-70">点击"新建"添加试卷</p>
-            </div>
-          ) : (
+            {loading ? (
+              <div className="space-y-1 p-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-3 py-2.5 border-b border-transparent"
+                  >
+                    <Skeleton className="h-3.5 w-10" />
+                    <Skeleton className="h-3.5 w-40 flex-1" />
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                    <Skeleton className="h-3.5 w-20" />
+                    <Skeleton className="h-3.5 w-12" />
+                    <Skeleton className="h-5 w-12 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : papers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <FileStack className="h-10 w-10 mb-3 opacity-40" />
+                <p className="text-sm">暂无试卷</p>
+                <p className="text-xs mt-1 opacity-70">点击"新建"添加试卷</p>
+              </div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
@@ -695,9 +688,7 @@ export default function PaperManager() {
                         <div>
                           <p className="text-sm">{paper.title}</p>
                           {paper.year && (
-                            <span className="text-xs text-muted-foreground">
-                              {paper.year}年
-                            </span>
+                            <span className="text-xs text-muted-foreground">{paper.year}年</span>
                           )}
                         </div>
                       </TableCell>
@@ -735,8 +726,8 @@ export default function PaperManager() {
                               paper.status === 1
                                 ? "default"
                                 : paper.status === 2
-                                ? "secondary"
-                                : "outline"
+                                  ? "secondary"
+                                  : "outline"
                             }
                             className="text-xs"
                           >
@@ -765,7 +756,10 @@ export default function PaperManager() {
                                 编辑
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleStatus(paper)} className="text-sm">
+                            <DropdownMenuItem
+                              onClick={() => handleToggleStatus(paper)}
+                              className="text-sm"
+                            >
                               {paper.status === 1 ? (
                                 <>
                                   <XCircle className="mr-2 h-3.5 w-3.5" />
@@ -793,7 +787,7 @@ export default function PaperManager() {
                   ))}
                 </TableBody>
               </Table>
-          )}
+            )}
           </div>
 
           {/* Pagination */}
@@ -801,15 +795,25 @@ export default function PaperManager() {
             <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-t bg-muted/10">
               <span className="text-xs text-muted-foreground">共 {total} 套</span>
               <div className="flex items-center gap-1">
-                <Button size="sm" variant="ghost" className="h-7 text-xs"
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}>
+                  disabled={page === 1}
+                >
                   上一页
                 </Button>
-                <span className="text-xs px-2">{page} / {totalPages}</span>
-                <Button size="sm" variant="ghost" className="h-7 text-xs"
+                <span className="text-xs px-2">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}>
+                  disabled={page === totalPages}
+                >
                   下一页
                 </Button>
               </div>

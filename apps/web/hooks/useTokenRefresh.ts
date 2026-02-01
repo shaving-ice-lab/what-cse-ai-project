@@ -16,14 +16,8 @@ import { authApi } from "@/services/api/auth";
  */
 export function useTokenRefresh() {
   const router = useRouter();
-  const {
-    isAuthenticated,
-    _hasHydrated,
-    refreshToken,
-    shouldRefreshToken,
-    updateTokens,
-    logout,
-  } = useAuthStore();
+  const { isAuthenticated, _hasHydrated, refreshToken, shouldRefreshToken, updateTokens, logout } =
+    useAuthStore();
 
   // 是否正在刷新中，避免重复刷新
   const isRefreshingRef = useRef(false);
@@ -40,11 +34,7 @@ export function useTokenRefresh() {
 
     try {
       const response = await authApi.refreshToken(refreshToken);
-      updateTokens(
-        response.access_token,
-        response.refresh_token,
-        response.expires_in
-      );
+      updateTokens(response.access_token, response.refresh_token, response.expires_in);
     } catch (error) {
       console.error("Token refresh failed:", error);
       // 刷新失败，登出用户

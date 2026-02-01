@@ -60,7 +60,11 @@ export default function FavoritesPage() {
   const handleRemove = async (favorite: FavoriteResponse) => {
     const success = await removeFavorite(favorite.favorite_type, favorite.target_id);
     if (success) {
-      fetchFavorites({ favorite_type: activeTab === "all" ? undefined : activeTab, page, page_size: pageSize });
+      fetchFavorites({
+        favorite_type: activeTab === "all" ? undefined : activeTab,
+        page,
+        page_size: pageSize,
+      });
       setSelectedIds(selectedIds.filter((id) => id !== favorite.id));
     }
   };
@@ -70,7 +74,11 @@ export default function FavoritesPage() {
     if (confirm(`确定要取消收藏选中的 ${selectedIds.length} 个项目吗？`)) {
       const success = await batchRemove(selectedIds);
       if (success) {
-        fetchFavorites({ favorite_type: activeTab === "all" ? undefined : activeTab, page, page_size: pageSize });
+        fetchFavorites({
+          favorite_type: activeTab === "all" ? undefined : activeTab,
+          page,
+          page_size: pageSize,
+        });
         setSelectedIds([]);
       }
     }
@@ -231,11 +239,13 @@ export default function FavoritesPage() {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               {/* Type indicator */}
-              <div className={`h-1 ${
-                favorite.favorite_type === "position" 
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600"
-                  : "bg-gradient-to-r from-blue-500 to-blue-600"
-              }`} />
+              <div
+                className={`h-1 ${
+                  favorite.favorite_type === "position"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600"
+                    : "bg-gradient-to-r from-blue-500 to-blue-600"
+                }`}
+              />
 
               <div className="p-5 lg:p-6">
                 <div className="flex items-start gap-4">
@@ -261,7 +271,9 @@ export default function FavoritesPage() {
                             {favorite.position.position_name}
                           </Link>
                           {favorite.position.exam_type && (
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${getExamTypeStyle(favorite.position.exam_type)}`}>
+                            <span
+                              className={`px-2 py-0.5 text-xs font-medium rounded-md ${getExamTypeStyle(favorite.position.exam_type)}`}
+                            >
                               {favorite.position.exam_type}
                             </span>
                           )}
@@ -288,7 +300,8 @@ export default function FavoritesPage() {
                             </span>
                           )}
                           <span className="flex items-center gap-1 px-2.5 py-1 bg-stone-100 rounded-lg text-stone-600">
-                            <Users className="w-3.5 h-3.5" />招{favorite.position.recruit_count || 1}人
+                            <Users className="w-3.5 h-3.5" />招
+                            {favorite.position.recruit_count || 1}人
                           </span>
                         </div>
                       </>
@@ -345,11 +358,12 @@ export default function FavoritesPage() {
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-stone-100 text-sm text-stone-500">
                   <span>收藏于 {new Date(favorite.created_at).toLocaleDateString()}</span>
                   <Link
-                    href={favorite.favorite_type === "position" && favorite.position
-                      ? `/positions/${favorite.position.id}`
-                      : favorite.favorite_type === "announcement" && favorite.announcement
-                        ? `/announcements/${favorite.announcement.id}`
-                        : "#"
+                    href={
+                      favorite.favorite_type === "position" && favorite.position
+                        ? `/positions/${favorite.position.id}`
+                        : favorite.favorite_type === "announcement" && favorite.announcement
+                          ? `/announcements/${favorite.announcement.id}`
+                          : "#"
                     }
                     className="font-medium text-amber-600 hover:text-amber-700 transition-colors"
                   >
@@ -360,21 +374,21 @@ export default function FavoritesPage() {
             </div>
           ))}
         </div>
-      ) : !loading && (
-        <div className="text-center py-16 bg-white rounded-2xl border border-stone-200/50 shadow-card">
-          <Heart className="w-16 h-16 mx-auto text-stone-200 mb-4" />
-          <p className="text-stone-500 mb-2">
-            {searchQuery ? "没有找到匹配的收藏" : "暂无收藏"}
-          </p>
-          {!searchQuery && (
-            <Link
-              href="/positions"
-              className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-amber-md"
-            >
-              去浏览职位
-            </Link>
-          )}
-        </div>
+      ) : (
+        !loading && (
+          <div className="text-center py-16 bg-white rounded-2xl border border-stone-200/50 shadow-card">
+            <Heart className="w-16 h-16 mx-auto text-stone-200 mb-4" />
+            <p className="text-stone-500 mb-2">{searchQuery ? "没有找到匹配的收藏" : "暂无收藏"}</p>
+            {!searchQuery && (
+              <Link
+                href="/positions"
+                className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-amber-md"
+              >
+                去浏览职位
+              </Link>
+            )}
+          </div>
+        )
       )}
 
       {/* Pagination */}

@@ -61,7 +61,9 @@ function AnswerBubble({
         "relative w-8 h-8 rounded-full border-2 flex items-center justify-center font-medium text-sm transition-all",
         isMulti && "rounded-lg",
         // Default state
-        !isSelected && !showResult && "border-stone-300 text-stone-400 hover:border-amber-400 hover:text-amber-500",
+        !isSelected &&
+          !showResult &&
+          "border-stone-300 text-stone-400 hover:border-amber-400 hover:text-amber-500",
         // Selected state
         isSelected && !showResult && "border-amber-500 bg-amber-500 text-white shadow-md",
         // Correct answer shown
@@ -69,7 +71,11 @@ function AnswerBubble({
         // Wrong answer shown
         showResult && isWrong && "border-red-500 bg-red-500 text-white",
         // Selected but not correct/wrong during result
-        showResult && isSelected && !isCorrect && !isWrong && "border-amber-500 bg-amber-100 text-amber-700",
+        showResult &&
+          isSelected &&
+          !isCorrect &&
+          !isWrong &&
+          "border-amber-500 bg-amber-100 text-amber-700",
         // Correct answer indicator (not selected but is correct)
         showResult && !isSelected && isCorrect && "border-green-500 text-green-500",
         disabled && "cursor-not-allowed opacity-70"
@@ -185,7 +191,9 @@ function ProgressSummary({
   showCorrectAnswers?: boolean;
   correctAnswers?: Record<number, string[]>;
 }) {
-  const answered = questions.filter((q) => q.status === "answered" || q.status === "flagged").length;
+  const answered = questions.filter(
+    (q) => q.status === "answered" || q.status === "flagged"
+  ).length;
   const flagged = questions.filter((q) => q.status === "flagged").length;
   const total = questions.length;
   const progress = Math.round((answered / total) * 100);
@@ -196,10 +204,7 @@ function ProgressSummary({
     questions.forEach((q) => {
       const correct = correctAnswers[q.id] || [];
       const selected = q.options.filter((o) => o.isSelected).map((o) => o.key);
-      if (
-        correct.length === selected.length &&
-        correct.every((c) => selected.includes(c))
-      ) {
+      if (correct.length === selected.length && correct.every((c) => selected.includes(c))) {
         correctCount++;
       }
     });
@@ -283,7 +288,12 @@ export function AnswerSheet({
   }, [currentQuestionIndex, groupSize]);
 
   return (
-    <div className={cn("bg-white rounded-2xl shadow-card border border-stone-200/50 overflow-hidden", className)}>
+    <div
+      className={cn(
+        "bg-white rounded-2xl shadow-card border border-stone-200/50 overflow-hidden",
+        className
+      )}
+    >
       {/* Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500">
         <h3 className="font-bold text-white flex items-center gap-2">

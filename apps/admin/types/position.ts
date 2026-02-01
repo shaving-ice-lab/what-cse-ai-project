@@ -286,21 +286,12 @@ export const PositionStatusColors: Record<PositionStatus, string> = {
 /**
  * 学历选项
  */
-export const EducationOptions = [
-  "大专",
-  "本科",
-  "硕士研究生",
-  "博士研究生",
-];
+export const EducationOptions = ["大专", "本科", "硕士研究生", "博士研究生"];
 
 /**
  * 学位选项
  */
-export const DegreeOptions = [
-  "学士",
-  "硕士",
-  "博士",
-];
+export const DegreeOptions = ["学士", "硕士", "博士"];
 
 /**
  * 考试类型选项
@@ -332,13 +323,7 @@ export const ExamCategoryOptions = [
 /**
  * 单位层级选项
  */
-export const DepartmentLevelOptions = [
-  "中央",
-  "省级",
-  "市级",
-  "县级",
-  "乡镇",
-];
+export const DepartmentLevelOptions = ["中央", "省级", "市级", "县级", "乡镇"];
 
 /**
  * 政治面貌选项

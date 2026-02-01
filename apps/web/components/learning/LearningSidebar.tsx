@@ -82,21 +82,13 @@ function KnowledgeListItem({
       >
         {point.name}
       </button>
-      {point.relatedChapterId && (
-        <ExternalLink className="w-4 h-4 text-stone-400" />
-      )}
+      {point.relatedChapterId && <ExternalLink className="w-4 h-4 text-stone-400" />}
     </div>
   );
 }
 
 // 笔记模板卡片
-function NoteTemplateCard({
-  template,
-  onCopy,
-}: {
-  template: NoteTemplate;
-  onCopy?: () => void;
-}) {
+function NoteTemplateCard({ template, onCopy }: { template: NoteTemplate; onCopy?: () => void }) {
   return (
     <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -109,9 +101,7 @@ function NoteTemplateCard({
           <Copy className="w-4 h-4 text-amber-600" />
         </button>
       </div>
-      <p className="text-xs text-amber-700 whitespace-pre-line line-clamp-3">
-        {template.content}
-      </p>
+      <p className="text-xs text-amber-700 whitespace-pre-line line-clamp-3">{template.content}</p>
     </div>
   );
 }
@@ -145,38 +135,37 @@ export function LearningSidebar({
 
   // 计算掌握进度
   const masteredCount = knowledgePoints.filter((p) => p.mastered).length;
-  const masteryProgress = knowledgePoints.length > 0 
-    ? Math.round((masteredCount / knowledgePoints.length) * 100) 
-    : 0;
+  const masteryProgress =
+    knowledgePoints.length > 0 ? Math.round((masteredCount / knowledgePoints.length) * 100) : 0;
 
   // 默认笔记模板
-  const defaultTemplates: NoteTemplate[] = noteTemplates.length > 0 ? noteTemplates : [
-    {
-      id: "1",
-      title: "知识点笔记",
-      content: "【知识点名称】\n\n【核心概念】\n\n【重点公式/要点】\n\n【典型例题】\n\n【个人总结】",
-    },
-    {
-      id: "2",
-      title: "错题分析",
-      content: "【题目】\n\n【错误答案】\n\n【正确答案】\n\n【错误原因】\n\n【知识点回顾】\n\n【避免方法】",
-    },
-    {
-      id: "3",
-      title: "章节总结",
-      content: "【本章重点】\n1.\n2.\n3.\n\n【难点突破】\n\n【易错点】\n\n【下次复习要点】",
-    },
-  ];
+  const defaultTemplates: NoteTemplate[] =
+    noteTemplates.length > 0
+      ? noteTemplates
+      : [
+          {
+            id: "1",
+            title: "知识点笔记",
+            content:
+              "【知识点名称】\n\n【核心概念】\n\n【重点公式/要点】\n\n【典型例题】\n\n【个人总结】",
+          },
+          {
+            id: "2",
+            title: "错题分析",
+            content:
+              "【题目】\n\n【错误答案】\n\n【正确答案】\n\n【错误原因】\n\n【知识点回顾】\n\n【避免方法】",
+          },
+          {
+            id: "3",
+            title: "章节总结",
+            content: "【本章重点】\n1.\n2.\n3.\n\n【难点突破】\n\n【易错点】\n\n【下次复习要点】",
+          },
+        ];
 
   if (!isOpen) return null;
 
   return (
-    <div
-      className={cn(
-        "w-80 bg-white border-l border-stone-200 flex flex-col",
-        className
-      )}
-    >
+    <div className={cn("w-80 bg-white border-l border-stone-200 flex flex-col", className)}>
       {/* 头部 */}
       <div className="p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-3">
@@ -185,10 +174,7 @@ export function LearningSidebar({
             <h3 className="font-semibold text-stone-800">AI 学习助手</h3>
           </div>
           {onClose && (
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-stone-100 rounded transition-colors"
-            >
+            <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded transition-colors">
               <X className="w-5 h-5 text-stone-400" />
             </button>
           )}
@@ -262,9 +248,7 @@ export function LearningSidebar({
               >
                 <div className="flex items-center gap-2">
                   <Brain className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-medium text-stone-700">
-                    本章知识点
-                  </span>
+                  <span className="text-sm font-medium text-stone-700">本章知识点</span>
                 </div>
                 {expandedSections.knowledge ? (
                   <ChevronDown className="w-4 h-4 text-stone-400" />
@@ -279,16 +263,12 @@ export function LearningSidebar({
                       <KnowledgeListItem
                         key={point.id}
                         point={point}
-                        onToggle={(mastered) =>
-                          onMasteryToggle?.(point.id, mastered)
-                        }
+                        onToggle={(mastered) => onMasteryToggle?.(point.id, mastered)}
                         onClick={() => onKnowledgeClick?.(point.id)}
                       />
                     ))
                   ) : (
-                    <p className="text-sm text-stone-400 text-center py-4">
-                      暂无知识点
-                    </p>
+                    <p className="text-sm text-stone-400 text-center py-4">暂无知识点</p>
                   )}
                 </div>
               )}
@@ -301,13 +281,9 @@ export function LearningSidebar({
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-3">
               <StickyNote className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-medium text-stone-700">
-                AI 笔记模板
-              </span>
+              <span className="text-sm font-medium text-stone-700">AI 笔记模板</span>
             </div>
-            <p className="text-xs text-stone-500 mb-4">
-              使用 AI 生成的笔记模板，快速记录学习要点
-            </p>
+            <p className="text-xs text-stone-500 mb-4">使用 AI 生成的笔记模板，快速记录学习要点</p>
             <div className="space-y-3">
               {defaultTemplates.map((template) => (
                 <NoteTemplateCard
@@ -325,13 +301,9 @@ export function LearningSidebar({
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-3">
               <BookOpen className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-medium text-stone-700">
-                关联知识点
-              </span>
+              <span className="text-sm font-medium text-stone-700">关联知识点</span>
             </div>
-            <p className="text-xs text-stone-500 mb-4">
-              与本章相关的前置和后续知识点
-            </p>
+            <p className="text-xs text-stone-500 mb-4">与本章相关的前置和后续知识点</p>
             <div className="space-y-2">
               {relatedKnowledgePoints.length > 0 ? (
                 relatedKnowledgePoints.map((point) => (

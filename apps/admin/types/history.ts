@@ -116,7 +116,13 @@ export interface HistoryQueryParams {
   year_to?: number;
   page?: number;
   page_size?: number;
-  sort_by?: "year" | "recruit_count" | "competition_ratio" | "interview_score" | "written_score" | "apply_count";
+  sort_by?:
+    | "year"
+    | "recruit_count"
+    | "competition_ratio"
+    | "interview_score"
+    | "written_score"
+    | "apply_count";
   sort_order?: "asc" | "desc";
 }
 

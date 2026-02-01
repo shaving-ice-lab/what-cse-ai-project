@@ -12,11 +12,11 @@ export type { Section, SectionType, LearningProgress } from "./ClassroomContext"
 
 export { ClassroomSidebar } from "./ClassroomSidebar";
 export { ClassroomToolbar } from "./ClassroomToolbar";
-export { 
-  ClassroomSlideViewer, 
-  SectionHeader, 
+export {
+  ClassroomSlideViewer,
+  SectionHeader,
   ContentCard,
-  StepReveal 
+  StepReveal,
 } from "./ClassroomSlideViewer";
 export {
   FlipCard,

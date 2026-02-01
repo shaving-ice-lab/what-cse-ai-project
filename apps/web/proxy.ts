@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 /**
  * 认证配置 - 与 @what-cse/shared 保持同步
- * 注意：middleware 运行在 Edge Runtime，不能直接导入 workspace 包
+ * 注意：proxy 运行在 Edge Runtime，不能直接导入 workspace 包
  */
 const AUTH_CONFIG = {
   loginPath: "/login",
@@ -46,7 +46,7 @@ function clearAuthAndRedirect(request: NextRequest, redirectPath: string) {
   return response;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 检查是否是受保护的路由

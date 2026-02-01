@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Calculator, 
+import {
+  Calculator,
   ChevronRight,
   CheckCircle2,
   AlertCircle,
   TrendingUp,
   Loader2,
   HelpCircle,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 import { toolsApi, ScoreEstimateRequest, ScoreEstimateResponse } from "@/services/api";
 
@@ -107,7 +107,9 @@ export default function ScoreEstimatePage() {
       <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
         <div className="container mx-auto px-4 lg:px-6 py-8">
           <div className="flex items-center gap-2 text-emerald-200 text-sm mb-2">
-            <a href="/tools" className="hover:text-white">考试工具箱</a>
+            <a href="/tools" className="hover:text-white">
+              考试工具箱
+            </a>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white">估分工具</span>
           </div>
@@ -202,7 +204,9 @@ export default function ScoreEstimatePage() {
                 {examSubject === "行测" ? (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-stone-700 mb-1">总题数</label>
+                      <label className="block text-sm font-medium text-stone-700 mb-1">
+                        总题数
+                      </label>
                       <input
                         type="number"
                         value={totalCount}
@@ -211,7 +215,9 @@ export default function ScoreEstimatePage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-stone-700 mb-1">答对题数</label>
+                      <label className="block text-sm font-medium text-stone-700 mb-1">
+                        答对题数
+                      </label>
                       <input
                         type="number"
                         value={correctCount}
@@ -225,7 +231,9 @@ export default function ScoreEstimatePage() {
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-stone-700 mb-1">题目数量</label>
+                      <label className="block text-sm font-medium text-stone-700 mb-1">
+                        题目数量
+                      </label>
                       <input
                         type="number"
                         value={totalCount}
@@ -234,7 +242,9 @@ export default function ScoreEstimatePage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-stone-700 mb-1">预估得分</label>
+                      <label className="block text-sm font-medium text-stone-700 mb-1">
+                        预估得分
+                      </label>
                       <input
                         type="number"
                         value={correctCount}
@@ -306,7 +316,7 @@ export default function ScoreEstimatePage() {
                       </span>
                     </div>
                     <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-emerald-500 rounded-full transition-all"
                         style={{ width: `${Math.min(100, result.accuracy)}%` }}
                       />
@@ -321,11 +331,15 @@ export default function ScoreEstimatePage() {
                     </div>
                     <div className="flex items-center justify-between p-3 bg-stone-50 rounded-xl">
                       <span className="text-sm text-stone-600">考试年份</span>
-                      <span className="text-sm font-medium text-stone-800">{result.exam_year}年</span>
+                      <span className="text-sm font-medium text-stone-800">
+                        {result.exam_year}年
+                      </span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-stone-50 rounded-xl">
                       <span className="text-sm text-stone-600">考试科目</span>
-                      <span className="text-sm font-medium text-stone-800">{result.exam_subject || "行测"}</span>
+                      <span className="text-sm font-medium text-stone-800">
+                        {result.exam_subject || "行测"}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-stone-50 rounded-xl">
                       <span className="text-sm text-stone-600">答对/总题数</span>
@@ -339,7 +353,9 @@ export default function ScoreEstimatePage() {
                   {(() => {
                     const level = getScoreLevel(result.estimated_score);
                     return (
-                      <div className={`flex items-center justify-center gap-2 p-4 ${level.bg} rounded-xl`}>
+                      <div
+                        className={`flex items-center justify-center gap-2 p-4 ${level.bg} rounded-xl`}
+                      >
                         {result.estimated_score >= 60 ? (
                           <CheckCircle2 className={`w-5 h-5 ${level.color}`} />
                         ) : (

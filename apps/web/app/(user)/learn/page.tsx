@@ -31,9 +31,24 @@ import {
   PenLine,
   Activity,
 } from "lucide-react";
-import { useCourses, useMyLearning, getSubjectName, getSubjectIcon, getSubjectColor, formatDuration, getDifficultyLabel, getDifficultyColor, useLearningContent } from "@/hooks/useCourse";
+import {
+  useCourses,
+  useMyLearning,
+  getSubjectName,
+  getSubjectIcon,
+  getSubjectColor,
+  formatDuration,
+  getDifficultyLabel,
+  getDifficultyColor,
+  useLearningContent,
+} from "@/hooks/useCourse";
 import { useStreak } from "@/hooks/usePractice";
-import { CourseBrief, UserCourseProgress, LearningContent, SubjectOverview } from "@/services/api/course";
+import {
+  CourseBrief,
+  UserCourseProgress,
+  LearningContent,
+  SubjectOverview,
+} from "@/services/api/course";
 import { courseApi } from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
 import { Empty } from "@/components/common";
@@ -107,16 +122,52 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 // 根据课程属性生成封面配色
-function getCoverGradient(course: CourseBrief): { gradient: string; accent: string; pattern: string } {
+function getCoverGradient(course: CourseBrief): {
+  gradient: string;
+  accent: string;
+  pattern: string;
+} {
   const colorSchemes = [
-    { gradient: "from-blue-500 via-blue-600 to-indigo-700", accent: "bg-blue-400/30", pattern: "text-blue-300/20" },
-    { gradient: "from-emerald-500 via-teal-600 to-cyan-700", accent: "bg-emerald-400/30", pattern: "text-emerald-300/20" },
-    { gradient: "from-violet-500 via-purple-600 to-indigo-700", accent: "bg-violet-400/30", pattern: "text-violet-300/20" },
-    { gradient: "from-amber-500 via-orange-600 to-red-600", accent: "bg-amber-400/30", pattern: "text-amber-300/20" },
-    { gradient: "from-rose-500 via-pink-600 to-fuchsia-700", accent: "bg-rose-400/30", pattern: "text-rose-300/20" },
-    { gradient: "from-cyan-500 via-sky-600 to-blue-700", accent: "bg-cyan-400/30", pattern: "text-cyan-300/20" },
-    { gradient: "from-lime-500 via-green-600 to-emerald-700", accent: "bg-lime-400/30", pattern: "text-lime-300/20" },
-    { gradient: "from-fuchsia-500 via-purple-600 to-violet-700", accent: "bg-fuchsia-400/30", pattern: "text-fuchsia-300/20" },
+    {
+      gradient: "from-blue-500 via-blue-600 to-indigo-700",
+      accent: "bg-blue-400/30",
+      pattern: "text-blue-300/20",
+    },
+    {
+      gradient: "from-emerald-500 via-teal-600 to-cyan-700",
+      accent: "bg-emerald-400/30",
+      pattern: "text-emerald-300/20",
+    },
+    {
+      gradient: "from-violet-500 via-purple-600 to-indigo-700",
+      accent: "bg-violet-400/30",
+      pattern: "text-violet-300/20",
+    },
+    {
+      gradient: "from-amber-500 via-orange-600 to-red-600",
+      accent: "bg-amber-400/30",
+      pattern: "text-amber-300/20",
+    },
+    {
+      gradient: "from-rose-500 via-pink-600 to-fuchsia-700",
+      accent: "bg-rose-400/30",
+      pattern: "text-rose-300/20",
+    },
+    {
+      gradient: "from-cyan-500 via-sky-600 to-blue-700",
+      accent: "bg-cyan-400/30",
+      pattern: "text-cyan-300/20",
+    },
+    {
+      gradient: "from-lime-500 via-green-600 to-emerald-700",
+      accent: "bg-lime-400/30",
+      pattern: "text-lime-300/20",
+    },
+    {
+      gradient: "from-fuchsia-500 via-purple-600 to-violet-700",
+      accent: "bg-fuchsia-400/30",
+      pattern: "text-fuchsia-300/20",
+    },
   ];
   const index = (course.id + (course.category_id || 0)) % colorSchemes.length;
   return colorSchemes[index];
@@ -125,22 +176,26 @@ function getCoverGradient(course: CourseBrief): { gradient: string; accent: stri
 // 获取难度对应的装饰点数量
 function getDifficultyDots(difficulty: string): number {
   switch (difficulty) {
-    case "beginner": return 1;
-    case "intermediate": return 2;
-    case "advanced": return 3;
-    default: return 1;
+    case "beginner":
+      return 1;
+    case "intermediate":
+      return 2;
+    case "advanced":
+      return 3;
+    default:
+      return 1;
   }
 }
 
 // 科目入口卡片 - 新设计
 function SubjectCard({ subject, index }: { subject: SubjectOverview; index: number }) {
   const IconComponent = iconMap[subject.icon] || BookOpen;
-  
+
   // 格式化数字：添加千位分隔符
   const formatNumber = (num: number) => {
     return num.toLocaleString();
   };
-  
+
   return (
     <Link
       href={`/learn/${subject.id}`}
@@ -149,7 +204,9 @@ function SubjectCard({ subject, index }: { subject: SubjectOverview; index: numb
       <div className="p-6">
         {/* Icon & Name */}
         <div className="flex items-center gap-4 mb-4">
-          <div className={`w-14 h-14 rounded-xl ${subject.bg_color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+          <div
+            className={`w-14 h-14 rounded-xl ${subject.bg_color} flex items-center justify-center group-hover:scale-110 transition-transform`}
+          >
             <IconComponent className={`w-7 h-7 ${subject.text_color}`} />
           </div>
           <div>
@@ -179,7 +236,10 @@ function SubjectCard({ subject, index }: { subject: SubjectOverview; index: numb
         <div className="flex items-center justify-between pt-4 border-t border-stone-100">
           <div className="flex items-center gap-3 text-sm text-stone-500">
             <span>
-              <span className="font-semibold text-stone-700">{formatNumber(subject.question_count)}</span> 道题目
+              <span className="font-semibold text-stone-700">
+                {formatNumber(subject.question_count)}
+              </span>{" "}
+              道题目
             </span>
             {subject.course_count > 0 && (
               <span>
@@ -218,29 +278,51 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
           <>
             {/* 装饰性几何图案背景 */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className={`absolute -top-8 -right-8 w-32 h-32 rounded-full ${accent} blur-xl`} />
-              <div className={`absolute -bottom-4 -left-4 w-24 h-24 rounded-full ${accent} blur-lg`} />
-              
-              <svg className={`absolute inset-0 w-full h-full ${pattern}`} xmlns="http://www.w3.org/2000/svg">
+              <div
+                className={`absolute -top-8 -right-8 w-32 h-32 rounded-full ${accent} blur-xl`}
+              />
+              <div
+                className={`absolute -bottom-4 -left-4 w-24 h-24 rounded-full ${accent} blur-lg`}
+              />
+
+              <svg
+                className={`absolute inset-0 w-full h-full ${pattern}`}
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <defs>
-                  <pattern id={`grid-home-${course.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
-                    <path d="M 24 0 L 0 0 0 24" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <pattern
+                    id={`grid-home-${course.id}`}
+                    width="24"
+                    height="24"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <path
+                      d="M 24 0 L 0 0 0 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="0.5"
+                    />
                   </pattern>
                 </defs>
                 <rect width="100%" height="100%" fill={`url(#grid-home-${course.id})`} />
               </svg>
-              
+
               {/* 难度指示点 */}
               <div className="absolute top-4 left-4 flex gap-1.5">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className={`w-2 h-2 rounded-full ${i < difficultyDots ? 'bg-white/60' : 'bg-white/20'}`} />
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full ${i < difficultyDots ? "bg-white/60" : "bg-white/20"}`}
+                  />
                 ))}
               </div>
             </div>
-            
+
             {/* 中心内容区 */}
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white">
-              <div className={`w-12 h-12 rounded-xl ${accent} backdrop-blur-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+              <div
+                className={`w-12 h-12 rounded-xl ${accent} backdrop-blur-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}
+              >
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div className="flex items-center gap-1.5 text-white/90 text-sm font-medium">
@@ -259,7 +341,7 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
             </div>
           </>
         )}
-        
+
         {/* Duration Badge */}
         <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs rounded-lg flex items-center gap-1">
           <Clock className="w-3 h-3" />
@@ -286,7 +368,9 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
           {course.category && (
             <span className="text-xs text-stone-500">{course.category.name}</span>
           )}
-          <span className={`px-2 py-0.5 text-xs rounded-lg font-medium ${getDifficultyColor(course.difficulty)}`}>
+          <span
+            className={`px-2 py-0.5 text-xs rounded-lg font-medium ${getDifficultyColor(course.difficulty)}`}
+          >
             {getDifficultyLabel(course.difficulty)}
           </span>
         </div>
@@ -313,7 +397,13 @@ function CourseCard({ course, index }: { course: CourseBrief; index: number }) {
 }
 
 // 继续学习卡片
-function ContinueLearningCard({ progress, index }: { progress: UserCourseProgress; index: number }) {
+function ContinueLearningCard({
+  progress,
+  index,
+}: {
+  progress: UserCourseProgress;
+  index: number;
+}) {
   const course = progress.course;
   if (!course) return null;
 
@@ -325,13 +415,17 @@ function ContinueLearningCard({ progress, index }: { progress: UserCourseProgres
       className="group flex gap-4 p-4 bg-white rounded-xl border border-stone-200 hover:border-amber-300 hover:shadow-md transition-all duration-300"
     >
       {/* Thumbnail - 动态封面 */}
-      <div className={`relative w-28 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br ${gradient}`}>
+      <div
+        className={`relative w-28 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br ${gradient}`}
+      >
         {course.cover_image ? (
           <img src={course.cover_image} alt={course.title} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center relative">
             <div className={`absolute -top-4 -right-4 w-16 h-16 rounded-full ${accent} blur-lg`} />
-            <div className={`w-10 h-10 rounded-lg ${accent} backdrop-blur-sm flex items-center justify-center`}>
+            <div
+              className={`w-10 h-10 rounded-lg ${accent} backdrop-blur-sm flex items-center justify-center`}
+            >
               <FileText className="w-5 h-5 text-white" />
             </div>
           </div>
@@ -350,7 +444,9 @@ function ContinueLearningCard({ progress, index }: { progress: UserCourseProgres
               style={{ width: `${progress.progress}%` }}
             />
           </div>
-          <span className="text-sm font-medium text-amber-600">{Math.round(progress.progress)}%</span>
+          <span className="text-sm font-medium text-amber-600">
+            {Math.round(progress.progress)}%
+          </span>
         </div>
       </div>
 
@@ -365,7 +461,16 @@ function ContinueLearningCard({ progress, index }: { progress: UserCourseProgres
 }
 
 // 每日一练入口卡片
-function DailyPracticeBanner({ streak }: { streak: { current_streak: number; today_completed: boolean; total_questions: number; avg_correct_rate: number } | null }) {
+function DailyPracticeBanner({
+  streak,
+}: {
+  streak: {
+    current_streak: number;
+    today_completed: boolean;
+    total_questions: number;
+    avg_correct_rate: number;
+  } | null;
+}) {
   return (
     <Link
       href="/learn/practice"
@@ -374,14 +479,14 @@ function DailyPracticeBanner({ streak }: { streak: { current_streak: number; tod
       <div className="flex items-stretch">
         {/* Left colored section */}
         <div className="w-2 bg-gradient-to-b from-amber-400 to-orange-500" />
-        
+
         <div className="flex-1 p-5 flex items-center justify-between">
           <div className="flex items-center gap-5">
             {/* Icon */}
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0">
               <Flame className="w-7 h-7 text-amber-600" />
             </div>
-            
+
             {/* Text */}
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -392,9 +497,7 @@ function DailyPracticeBanner({ streak }: { streak: { current_streak: number; tod
                   </span>
                 )}
               </div>
-              <p className="text-sm text-stone-500">
-                每天10道精选题目，智能推送你的薄弱点
-              </p>
+              <p className="text-sm text-stone-500">每天10道精选题目，智能推送你的薄弱点</p>
             </div>
           </div>
 
@@ -409,7 +512,9 @@ function DailyPracticeBanner({ streak }: { streak: { current_streak: number; tod
               <p className="text-xs text-stone-500">累计做题</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-emerald-600">{Math.round(streak?.avg_correct_rate || 0)}%</p>
+              <p className="text-2xl font-bold text-emerald-600">
+                {Math.round(streak?.avg_correct_rate || 0)}%
+              </p>
               <p className="text-xs text-stone-500">正确率</p>
             </div>
           </div>
@@ -428,10 +533,34 @@ function DailyPracticeBanner({ streak }: { streak: { current_streak: number; tod
 
 // 快捷入口
 const quickActions = [
-  { icon: Target, label: "学习计划", href: "/learn/plan", color: "text-amber-600", bg: "bg-amber-50" },
-  { icon: TrendingUp, label: "学习统计", href: "/learn/stats", color: "text-blue-600", bg: "bg-blue-50" },
-  { icon: BookMarked, label: "我的收藏", href: "/learn/favorites", color: "text-violet-600", bg: "bg-violet-50" },
-  { icon: FileText, label: "错题回顾", href: "/learn/mistakes", color: "text-red-600", bg: "bg-red-50" },
+  {
+    icon: Target,
+    label: "学习计划",
+    href: "/learn/plan",
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+  },
+  {
+    icon: TrendingUp,
+    label: "学习统计",
+    href: "/learn/stats",
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+  },
+  {
+    icon: BookMarked,
+    label: "我的收藏",
+    href: "/learn/favorites",
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+  },
+  {
+    icon: FileText,
+    label: "错题回顾",
+    href: "/learn/mistakes",
+    color: "text-red-600",
+    bg: "bg-red-50",
+  },
 ];
 
 // 学习统计数据
@@ -476,10 +605,7 @@ export default function LearnPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [featured, free] = await Promise.all([
-          fetchFeaturedCourses(8),
-          fetchFreeCourses(4),
-        ]);
+        const [featured, free] = await Promise.all([fetchFeaturedCourses(8), fetchFreeCourses(4)]);
         setFeaturedCourses(featured);
         setFreeCourses(free);
       } catch (error) {
@@ -565,7 +691,9 @@ export default function LearnPage() {
                   href={action.href}
                   className="flex items-center gap-3 p-4 bg-white rounded-xl border border-stone-200 hover:border-amber-300 hover:shadow-md transition-all group"
                 >
-                  <div className={`w-10 h-10 rounded-lg ${action.bg} flex items-center justify-center`}>
+                  <div
+                    className={`w-10 h-10 rounded-lg ${action.bg} flex items-center justify-center`}
+                  >
                     <action.icon className={`w-5 h-5 ${action.color}`} />
                   </div>
                   <span className="font-medium text-stone-700 group-hover:text-amber-600 transition-colors">
@@ -612,7 +740,10 @@ export default function LearnPage() {
           {subjectsLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-white rounded-2xl border border-stone-200 p-6 animate-pulse">
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-stone-200 p-6 animate-pulse"
+                >
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-14 h-14 rounded-xl bg-stone-200" />
                     <div className="flex-1">

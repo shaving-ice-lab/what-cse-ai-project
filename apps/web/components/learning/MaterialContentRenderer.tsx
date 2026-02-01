@@ -75,14 +75,9 @@ interface MaterialContentRendererProps {
 // 主渲染组件
 // =====================================================
 
-export function MaterialContentRenderer({
-  material,
-  className,
-}: MaterialContentRendererProps) {
+export function MaterialContentRenderer({ material, className }: MaterialContentRendererProps) {
   if (!material) {
-    return (
-      <div className="text-center py-12 text-stone-500">暂无素材内容</div>
-    );
+    return <div className="text-center py-12 text-stone-500">暂无素材内容</div>;
   }
 
   return (
@@ -97,9 +92,7 @@ export function MaterialContentRenderer({
       <MaterialMainContent content={material.content} />
 
       {/* 背景解读 */}
-      {material.background && (
-        <BackgroundSection background={material.background} />
-      )}
+      {material.background && <BackgroundSection background={material.background} />}
 
       {/* 使用场景 */}
       {material.usage_scenarios && material.usage_scenarios.length > 0 && (
@@ -117,14 +110,10 @@ export function MaterialContentRenderer({
       )}
 
       {/* 拓展延伸 */}
-      {material.extension && (
-        <ExtensionSection extension={material.extension} />
-      )}
+      {material.extension && <ExtensionSection extension={material.extension} />}
 
       {/* 标签 */}
-      {material.tags && material.tags.length > 0 && (
-        <MaterialTags tags={material.tags} />
-      )}
+      {material.tags && material.tags.length > 0 && <MaterialTags tags={material.tags} />}
     </div>
   );
 }
@@ -137,7 +126,7 @@ function MaterialHeader({ material }: { material: MaterialContent }) {
   return (
     <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-100">
       <h2 className="text-xl font-bold text-amber-900 mb-4">{material.title}</h2>
-      
+
       <div className="flex flex-wrap gap-4 text-sm">
         {material.source && (
           <div className="flex items-center gap-2 text-amber-700">
@@ -171,10 +160,7 @@ function MaterialHeader({ material }: { material: MaterialContent }) {
             {material.theme}
           </span>
           {material.sub_themes?.map((subTheme, idx) => (
-            <span
-              key={idx}
-              className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm"
-            >
+            <span key={idx} className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm">
               {subTheme}
             </span>
           ))}
@@ -195,9 +181,7 @@ function MaterialQuote({ quote }: { quote: string }) {
       <blockquote className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl p-8 pl-12">
         <div className="flex items-start gap-3">
           <Quote className="w-8 h-8 flex-shrink-0 opacity-50" />
-          <p className="text-xl font-medium leading-relaxed italic">
-            {quote}
-          </p>
+          <p className="text-xl font-medium leading-relaxed italic">{quote}</p>
         </div>
       </blockquote>
     </section>
@@ -218,9 +202,7 @@ function MaterialMainContent({ content }: { content: string }) {
         <h3 className="text-lg font-bold text-stone-900">素材内容</h3>
       </div>
       <div className="prose prose-stone max-w-none">
-        <p className="text-stone-700 leading-relaxed whitespace-pre-line">
-          {content}
-        </p>
+        <p className="text-stone-700 leading-relaxed whitespace-pre-line">{content}</p>
       </div>
     </section>
   );
@@ -240,9 +222,7 @@ function BackgroundSection({ background }: { background: string }) {
         <h3 className="text-lg font-bold text-slate-900">背景解读</h3>
       </div>
       <div className="prose prose-stone max-w-none">
-        <p className="text-stone-700 leading-relaxed whitespace-pre-line">
-          {background}
-        </p>
+        <p className="text-stone-700 leading-relaxed whitespace-pre-line">{background}</p>
       </div>
     </section>
   );
@@ -274,9 +254,7 @@ function UsageScenarios({ scenarios }: { scenarios: UsageScenario[] }) {
               </span>
               <h4 className="font-semibold text-emerald-800">{scenario.scenario}</h4>
             </div>
-            <p className="text-sm text-stone-600 leading-relaxed">
-              {scenario.example}
-            </p>
+            <p className="text-sm text-stone-600 leading-relaxed">{scenario.example}</p>
           </div>
         ))}
       </div>
@@ -338,7 +316,7 @@ function WritingSegments({ segments }: { segments: WritingSegment[] }) {
             color: "from-stone-500 to-stone-600",
             icon: "📝",
           };
-          
+
           return (
             <div key={idx} className="group">
               <div className="flex items-start gap-4">
@@ -352,9 +330,7 @@ function WritingSegments({ segments }: { segments: WritingSegment[] }) {
                   <span className="text-sm">{config.label}</span>
                 </div>
                 <div className="flex-1 p-4 bg-stone-50 rounded-xl group-hover:bg-stone-100 transition-colors">
-                  <p className="text-stone-700 leading-relaxed">
-                    {segment.content}
-                  </p>
+                  <p className="text-stone-700 leading-relaxed">{segment.content}</p>
                   <button className="mt-3 flex items-center gap-1 text-sm text-violet-600 hover:text-violet-700">
                     <span>复制此段</span>
                     <ChevronRight className="w-4 h-4" />
@@ -386,9 +362,7 @@ function ExtensionSection({ extension }: { extension: string | MaterialExtension
           <h3 className="text-lg font-bold text-indigo-900">拓展延伸</h3>
         </div>
         <div className="prose prose-stone max-w-none">
-          <p className="text-stone-700 leading-relaxed whitespace-pre-line">
-            {extension}
-          </p>
+          <p className="text-stone-700 leading-relaxed whitespace-pre-line">{extension}</p>
         </div>
       </section>
     );

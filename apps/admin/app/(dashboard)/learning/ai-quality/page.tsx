@@ -54,13 +54,7 @@ import { toast } from "sonner";
 // Stats Cards Component
 // ============================================
 
-function OverviewCards({
-  stats,
-  loading,
-}: {
-  stats: AIQualityStats | null;
-  loading: boolean;
-}) {
+function OverviewCards({ stats, loading }: { stats: AIQualityStats | null; loading: boolean }) {
   const cards = [
     {
       title: "总内容数",
@@ -150,13 +144,9 @@ function QualityDistributionCard({
   };
 
   const total =
-    distribution.excellent +
-    distribution.good +
-    distribution.average +
-    distribution.poor;
+    distribution.excellent + distribution.good + distribution.average + distribution.poor;
 
-  const getPercentage = (value: number) =>
-    total > 0 ? Math.round((value / total) * 100) : 0;
+  const getPercentage = (value: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
 
   const items = [
     {
@@ -224,15 +214,11 @@ function QualityDistributionCard({
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span className="font-medium">{item.label}</span>
-                <span className="text-xs text-muted-foreground">
-                  ({item.subLabel})
-                </span>
+                <span className="text-xs text-muted-foreground">({item.subLabel})</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className={item.textColor}>{item.value}</span>
-                <span className="text-muted-foreground text-xs">
-                  ({item.percentage}%)
-                </span>
+                <span className="text-muted-foreground text-xs">({item.percentage}%)</span>
               </div>
             </div>
             <Progress value={item.percentage} className={`h-2 ${item.color}`} />
@@ -289,14 +275,10 @@ function ContentTypeDistributionCard({
               return (
                 <div key={type} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">
-                      {getContentTypeLabel(type as any)}
-                    </span>
+                    <span className="font-medium">{getContentTypeLabel(type as any)}</span>
                     <div className="flex items-center gap-2">
                       <span>{count}</span>
-                      <span className="text-muted-foreground text-xs">
-                        ({percentage}%)
-                      </span>
+                      <span className="text-muted-foreground text-xs">({percentage}%)</span>
                     </div>
                   </div>
                   <Progress value={percentage} className="h-1.5" />
@@ -304,9 +286,7 @@ function ContentTypeDistributionCard({
               );
             })}
             {entries.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                暂无数据
-              </p>
+              <p className="text-sm text-muted-foreground text-center py-4">暂无数据</p>
             )}
           </div>
         </ScrollArea>
@@ -319,13 +299,7 @@ function ContentTypeDistributionCard({
 // Common Issues Card
 // ============================================
 
-function CommonIssuesCard({
-  stats,
-  loading,
-}: {
-  stats: AIQualityStats | null;
-  loading: boolean;
-}) {
+function CommonIssuesCard({ stats, loading }: { stats: AIQualityStats | null; loading: boolean }) {
   const issues = stats?.common_issues || [];
 
   if (loading) {
@@ -360,10 +334,7 @@ function CommonIssuesCard({
         ) : (
           <div className="space-y-3">
             {issues.map((issue, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 border rounded-lg"
-              >
+              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-xs font-medium">
                     {index + 1}
@@ -433,10 +404,7 @@ function GenerationTrendCard({
             {trend.slice(-14).map((item, index) => {
               const height = (item.count / maxCount) * 100;
               return (
-                <div
-                  key={index}
-                  className="flex-1 flex flex-col items-center gap-1"
-                >
+                <div key={index} className="flex-1 flex flex-col items-center gap-1">
                   <div
                     className="w-full bg-blue-500 rounded-t transition-all duration-300 hover:bg-blue-600 cursor-pointer"
                     style={{ height: `${Math.max(height, 4)}%` }}
@@ -510,30 +478,22 @@ function LowQualityContentsTable({
               <TableBody>
                 {contents.map((content) => (
                   <TableRow key={content.id}>
-                    <TableCell className="font-mono text-xs">
-                      #{content.id}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs">#{content.id}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {getContentTypeLabel(content.content_type)}
-                      </Badge>
+                      <Badge variant="outline">{getContentTypeLabel(content.content_type)}</Badge>
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate">
                       {content.title || content.content.summary || "-"}
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`font-medium ${getQualityScoreColor(
-                          content.quality_score
-                        )}`}
+                        className={`font-medium ${getQualityScoreColor(content.quality_score)}`}
                       >
                         {content.quality_score.toFixed(2)}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">
-                        {getContentStatusLabel(content.status)}
-                      </Badge>
+                      <Badge variant="secondary">{getContentStatusLabel(content.status)}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -601,30 +561,22 @@ function HighQualityContentsTable({
               <TableBody>
                 {contents.map((content) => (
                   <TableRow key={content.id}>
-                    <TableCell className="font-mono text-xs">
-                      #{content.id}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs">#{content.id}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {getContentTypeLabel(content.content_type)}
-                      </Badge>
+                      <Badge variant="outline">{getContentTypeLabel(content.content_type)}</Badge>
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate">
                       {content.title || content.content.summary || "-"}
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`font-medium ${getQualityScoreColor(
-                          content.quality_score
-                        )}`}
+                        className={`font-medium ${getQualityScoreColor(content.quality_score)}`}
                       >
                         {content.quality_score.toFixed(2)}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">
-                        {getContentStatusLabel(content.status)}
-                      </Badge>
+                      <Badge variant="secondary">{getContentStatusLabel(content.status)}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -698,9 +650,7 @@ export default function AIQualityDashboardPage() {
             <BarChart3 className="h-6 w-6 text-purple-500" />
             AI 内容质量分析
           </h1>
-          <p className="text-muted-foreground">
-            分析 AI 生成内容的质量分布和常见问题
-          </p>
+          <p className="text-muted-foreground">分析 AI 生成内容的质量分布和常见问题</p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="mr-2 h-4 w-4" />
@@ -725,14 +675,8 @@ export default function AIQualityDashboardPage() {
 
       {/* 高质量和低质量内容 */}
       <div className="grid gap-6 md:grid-cols-2">
-        <HighQualityContentsTable
-          contents={highQualityContents}
-          loading={loading}
-        />
-        <LowQualityContentsTable
-          contents={lowQualityContents}
-          loading={loading}
-        />
+        <HighQualityContentsTable contents={highQualityContents} loading={loading} />
+        <LowQualityContentsTable contents={lowQualityContents} loading={loading} />
       </div>
     </div>
   );

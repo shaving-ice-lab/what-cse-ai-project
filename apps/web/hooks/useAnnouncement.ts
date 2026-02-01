@@ -105,7 +105,10 @@ export function useSearchAnnouncements(keyword: string, params?: AnnouncementQue
 }
 
 // 获取公告关联职位
-export function useAnnouncementPositions(id: number, params?: { page?: number; page_size?: number }) {
+export function useAnnouncementPositions(
+  id: number,
+  params?: { page?: number; page_size?: number }
+) {
   return useQuery<{ positions: AnnouncementPosition[]; total: number }>({
     queryKey: ["announcementPositions", id, params],
     queryFn: () => announcementApi.getPositions(id, params),

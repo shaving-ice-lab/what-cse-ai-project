@@ -92,8 +92,7 @@ function MindMapNodeComponent({
   const hasChildren = node.children && node.children.length > 0;
   const isCollapsed = collapsedNodes.has(node.id);
   const isHighlighted = highlightedNodeId === node.id;
-  const isSearchMatch =
-    searchQuery && node.label.toLowerCase().includes(searchQuery.toLowerCase());
+  const isSearchMatch = searchQuery && node.label.toLowerCase().includes(searchQuery.toLowerCase());
 
   const color = getNodeColor(level, node.color);
 
@@ -127,9 +126,7 @@ function MindMapNodeComponent({
           {node.icon && <span className="text-xl">{node.icon}</span>}
           <span className="text-lg">{node.label}</span>
           {node.note && (
-            <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">
-              📝
-            </span>
+            <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">📝</span>
           )}
         </div>
 
@@ -161,10 +158,7 @@ function MindMapNodeComponent({
     <div className="flex items-start">
       {/* 连接线 */}
       <div className="flex items-center">
-        <div
-          className="w-6 h-0.5"
-          style={{ backgroundColor: color }}
-        />
+        <div className="w-6 h-0.5" style={{ backgroundColor: color }} />
       </div>
 
       <div className="flex flex-col">
@@ -197,10 +191,7 @@ function MindMapNodeComponent({
             </button>
           )}
           {node.icon && <span>{node.icon}</span>}
-          <span
-            className="font-medium"
-            style={{ color: level <= 2 ? color : "#44403c" }}
-          >
+          <span className="font-medium" style={{ color: level <= 2 ? color : "#44403c" }}>
             {node.label}
           </span>
           {node.note && (
@@ -245,13 +236,7 @@ function MindMapNodeComponent({
   );
 }
 
-export function MindMap({
-  data,
-  title,
-  onNodeClick,
-  onExport,
-  className,
-}: MindMapProps) {
+export function MindMap({ data, title, onNodeClick, onExport, className }: MindMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -269,24 +254,21 @@ export function MindMap({
   const [nodePositions, setNodePositions] = useState<Map<string, NodePosition>>(new Map());
 
   // 搜索节点
-  const searchNodes = useCallback(
-    (node: MindMapNode, query: string): MindMapNode[] => {
-      const results: MindMapNode[] = [];
+  const searchNodes = useCallback((node: MindMapNode, query: string): MindMapNode[] => {
+    const results: MindMapNode[] = [];
 
-      if (node.label.toLowerCase().includes(query.toLowerCase())) {
-        results.push(node);
+    if (node.label.toLowerCase().includes(query.toLowerCase())) {
+      results.push(node);
+    }
+
+    if (node.children) {
+      for (const child of node.children) {
+        results.push(...searchNodes(child, query));
       }
+    }
 
-      if (node.children) {
-        for (const child of node.children) {
-          results.push(...searchNodes(child, query));
-        }
-      }
-
-      return results;
-    },
-    []
-  );
+    return results;
+  }, []);
 
   // 执行搜索
   useEffect(() => {
@@ -383,18 +365,15 @@ export function MindMap({
   }, []);
 
   // 全部展开/折叠
-  const collectAllNodeIds = useCallback(
-    (node: MindMapNode): string[] => {
-      const ids: string[] = [node.id];
-      if (node.children) {
-        for (const child of node.children) {
-          ids.push(...collectAllNodeIds(child));
-        }
+  const collectAllNodeIds = useCallback((node: MindMapNode): string[] => {
+    const ids: string[] = [node.id];
+    if (node.children) {
+      for (const child of node.children) {
+        ids.push(...collectAllNodeIds(child));
       }
-      return ids;
-    },
-    []
-  );
+    }
+    return ids;
+  }, []);
 
   const expandAll = useCallback(() => {
     setCollapsedNodes(new Set());
@@ -406,27 +385,21 @@ export function MindMap({
   }, [data, collectAllNodeIds]);
 
   // 更新节点位置
-  const handleNodePositionUpdate = useCallback(
-    (nodeId: string, position: NodePosition) => {
-      setNodePositions((prev) => {
-        const next = new Map(prev);
-        next.set(nodeId, position);
-        return next;
-      });
-    },
-    []
-  );
+  const handleNodePositionUpdate = useCallback((nodeId: string, position: NodePosition) => {
+    setNodePositions((prev) => {
+      const next = new Map(prev);
+      next.set(nodeId, position);
+      return next;
+    });
+  }, []);
 
   // 定位到节点
-  const focusNode = useCallback(
-    (nodeId: string) => {
-      setHighlightedNodeId(nodeId);
-      // 简化处理：重置位置
-      setPosition({ x: 0, y: 0 });
-      setScale(1);
-    },
-    []
-  );
+  const focusNode = useCallback((nodeId: string) => {
+    setHighlightedNodeId(nodeId);
+    // 简化处理：重置位置
+    setPosition({ x: 0, y: 0 });
+    setScale(1);
+  }, []);
 
   // 导出图片
   const handleExport = useCallback(
@@ -534,9 +507,7 @@ export function MindMap({
                 autoFocus
               />
               {searchResults.length > 0 && (
-                <span className="text-xs text-stone-500">
-                  {searchResults.length} 个结果
-                </span>
+                <span className="text-xs text-stone-500">{searchResults.length} 个结果</span>
               )}
               <button
                 onClick={() => {

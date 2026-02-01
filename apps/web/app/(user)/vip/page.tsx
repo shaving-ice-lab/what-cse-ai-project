@@ -68,9 +68,7 @@ function VIPStatusCard({ status, loading }: VIPStatusCardProps) {
 
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-4">
-          <div
-            className={`p-2 rounded-xl ${isVIP ? "bg-white/20" : "bg-stone-300/50"}`}
-          >
+          <div className={`p-2 rounded-xl ${isVIP ? "bg-white/20" : "bg-stone-300/50"}`}>
             <Crown className={`w-6 h-6 ${isVIP ? "text-white" : "text-stone-600"}`} />
           </div>
           <div>
@@ -149,9 +147,7 @@ function FeatureComparison({ comparison, loading }: FeatureComparisonProps) {
         <table className="w-full">
           <thead>
             <tr className="bg-stone-50">
-              <th className="text-left px-6 py-4 text-sm font-medium text-stone-500">
-                功能权益
-              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-stone-500">功能权益</th>
               <th className="text-center px-4 py-4 text-sm font-medium text-stone-500 w-28">
                 普通用户
               </th>
@@ -212,9 +208,8 @@ interface PlanCardProps {
 }
 
 function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
-  const discount = plan.original_price > plan.price
-    ? Math.round((1 - plan.price / plan.original_price) * 100)
-    : 0;
+  const discount =
+    plan.original_price > plan.price ? Math.round((1 - plan.price / plan.original_price) * 100) : 0;
 
   return (
     <div
@@ -242,9 +237,7 @@ function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
         <p className="text-sm text-stone-500 mt-1">{plan.duration}天</p>
 
         <div className="mt-4">
-          <span className="text-3xl font-bold text-amber-600">
-            {formatPrice(plan.price)}
-          </span>
+          <span className="text-3xl font-bold text-amber-600">{formatPrice(plan.price)}</span>
           {plan.original_price > plan.price && (
             <span className="ml-2 text-sm text-stone-400 line-through">
               {formatPrice(plan.original_price)}
@@ -252,17 +245,13 @@ function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
           )}
         </div>
 
-        {plan.description && (
-          <p className="mt-3 text-xs text-stone-500">{plan.description}</p>
-        )}
+        {plan.description && <p className="mt-3 text-xs text-stone-500">{plan.description}</p>}
       </div>
 
       {/* Selection indicator */}
       <div
         className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-          selected
-            ? "border-amber-500 bg-amber-500"
-            : "border-stone-300"
+          selected ? "border-amber-500 bg-amber-500" : "border-stone-300"
         }`}
       >
         {selected && <Check className="w-3 h-3 text-white" />}
@@ -394,13 +383,13 @@ export default function VIPMembershipPage() {
     try {
       // Create order
       const order = await membershipApi.createOrder(selectedPlanId);
-      
+
       // Simulate payment (in production, this would redirect to payment gateway)
       await membershipApi.payOrder(order.order_no);
-      
+
       // Refresh data
       await fetchData();
-      
+
       alert("开通成功！");
     } catch (error) {
       console.error("Failed to purchase:", error);

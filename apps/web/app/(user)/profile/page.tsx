@@ -24,7 +24,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@what-cse/ui";
-import { userApi, type UserProfileResponse, type UpdateProfileParams, type UserCertificate, type CertificateParams } from "@/services/api/user";
+import {
+  userApi,
+  type UserProfileResponse,
+  type UpdateProfileParams,
+  type UserCertificate,
+  type CertificateParams,
+} from "@/services/api/user";
 import { useAuthStore } from "@/stores/authStore";
 
 // Quick Links for user actions
@@ -51,15 +57,19 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<UserProfileResponse | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showAddCertModal, setShowAddCertModal] = useState(false);
-  const [newCert, setNewCert] = useState<CertificateParams>({ cert_type: "", cert_name: "", cert_level: "" });
-  
+  const [newCert, setNewCert] = useState<CertificateParams>({
+    cert_type: "",
+    cert_name: "",
+    cert_level: "",
+  });
+
   // 表单数据
   const [formData, setFormData] = useState<UpdateProfileParams>({});
 
   // 获取用户档案
   const fetchProfile = useCallback(async () => {
     if (!isAuthenticated) return;
-    
+
     try {
       setLoading(true);
       const data = await userApi.getProfile();
@@ -102,15 +112,15 @@ export default function ProfilePage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === "number" ? Number(value) : value
+      [name]: type === "number" ? Number(value) : value,
     }));
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
+    setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleSave = async () => {
@@ -133,7 +143,7 @@ export default function ProfilePage() {
       toast.error("请填写证书类型和名称");
       return;
     }
-    
+
     try {
       await userApi.addCertificate(newCert);
       toast.success("添加证书成功");
@@ -148,7 +158,7 @@ export default function ProfilePage() {
 
   const handleDeleteCertificate = async (id: number) => {
     if (!confirm("确定要删除这个证书吗？")) return;
-    
+
     try {
       await userApi.deleteCertificate(id);
       toast.success("删除成功");
@@ -243,19 +253,23 @@ export default function ProfilePage() {
               </div>
 
               {/* Name & Info */}
-              <h2 className="text-xl font-semibold text-stone-800">{user?.nickname || "未设置昵称"}</h2>
+              <h2 className="text-xl font-semibold text-stone-800">
+                {user?.nickname || "未设置昵称"}
+              </h2>
               <p className="text-stone-500 mt-1">
                 {profile?.education || "未设置学历"} · {profile?.major || "未设置专业"}
               </p>
-              
+
               {/* Profile Completeness */}
               <div className="mt-4 p-3 bg-stone-50 rounded-xl">
                 <div className="flex items-center justify-between text-sm mb-2">
                   <span className="text-stone-500">资料完整度</span>
-                  <span className="font-medium text-amber-600">{profile?.profile_completeness || 0}%</span>
+                  <span className="font-medium text-amber-600">
+                    {profile?.profile_completeness || 0}%
+                  </span>
                 </div>
                 <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all"
                     style={{ width: `${profile?.profile_completeness || 0}%` }}
                   />
@@ -275,7 +289,9 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl">
                   <MapPin className="w-4 h-4 text-stone-400" />
                   <span className="text-stone-600">
-                    {profile?.current_province ? `${profile.current_province} ${profile.current_city || ""}` : "未设置现居地"}
+                    {profile?.current_province
+                      ? `${profile.current_province} ${profile.current_city || ""}`
+                      : "未设置现居地"}
                   </span>
                 </div>
               </div>
@@ -297,9 +313,15 @@ export default function ProfilePage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{link.icon}</span>
-                    <span className={`font-medium ${
-                      (link as { highlight?: boolean }).highlight ? "text-amber-700" : "text-stone-700"
-                    }`}>{link.label}</span>
+                    <span
+                      className={`font-medium ${
+                        (link as { highlight?: boolean }).highlight
+                          ? "text-amber-700"
+                          : "text-stone-700"
+                      }`}
+                    >
+                      {link.label}
+                    </span>
                   </div>
                   {(link as { highlight?: boolean }).highlight ? (
                     <span className="px-2 py-0.5 text-xs bg-amber-500 text-white rounded-full font-medium">
@@ -370,8 +392,10 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none transition-all disabled:opacity-60 focus:bg-white focus:border-amber-500"
                 >
                   <option value="">请选择</option>
-                  {politicalStatusOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  {politicalStatusOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -385,8 +409,10 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none transition-all disabled:opacity-60 focus:bg-white focus:border-amber-500"
                 >
                   <option value="">请选择</option>
-                  {identityTypeOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  {identityTypeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -523,8 +549,10 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none transition-all disabled:opacity-60 focus:bg-white focus:border-amber-500"
                 >
                   <option value="">请选择</option>
-                  {educationOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  {educationOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -538,8 +566,10 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none transition-all disabled:opacity-60 focus:bg-white focus:border-amber-500"
                 >
                   <option value="">请选择</option>
-                  {degreeOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  {degreeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -565,8 +595,10 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none transition-all disabled:opacity-60 focus:bg-white focus:border-amber-500"
                 >
                   <option value="">请选择</option>
-                  {schoolTypeOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  {schoolTypeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -693,12 +725,14 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium text-stone-500">证书类型 *</label>
                 <select
                   value={newCert.cert_type}
-                  onChange={(e) => setNewCert(prev => ({ ...prev, cert_type: e.target.value }))}
+                  onChange={(e) => setNewCert((prev) => ({ ...prev, cert_type: e.target.value }))}
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none focus:bg-white focus:border-amber-500"
                 >
                   <option value="">请选择</option>
-                  {certTypeOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  {certTypeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -707,7 +741,7 @@ export default function ProfilePage() {
                 <input
                   type="text"
                   value={newCert.cert_name}
-                  onChange={(e) => setNewCert(prev => ({ ...prev, cert_name: e.target.value }))}
+                  onChange={(e) => setNewCert((prev) => ({ ...prev, cert_name: e.target.value }))}
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none focus:bg-white focus:border-amber-500"
                   placeholder="如：英语六级证书"
                 />
@@ -717,7 +751,7 @@ export default function ProfilePage() {
                 <input
                   type="text"
                   value={newCert.cert_level || ""}
-                  onChange={(e) => setNewCert(prev => ({ ...prev, cert_level: e.target.value }))}
+                  onChange={(e) => setNewCert((prev) => ({ ...prev, cert_level: e.target.value }))}
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 outline-none focus:bg-white focus:border-amber-500"
                   placeholder="如：425分以上"
                 />

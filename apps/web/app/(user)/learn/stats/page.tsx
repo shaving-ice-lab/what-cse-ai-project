@@ -35,16 +35,16 @@ function formatDuration(minutes: number) {
 }
 
 // 统计卡片
-function StatCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  subValue, 
-  color 
-}: { 
-  icon: typeof Clock; 
-  label: string; 
-  value: string | number; 
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  subValue,
+  color,
+}: {
+  icon: typeof Clock;
+  label: string;
+  value: string | number;
   subValue?: string;
   color: string;
 }) {
@@ -61,11 +61,11 @@ function StatCard({
 }
 
 // 周期选择器
-function PeriodSelector({ 
-  period, 
-  onChange 
-}: { 
-  period: "day" | "week" | "month"; 
+function PeriodSelector({
+  period,
+  onChange,
+}: {
+  period: "day" | "week" | "month";
   onChange: (p: "day" | "week" | "month") => void;
 }) {
   const periods = [
@@ -96,14 +96,10 @@ function PeriodSelector({
 // 学习趋势图表
 function TrendChart({ trend }: { trend: { date: string; total_minutes: number }[] }) {
   if (!trend || trend.length === 0) {
-    return (
-      <div className="h-40 flex items-center justify-center text-stone-400">
-        暂无数据
-      </div>
-    );
+    return <div className="h-40 flex items-center justify-center text-stone-400">暂无数据</div>;
   }
 
-  const maxMinutes = Math.max(...trend.map(t => t.total_minutes), 1);
+  const maxMinutes = Math.max(...trend.map((t) => t.total_minutes), 1);
 
   return (
     <div className="h-40 flex items-end gap-1">
@@ -111,7 +107,7 @@ function TrendChart({ trend }: { trend: { date: string; total_minutes: number }[
         const height = (day.total_minutes / maxMinutes) * 100;
         const date = new Date(day.date);
         const dayName = date.toLocaleDateString("zh-CN", { weekday: "short" });
-        
+
         return (
           <div key={idx} className="flex-1 flex flex-col items-center gap-1">
             <div className="w-full flex-1 flex items-end">
@@ -137,7 +133,7 @@ function StudyDistribution({ stats }: { stats: StudyStatistics }) {
     { label: "做题练习", value: stats.practice_minutes, color: "bg-green-500" },
     { label: "文章阅读", value: stats.article_minutes, color: "bg-purple-500" },
     { label: "其他", value: stats.other_minutes, color: "bg-stone-400" },
-  ].filter(item => item.value > 0);
+  ].filter((item) => item.value > 0);
 
   return (
     <div className="space-y-3">
@@ -172,7 +168,9 @@ function MasteryCard({ mastery }: { mastery: KnowledgeMastery }) {
   };
 
   return (
-    <div className={`p-4 rounded-xl ${mastery.is_weak ? "bg-red-50 border border-red-200" : "bg-stone-50"}`}>
+    <div
+      className={`p-4 rounded-xl ${mastery.is_weak ? "bg-red-50 border border-red-200" : "bg-stone-50"}`}
+    >
       <div className="flex items-center justify-between mb-2">
         <span className="font-medium text-stone-800">{mastery.knowledge_name}</span>
         <span className={`px-2 py-1 text-xs rounded-lg ${getMasteryColor(mastery.mastery_level)}`}>
@@ -216,7 +214,8 @@ export default function StudyStatsPage() {
   const [period, setPeriod] = useState<"day" | "week" | "month">("week");
 
   // 获取当前显示的统计数据
-  const currentStats = period === "day" ? dailyStats : period === "week" ? weeklyStats : monthlyStats;
+  const currentStats =
+    period === "day" ? dailyStats : period === "week" ? weeklyStats : monthlyStats;
 
   // 加载数据
   useEffect(() => {
@@ -227,7 +226,14 @@ export default function StudyStatsPage() {
       fetchWeakPoints(5);
       fetchMasteryStats();
     }
-  }, [isAuthenticated, fetchDailyStats, fetchWeeklyStats, fetchMonthlyStats, fetchWeakPoints, fetchMasteryStats]);
+  }, [
+    isAuthenticated,
+    fetchDailyStats,
+    fetchWeeklyStats,
+    fetchMonthlyStats,
+    fetchWeakPoints,
+    fetchMasteryStats,
+  ]);
 
   // 未登录提示
   if (!isAuthenticated) {
@@ -288,7 +294,11 @@ export default function StudyStatsPage() {
                 icon={Clock}
                 label="学习时长"
                 value={currentStats ? formatDuration(currentStats.total_minutes) : "0"}
-                subValue={currentStats?.daily_average_minutes ? `日均 ${currentStats.daily_average_minutes} 分钟` : undefined}
+                subValue={
+                  currentStats?.daily_average_minutes
+                    ? `日均 ${currentStats.daily_average_minutes} 分钟`
+                    : undefined
+                }
                 color="bg-amber-500"
               />
               <StatCard
@@ -344,15 +354,21 @@ export default function StudyStatsPage() {
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 bg-green-50 rounded-xl">
-                      <div className="text-3xl font-bold text-green-600">{masteryStats.mastered}</div>
+                      <div className="text-3xl font-bold text-green-600">
+                        {masteryStats.mastered}
+                      </div>
                       <div className="text-sm text-green-700">已掌握</div>
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-xl">
-                      <div className="text-3xl font-bold text-blue-600">{masteryStats.familiar}</div>
+                      <div className="text-3xl font-bold text-blue-600">
+                        {masteryStats.familiar}
+                      </div>
                       <div className="text-sm text-blue-700">较熟悉</div>
                     </div>
                     <div className="text-center p-4 bg-amber-50 rounded-xl">
-                      <div className="text-3xl font-bold text-amber-600">{masteryStats.learning}</div>
+                      <div className="text-3xl font-bold text-amber-600">
+                        {masteryStats.learning}
+                      </div>
                       <div className="text-sm text-amber-700">学习中</div>
                     </div>
                     <div className="text-center p-4 bg-red-50 rounded-xl">
@@ -389,7 +405,9 @@ export default function StudyStatsPage() {
               <div className="bg-white rounded-2xl border border-stone-200/50 p-8 text-center">
                 <Flame className="w-16 h-16 mx-auto text-amber-300 mb-4" />
                 <h3 className="text-xl font-semibold text-stone-800 mb-2">
-                  {period === "day" ? "今天还没有学习记录" : `这${period === "week" ? "周" : "个月"}还没有学习记录`}
+                  {period === "day"
+                    ? "今天还没有学习记录"
+                    : `这${period === "week" ? "周" : "个月"}还没有学习记录`}
                 </h3>
                 <p className="text-stone-500 mb-6">开始学习，让数据动起来！</p>
                 <Link

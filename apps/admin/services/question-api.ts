@@ -55,7 +55,13 @@ axiosInstance.interceptors.response.use(
 // Types
 // ============================================
 
-export type QuestionType = "single_choice" | "multi_choice" | "fill_blank" | "essay" | "material" | "judge";
+export type QuestionType =
+  | "single_choice"
+  | "multi_choice"
+  | "fill_blank"
+  | "essay"
+  | "material"
+  | "judge";
 export type QuestionSourceType = "real_exam" | "mock" | "original";
 export type QuestionStatus = 0 | 1 | 2; // 0: draft, 1: published, 2: archived
 export type PaperType = "real_exam" | "mock" | "daily" | "custom";
@@ -294,7 +300,7 @@ export interface UpdateMaterialRequest {
 
 export const questionApi = {
   // =============== 题目管理 ===============
-  
+
   // 获取题目列表
   getQuestions: (params?: QuestionListParams) => {
     return request.get<{
@@ -331,7 +337,7 @@ export const questionApi = {
   },
 
   // =============== 试卷管理 ===============
-  
+
   // 获取试卷列表
   getPapers: (params?: PaperListParams) => {
     return request.get<{
@@ -363,7 +369,7 @@ export const questionApi = {
   },
 
   // =============== 材料管理 ===============
-  
+
   // 获取材料列表
   getMaterials: (params?: MaterialListParams) => {
     return request.get<{
@@ -395,7 +401,7 @@ export const questionApi = {
   },
 
   // =============== AI 辅助生成 ===============
-  
+
   // AI生成题目
   aiGenerateQuestions: (params: AIGenerateRequest) => {
     return request.post<AIGenerateResponse>("/admin/questions/ai/generate", params);

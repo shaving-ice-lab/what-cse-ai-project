@@ -61,13 +61,13 @@ export default function RegistrationDataPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [overview, province, examType] = await Promise.all([
         registrationDataApi.getOverview(),
         registrationDataApi.getStatsByProvince(),
         registrationDataApi.getStatsByExamType(),
       ]);
-      
+
       setOverviewData(overview);
       setProvinceStats(province.stats || []);
       setExamTypeStats(examType.stats || []);
@@ -110,9 +110,7 @@ export default function RegistrationDataPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">报名大数据</h1>
-          <p className="text-muted-foreground">
-            实时报名数据统计和分析，洞察职位热度与竞争态势
-          </p>
+          <p className="text-muted-foreground">实时报名数据统计和分析，洞察职位热度与竞争态势</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={fetchData} disabled={loading}>
@@ -293,8 +291,12 @@ export default function RegistrationDataPage() {
                           <TableRow key={stat.province}>
                             <TableCell className="font-medium">{stat.province}</TableCell>
                             <TableCell className="text-right">{stat.position_count}</TableCell>
-                            <TableCell className="text-right">{formatNumber(stat.total_recruit)}</TableCell>
-                            <TableCell className="text-right">{formatNumber(stat.total_applicants)}</TableCell>
+                            <TableCell className="text-right">
+                              {formatNumber(stat.total_recruit)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatNumber(stat.total_applicants)}
+                            </TableCell>
                             <TableCell className="text-right">
                               <Badge
                                 variant="secondary"
@@ -302,8 +304,8 @@ export default function RegistrationDataPage() {
                                   stat.avg_competition > 100
                                     ? "bg-red-100 text-red-700"
                                     : stat.avg_competition > 50
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-green-100 text-green-700"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-green-100 text-green-700"
                                 }
                               >
                                 {stat.avg_competition.toFixed(1)}:1
@@ -350,8 +352,12 @@ export default function RegistrationDataPage() {
                           <TableRow key={stat.exam_type}>
                             <TableCell className="font-medium">{stat.exam_type}</TableCell>
                             <TableCell className="text-right">{stat.position_count}</TableCell>
-                            <TableCell className="text-right">{formatNumber(stat.total_recruit)}</TableCell>
-                            <TableCell className="text-right">{formatNumber(stat.total_applicants)}</TableCell>
+                            <TableCell className="text-right">
+                              {formatNumber(stat.total_recruit)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatNumber(stat.total_applicants)}
+                            </TableCell>
                             <TableCell className="text-right">
                               <Badge
                                 variant="secondary"
@@ -359,8 +365,8 @@ export default function RegistrationDataPage() {
                                   stat.avg_competition > 100
                                     ? "bg-red-100 text-red-700"
                                     : stat.avg_competition > 50
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-green-100 text-green-700"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-green-100 text-green-700"
                                 }
                               >
                                 {stat.avg_competition.toFixed(1)}:1

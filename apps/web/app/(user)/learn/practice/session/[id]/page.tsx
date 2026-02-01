@@ -100,7 +100,9 @@ function QuestionCard({
           <span className="px-2 py-1 text-xs bg-stone-100 text-stone-600 rounded">
             {getQuestionTypeName(question.question_type)}
           </span>
-          <span className={cn("px-2 py-1 text-xs rounded", getDifficultyColor(question.difficulty))}>
+          <span
+            className={cn("px-2 py-1 text-xs rounded", getDifficultyColor(question.difficulty))}
+          >
             {getDifficultyLabel(question.difficulty)}
           </span>
         </div>
@@ -148,10 +150,12 @@ function QuestionCard({
                   selectedAnswer === option.key && !isAnswered
                     ? "border-amber-500 text-amber-600 bg-amber-50"
                     : isAnswered && option.key === question.answer
-                    ? "border-green-500 text-green-600 bg-green-50"
-                    : isAnswered && option.key === sessionQuestion.user_answer && !sessionQuestion.is_correct
-                    ? "border-red-500 text-red-600 bg-red-50"
-                    : "border-stone-300 text-stone-500"
+                      ? "border-green-500 text-green-600 bg-green-50"
+                      : isAnswered &&
+                          option.key === sessionQuestion.user_answer &&
+                          !sessionQuestion.is_correct
+                        ? "border-red-500 text-red-600 bg-red-50"
+                        : "border-stone-300 text-stone-500"
                 )}
               >
                 {option.key}
@@ -185,13 +189,14 @@ function QuestionCard({
             <BookOpen className="w-4 h-4" />
             答案解析
           </h4>
-          <p className="text-sm text-blue-700 whitespace-pre-wrap">
-            {question.analysis}
-          </p>
+          <p className="text-sm text-blue-700 whitespace-pre-wrap">{question.analysis}</p>
           {question.tips && (
             <p className="mt-2 text-sm text-blue-600 flex items-start gap-1">
               <Zap className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span><strong>技巧：</strong>{question.tips}</span>
+              <span>
+                <strong>技巧：</strong>
+                {question.tips}
+              </span>
             </p>
           )}
         </div>
@@ -225,10 +230,10 @@ function ProgressIndicator({
               isActive
                 ? "bg-amber-500 text-white ring-2 ring-amber-300 ring-offset-2"
                 : isAnswered
-                ? q.is_correct
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-                : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                  ? q.is_correct
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                  : "bg-stone-100 text-stone-600 hover:bg-stone-200"
             )}
           >
             {isAnswered ? (
@@ -270,12 +275,8 @@ function CompletionCelebration({
         </div>
 
         {/* 标题 */}
-        <h2 className="text-2xl font-bold text-stone-800 mb-2">
-          练习完成！
-        </h2>
-        <p className="text-stone-500 mb-6">
-          {getSessionTypeName(session.session_type)}已完成
-        </p>
+        <h2 className="text-2xl font-bold text-stone-800 mb-2">练习完成！</h2>
+        <p className="text-stone-500 mb-6">{getSessionTypeName(session.session_type)}已完成</p>
 
         {/* 统计数据 */}
         <div className="grid grid-cols-3 gap-4 mb-6">
@@ -288,7 +289,9 @@ function CompletionCelebration({
             <div className="text-xs text-red-600">错误</div>
           </div>
           <div className="p-3 bg-blue-50 rounded-xl">
-            <div className="text-2xl font-bold text-blue-600">{Math.round(session.correct_rate)}%</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {Math.round(session.correct_rate)}%
+            </div>
             <div className="text-xs text-blue-600">正确率</div>
           </div>
         </div>
@@ -296,9 +299,7 @@ function CompletionCelebration({
         {/* 用时 */}
         <div className="flex items-center justify-center gap-2 mb-6 p-3 bg-stone-50 rounded-xl">
           <Clock className="w-5 h-5 text-stone-500" />
-          <span className="text-stone-600">
-            用时: {formatTime(session.total_time_spent)}
-          </span>
+          <span className="text-stone-600">用时: {formatTime(session.total_time_spent)}</span>
         </div>
 
         {/* 操作按钮 */}
@@ -351,19 +352,19 @@ export default function PracticeSessionPage() {
     try {
       const data = await practiceApi.getSession(sessionId);
       setSession(data);
-      
+
       // 如果会话是待开始状态，自动开始
       if (data.status === "pending") {
         const started = await practiceApi.startSession(sessionId);
         setSession(started);
       }
-      
+
       // 找到第一个未答题的位置
-      const firstUnanswered = data.questions.findIndex(q => q.is_correct === undefined);
+      const firstUnanswered = data.questions.findIndex((q) => q.is_correct === undefined);
       if (firstUnanswered !== -1) {
         setCurrentIndex(firstUnanswered);
       }
-      
+
       // 如果会话正在进行中，启动计时器
       if (data.status === "active" || data.status === "pending") {
         setIsTimerRunning(true);
@@ -402,39 +403,42 @@ export default function PracticeSessionPage() {
   }, [session, showCelebration]);
 
   // 提交答案
-  const handleAnswer = useCallback(async (questionId: number, answer: string) => {
-    if (!session || submitting) return;
-    
-    setSubmitting(true);
-    try {
-      await practiceApi.submitSessionAnswer(sessionId, {
-        question_id: questionId,
-        user_answer: answer,
-        time_spent: timer,
-      });
-      
-      // 重新加载会话
-      const updated = await practiceApi.getSession(sessionId);
-      setSession(updated);
-      setTimer(0);
-      
-      // 如果还有未完成的题目，跳转到下一题
-      if (updated.status !== "completed" && currentIndex < updated.questions.length - 1) {
-        setTimeout(() => {
-          setCurrentIndex(currentIndex + 1);
-        }, 1500);
+  const handleAnswer = useCallback(
+    async (questionId: number, answer: string) => {
+      if (!session || submitting) return;
+
+      setSubmitting(true);
+      try {
+        await practiceApi.submitSessionAnswer(sessionId, {
+          question_id: questionId,
+          user_answer: answer,
+          time_spent: timer,
+        });
+
+        // 重新加载会话
+        const updated = await practiceApi.getSession(sessionId);
+        setSession(updated);
+        setTimer(0);
+
+        // 如果还有未完成的题目，跳转到下一题
+        if (updated.status !== "completed" && currentIndex < updated.questions.length - 1) {
+          setTimeout(() => {
+            setCurrentIndex(currentIndex + 1);
+          }, 1500);
+        }
+      } catch (error) {
+        console.error("Failed to submit answer:", error);
+      } finally {
+        setSubmitting(false);
       }
-    } catch (error) {
-      console.error("Failed to submit answer:", error);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [session, sessionId, timer, currentIndex, submitting]);
+    },
+    [session, sessionId, timer, currentIndex, submitting]
+  );
 
   // 放弃练习
   const handleAbandon = useCallback(async () => {
     if (!confirm("确定要放弃本次练习吗？")) return;
-    
+
     try {
       await practiceApi.abandonSession(sessionId);
       router.push("/learn/practice/specialized");
@@ -520,8 +524,10 @@ export default function PracticeSessionPage() {
             <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-stone-200">
               <Timer className="w-4 h-4 text-amber-500" />
               <span className="font-mono text-sm">
-                {Math.floor(timer / 60).toString().padStart(2, "0")}:
-                {(timer % 60).toString().padStart(2, "0")}
+                {Math.floor(timer / 60)
+                  .toString()
+                  .padStart(2, "0")}
+                :{(timer % 60).toString().padStart(2, "0")}
               </span>
             </div>
 
@@ -587,7 +593,9 @@ export default function PracticeSessionPage() {
               </button>
 
               <button
-                onClick={() => setCurrentIndex(Math.min(session.questions.length - 1, currentIndex + 1))}
+                onClick={() =>
+                  setCurrentIndex(Math.min(session.questions.length - 1, currentIndex + 1))
+                }
                 disabled={currentIndex === session.questions.length - 1}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors",
@@ -634,9 +642,7 @@ export default function PracticeSessionPage() {
                 </div>
                 <div className="p-3 bg-blue-50 rounded-xl text-center">
                   <div className="text-xl font-bold text-blue-600">
-                    {session.completed_count > 0
-                      ? Math.round(session.correct_rate)
-                      : 0}%
+                    {session.completed_count > 0 ? Math.round(session.correct_rate) : 0}%
                   </div>
                   <div className="text-xs text-blue-600">正确率</div>
                 </div>

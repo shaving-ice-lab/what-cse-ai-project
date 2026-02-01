@@ -255,10 +255,7 @@ export function Scratchpad({ isOpen, onClose, position }: ScratchpadProps) {
         onMouseDown={handleMouseDown}
       >
         <span className="text-white font-medium">草稿纸</span>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-white/20 rounded-lg transition-colors"
-        >
+        <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
           <X className="w-4 h-4 text-white" />
         </button>
       </div>

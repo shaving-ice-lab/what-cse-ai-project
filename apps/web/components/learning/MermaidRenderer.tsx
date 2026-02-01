@@ -10,6 +10,10 @@ interface MermaidRendererProps {
   title?: string;
   /** Custom class name */
   className?: string;
+  /** Mermaid theme name */
+  theme?: string;
+  /** Override Mermaid theme variables */
+  themeVariables?: Record<string, string>;
   /** Allow fullscreen view */
   allowFullscreen?: boolean;
   /** Allow download as SVG */
@@ -24,6 +28,8 @@ export function MermaidRenderer({
   code,
   title,
   className = "",
+  theme = "default",
+  themeVariables,
   allowFullscreen = true,
   allowDownload = true,
 }: MermaidRendererProps) {
@@ -52,9 +58,26 @@ export function MermaidRenderer({
         const mermaid = (await import("mermaid")).default;
 
         // Initialize mermaid with configuration
+        const baseThemeVariables = {
+          // Mind map colors
+          primaryColor: "#6366f1",
+          primaryTextColor: "#1f2937",
+          primaryBorderColor: "#4f46e5",
+          lineColor: "#9ca3af",
+          secondaryColor: "#f3f4f6",
+          tertiaryColor: "#fef3c7",
+          // Background
+          background: "#ffffff",
+          mainBkg: "#f8fafc",
+          secondBkg: "#f1f5f9",
+          // Font
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontSize: "14px",
+        };
+
         mermaid.initialize({
           startOnLoad: false,
-          theme: "default",
+          theme,
           securityLevel: "loose",
           mindmap: {
             padding: 20,
@@ -66,20 +89,8 @@ export function MermaidRenderer({
             curve: "basis",
           },
           themeVariables: {
-            // Mind map colors
-            primaryColor: "#6366f1",
-            primaryTextColor: "#1f2937",
-            primaryBorderColor: "#4f46e5",
-            lineColor: "#9ca3af",
-            secondaryColor: "#f3f4f6",
-            tertiaryColor: "#fef3c7",
-            // Background
-            background: "#ffffff",
-            mainBkg: "#f8fafc",
-            secondBkg: "#f1f5f9",
-            // Font
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            fontSize: "14px",
+            ...baseThemeVariables,
+            ...(themeVariables ?? {}),
           },
         });
 
@@ -96,9 +107,7 @@ export function MermaidRenderer({
       } catch (err) {
         console.error("Mermaid rendering error:", err);
         if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to render diagram"
-          );
+          setError(err instanceof Error ? err.message : "Failed to render diagram");
           setIsLoading(false);
         }
       }
@@ -149,9 +158,7 @@ export function MermaidRenderer({
         <p className="text-red-400 text-xs">{error}</p>
         {/* Show raw code in development */}
         {process.env.NODE_ENV === "development" && (
-          <pre className="mt-4 p-2 bg-red-100 rounded text-xs overflow-auto max-w-full">
-            {code}
-          </pre>
+          <pre className="mt-4 p-2 bg-red-100 rounded text-xs overflow-auto max-w-full">{code}</pre>
         )}
       </div>
     );
@@ -166,9 +173,7 @@ export function MermaidRenderer({
         {/* Header with title and actions */}
         {(title || allowFullscreen || allowDownload) && (
           <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-200">
-            {title && (
-              <h4 className="font-medium text-stone-700 text-sm">{title}</h4>
-            )}
+            {title && <h4 className="font-medium text-stone-700 text-sm">{title}</h4>}
             <div className="flex items-center gap-2 ml-auto">
               {allowDownload && svgContent && (
                 <button
@@ -212,9 +217,7 @@ export function MermaidRenderer({
           >
             {/* Modal header */}
             <div className="sticky top-0 flex items-center justify-between px-6 py-4 bg-white border-b border-stone-200 rounded-t-2xl">
-              <h3 className="font-semibold text-stone-800">
-                {title || "思维导图"}
-              </h3>
+              <h3 className="font-semibold text-stone-800">{title || "思维导图"}</h3>
               <div className="flex items-center gap-2">
                 {allowDownload && svgContent && (
                   <button
@@ -235,10 +238,7 @@ export function MermaidRenderer({
             </div>
 
             {/* Modal content */}
-            <div
-              className="p-8 [&_svg]:mx-auto"
-              dangerouslySetInnerHTML={{ __html: svgContent }}
-            />
+            <div className="p-8 [&_svg]:mx-auto" dangerouslySetInnerHTML={{ __html: svgContent }} />
           </div>
         </div>
       )}

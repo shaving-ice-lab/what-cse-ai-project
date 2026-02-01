@@ -75,7 +75,7 @@ function AnswerCard({
     const questionId = questions[index]?.id;
     const state = answerStates[questionId];
     const isMarked = markedQuestions.has(questionId);
-    
+
     if (index === currentIndex) {
       return "bg-amber-500 text-white ring-2 ring-amber-300";
     }
@@ -103,7 +103,7 @@ function AnswerCard({
             <X className="w-5 h-5 text-stone-500" />
           </button>
         </div>
-        
+
         <div className="p-4 overflow-y-auto max-h-[60vh]">
           <div className="grid grid-cols-6 gap-2">
             {questions.map((q, index) => (
@@ -119,7 +119,7 @@ function AnswerCard({
               </button>
             ))}
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t text-xs text-stone-500">
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 rounded bg-emerald-500" />
@@ -163,7 +163,7 @@ function OptionItem({
   onClick: () => void;
 }) {
   const isCorrectOption = correctAnswer?.includes(option.key);
-  
+
   let statusClass = "";
   if (isSubmitted) {
     if (isCorrectOption) {
@@ -188,14 +188,18 @@ function OptionItem({
           isSubmitted && isCorrectOption
             ? "bg-emerald-500 text-white"
             : isSubmitted && isSelected && !isCorrectOption
-            ? "bg-red-500 text-white"
-            : isSelected
-            ? "bg-amber-500 text-white"
-            : "bg-stone-100 text-stone-600"
+              ? "bg-red-500 text-white"
+              : isSelected
+                ? "bg-amber-500 text-white"
+                : "bg-stone-100 text-stone-600"
         }`}
       >
         {isMultiple ? (
-          isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />
+          isSelected ? (
+            <CheckSquare className="w-4 h-4" />
+          ) : (
+            <Square className="w-4 h-4" />
+          )
         ) : (
           option.key
         )}
@@ -234,7 +238,7 @@ function PracticeDoContent() {
   const [showAnalysis, setShowAnalysis] = useState(true);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
-  
+
   // 笔记和相似题
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [editingNote, setEditingNote] = useState<string>("");
@@ -320,8 +324,12 @@ function PracticeDoContent() {
   const handleSelectOption = (key: string) => {
     if (!currentQuestion || currentAnswer?.isSubmitted) return;
 
-    const currentState = answerStates[currentQuestion.id] || { userAnswer: "", isSubmitted: false, timeSpent: 0 };
-    
+    const currentState = answerStates[currentQuestion.id] || {
+      userAnswer: "",
+      isSubmitted: false,
+      timeSpent: 0,
+    };
+
     let newAnswer: string;
     if (isMultipleChoice) {
       const selected = currentState.userAnswer.split(",").filter(Boolean);
@@ -372,14 +380,14 @@ function PracticeDoContent() {
       });
 
       toast[res.is_correct ? "success" : "error"](res.is_correct ? "回答正确！" : "回答错误");
-      
+
       // 加载相似题推荐
       fetchSimilarQuestions(currentQuestion.id);
     } catch (error: any) {
       toast.error(error.message || "提交失败");
     }
   };
-  
+
   // 获取相似题推荐
   const fetchSimilarQuestions = async (questionId: number) => {
     setLoadingSimilar(true);
@@ -427,7 +435,9 @@ function PracticeDoContent() {
 
   // 统计
   const answeredCount = Object.values(answerStates).filter((s) => s.isSubmitted).length;
-  const correctCount = Object.values(answerStates).filter((s) => s.isSubmitted && s.isCorrect).length;
+  const correctCount = Object.values(answerStates).filter(
+    (s) => s.isSubmitted && s.isCorrect
+  ).length;
 
   if (loading) {
     return (
@@ -502,7 +512,9 @@ function PracticeDoContent() {
               <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg font-medium">
                 {getQuestionTypeName(currentQuestion.question_type)}
               </span>
-              <span className={`px-2 py-1 text-xs rounded-lg font-medium ${getDifficultyColor(currentQuestion.difficulty)}`}>
+              <span
+                className={`px-2 py-1 text-xs rounded-lg font-medium ${getDifficultyColor(currentQuestion.difficulty)}`}
+              >
                 {getDifficultyLabel(currentQuestion.difficulty)}
               </span>
               {currentQuestion.source_type && (
@@ -590,9 +602,13 @@ function PracticeDoContent() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-4 text-sm">
                       <span className="text-stone-500">正确答案：</span>
-                      <span className="font-bold text-emerald-600">{currentAnswer.correctAnswer}</span>
+                      <span className="font-bold text-emerald-600">
+                        {currentAnswer.correctAnswer}
+                      </span>
                       <span className="text-stone-500">你的答案：</span>
-                      <span className={`font-bold ${currentAnswer.isCorrect ? "text-emerald-600" : "text-red-500"}`}>
+                      <span
+                        className={`font-bold ${currentAnswer.isCorrect ? "text-emerald-600" : "text-red-500"}`}
+                      >
                         {currentAnswer.userAnswer}
                       </span>
                     </div>
@@ -613,26 +629,27 @@ function PracticeDoContent() {
                     )}
 
                     {/* 知识点链接 */}
-                    {currentQuestion.knowledge_points && currentQuestion.knowledge_points.length > 0 && (
-                      <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                        <div className="text-sm font-medium text-blue-700 mb-2 flex items-center gap-1">
-                          <Link2 className="w-4 h-4" />
-                          相关知识点
+                    {currentQuestion.knowledge_points &&
+                      currentQuestion.knowledge_points.length > 0 && (
+                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                          <div className="text-sm font-medium text-blue-700 mb-2 flex items-center gap-1">
+                            <Link2 className="w-4 h-4" />
+                            相关知识点
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {currentQuestion.knowledge_points.map((kpId: number) => (
+                              <Link
+                                key={kpId}
+                                href={`/learn/knowledge/${kpId}`}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-blue-600 text-sm rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
+                              >
+                                <BookOpen className="w-3.5 h-3.5" />
+                                知识点 #{kpId}
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {currentQuestion.knowledge_points.map((kpId: number) => (
-                            <Link
-                              key={kpId}
-                              href={`/learn/knowledge/${kpId}`}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-blue-600 text-sm rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
-                            >
-                              <BookOpen className="w-3.5 h-3.5" />
-                              知识点 #{kpId}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* 相似题推荐 */}
                     <div className="bg-violet-50 rounded-xl p-4 border border-violet-100">
@@ -641,7 +658,9 @@ function PracticeDoContent() {
                           <Sparkles className="w-4 h-4" />
                           相似题推荐
                         </div>
-                        {loadingSimilar && <Loader2 className="w-4 h-4 text-violet-500 animate-spin" />}
+                        {loadingSimilar && (
+                          <Loader2 className="w-4 h-4 text-violet-500 animate-spin" />
+                        )}
                       </div>
                       {similarQuestions.length > 0 ? (
                         <div className="space-y-2">
@@ -651,9 +670,13 @@ function PracticeDoContent() {
                               href={`/practice/do?question_id=${sq.id}`}
                               className="block p-3 bg-white rounded-lg border border-violet-200 hover:border-violet-400 transition-colors"
                             >
-                              <div className="text-sm text-stone-700 line-clamp-2">{sq.content}</div>
+                              <div className="text-sm text-stone-700 line-clamp-2">
+                                {sq.content}
+                              </div>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-xs px-1.5 py-0.5 rounded ${getDifficultyColor(sq.difficulty)}`}>
+                                <span
+                                  className={`text-xs px-1.5 py-0.5 rounded ${getDifficultyColor(sq.difficulty)}`}
+                                >
                                   {getDifficultyLabel(sq.difficulty)}
                                 </span>
                                 <span className="text-xs text-stone-400">
@@ -676,7 +699,7 @@ function PracticeDoContent() {
                         <FileEdit className="w-4 h-4" />
                         我的笔记
                       </div>
-                      
+
                       {isEditingNote ? (
                         <div className="space-y-2">
                           <textarea
@@ -700,14 +723,20 @@ function PracticeDoContent() {
                               onClick={async () => {
                                 if (!currentQuestion || !isAuthenticated) return;
                                 try {
-                                  await practiceApi.updateCollectNote(currentQuestion.id, editingNote);
+                                  await practiceApi.updateCollectNote(
+                                    currentQuestion.id,
+                                    editingNote
+                                  );
                                   setNotes({ ...notes, [currentQuestion.id]: editingNote });
                                   setIsEditingNote(false);
                                   toast.success("笔记已保存");
                                 } catch (error: any) {
                                   // If not collected, collect first then add note
                                   try {
-                                    await practiceApi.collectQuestion(currentQuestion.id, editingNote);
+                                    await practiceApi.collectQuestion(
+                                      currentQuestion.id,
+                                      editingNote
+                                    );
                                     setNotes({ ...notes, [currentQuestion.id]: editingNote });
                                     setIsEditingNote(false);
                                     toast.success("已收藏并保存笔记");
@@ -724,7 +753,7 @@ function PracticeDoContent() {
                           </div>
                         </div>
                       ) : notes[currentQuestion.id] ? (
-                        <div 
+                        <div
                           onClick={() => {
                             setEditingNote(notes[currentQuestion.id]);
                             setIsEditingNote(true);
@@ -805,11 +834,13 @@ function PracticeDoContent() {
 
 export default function PracticeDoPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        </div>
+      }
+    >
       <PracticeDoContent />
     </Suspense>
   );

@@ -15,11 +15,7 @@ import { positionApi } from "@/services/position-api";
 import type { PositionStats } from "@/types/position";
 
 // 数字动画 Hook
-function useAnimatedNumber(
-  targetValue: number,
-  duration: number = 1000,
-  enabled: boolean = true
-) {
+function useAnimatedNumber(targetValue: number, duration: number = 1000, enabled: boolean = true) {
   const [displayValue, setDisplayValue] = useState(0);
   const animationRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -143,9 +139,7 @@ function StatsCard({
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <AnimatedNumber value={value} formatter={formatter} loading={loading} />
-            {description && (
-              <p className="text-xs text-muted-foreground mt-1">{description}</p>
-            )}
+            {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
             {trend !== undefined && !loading && (
               <div
                 className={`flex items-center gap-1 mt-1 text-xs ${
@@ -153,12 +147,17 @@ function StatsCard({
                 }`}
               >
                 <TrendingUp className={`h-3 w-3 ${trend < 0 ? "rotate-180" : ""}`} />
-                <span>{trend >= 0 ? "+" : ""}{trend}%</span>
+                <span>
+                  {trend >= 0 ? "+" : ""}
+                  {trend}%
+                </span>
                 <span className="text-muted-foreground">较昨日</span>
               </div>
             )}
           </div>
-          <div className={`p-2 rounded-lg ${iconStyles[variant]} transition-transform ${onClick ? "group-hover:scale-110" : ""}`}>
+          <div
+            className={`p-2 rounded-lg ${iconStyles[variant]} transition-transform ${onClick ? "group-hover:scale-110" : ""}`}
+          >
             {icon}
           </div>
         </div>
@@ -168,7 +167,14 @@ function StatsCard({
 }
 
 interface PositionStatsCardsProps {
-  onFilterChange?: (filter: Partial<{ status?: string; unlimited_major?: boolean; expiring_days?: number; updated_today?: boolean }>) => void;
+  onFilterChange?: (
+    filter: Partial<{
+      status?: string;
+      unlimited_major?: boolean;
+      expiring_days?: number;
+      updated_today?: boolean;
+    }>
+  ) => void;
 }
 
 export function PositionStatsCards({ onFilterChange }: PositionStatsCardsProps) {

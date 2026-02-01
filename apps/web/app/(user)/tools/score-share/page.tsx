@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
+import {
   Trophy,
   ChevronRight,
   ThumbsUp,
@@ -13,9 +13,15 @@ import {
   Loader2,
   X,
   CheckCircle2,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
-import { toolsApi, ScoreShare, ScoreShareQueryParams, ScoreStatistics, ScoreShareRequest } from "@/services/api";
+import {
+  toolsApi,
+  ScoreShare,
+  ScoreShareQueryParams,
+  ScoreStatistics,
+  ScoreShareRequest,
+} from "@/services/api";
 
 export default function ScoreSharePage() {
   const [activeTab, setActiveTab] = useState<"list" | "ranking" | "stats">("list");
@@ -37,8 +43,27 @@ export default function ScoreSharePage() {
   const examTypes = ["全部", "国考", "省考", "事业单位"];
   const years = [2026, 2025, 2024, 2023, 2022];
   const provinces = [
-    "全部", "北京", "上海", "广东", "江苏", "浙江", "山东", "河南", "四川", "湖北", "湖南",
-    "河北", "福建", "安徽", "陕西", "辽宁", "云南", "广西", "山西", "贵州", "江西"
+    "全部",
+    "北京",
+    "上海",
+    "广东",
+    "江苏",
+    "浙江",
+    "山东",
+    "河南",
+    "四川",
+    "湖北",
+    "湖南",
+    "河北",
+    "福建",
+    "安徽",
+    "陕西",
+    "辽宁",
+    "云南",
+    "广西",
+    "山西",
+    "贵州",
+    "江西",
   ];
   const passStatuses = [
     { value: "", label: "全部" },
@@ -114,7 +139,9 @@ export default function ScoreSharePage() {
       <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
         <div className="container mx-auto px-4 lg:px-6 py-8">
           <div className="flex items-center gap-2 text-amber-200 text-sm mb-2">
-            <a href="/tools" className="hover:text-white">考试工具箱</a>
+            <a href="/tools" className="hover:text-white">
+              考试工具箱
+            </a>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white">成绩晒分</span>
           </div>
@@ -190,11 +217,15 @@ export default function ScoreSharePage() {
               <span className="text-sm text-stone-500">年份：</span>
               <select
                 value={filters.exam_year}
-                onChange={(e) => setFilters((f) => ({ ...f, exam_year: Number(e.target.value), page: 1 }))}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, exam_year: Number(e.target.value), page: 1 }))
+                }
                 className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:border-amber-500 outline-none"
               >
                 {years.map((year) => (
-                  <option key={year} value={year}>{year}年</option>
+                  <option key={year} value={year}>
+                    {year}年
+                  </option>
                 ))}
               </select>
             </div>
@@ -204,11 +235,15 @@ export default function ScoreSharePage() {
               <span className="text-sm text-stone-500">省份：</span>
               <select
                 value={filters.exam_province}
-                onChange={(e) => setFilters((f) => ({ ...f, exam_province: e.target.value, page: 1 }))}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, exam_province: e.target.value, page: 1 }))
+                }
                 className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:border-amber-500 outline-none"
               >
                 {provinces.map((prov) => (
-                  <option key={prov} value={prov}>{prov}</option>
+                  <option key={prov} value={prov}>
+                    {prov}
+                  </option>
                 ))}
               </select>
             </div>
@@ -229,31 +264,45 @@ export default function ScoreSharePage() {
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-6">
               <p className="text-sm text-stone-500 mb-1">行测平均分</p>
-              <p className="text-3xl font-bold text-blue-600">{statistics.avg_xingce?.toFixed(1) || "-"}</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {statistics.avg_xingce?.toFixed(1) || "-"}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-6">
               <p className="text-sm text-stone-500 mb-1">申论平均分</p>
-              <p className="text-3xl font-bold text-emerald-600">{statistics.avg_shenlun?.toFixed(1) || "-"}</p>
+              <p className="text-3xl font-bold text-emerald-600">
+                {statistics.avg_shenlun?.toFixed(1) || "-"}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-6">
               <p className="text-sm text-stone-500 mb-1">总分平均</p>
-              <p className="text-3xl font-bold text-amber-600">{statistics.avg_total?.toFixed(1) || "-"}</p>
+              <p className="text-3xl font-bold text-amber-600">
+                {statistics.avg_total?.toFixed(1) || "-"}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-6">
               <p className="text-sm text-stone-500 mb-1">行测最高分</p>
-              <p className="text-3xl font-bold text-blue-600">{statistics.max_xingce?.toFixed(1) || "-"}</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {statistics.max_xingce?.toFixed(1) || "-"}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-6">
               <p className="text-sm text-stone-500 mb-1">申论最高分</p>
-              <p className="text-3xl font-bold text-emerald-600">{statistics.max_shenlun?.toFixed(1) || "-"}</p>
+              <p className="text-3xl font-bold text-emerald-600">
+                {statistics.max_shenlun?.toFixed(1) || "-"}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-6">
               <p className="text-sm text-stone-500 mb-1">总分最高</p>
-              <p className="text-3xl font-bold text-amber-600">{statistics.max_total?.toFixed(1) || "-"}</p>
+              <p className="text-3xl font-bold text-amber-600">
+                {statistics.max_total?.toFixed(1) || "-"}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-stone-200 p-6">
               <p className="text-sm text-stone-500 mb-1">进面率</p>
-              <p className="text-3xl font-bold text-purple-600">{statistics.pass_rate?.toFixed(1) || "0"}%</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {statistics.pass_rate?.toFixed(1) || "0"}%
+              </p>
             </div>
 
             {/* Distribution */}
@@ -300,9 +349,11 @@ export default function ScoreSharePage() {
                       <div className="flex items-start gap-4">
                         {/* Rank Badge */}
                         {activeTab === "ranking" && (
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${
-                            rankBadge ? rankBadge.bg : "bg-stone-100"
-                          }`}>
+                          <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${
+                              rankBadge ? rankBadge.bg : "bg-stone-100"
+                            }`}
+                          >
                             {rankBadge ? (
                               <rankBadge.icon className={`w-5 h-5 ${rankBadge.color}`} />
                             ) : (
@@ -331,29 +382,37 @@ export default function ScoreSharePage() {
                             {share.xingce_score && (
                               <div className="flex items-center gap-1">
                                 <span className="text-sm text-stone-500">行测:</span>
-                                <span className="text-lg font-bold text-blue-600">{share.xingce_score}</span>
+                                <span className="text-lg font-bold text-blue-600">
+                                  {share.xingce_score}
+                                </span>
                               </div>
                             )}
                             {share.shenlun_score && (
                               <div className="flex items-center gap-1">
                                 <span className="text-sm text-stone-500">申论:</span>
-                                <span className="text-lg font-bold text-emerald-600">{share.shenlun_score}</span>
+                                <span className="text-lg font-bold text-emerald-600">
+                                  {share.shenlun_score}
+                                </span>
                               </div>
                             )}
                             {share.total_score && (
                               <div className="flex items-center gap-1">
                                 <span className="text-sm text-stone-500">总分:</span>
-                                <span className="text-lg font-bold text-amber-600">{share.total_score}</span>
+                                <span className="text-lg font-bold text-amber-600">
+                                  {share.total_score}
+                                </span>
                               </div>
                             )}
                             {share.pass_status && (
-                              <span className={`px-2 py-0.5 text-xs rounded-md ${
-                                share.pass_status === "进面" 
-                                  ? "bg-emerald-100 text-emerald-700" 
-                                  : share.pass_status === "未进"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-stone-100 text-stone-600"
-                              }`}>
+                              <span
+                                className={`px-2 py-0.5 text-xs rounded-md ${
+                                  share.pass_status === "进面"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : share.pass_status === "未进"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-stone-100 text-stone-600"
+                                }`}
+                              >
                                 {share.pass_status}
                               </span>
                             )}
@@ -398,7 +457,9 @@ export default function ScoreSharePage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-8">
                 <button
-                  onClick={() => setFilters((f) => ({ ...f, page: Math.max(1, (f.page || 1) - 1) }))}
+                  onClick={() =>
+                    setFilters((f) => ({ ...f, page: Math.max(1, (f.page || 1) - 1) }))
+                  }
                   disabled={filters.page === 1}
                   className="px-4 py-2 text-sm rounded-lg border border-stone-200 hover:border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -408,7 +469,9 @@ export default function ScoreSharePage() {
                   {filters.page} / {totalPages}
                 </span>
                 <button
-                  onClick={() => setFilters((f) => ({ ...f, page: Math.min(totalPages, (f.page || 1) + 1) }))}
+                  onClick={() =>
+                    setFilters((f) => ({ ...f, page: Math.min(totalPages, (f.page || 1) + 1) }))
+                  }
                   disabled={filters.page === totalPages}
                   className="px-4 py-2 text-sm rounded-lg border border-stone-200 hover:border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -421,10 +484,15 @@ export default function ScoreSharePage() {
       </div>
 
       {/* Share Modal */}
-      {showModal && <ShareModal onClose={() => setShowModal(false)} onSuccess={() => {
-        setShowModal(false);
-        setFilters((f) => ({ ...f })); // Refresh
-      }} />}
+      {showModal && (
+        <ShareModal
+          onClose={() => setShowModal(false)}
+          onSuccess={() => {
+            setShowModal(false);
+            setFilters((f) => ({ ...f })); // Refresh
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -459,8 +527,14 @@ function ShareModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-stone-800">晒出我的成绩</h2>
@@ -494,7 +568,9 @@ function ShareModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                   className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:border-amber-500 outline-none"
                 >
                   {[2026, 2025, 2024, 2023, 2022].map((y) => (
-                    <option key={y} value={y}>{y}年</option>
+                    <option key={y} value={y}>
+                      {y}年
+                    </option>
                   ))}
                 </select>
               </div>
@@ -517,7 +593,12 @@ function ShareModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                 <input
                   type="number"
                   value={form.xingce_score || ""}
-                  onChange={(e) => setForm((f) => ({ ...f, xingce_score: e.target.value ? Number(e.target.value) : undefined }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      xingce_score: e.target.value ? Number(e.target.value) : undefined,
+                    }))
+                  }
                   placeholder="0-100"
                   className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:border-amber-500 outline-none text-center"
                 />
@@ -527,7 +608,12 @@ function ShareModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                 <input
                   type="number"
                   value={form.shenlun_score || ""}
-                  onChange={(e) => setForm((f) => ({ ...f, shenlun_score: e.target.value ? Number(e.target.value) : undefined }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      shenlun_score: e.target.value ? Number(e.target.value) : undefined,
+                    }))
+                  }
                   placeholder="0-100"
                   className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:border-amber-500 outline-none text-center"
                 />
@@ -537,7 +623,12 @@ function ShareModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                 <input
                   type="number"
                   value={form.total_score || ""}
-                  onChange={(e) => setForm((f) => ({ ...f, total_score: e.target.value ? Number(e.target.value) : undefined }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      total_score: e.target.value ? Number(e.target.value) : undefined,
+                    }))
+                  }
                   placeholder="0-200"
                   className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:border-amber-500 outline-none text-center"
                 />
@@ -554,7 +645,11 @@ function ShareModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                     onClick={() => setForm((f) => ({ ...f, pass_status: status }))}
                     className={`px-4 py-2 rounded-lg text-sm transition-colors ${
                       form.pass_status === status
-                        ? status === "进面" ? "bg-emerald-500 text-white" : status === "未进" ? "bg-red-500 text-white" : "bg-stone-500 text-white"
+                        ? status === "进面"
+                          ? "bg-emerald-500 text-white"
+                          : status === "未进"
+                            ? "bg-red-500 text-white"
+                            : "bg-stone-500 text-white"
                         : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                     }`}
                   >
@@ -618,7 +713,11 @@ function ShareModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trophy className="w-5 h-5" />}
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Trophy className="w-5 h-5" />
+              )}
               提交晒分
             </button>
             <button

@@ -35,7 +35,7 @@ export default function MigratePage() {
   const [stats, setStats] = useState<MigrationStats | null>(null);
   const [state, setState] = useState<MigrationState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Polling ref
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -68,11 +68,11 @@ export default function MigratePage() {
         try {
           const statusRes = await migrateApi.getStatus();
           setState(statusRes);
-          
+
           // Update stats too
           const statsRes = await migrateApi.getStats();
           setStats(statsRes);
-          
+
           // Stop polling if migration is done
           if (statusRes.status !== "running") {
             if (pollingRef.current) {
@@ -176,9 +176,7 @@ export default function MigratePage() {
             <Database className="h-6 w-6" />
             数据迁移
           </h1>
-          <p className="text-muted-foreground mt-1">
-            将粉笔解析任务中的职位数据迁移到职位表
-          </p>
+          <p className="text-muted-foreground mt-1">将粉笔解析任务中的职位数据迁移到职位表</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -245,9 +243,7 @@ export default function MigratePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">
-              {state?.created_count || 0}
-            </div>
+            <div className="text-2xl font-bold text-emerald-600">{state?.created_count || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
               新建职位 / 更新 {state?.updated_count || 0} / 重复 {state?.duplicate_count || 0}
             </p>
@@ -262,12 +258,12 @@ export default function MigratePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              {getStatusBadge(state?.status || "idle")}
-            </div>
+            <div className="flex items-center gap-2">{getStatusBadge(state?.status || "idle")}</div>
             <p className="text-xs text-muted-foreground mt-2">
               {state?.status === "running" ? (
-                <>处理中: {state?.processed_tasks || 0} / {state?.total_tasks || 0}</>
+                <>
+                  处理中: {state?.processed_tasks || 0} / {state?.total_tasks || 0}
+                </>
               ) : state?.completed_at ? (
                 <>完成于: {new Date(state.completed_at).toLocaleString("zh-CN")}</>
               ) : (
@@ -299,9 +295,12 @@ export default function MigratePage() {
               </div>
               <Progress value={getProgress()} className="h-2" />
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>已处理 {state?.processed_tasks} / {state?.total_tasks} 个任务</span>
                 <span>
-                  成功: {state?.successful_tasks} | 失败: {state?.failed_tasks} | 跳过: {state?.skipped_tasks}
+                  已处理 {state?.processed_tasks} / {state?.total_tasks} 个任务
+                </span>
+                <span>
+                  成功: {state?.successful_tasks} | 失败: {state?.failed_tasks} | 跳过:{" "}
+                  {state?.skipped_tasks}
                 </span>
               </div>
             </div>
@@ -358,37 +357,42 @@ export default function MigratePage() {
           <CardContent>
             <ScrollArea className="h-[300px]">
               <div className="space-y-2">
-                {state.logs.slice(-100).reverse().map((log, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-2 p-2 rounded text-sm ${
-                      log.level === "error"
-                        ? "bg-red-50 dark:bg-red-950/20"
-                        : log.level === "warn"
-                        ? "bg-orange-50 dark:bg-orange-950/20"
-                        : "bg-muted/30"
-                    }`}
-                  >
-                    {getLogIcon(log.level)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(log.time).toLocaleTimeString("zh-CN")}
-                        </span>
-                        {log.task_id && (
-                          <Badge variant="outline" className="text-xs">
-                            任务 #{log.task_id}
-                          </Badge>
-                        )}
+                {state.logs
+                  .slice(-100)
+                  .reverse()
+                  .map((log, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-start gap-2 p-2 rounded text-sm ${
+                        log.level === "error"
+                          ? "bg-red-50 dark:bg-red-950/20"
+                          : log.level === "warn"
+                            ? "bg-orange-50 dark:bg-orange-950/20"
+                            : "bg-muted/30"
+                      }`}
+                    >
+                      {getLogIcon(log.level)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(log.time).toLocaleTimeString("zh-CN")}
+                          </span>
+                          {log.task_id && (
+                            <Badge variant="outline" className="text-xs">
+                              任务 #{log.task_id}
+                            </Badge>
+                          )}
+                        </div>
+                        <p
+                          className={`mt-0.5 ${
+                            log.level === "error" ? "text-red-700 dark:text-red-300" : ""
+                          }`}
+                        >
+                          {log.message}
+                        </p>
                       </div>
-                      <p className={`mt-0.5 ${
-                        log.level === "error" ? "text-red-700 dark:text-red-300" : ""
-                      }`}>
-                        {log.message}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </ScrollArea>
           </CardContent>

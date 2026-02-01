@@ -61,50 +61,53 @@ function renderLatex(latex: string): string {
   // 基础转换 - 实际项目中应该使用 KaTeX
   let result = latex
     // 分数
-    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '<span class="frac"><span class="num">$1</span><span class="denom">$2</span></span>')
+    .replace(
+      /\\frac\{([^}]+)\}\{([^}]+)\}/g,
+      '<span class="frac"><span class="num">$1</span><span class="denom">$2</span></span>'
+    )
     // 上标
-    .replace(/\^(\{[^}]+\}|\d)/g, (_, exp) => `<sup>${exp.replace(/[{}]/g, '')}</sup>`)
+    .replace(/\^(\{[^}]+\}|\d)/g, (_, exp) => `<sup>${exp.replace(/[{}]/g, "")}</sup>`)
     // 下标
-    .replace(/_(\{[^}]+\}|\d)/g, (_, sub) => `<sub>${sub.replace(/[{}]/g, '')}</sub>`)
+    .replace(/_(\{[^}]+\}|\d)/g, (_, sub) => `<sub>${sub.replace(/[{}]/g, "")}</sub>`)
     // 根号
-    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-    .replace(/\\sqrt\[(\d+)\]\{([^}]+)\}/g, '<sup>$1</sup>√($2)')
+    .replace(/\\sqrt\{([^}]+)\}/g, "√($1)")
+    .replace(/\\sqrt\[(\d+)\]\{([^}]+)\}/g, "<sup>$1</sup>√($2)")
     // 希腊字母
-    .replace(/\\alpha/g, 'α')
-    .replace(/\\beta/g, 'β')
-    .replace(/\\gamma/g, 'γ')
-    .replace(/\\delta/g, 'δ')
-    .replace(/\\epsilon/g, 'ε')
-    .replace(/\\theta/g, 'θ')
-    .replace(/\\lambda/g, 'λ')
-    .replace(/\\mu/g, 'μ')
-    .replace(/\\pi/g, 'π')
-    .replace(/\\sigma/g, 'σ')
-    .replace(/\\omega/g, 'ω')
-    .replace(/\\Sigma/g, 'Σ')
-    .replace(/\\Pi/g, 'Π')
-    .replace(/\\Omega/g, 'Ω')
+    .replace(/\\alpha/g, "α")
+    .replace(/\\beta/g, "β")
+    .replace(/\\gamma/g, "γ")
+    .replace(/\\delta/g, "δ")
+    .replace(/\\epsilon/g, "ε")
+    .replace(/\\theta/g, "θ")
+    .replace(/\\lambda/g, "λ")
+    .replace(/\\mu/g, "μ")
+    .replace(/\\pi/g, "π")
+    .replace(/\\sigma/g, "σ")
+    .replace(/\\omega/g, "ω")
+    .replace(/\\Sigma/g, "Σ")
+    .replace(/\\Pi/g, "Π")
+    .replace(/\\Omega/g, "Ω")
     // 运算符
-    .replace(/\\times/g, '×')
-    .replace(/\\div/g, '÷')
-    .replace(/\\pm/g, '±')
-    .replace(/\\neq/g, '≠')
-    .replace(/\\leq/g, '≤')
-    .replace(/\\geq/g, '≥')
-    .replace(/\\approx/g, '≈')
-    .replace(/\\infty/g, '∞')
-    .replace(/\\sum/g, 'Σ')
-    .replace(/\\prod/g, 'Π')
-    .replace(/\\int/g, '∫')
+    .replace(/\\times/g, "×")
+    .replace(/\\div/g, "÷")
+    .replace(/\\pm/g, "±")
+    .replace(/\\neq/g, "≠")
+    .replace(/\\leq/g, "≤")
+    .replace(/\\geq/g, "≥")
+    .replace(/\\approx/g, "≈")
+    .replace(/\\infty/g, "∞")
+    .replace(/\\sum/g, "Σ")
+    .replace(/\\prod/g, "Π")
+    .replace(/\\int/g, "∫")
     // 括号
-    .replace(/\\left\(/g, '(')
-    .replace(/\\right\)/g, ')')
-    .replace(/\\left\[/g, '[')
-    .replace(/\\right\]/g, ']')
+    .replace(/\\left\(/g, "(")
+    .replace(/\\right\)/g, ")")
+    .replace(/\\left\[/g, "[")
+    .replace(/\\right\]/g, "]")
     // 其他
-    .replace(/\\cdot/g, '·')
-    .replace(/\\ldots/g, '...')
-    .replace(/\\/g, '');
+    .replace(/\\cdot/g, "·")
+    .replace(/\\ldots/g, "...")
+    .replace(/\\/g, "");
 
   return result;
 }
@@ -116,10 +119,7 @@ function DifficultyIndicator({ level }: { level: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className={cn(
-            "w-1.5 h-4 rounded-sm",
-            i <= level ? "bg-amber-400" : "bg-stone-200"
-          )}
+          className={cn("w-1.5 h-4 rounded-sm", i <= level ? "bg-amber-400" : "bg-stone-200")}
         />
       ))}
     </div>
@@ -171,13 +171,9 @@ export function FormulaDisplay({
                 {formula.category}
               </span>
               {formula.subcategory && (
-                <span className="text-xs text-stone-400">
-                  / {formula.subcategory}
-                </span>
+                <span className="text-xs text-stone-400">/ {formula.subcategory}</span>
               )}
-              {formula.difficulty && (
-                <DifficultyIndicator level={formula.difficulty} />
-              )}
+              {formula.difficulty && <DifficultyIndicator level={formula.difficulty} />}
             </div>
             {/* 名称 */}
             <h3 className="font-semibold text-stone-800">{formula.name}</h3>
@@ -189,31 +185,21 @@ export function FormulaDisplay({
               onClick={handleCopy}
               className={cn(
                 "p-2 rounded-lg transition-colors",
-                copied
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "hover:bg-stone-100 text-stone-500"
+                copied ? "bg-emerald-50 text-emerald-600" : "hover:bg-stone-100 text-stone-500"
               )}
               title="复制公式"
             >
-              {copied ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </button>
             <button
               onClick={() => onFavoriteToggle?.(formula.id)}
               className={cn(
                 "p-2 rounded-lg transition-colors",
-                isFavorited
-                  ? "bg-red-50 text-red-500"
-                  : "hover:bg-stone-100 text-stone-500"
+                isFavorited ? "bg-red-50 text-red-500" : "hover:bg-stone-100 text-stone-500"
               )}
               title={isFavorited ? "取消收藏" : "收藏"}
             >
-              <Heart
-                className={cn("w-4 h-4", isFavorited && "fill-current")}
-              />
+              <Heart className={cn("w-4 h-4", isFavorited && "fill-current")} />
             </button>
           </div>
         </div>
@@ -266,13 +252,8 @@ export function FormulaDisplay({
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 {formula.variables.map((v, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 p-2 bg-white rounded-lg"
-                  >
-                    <span className="font-mono font-bold text-amber-600">
-                      {v.symbol}
-                    </span>
+                  <div key={index} className="flex items-center gap-2 p-2 bg-white rounded-lg">
+                    <span className="font-mono font-bold text-amber-600">{v.symbol}</span>
                     <span className="text-sm text-stone-600">{v.meaning}</span>
                   </div>
                 ))}
@@ -315,10 +296,7 @@ export function FormulaDisplay({
               </h4>
               <ul className="space-y-1">
                 {formula.tips.map((tip, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-2 text-sm text-stone-600"
-                  >
+                  <li key={index} className="flex items-start gap-2 text-sm text-stone-600">
                     <span className="text-amber-500 mt-0.5">💡</span>
                     {tip}
                   </li>
@@ -467,9 +445,7 @@ export function FormulaList({
               : "border-stone-200 text-stone-600 hover:bg-stone-50"
           )}
         >
-          <Heart
-            className={cn("w-4 h-4", showFavoritesOnly && "fill-current")}
-          />
+          <Heart className={cn("w-4 h-4", showFavoritesOnly && "fill-current")} />
           <span className="text-sm">收藏</span>
         </button>
       </div>
@@ -488,9 +464,7 @@ export function FormulaList({
               <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
                 <span className="w-1 h-4 bg-amber-500 rounded" />
                 {category}
-                <span className="text-stone-400 font-normal">
-                  ({formulas.length})
-                </span>
+                <span className="text-stone-400 font-normal">({formulas.length})</span>
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 {formulas.map((formula) => (

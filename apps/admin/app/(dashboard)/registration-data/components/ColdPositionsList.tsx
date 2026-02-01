@@ -45,13 +45,13 @@ export function ColdPositionsList() {
     try {
       setLoading(true);
       let result: ColdPositionsResponse;
-      
+
       if (activeTab === "no-applicant") {
         result = await registrationDataApi.getNoApplicantPositions(page, pageSize);
       } else {
         result = await registrationDataApi.getLowCompetitionPositions(10, page, pageSize);
       }
-      
+
       setData(result);
     } catch (err) {
       console.error("Failed to fetch cold positions:", err);
@@ -74,15 +74,14 @@ export function ColdPositionsList() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          冷门岗位推荐
-        </CardTitle>
-        <CardDescription>
-          发现低竞争的"捡漏"机会，这些岗位可能更容易上岸
-        </CardDescription>
+        <CardTitle className="flex items-center gap-2">冷门岗位推荐</CardTitle>
+        <CardDescription>发现低竞争的"捡漏"机会，这些岗位可能更容易上岸</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "no-applicant" | "low-competition")}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "no-applicant" | "low-competition")}
+        >
           <TabsList className="mb-4">
             <TabsTrigger value="no-applicant" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
@@ -146,17 +145,18 @@ export function ColdPositionsList() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <span className="text-blue-600 font-medium">{position.apply_count}</span>
+                              <span className="text-blue-600 font-medium">
+                                {position.apply_count}
+                              </span>
                               <span className="text-muted-foreground">/</span>
-                              <span className="text-green-600 font-medium">{position.pass_count}</span>
+                              <span className="text-green-600 font-medium">
+                                {position.pass_count}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
                             {position.competition_ratio > 0 ? (
-                              <Badge
-                                variant="secondary"
-                                className="bg-green-50 text-green-700"
-                              >
+                              <Badge variant="secondary" className="bg-green-50 text-green-700">
                                 {position.competition_ratio.toFixed(1)}:1
                               </Badge>
                             ) : (
@@ -180,9 +180,7 @@ export function ColdPositionsList() {
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/positions/${position.position_id}`}>
-                                查看
-                              </Link>
+                              <Link href={`/positions/${position.position_id}`}>查看</Link>
                             </Button>
                           </TableCell>
                         </TableRow>

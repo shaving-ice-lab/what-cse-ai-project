@@ -11,66 +11,53 @@ import { toast } from "@what-cse/ui";
 
 export function useSubscriptions() {
   const [loading, setLoading] = useState(false);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionResponse[]>(
-    []
-  );
+  const [subscriptions, setSubscriptions] = useState<SubscriptionResponse[]>([]);
   const [total, setTotal] = useState(0);
 
-  const fetchSubscriptions = useCallback(
-    async (page?: number, pageSize?: number) => {
-      setLoading(true);
-      try {
-        const result = await subscriptionApi.list(page, pageSize);
-        setSubscriptions(result.subscriptions);
-        setTotal(result.total);
-        return result;
-      } catch (error) {
-        toast.error("获取订阅列表失败");
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const fetchSubscriptions = useCallback(async (page?: number, pageSize?: number) => {
+    setLoading(true);
+    try {
+      const result = await subscriptionApi.list(page, pageSize);
+      setSubscriptions(result.subscriptions);
+      setTotal(result.total);
+      return result;
+    } catch (error) {
+      toast.error("获取订阅列表失败");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const createSubscription = useCallback(
-    async (data: CreateSubscriptionRequest) => {
-      try {
-        const subscription = await subscriptionApi.create(data);
-        setSubscriptions((prev) => [subscription, ...prev]);
-        setTotal((prev) => prev + 1);
-        toast.success("订阅创建成功");
-        return subscription;
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "创建订阅失败";
-        if (message.includes("exists")) {
-          toast.error("该订阅已存在");
-        } else {
-          toast.error(message);
-        }
-        throw error;
+  const createSubscription = useCallback(async (data: CreateSubscriptionRequest) => {
+    try {
+      const subscription = await subscriptionApi.create(data);
+      setSubscriptions((prev) => [subscription, ...prev]);
+      setTotal((prev) => prev + 1);
+      toast.success("订阅创建成功");
+      return subscription;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "创建订阅失败";
+      if (message.includes("exists")) {
+        toast.error("该订阅已存在");
+      } else {
+        toast.error(message);
       }
-    },
-    []
-  );
+      throw error;
+    }
+  }, []);
 
-  const updateSubscription = useCallback(
-    async (id: number, data: UpdateSubscriptionRequest) => {
-      try {
-        await subscriptionApi.update(id, data);
-        setSubscriptions((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, ...data } : s))
-        );
-        toast.success("订阅更新成功");
-        return true;
-      } catch (error) {
-        toast.error("更新订阅失败");
-        return false;
-      }
-    },
-    []
-  );
+  const updateSubscription = useCallback(async (id: number, data: UpdateSubscriptionRequest) => {
+    try {
+      await subscriptionApi.update(id, data);
+      setSubscriptions((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)));
+      toast.success("订阅更新成功");
+      return true;
+    } catch (error) {
+      toast.error("更新订阅失败");
+      return false;
+    }
+  }, []);
 
   const toggleSubscription = useCallback(async (id: number) => {
     try {

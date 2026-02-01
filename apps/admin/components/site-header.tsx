@@ -98,10 +98,10 @@ export function SiteHeader() {
           {/* 搜索输入容器 */}
           <div className="relative flex items-center bg-stone-100/80 hover:bg-stone-100 focus-within:bg-white border border-transparent hover:border-stone-200 focus-within:border-stone-300 focus-within:shadow-sm rounded-xl transition-all duration-200 overflow-hidden">
             <Search className="w-[18px] h-[18px] text-stone-400 group-focus-within/search:text-stone-500 ml-3 flex-shrink-0 transition-colors duration-200" />
-            <Input 
-              type="search" 
-              placeholder="搜索功能、用户、数据..." 
-              className="h-9 w-[180px] lg:w-[220px] xl:w-[260px] py-2 pl-2.5 pr-2 bg-transparent border-0 text-sm text-stone-700 placeholder:text-stone-400 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200" 
+            <Input
+              type="search"
+              placeholder="搜索功能、用户、数据..."
+              className="h-9 w-[180px] lg:w-[220px] xl:w-[260px] py-2 pl-2.5 pr-2 bg-transparent border-0 text-sm text-stone-700 placeholder:text-stone-400 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200"
             />
             {/* 快捷键提示 */}
             <div className="hidden lg:flex items-center gap-0.5 px-2 py-1 mr-2.5 bg-stone-200/60 hover:bg-stone-200 rounded-md text-[10px] text-stone-400 font-medium tracking-wide cursor-pointer transition-colors">
@@ -112,7 +112,11 @@ export function SiteHeader() {
         </div>
 
         {/* 移动端搜索按钮 */}
-        <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 hover:bg-stone-100 active:bg-stone-200 transition-colors rounded-xl">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-9 w-9 hover:bg-stone-100 active:bg-stone-200 transition-colors rounded-xl"
+        >
           <Search className="h-5 w-5 text-stone-600" />
           <span className="sr-only">搜索</span>
         </Button>

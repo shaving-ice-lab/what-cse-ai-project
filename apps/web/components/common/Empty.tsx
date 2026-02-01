@@ -22,10 +22,10 @@ interface EmptyProps {
   className?: string;
 }
 
-export default function Empty({ 
-  title = "暂无数据", 
-  description, 
-  icon, 
+export default function Empty({
+  title = "暂无数据",
+  description,
+  icon,
   Icon,
   action,
   linkAction,
@@ -67,8 +67,12 @@ export default function Empty({
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center ${config.wrapper} text-center ${className}`}>
-      <div className={`${config.iconContainer} bg-stone-100 rounded-full flex items-center justify-center mb-4`}>
+    <div
+      className={`flex flex-col items-center justify-center ${config.wrapper} text-center ${className}`}
+    >
+      <div
+        className={`${config.iconContainer} bg-stone-100 rounded-full flex items-center justify-center mb-4`}
+      >
         {renderIcon()}
       </div>
       <h3 className={`${config.title} text-stone-700 mb-1`}>{title}</h3>
@@ -77,7 +81,7 @@ export default function Empty({
       )}
       {action}
       {linkAction && (
-        <Link 
+        <Link
           href={linkAction.href}
           className="text-amber-600 hover:text-amber-700 hover:underline text-sm font-medium mt-2"
         >

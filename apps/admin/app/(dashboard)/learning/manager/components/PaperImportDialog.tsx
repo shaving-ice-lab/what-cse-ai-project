@@ -102,11 +102,7 @@ const subjectMap: Record<string, string> = {
   公基: "gongji",
 };
 
-export function PaperImportDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: PaperImportDialogProps) {
+export function PaperImportDialog({ open, onOpenChange, onSuccess }: PaperImportDialogProps) {
   const [step, setStep] = useState<"upload" | "preview" | "result">("upload");
   const [parsedPapers, setParsedPapers] = useState<ParsedPaper[]>([]);
   const [importing, setImporting] = useState(false);
@@ -120,65 +116,67 @@ export function PaperImportDialog({
   // 解析题目ID字符串
   const parseQuestionIds = (str: string): PaperQuestion[] => {
     if (!str) return [];
-    
+
     // 支持多种格式：
     // 1. "1,2,3,4,5" - 逗号分隔，每题默认1分
     // 2. "1:5,2:5,3:5" - ID:分数格式
     // 3. JSON数组 [{"question_id":1,"score":5},...]
-    
+
     try {
       const parsed = JSON.parse(str);
       if (Array.isArray(parsed)) {
         return parsed.map((item, idx) => ({
           question_id: typeof item === "object" ? item.question_id : item,
-          score: typeof item === "object" ? (item.score || 1) : 1,
+          score: typeof item === "object" ? item.score || 1 : 1,
           order: idx + 1,
         }));
       }
     } catch {
       // 不是 JSON 格式
     }
-    
+
     // 尝试解析 "1:5,2:5" 或 "1,2,3" 格式
     const parts = str.split(/[,，;；\s]+/).filter(Boolean);
-    return parts.map((part, idx) => {
-      const match = part.match(/^(\d+)(?::(\d+))?$/);
-      if (match) {
+    return parts
+      .map((part, idx) => {
+        const match = part.match(/^(\d+)(?::(\d+))?$/);
+        if (match) {
+          return {
+            question_id: parseInt(match[1]),
+            score: match[2] ? parseInt(match[2]) : 1,
+            order: idx + 1,
+          };
+        }
         return {
-          question_id: parseInt(match[1]),
-          score: match[2] ? parseInt(match[2]) : 1,
+          question_id: parseInt(part) || 0,
+          score: 1,
           order: idx + 1,
         };
-      }
-      return {
-        question_id: parseInt(part) || 0,
-        score: 1,
-        order: idx + 1,
-      };
-    }).filter(q => q.question_id > 0);
+      })
+      .filter((q) => q.question_id > 0);
   };
 
   // 验证试卷
   const validatePaper = (p: ParsedPaper): ParsedPaper => {
     const errors: string[] = [];
-    
+
     if (!p.title || p.title.trim().length < 2) {
       errors.push("试卷标题过短");
     }
-    
+
     if (p.total_score <= 0) {
       errors.push("总分必须大于0");
     }
-    
+
     if (p.time_limit <= 0) {
       errors.push("时间限制必须大于0");
     }
-    
+
     // 题目是可选的，但如果有题目ID字符串但解析失败，应该报错
     if (p.question_ids_str && p.questions.length === 0) {
       errors.push("题目ID格式错误");
     }
-    
+
     return {
       ...p,
       isValid: errors.length === 0,
@@ -192,7 +190,7 @@ export function PaperImportDialog({
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
-    
+
     return rows.map((row, index) => {
       const questionIdsStr = row["题目ID"] || row["question_ids"] || "";
       const p: ParsedPaper = {
@@ -212,7 +210,7 @@ export function PaperImportDialog({
         isValid: false,
         errors: [],
       };
-      
+
       return validatePaper(p);
     });
   };
@@ -222,7 +220,7 @@ export function PaperImportDialog({
     try {
       const parsed = JSON.parse(data);
       const papers = Array.isArray(parsed) ? parsed : parsed.papers || [];
-      
+
       return papers.map((row: any, index: number) => {
         const questionIdsStr = typeof row.questions === "string" ? row.questions : "";
         const p: ParsedPaper = {
@@ -235,7 +233,7 @@ export function PaperImportDialog({
           region: row.region,
           total_score: parseInt(row.total_score) || 100,
           time_limit: parseInt(row.time_limit) || 120,
-          questions: Array.isArray(row.questions) 
+          questions: Array.isArray(row.questions)
             ? row.questions.map((q: any, idx: number) => ({
                 question_id: q.question_id || q,
                 score: q.score || 1,
@@ -248,7 +246,7 @@ export function PaperImportDialog({
           isValid: false,
           errors: [],
         };
-        
+
         return validatePaper(p);
       });
     } catch (e) {
@@ -258,49 +256,46 @@ export function PaperImportDialog({
   };
 
   // 处理文件上传
-  const handleFileUpload = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      
-      const fileName = file.name.toLowerCase();
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        const result = e.target?.result;
-        if (!result) return;
-        
-        let papers: ParsedPaper[] = [];
-        
-        if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
-          papers = parseExcel(result as ArrayBuffer);
-        } else if (fileName.endsWith(".json")) {
-          papers = parseJSON(result as string);
-        } else {
-          toast.error("不支持的文件格式，请上传 Excel 或 JSON 文件");
-          return;
-        }
-        
-        if (papers.length === 0) {
-          toast.error("未解析到任何试卷数据");
-          return;
-        }
-        
-        setParsedPapers(papers);
-        setStep("preview");
-        toast.success(`成功解析 ${papers.length} 套试卷`);
-      };
-      
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const fileName = file.name.toLowerCase();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (!result) return;
+
+      let papers: ParsedPaper[] = [];
+
       if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
-        reader.readAsArrayBuffer(file);
+        papers = parseExcel(result as ArrayBuffer);
+      } else if (fileName.endsWith(".json")) {
+        papers = parseJSON(result as string);
       } else {
-        reader.readAsText(file);
+        toast.error("不支持的文件格式，请上传 Excel 或 JSON 文件");
+        return;
       }
-      
-      event.target.value = "";
-    },
-    []
-  );
+
+      if (papers.length === 0) {
+        toast.error("未解析到任何试卷数据");
+        return;
+      }
+
+      setParsedPapers(papers);
+      setStep("preview");
+      toast.success(`成功解析 ${papers.length} 套试卷`);
+    };
+
+    if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file);
+    }
+
+    event.target.value = "";
+  }, []);
 
   // 执行导入
   const handleImport = async () => {
@@ -309,11 +304,11 @@ export function PaperImportDialog({
       toast.error("没有有效的试卷可导入");
       return;
     }
-    
+
     setImporting(true);
     let successCount = 0;
     const errors: string[] = [];
-    
+
     try {
       for (const p of validPapers) {
         try {
@@ -337,17 +332,17 @@ export function PaperImportDialog({
           errors.push(`#${p.id} "${p.title}": ${error.message || "创建失败"}`);
         }
       }
-      
+
       setImportResult({
         success: successCount,
-        failed: validPapers.length - successCount + parsedPapers.filter(p => !p.isValid).length,
+        failed: validPapers.length - successCount + parsedPapers.filter((p) => !p.isValid).length,
         errors: [
-          ...parsedPapers.filter(p => !p.isValid).map(p => `#${p.id}: ${p.errors.join(", ")}`),
+          ...parsedPapers.filter((p) => !p.isValid).map((p) => `#${p.id}: ${p.errors.join(", ")}`),
           ...errors,
         ],
       });
       setStep("result");
-      
+
       if (successCount > 0) {
         toast.success(`成功导入 ${successCount} 套试卷`);
         onSuccess();
@@ -377,7 +372,7 @@ export function PaperImportDialog({
           描述: "2024年国考行测真题地市级卷",
         },
       ];
-      
+
       const ws = XLSX.utils.json_to_sheet(templateData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "试卷导入模板");
@@ -404,7 +399,7 @@ export function PaperImportDialog({
           },
         ],
       };
-      
+
       const blob = new Blob([JSON.stringify(templateData, null, 2)], {
         type: "application/json",
       });
@@ -462,12 +457,8 @@ export function PaperImportDialog({
                   onChange={handleFileUpload}
                 />
                 <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-sm font-medium mb-1">
-                  点击或拖拽文件到此处上传
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  支持 .xlsx、.xls、.json 格式
-                </p>
+                <p className="text-sm font-medium mb-1">点击或拖拽文件到此处上传</p>
+                <p className="text-xs text-muted-foreground">支持 .xlsx、.xls、.json 格式</p>
               </div>
 
               {/* 模板下载 */}
@@ -482,11 +473,7 @@ export function PaperImportDialog({
                   <FileSpreadsheet className="h-4 w-4 mr-2" />
                   Excel 模板
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadTemplate("json")}
-                >
+                <Button variant="outline" size="sm" onClick={() => downloadTemplate("json")}>
                   <FileJson className="h-4 w-4 mr-2" />
                   JSON 模板
                 </Button>
@@ -539,14 +526,10 @@ export function PaperImportDialog({
                   <PaperPreviewTable papers={parsedPapers} />
                 </TabsContent>
                 <TabsContent value="valid" className="mt-4">
-                  <PaperPreviewTable
-                    papers={parsedPapers.filter((p) => p.isValid)}
-                  />
+                  <PaperPreviewTable papers={parsedPapers.filter((p) => p.isValid)} />
                 </TabsContent>
                 <TabsContent value="invalid" className="mt-4">
-                  <PaperPreviewTable
-                    papers={parsedPapers.filter((p) => !p.isValid)}
-                  />
+                  <PaperPreviewTable papers={parsedPapers.filter((p) => !p.isValid)} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -562,10 +545,12 @@ export function PaperImportDialog({
               <div>
                 <h3 className="text-xl font-medium mb-2">导入完成</h3>
                 <p className="text-muted-foreground">
-                  成功导入 <span className="text-green-600 font-medium">{importResult.success}</span> 套试卷
+                  成功导入{" "}
+                  <span className="text-green-600 font-medium">{importResult.success}</span> 套试卷
                   {importResult.failed > 0 && (
                     <>
-                      ，<span className="text-red-600 font-medium">{importResult.failed}</span> 套失败
+                      ，<span className="text-red-600 font-medium">{importResult.failed}</span>{" "}
+                      套失败
                     </>
                   )}
                 </p>
@@ -605,16 +590,12 @@ export function PaperImportDialog({
                     导入中...
                   </>
                 ) : (
-                  <>
-                    导入 {validCount} 套试卷
-                  </>
+                  <>导入 {validCount} 套试卷</>
                 )}
               </Button>
             </>
           )}
-          {step === "result" && (
-            <Button onClick={() => onOpenChange(false)}>完成</Button>
-          )}
+          {step === "result" && <Button onClick={() => onOpenChange(false)}>完成</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -624,11 +605,7 @@ export function PaperImportDialog({
 // 试卷预览表格组件
 function PaperPreviewTable({ papers }: { papers: ParsedPaper[] }) {
   if (papers.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        暂无试卷
-      </div>
-    );
+    return <div className="text-center py-8 text-muted-foreground">暂无试卷</div>;
   }
 
   return (
@@ -666,26 +643,16 @@ function PaperPreviewTable({ papers }: { papers: ParsedPaper[] }) {
                 <div className="max-w-[250px]">
                   <p className="text-sm truncate">{p.title}</p>
                   {!p.isValid && p.errors.length > 0 && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {p.errors.join(", ")}
-                    </p>
+                    <p className="text-xs text-red-500 mt-1">{p.errors.join(", ")}</p>
                   )}
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">
-                  {getPaperTypeName(p.paper_type)}
-                </Badge>
+                <Badge variant="secondary">{getPaperTypeName(p.paper_type)}</Badge>
               </TableCell>
-              <TableCell className="text-sm">
-                {p.subject || "-"}
-              </TableCell>
-              <TableCell className="text-sm">
-                {p.questions.length} 题
-              </TableCell>
-              <TableCell className="text-sm">
-                {p.total_score} 分
-              </TableCell>
+              <TableCell className="text-sm">{p.subject || "-"}</TableCell>
+              <TableCell className="text-sm">{p.questions.length} 题</TableCell>
+              <TableCell className="text-sm">{p.total_score} 分</TableCell>
             </TableRow>
           ))}
         </TableBody>

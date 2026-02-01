@@ -147,7 +147,8 @@ export default function NotificationSettingsPage() {
   const [saved, setSaved] = useState(false);
 
   // 通知类型配置
-  const [notificationTypes, setNotificationTypes] = useState<NotificationTypeConfig[]>(defaultNotificationTypes);
+  const [notificationTypes, setNotificationTypes] =
+    useState<NotificationTypeConfig[]>(defaultNotificationTypes);
 
   // 提醒时间配置
   const [reminderConfig, setReminderConfig] = useState<ReminderConfig>(defaultReminderConfig);
@@ -213,9 +214,7 @@ export default function NotificationSettingsPage() {
   const toggleChannel = (typeId: string, channel: keyof NotificationTypeConfig["channels"]) => {
     setNotificationTypes((types) =>
       types.map((t) =>
-        t.id === typeId
-          ? { ...t, channels: { ...t.channels, [channel]: !t.channels[channel] } }
-          : t
+        t.id === typeId ? { ...t, channels: { ...t.channels, [channel]: !t.channels[channel] } } : t
       )
     );
   };
@@ -349,9 +348,7 @@ export default function NotificationSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>报名截止提醒</Label>
-                  <p className="text-sm text-muted-foreground">
-                    在报名截止前多久发送提醒
-                  </p>
+                  <p className="text-sm text-muted-foreground">在报名截止前多久发送提醒</p>
                 </div>
                 <Select
                   value={String(reminderConfig.registrationReminder)}
@@ -381,9 +378,7 @@ export default function NotificationSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>考试时间提醒</Label>
-                  <p className="text-sm text-muted-foreground">
-                    在考试开始前多久发送提醒
-                  </p>
+                  <p className="text-sm text-muted-foreground">在考试开始前多久发送提醒</p>
                 </div>
                 <Select
                   value={String(reminderConfig.examReminder)}
@@ -409,9 +404,7 @@ export default function NotificationSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>日历事件提醒</Label>
-                  <p className="text-sm text-muted-foreground">
-                    在日历事件开始前多久发送提醒
-                  </p>
+                  <p className="text-sm text-muted-foreground">在日历事件开始前多久发送提醒</p>
                 </div>
                 <Select
                   value={String(reminderConfig.calendarReminder)}
@@ -449,9 +442,7 @@ export default function NotificationSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>启用免打扰</Label>
-                  <p className="text-sm text-muted-foreground">
-                    在指定时间段内暂停所有通知
-                  </p>
+                  <p className="text-sm text-muted-foreground">在指定时间段内暂停所有通知</p>
                 </div>
                 <Switch checked={quietHoursEnabled} onCheckedChange={setQuietHoursEnabled} />
               </div>

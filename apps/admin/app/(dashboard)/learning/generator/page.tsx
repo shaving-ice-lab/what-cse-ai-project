@@ -133,9 +133,7 @@ function StatsCards({ stats, loading }: { stats?: ContentStats; loading: boolean
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {card.value.toLocaleString()}
-            </div>
+            <div className="text-2xl font-bold">{card.value.toLocaleString()}</div>
           </CardContent>
         </Card>
       ))}
@@ -216,9 +214,7 @@ function QuickGenerateDialog({
             <Wand2 className="h-5 w-5 text-amber-500" />
             快速生成内容
           </DialogTitle>
-          <DialogDescription>
-            根据预设的课程结构快速生成分类和课程
-          </DialogDescription>
+          <DialogDescription>根据预设的课程结构快速生成分类和课程</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -295,7 +291,10 @@ function QuickGenerateDialog({
                     {items.length > 0 && (
                       <div className="ml-6 mt-2 space-y-1">
                         {items.slice(0, 5).map((item, i) => (
-                          <div key={i} className="text-sm text-muted-foreground flex items-center gap-2">
+                          <div
+                            key={i}
+                            className="text-sm text-muted-foreground flex items-center gap-2"
+                          >
                             <ChevronRight className="h-3 w-3" />
                             {item}
                           </div>
@@ -377,7 +376,9 @@ export default function ContentGeneratorPage() {
 
   // 轮询更新任务状态
   useEffect(() => {
-    const hasProcessingTask = tasks.some((t) => t.status === "processing" || t.status === "pending");
+    const hasProcessingTask = tasks.some(
+      (t) => t.status === "processing" || t.status === "pending"
+    );
     if (!hasProcessingTask) return;
 
     const interval = setInterval(() => {
@@ -388,7 +389,11 @@ export default function ContentGeneratorPage() {
   }, [tasks, fetchData]);
 
   // 快速生成
-  const handleQuickGenerate = async (subject: Subject, type: "categories" | "courses", categoryId?: number) => {
+  const handleQuickGenerate = async (
+    subject: Subject,
+    type: "categories" | "courses",
+    categoryId?: number
+  ) => {
     setGenerating(true);
     try {
       let task: GeneratorTask;
@@ -499,7 +504,8 @@ export default function ContentGeneratorPage() {
                                 </p>
                                 {task.subject && (
                                   <p className="text-sm text-muted-foreground">
-                                    {getSubjectIcon(task.subject as Subject)} {getSubjectName(task.subject as Subject)}
+                                    {getSubjectIcon(task.subject as Subject)}{" "}
+                                    {getSubjectName(task.subject as Subject)}
                                   </p>
                                 )}
                               </div>

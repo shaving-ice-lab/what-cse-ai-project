@@ -166,7 +166,9 @@ export async function getWrongQuestions(params: WrongQuestionQueryParams = {}) {
   if (params.page) queryParams.append("page", String(params.page));
   if (params.page_size) queryParams.append("page_size", String(params.page_size));
 
-  return request<{ items: WrongQuestion[]; total: number; page: number }>(`/wrong-questions?${queryParams.toString()}`);
+  return request<{ items: WrongQuestion[]; total: number; page: number }>(
+    `/wrong-questions?${queryParams.toString()}`
+  );
 }
 
 // 获取单个错题详情
@@ -324,7 +326,9 @@ export async function getMyNotes(params: NoteQueryParams = {}) {
   if (params.page) queryParams.append("page", String(params.page));
   if (params.page_size) queryParams.append("page_size", String(params.page_size));
 
-  return request<{ items: StudyNote[]; total: number; page: number }>(`/notes/my?${queryParams.toString()}`);
+  return request<{ items: StudyNote[]; total: number; page: number }>(
+    `/notes/my?${queryParams.toString()}`
+  );
 }
 
 // 获取公开笔记
@@ -337,7 +341,9 @@ export async function getPublicNotes(params: NoteQueryParams = {}) {
   if (params.page) queryParams.append("page", String(params.page));
   if (params.page_size) queryParams.append("page_size", String(params.page_size));
 
-  return request<{ items: StudyNote[]; total: number; page: number }>(`/notes/public?${queryParams.toString()}`);
+  return request<{ items: StudyNote[]; total: number; page: number }>(
+    `/notes/public?${queryParams.toString()}`
+  );
 }
 
 // 搜索笔记
@@ -350,7 +356,9 @@ export async function searchNotes(keyword: string, params: NoteQueryParams = {})
   if (params.page) queryParams.append("page", String(params.page));
   if (params.page_size) queryParams.append("page_size", String(params.page_size));
 
-  return request<{ items: StudyNote[]; total: number; page: number }>(`/notes/search?${queryParams.toString()}`);
+  return request<{ items: StudyNote[]; total: number; page: number }>(
+    `/notes/search?${queryParams.toString()}`
+  );
 }
 
 // 获取笔记详情

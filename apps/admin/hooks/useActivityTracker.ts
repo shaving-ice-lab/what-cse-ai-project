@@ -16,13 +16,7 @@ import { useAuthStore } from "@/stores/authStore";
  */
 export function useActivityTracker() {
   const router = useRouter();
-  const {
-    isAuthenticated,
-    _hasHydrated,
-    updateActivity,
-    isSessionValid,
-    logout,
-  } = useAuthStore();
+  const { isAuthenticated, _hasHydrated, updateActivity, isSessionValid, logout } = useAuthStore();
 
   // 上次更新活动时间的时间戳
   const lastUpdateRef = useRef<number>(Date.now());

@@ -2,16 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  Scale,
-  X,
-  ChevronUp,
-  ChevronDown,
-  Trash2,
-  ArrowRight,
-  MapPin,
-  Users,
-} from "lucide-react";
+import { Scale, X, ChevronUp, ChevronDown, Trash2, ArrowRight, MapPin, Users } from "lucide-react";
 import type { PositionBrief } from "@/services/api/position";
 
 interface CompareBarProps {
@@ -21,12 +12,7 @@ interface CompareBarProps {
   onClear: () => void;
 }
 
-export function CompareBar({
-  positions,
-  maxCount = 5,
-  onRemove,
-  onClear,
-}: CompareBarProps) {
+export function CompareBar({ positions, maxCount = 5, onRemove, onClear }: CompareBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (positions.length === 0) {
@@ -71,11 +57,7 @@ export function CompareBar({
             <ArrowRight className="h-4 w-4 inline ml-1" />
           </Link>
           <button className="p-1.5 text-stone-400 hover:text-stone-600 rounded-lg">
-            {isExpanded ? (
-              <ChevronDown className="h-5 w-5" />
-            ) : (
-              <ChevronUp className="h-5 w-5" />
-            )}
+            {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
           </button>
         </div>
       </div>

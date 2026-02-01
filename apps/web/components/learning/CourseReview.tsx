@@ -92,9 +92,7 @@ function KnowledgeChecklist({
             <span
               className={cn(
                 "text-sm",
-                item.status === "mastered"
-                  ? "text-green-700"
-                  : "text-stone-700"
+                item.status === "mastered" ? "text-green-700" : "text-stone-700"
               )}
             >
               {item.title}
@@ -121,19 +119,13 @@ function ConceptSummary({ concepts }: { concepts: string[] }) {
           核心公式/概念汇总
         </h4>
         <ChevronDown
-          className={cn(
-            "w-5 h-5 text-stone-400 transition-transform",
-            expanded && "rotate-180"
-          )}
+          className={cn("w-5 h-5 text-stone-400 transition-transform", expanded && "rotate-180")}
         />
       </button>
       {expanded && (
         <div className="px-5 pb-5 space-y-3">
           {concepts.map((concept, idx) => (
-            <div
-              key={idx}
-              className="p-4 bg-blue-50 rounded-lg border border-blue-200"
-            >
+            <div key={idx} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-800">{concept}</p>
             </div>
           ))}
@@ -175,10 +167,26 @@ function ReviewSchedule({
 }) {
   const scheduleItems = [
     { day: "第1天", desc: "首次学习后24小时", status: reviewCount >= 1 ? "done" : "pending" },
-    { day: "第3天", desc: "加深记忆", status: reviewCount >= 2 ? "done" : reviewCount === 1 ? "current" : "future" },
-    { day: "第7天", desc: "强化巩固", status: reviewCount >= 3 ? "done" : reviewCount === 2 ? "current" : "future" },
-    { day: "第14天", desc: "长期记忆", status: reviewCount >= 4 ? "done" : reviewCount === 3 ? "current" : "future" },
-    { day: "第30天", desc: "永久记忆", status: reviewCount >= 5 ? "done" : reviewCount === 4 ? "current" : "future" },
+    {
+      day: "第3天",
+      desc: "加深记忆",
+      status: reviewCount >= 2 ? "done" : reviewCount === 1 ? "current" : "future",
+    },
+    {
+      day: "第7天",
+      desc: "强化巩固",
+      status: reviewCount >= 3 ? "done" : reviewCount === 2 ? "current" : "future",
+    },
+    {
+      day: "第14天",
+      desc: "长期记忆",
+      status: reviewCount >= 4 ? "done" : reviewCount === 3 ? "current" : "future",
+    },
+    {
+      day: "第30天",
+      desc: "永久记忆",
+      status: reviewCount >= 5 ? "done" : reviewCount === 4 ? "current" : "future",
+    },
   ];
 
   return (
@@ -208,9 +216,7 @@ function ReviewSchedule({
             ) : (
               <Circle className="w-5 h-5 text-stone-300" />
             )}
-            <span className="text-sm font-medium text-stone-700">
-              {item.day}
-            </span>
+            <span className="text-sm font-medium text-stone-700">{item.day}</span>
             <span className="text-sm text-stone-500">{item.desc}</span>
           </div>
         ))}
@@ -331,18 +337,20 @@ export function CourseReview({
   const estimatedTime = content?.estimated_time || 45;
 
   // 核心概念
-  const concepts = mainPoints.length > 0 ? mainPoints : [
-    "概念一：基本定义和核心要素",
-    "概念二：主要公式及其推导",
-    "概念三：实际应用场景和方法",
-  ];
+  const concepts =
+    mainPoints.length > 0
+      ? mainPoints
+      : ["概念一：基本定义和核心要素", "概念二：主要公式及其推导", "概念三：实际应用场景和方法"];
 
   // 易错点
-  const errorProne = tips.length > 0 ? tips : [
-    "易错点1：概念混淆，注意区分相似术语",
-    "易错点2：公式运用错误，注意适用条件",
-    "易错点3：计算失误，建议验算检查",
-  ];
+  const errorProne =
+    tips.length > 0
+      ? tips
+      : [
+          "易错点1：概念混淆，注意区分相似术语",
+          "易错点2：公式运用错误，注意适用条件",
+          "易错点3：计算失误，建议验算检查",
+        ];
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -379,10 +387,7 @@ export function CourseReview({
       <ErrorProneReminder errors={errorProne} />
 
       {/* 艾宾浩斯复习计划 */}
-      <ReviewSchedule
-        nextReviewDate="明天 (第1次复习)"
-        reviewCount={0}
-      />
+      <ReviewSchedule nextReviewDate="明天 (第1次复习)" reviewCount={0} />
 
       {/* 巩固练习 */}
       <PracticeButtons

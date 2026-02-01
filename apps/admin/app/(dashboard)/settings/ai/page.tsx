@@ -47,11 +47,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@what-cse/ui";
-import {
-  aiContentApi,
-  AIGenerationConfig,
-  UpdateAIConfigRequest,
-} from "@/services/ai-content-api";
+import { aiContentApi, AIGenerationConfig, UpdateAIConfigRequest } from "@/services/ai-content-api";
 import { toast } from "sonner";
 
 // ============================================
@@ -65,13 +61,7 @@ interface UsageStatsData {
   total_cost: number;
 }
 
-function UsageStatsCard({
-  stats,
-  loading,
-}: {
-  stats: UsageStatsData | null;
-  loading: boolean;
-}) {
+function UsageStatsCard({ stats, loading }: { stats: UsageStatsData | null; loading: boolean }) {
   if (loading) {
     return (
       <Card>
@@ -110,10 +100,7 @@ function UsageStatsCard({
               {dailyData.map((item, index) => {
                 const height = (item.tokens / maxTokens) * 100;
                 return (
-                  <div
-                    key={index}
-                    className="flex-1 flex flex-col items-center gap-1"
-                  >
+                  <div key={index} className="flex-1 flex flex-col items-center gap-1">
                     <div
                       className="w-full bg-blue-500 rounded-t transition-all duration-300 hover:bg-blue-600 cursor-pointer"
                       style={{ height: `${Math.max(height, 4)}%` }}
@@ -135,9 +122,7 @@ function UsageStatsCard({
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">总费用</p>
-                <p className="text-lg font-semibold">
-                  ¥{stats?.total_cost?.toFixed(2) || "0.00"}
-                </p>
+                <p className="text-lg font-semibold">¥{stats?.total_cost?.toFixed(2) || "0.00"}</p>
               </div>
             </div>
           </div>
@@ -157,11 +142,7 @@ interface FeatureToggleCardProps {
   disabled?: boolean;
 }
 
-function FeatureToggleCard({
-  features,
-  onChange,
-  disabled,
-}: FeatureToggleCardProps) {
+function FeatureToggleCard({ features, onChange, disabled }: FeatureToggleCardProps) {
   const featureList = [
     {
       key: "question_analysis",
@@ -206,24 +187,17 @@ function FeatureToggleCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {featureList.map((feature) => (
-          <div
-            key={feature.key}
-            className="flex items-center justify-between py-2"
-          >
+          <div key={feature.key} className="flex items-center justify-between py-2">
             <div className="space-y-0.5">
               <Label htmlFor={feature.key} className="cursor-pointer">
                 {feature.label}
               </Label>
-              <p className="text-xs text-muted-foreground">
-                {feature.description}
-              </p>
+              <p className="text-xs text-muted-foreground">{feature.description}</p>
             </div>
             <Switch
               id={feature.key}
               checked={features?.[feature.key as keyof typeof features] ?? true}
-              onCheckedChange={(checked) =>
-                onChange({ [feature.key]: checked })
-              }
+              onCheckedChange={(checked) => onChange({ [feature.key]: checked })}
               disabled={disabled}
             />
           </div>
@@ -357,9 +331,7 @@ export default function AIConfigPage() {
   }
 
   const usagePercent =
-    config && config.daily_limit > 0
-      ? (config.daily_used / config.daily_limit) * 100
-      : 0;
+    config && config.daily_limit > 0 ? (config.daily_used / config.daily_limit) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -377,11 +349,7 @@ export default function AIConfigPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             刷新
           </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || saving}
-          >
+          <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving}>
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -401,9 +369,7 @@ export default function AIConfigPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              服务状态
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">服务状态</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -423,9 +389,7 @@ export default function AIConfigPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              今日用量
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">今日用量</CardTitle>
             <Gauge className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -445,9 +409,7 @@ export default function AIConfigPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              今日费用
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">今日费用</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -462,18 +424,12 @@ export default function AIConfigPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              当前模型
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">当前模型</CardTitle>
             <Bot className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-semibold truncate">
-              {config?.model_name || "-"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Max tokens: {config?.max_tokens || 0}
-            </p>
+            <div className="text-lg font-semibold truncate">{config?.model_name || "-"}</div>
+            <p className="text-xs text-muted-foreground">Max tokens: {config?.max_tokens || 0}</p>
           </CardContent>
         </Card>
       </div>
@@ -524,11 +480,7 @@ export default function AIConfigPage() {
                     className="absolute right-0 top-0 h-9 w-9"
                     onClick={() => setShowApiKey(!showApiKey)}
                   >
-                    {showApiKey ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -543,9 +495,7 @@ export default function AIConfigPage() {
                   min="1"
                   max="128000"
                   value={formData.max_tokens || ""}
-                  onChange={(e) =>
-                    updateFormData({ max_tokens: parseInt(e.target.value) || 4096 })
-                  }
+                  onChange={(e) => updateFormData({ max_tokens: parseInt(e.target.value) || 4096 })}
                 />
               </div>
               <div className="space-y-2">
@@ -569,9 +519,7 @@ export default function AIConfigPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="is_enabled">启用 AI 服务</Label>
-                <p className="text-xs text-muted-foreground">
-                  关闭后将暂停所有 AI 内容生成
-                </p>
+                <p className="text-xs text-muted-foreground">关闭后将暂停所有 AI 内容生成</p>
               </div>
               <Switch
                 id="is_enabled"
@@ -603,9 +551,7 @@ export default function AIConfigPage() {
                   updateFormData({ daily_limit: parseInt(e.target.value) || 100000 })
                 }
               />
-              <p className="text-xs text-muted-foreground">
-                设为 0 表示不限制
-              </p>
+              <p className="text-xs text-muted-foreground">设为 0 表示不限制</p>
             </div>
 
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
@@ -613,9 +559,7 @@ export default function AIConfigPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>已使用 Token</span>
-                  <span className="font-medium">
-                    {config?.daily_used?.toLocaleString() || 0}
-                  </span>
+                  <span className="font-medium">{config?.daily_used?.toLocaleString() || 0}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>剩余额度</span>
@@ -631,11 +575,7 @@ export default function AIConfigPage() {
               </div>
             </div>
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setConfirmResetOpen(true)}
-            >
+            <Button variant="outline" className="w-full" onClick={() => setConfirmResetOpen(true)}>
               <RefreshCw className="mr-2 h-4 w-4" />
               重置每日限额
             </Button>
@@ -644,14 +584,17 @@ export default function AIConfigPage() {
 
         {/* 功能开关 */}
         <FeatureToggleCard
-          features={formData.features || config?.features || {
-            question_analysis: true,
-            knowledge_summary: true,
-            similar_questions: true,
-            learning_path: true,
-            weakness_analysis: true,
-            ability_report: true,
-          }}
+          features={
+            formData.features ||
+            config?.features || {
+              question_analysis: true,
+              knowledge_summary: true,
+              similar_questions: true,
+              learning_path: true,
+              weakness_analysis: true,
+              ability_report: true,
+            }
+          }
           onChange={(updates) =>
             updateFormData({
               features: { ...formData.features, ...updates },
@@ -673,10 +616,7 @@ export default function AIConfigPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmResetOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setConfirmResetOpen(false)}>
               取消
             </Button>
             <Button onClick={handleResetDailyLimit}>确认重置</Button>

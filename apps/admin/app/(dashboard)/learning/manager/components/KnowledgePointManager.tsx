@@ -134,14 +134,14 @@ import { toast } from "sonner";
 // Mini Ring Chart Component
 // ============================================
 
-function MiniRingChart({ 
-  value, 
-  total, 
+function MiniRingChart({
+  value,
+  total,
   color,
   size = 40,
-}: { 
-  value: number; 
-  total: number; 
+}: {
+  value: number;
+  total: number;
   color: string;
   size?: number;
 }) {
@@ -210,10 +210,10 @@ function FilterBreadcrumb({
   onClearAll,
 }: FilterBreadcrumbProps) {
   const hasFilters = categoryFilter !== "all" || frequencyFilter !== "all" || searchTerm;
-  
+
   if (!hasFilters) return null;
 
-  const categoryName = categories.find(c => c.id === categoryFilter)?.name;
+  const categoryName = categories.find((c) => c.id === categoryFilter)?.name;
 
   const frequencyLabels: Record<string, string> = {
     high: "高频",
@@ -227,51 +227,41 @@ function FilterBreadcrumb({
         <Filter className="h-3 w-3" />
         <span>筛选:</span>
       </div>
-      
+
       <div className="flex items-center gap-2 flex-wrap">
         {categoryFilter !== "all" && categoryName && (
           <Badge variant="secondary" className="text-xs pl-2 pr-1 gap-1">
             <FolderTree className="h-3 w-3" />
             {categoryName}
-            <button 
-              onClick={onClearCategory}
-              className="ml-1 hover:bg-muted rounded-full p-0.5"
-            >
+            <button onClick={onClearCategory} className="ml-1 hover:bg-muted rounded-full p-0.5">
               <X className="h-3 w-3" />
             </button>
           </Badge>
         )}
-        
+
         {frequencyFilter !== "all" && (
           <Badge variant="secondary" className="text-xs pl-2 pr-1 gap-1">
             <Activity className="h-3 w-3" />
             {frequencyLabels[frequencyFilter]}
-            <button 
-              onClick={onClearFrequency}
-              className="ml-1 hover:bg-muted rounded-full p-0.5"
-            >
+            <button onClick={onClearFrequency} className="ml-1 hover:bg-muted rounded-full p-0.5">
               <X className="h-3 w-3" />
             </button>
           </Badge>
         )}
-        
+
         {searchTerm && (
           <Badge variant="secondary" className="text-xs pl-2 pr-1 gap-1">
-            <Search className="h-3 w-3" />
-            "{searchTerm}"
-            <button 
-              onClick={onClearSearch}
-              className="ml-1 hover:bg-muted rounded-full p-0.5"
-            >
+            <Search className="h-3 w-3" />"{searchTerm}"
+            <button onClick={onClearSearch} className="ml-1 hover:bg-muted rounded-full p-0.5">
               <X className="h-3 w-3" />
             </button>
           </Badge>
         )}
       </div>
 
-      <Button 
-        variant="ghost" 
-        size="sm" 
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onClearAll}
         className="ml-auto text-xs h-6 px-2 text-muted-foreground hover:text-foreground"
       >
@@ -322,19 +312,20 @@ function QuickJumpDialog({ open, onOpenChange, points, onSelect }: QuickJumpDial
     if (!searchValue.trim()) return allPoints.slice(0, 10);
     const term = searchValue.toLowerCase();
     return allPoints
-      .filter(p => 
-        p.name.toLowerCase().includes(term) || 
-        p.code.toLowerCase().includes(term)
-      )
+      .filter((p) => p.name.toLowerCase().includes(term) || p.code.toLowerCase().includes(term))
       .slice(0, 10);
   }, [allPoints, searchValue]);
 
   const getFrequencyIcon = (frequency: Frequency) => {
     switch (frequency) {
-      case "high": return <Zap className="h-3 w-3" />;
-      case "medium": return <Target className="h-3 w-3" />;
-      case "low": return <Lightbulb className="h-3 w-3" />;
-      default: return <Brain className="h-3 w-3" />;
+      case "high":
+        return <Zap className="h-3 w-3" />;
+      case "medium":
+        return <Target className="h-3 w-3" />;
+      case "low":
+        return <Lightbulb className="h-3 w-3" />;
+      default:
+        return <Brain className="h-3 w-3" />;
     }
   };
 
@@ -353,7 +344,7 @@ function QuickJumpDialog({ open, onOpenChange, points, onSelect }: QuickJumpDial
             />
           </div>
         </div>
-        
+
         <ScrollArea className="max-h-[300px]">
           <div className="p-2">
             {filteredPoints.length === 0 ? (
@@ -409,13 +400,13 @@ function QuickJumpDialog({ open, onOpenChange, points, onSelect }: QuickJumpDial
 // Empty State Component
 // ============================================
 
-function EmptyState({ 
-  hasFilters, 
-  onClearFilters, 
-  onCreateFirst 
-}: { 
-  hasFilters: boolean; 
-  onClearFilters: () => void; 
+function EmptyState({
+  hasFilters,
+  onClearFilters,
+  onCreateFirst,
+}: {
+  hasFilters: boolean;
+  onClearFilters: () => void;
   onCreateFirst: () => void;
 }) {
   return (
@@ -428,11 +419,9 @@ function EmptyState({
         {hasFilters ? "没有找到匹配的知识点" : "暂无知识点"}
       </h3>
       <p className="text-sm text-muted-foreground mb-6 max-w-md">
-        {hasFilters 
-          ? "尝试调整筛选条件或搜索关键词"
-          : "创建知识点来构建您的学习体系"}
+        {hasFilters ? "尝试调整筛选条件或搜索关键词" : "创建知识点来构建您的学习体系"}
       </p>
-      
+
       {hasFilters ? (
         <Button variant="outline" onClick={onClearFilters} className="gap-2">
           <X className="h-4 w-4" />
@@ -462,7 +451,7 @@ function AnimatedNumber({ value, duration = 1000 }: { value: number; duration?: 
     const animate = (currentTime: number) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      
+
       // Easing function for smooth animation
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       setDisplayValue(Math.floor(easeOutQuart * value));
@@ -552,16 +541,13 @@ function StatsCards({ stats, loading, activeFilter = "all", onFilterClick }: Sta
       {cards.map((card, index) => {
         const isActive = activeFilter === card.filterValue;
         return (
-          <Card 
-            key={index} 
+          <Card
+            key={index}
             onClick={() => onFilterClick?.(card.filterValue)}
             className={`
               relative overflow-hidden group cursor-pointer
               transition-all duration-200 hover:shadow-md
-              ${isActive 
-                ? "ring-2 ring-primary shadow-md" 
-                : ""
-              }
+              ${isActive ? "ring-2 ring-primary shadow-md" : ""}
             `}
           >
             {/* Active indicator */}
@@ -570,7 +556,7 @@ function StatsCards({ stats, loading, activeFilter = "all", onFilterClick }: Sta
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               </div>
             )}
-            
+
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {card.title}
@@ -732,7 +718,11 @@ function KnowledgeFormDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <div className="p-2 rounded-lg bg-muted">
-                {point ? <Edit className="h-5 w-5 text-muted-foreground" /> : <Plus className="h-5 w-5 text-muted-foreground" />}
+                {point ? (
+                  <Edit className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <Plus className="h-5 w-5 text-muted-foreground" />
+                )}
               </div>
               {point ? "编辑知识点" : "新建知识点"}
             </DialogTitle>
@@ -750,27 +740,27 @@ function KnowledgeFormDialog({
                 <Brain className="h-4 w-4" />
                 基本信息
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">知识点名称 <span className="text-rose-500">*</span></Label>
+                  <Label className="text-xs text-muted-foreground">
+                    知识点名称 <span className="text-rose-500">*</span>
+                  </Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="输入知识点名称"
                     className="h-10"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">编码 <span className="text-rose-500">*</span></Label>
+                  <Label className="text-xs text-muted-foreground">
+                    编码 <span className="text-rose-500">*</span>
+                  </Label>
                   <Input
                     value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                     placeholder="如 xc_yanyu_sc"
                     className="h-10 font-mono text-sm"
                   />
@@ -779,12 +769,12 @@ function KnowledgeFormDialog({
 
               {!point && (
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">所属分类 <span className="text-rose-500">*</span></Label>
+                  <Label className="text-xs text-muted-foreground">
+                    所属分类 <span className="text-rose-500">*</span>
+                  </Label>
                   <Select
                     value={formData.category_id ? formData.category_id.toString() : ""}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, category_id: Number(v) })
-                    }
+                    onValueChange={(v) => setFormData({ ...formData, category_id: Number(v) })}
                   >
                     <SelectTrigger className="h-10">
                       <SelectValue placeholder="选择分类" />
@@ -808,9 +798,7 @@ function KnowledgeFormDialog({
                 <Label className="text-xs text-muted-foreground">描述</Label>
                 <Textarea
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="知识点简要描述..."
                   rows={2}
                   className="resize-none"
@@ -837,15 +825,21 @@ function KnowledgeFormDialog({
                         <button
                           key={opt.value}
                           type="button"
-                          onClick={() => setFormData({ ...formData, frequency: opt.value as Frequency })}
+                          onClick={() =>
+                            setFormData({ ...formData, frequency: opt.value as Frequency })
+                          }
                           className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 transition-all ${
-                            isSelected 
-                              ? "border-primary bg-primary/5" 
+                            isSelected
+                              ? "border-primary bg-primary/5"
                               : "border-transparent bg-muted/50 hover:bg-muted"
                           }`}
                         >
-                          <opt.icon className={`h-4 w-4 ${isSelected ? "text-foreground" : "text-muted-foreground"}`} />
-                          <span className={`text-xs font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
+                          <opt.icon
+                            className={`h-4 w-4 ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
+                          />
+                          <span
+                            className={`text-xs font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
+                          >
                             {opt.label}
                           </span>
                         </button>
@@ -858,9 +852,7 @@ function KnowledgeFormDialog({
                   <Label className="text-xs text-muted-foreground">重要程度</Label>
                   <Select
                     value={formData.importance?.toString() || "3"}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, importance: Number(v) })
-                    }
+                    onValueChange={(v) => setFormData({ ...formData, importance: Number(v) })}
                   >
                     <SelectTrigger className="h-10">
                       <SelectValue />
@@ -870,7 +862,8 @@ function KnowledgeFormDialog({
                         <SelectItem key={opt.value} value={opt.value}>
                           <span className="flex items-center gap-2">
                             <span className="text-foreground">
-                              {"★".repeat(opt.stars)}{"☆".repeat(5 - opt.stars)}
+                              {"★".repeat(opt.stars)}
+                              {"☆".repeat(5 - opt.stars)}
                             </span>
                             <span>{opt.label}</span>
                           </span>
@@ -885,9 +878,7 @@ function KnowledgeFormDialog({
                 <Label className="text-xs text-muted-foreground">学习提示</Label>
                 <Textarea
                   value={formData.tips}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tips: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, tips: e.target.value })}
                   placeholder="学习建议和技巧..."
                   rows={2}
                   className="resize-none"
@@ -908,7 +899,7 @@ function KnowledgeFormDialog({
                   已选 {formData.related_courses?.length || 0} 门
                 </Badge>
               </div>
-              
+
               {/* 已选课程列表 */}
               {formData.related_courses && formData.related_courses.length > 0 && (
                 <div className="flex flex-wrap gap-2 p-3 bg-gradient-to-br from-muted/50 to-muted/30 rounded-lg border border-dashed">
@@ -921,7 +912,9 @@ function KnowledgeFormDialog({
                         className="flex items-center gap-1.5 pr-1 py-1 bg-background shadow-sm"
                       >
                         <BookOpen className="h-3 w-3 text-muted-foreground" />
-                        <span className="max-w-[150px] truncate">{course?.title || `课程#${courseId}`}</span>
+                        <span className="max-w-[150px] truncate">
+                          {course?.title || `课程#${courseId}`}
+                        </span>
                         <button
                           type="button"
                           onClick={() =>
@@ -967,9 +960,7 @@ function KnowledgeFormDialog({
                         })
                         .slice(0, 20)
                         .map((course) => {
-                          const isSelected = formData.related_courses?.includes(
-                            course.id
-                          );
+                          const isSelected = formData.related_courses?.includes(course.id);
                           return (
                             <button
                               key={course.id}
@@ -993,8 +984,8 @@ function KnowledgeFormDialog({
                                 }
                               }}
                               className={`w-full flex items-center gap-3 p-2.5 text-left rounded-md transition-all ${
-                                isSelected 
-                                  ? "bg-primary/5 ring-1 ring-primary/20" 
+                                isSelected
+                                  ? "bg-primary/5 ring-1 ring-primary/20"
                                   : "hover:bg-muted/50"
                               }`}
                             >
@@ -1008,9 +999,7 @@ function KnowledgeFormDialog({
                                 {isSelected && <Check className="h-3 w-3" />}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {course.title}
-                                </p>
+                                <p className="text-sm font-medium truncate">{course.title}</p>
                                 <p className="text-xs text-muted-foreground truncate">
                                   {course.category?.name || "未分类"}
                                 </p>
@@ -1042,9 +1031,7 @@ function KnowledgeFormDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               取消
             </Button>
-            <Button onClick={handleSubmit}>
-              {point ? "保存修改" : "创建知识点"}
-            </Button>
+            <Button onClick={handleSubmit}>{point ? "保存修改" : "创建知识点"}</Button>
           </DialogFooter>
         </div>
       </DialogContent>
@@ -1061,7 +1048,7 @@ function HighlightText({ text, highlight }: { text: string; highlight: string })
     return <span>{text}</span>;
   }
 
-  const regex = new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const regex = new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
   const parts = text.split(regex);
 
   return (
@@ -1105,45 +1092,44 @@ function KnowledgeDetailSheet({
   const getFrequencyConfig = (frequency: Frequency) => {
     switch (frequency) {
       case "high":
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-foreground",
           icon: Zap,
           label: "高频考点",
-          description: "历年考试中频繁出现，必须重点掌握"
+          description: "历年考试中频繁出现，必须重点掌握",
         };
       case "medium":
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-foreground",
           icon: Target,
           label: "中频考点",
-          description: "考试中偶尔出现，需要理解掌握"
+          description: "考试中偶尔出现，需要理解掌握",
         };
       case "low":
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-muted-foreground",
           icon: Lightbulb,
           label: "低频考点",
-          description: "考试中较少出现，了解即可"
+          description: "考试中较少出现，了解即可",
         };
       default:
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-muted-foreground",
           icon: Brain,
           label: "未知",
-          description: ""
+          description: "",
         };
     }
   };
 
   const frequencyConfig = getFrequencyConfig(point.frequency);
   const FrequencyIcon = frequencyConfig.icon;
-  const relatedCoursesList = point.related_courses?.map(id => 
-    courses.find(c => c.id === id)
-  ).filter(Boolean) || [];
+  const relatedCoursesList =
+    point.related_courses?.map((id) => courses.find((c) => c.id === id)).filter(Boolean) || [];
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(point.code);
@@ -1164,8 +1150,8 @@ function KnowledgeDetailSheet({
                 <div>
                   <SheetTitle className="text-xl">{point.name}</SheetTitle>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className="font-mono text-xs cursor-pointer hover:bg-muted"
                       onClick={handleCopyCode}
                     >
@@ -1190,25 +1176,21 @@ function KnowledgeDetailSheet({
                     {frequencyConfig.label}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {frequencyConfig.description}
-                </p>
+                <p className="text-xs text-muted-foreground">{frequencyConfig.description}</p>
               </div>
-              
+
               <div className="p-4 rounded-xl bg-muted border border-dashed">
                 <div className="flex items-center gap-2 mb-2">
                   <Star className="h-4 w-4 text-foreground fill-foreground" />
-                  <span className="text-sm font-medium">
-                    重要程度 {point.importance}/5
-                  </span>
+                  <span className="text-sm font-medium">重要程度 {point.importance}/5</span>
                 </div>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
                       className={`h-4 w-4 ${
-                        star <= point.importance 
-                          ? "text-foreground fill-foreground" 
+                        star <= point.importance
+                          ? "text-foreground fill-foreground"
                           : "text-muted-foreground/30"
                       }`}
                     />
@@ -1238,9 +1220,7 @@ function KnowledgeDetailSheet({
                   学习提示
                 </div>
                 <div className="p-4 rounded-xl bg-muted/50 border">
-                  <p className="text-sm leading-relaxed">
-                    {point.tips}
-                  </p>
+                  <p className="text-sm leading-relaxed">{point.tips}</p>
                 </div>
               </div>
             )}
@@ -1259,7 +1239,7 @@ function KnowledgeDetailSheet({
                 </div>
                 <div className="space-y-2">
                   {relatedCoursesList.map((course) => (
-                    <div 
+                    <div
                       key={course!.id}
                       className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border hover:bg-muted/50 transition-colors group cursor-pointer"
                     >
@@ -1296,7 +1276,7 @@ function KnowledgeDetailSheet({
                     const childFreq = getFrequencyConfig(child.frequency);
                     const ChildIcon = childFreq.icon;
                     return (
-                      <div 
+                      <div
                         key={child.id}
                         className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border"
                       >
@@ -1336,17 +1316,13 @@ function KnowledgeDetailSheet({
 
         {/* Footer Actions */}
         <div className="border-t px-6 py-4 flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleCopyCode}
-          >
+          <Button variant="outline" size="sm" onClick={handleCopyCode}>
             <Copy className="mr-2 h-4 w-4" />
             复制编码
           </Button>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => {
                 onOpenChange(false);
@@ -1357,7 +1333,7 @@ function KnowledgeDetailSheet({
               <Trash2 className="mr-2 h-4 w-4" />
               删除
             </Button>
-            <Button 
+            <Button
               size="sm"
               onClick={() => {
                 onOpenChange(false);
@@ -1388,11 +1364,11 @@ interface CategorySidebarProps {
   };
 }
 
-function CategorySidebar({ 
-  categories, 
-  selectedCategory, 
+function CategorySidebar({
+  categories,
+  selectedCategory,
   onSelectCategory,
-  stats 
+  stats,
 }: CategorySidebarProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
 
@@ -1420,20 +1396,21 @@ function CategorySidebar({
           className={`
             w-full flex items-center gap-1 px-2 py-1 rounded text-left text-xs
             transition-colors duration-100
-            ${isSelected 
-              ? "bg-primary/10 text-foreground font-medium" 
-              : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+            ${
+              isSelected
+                ? "bg-primary/10 text-foreground font-medium"
+                : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
             }
           `}
           style={{ paddingLeft: `${8 + level * 10}px` }}
         >
           {hasChildren ? (
-            <span 
+            <span
               onClick={(e) => toggleExpanded(category.id, e)}
               className="p-0.5 -ml-0.5 hover:bg-muted rounded cursor-pointer"
             >
-              <ChevronRight 
-                className={`h-3 w-3 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`} 
+              <ChevronRight
+                className={`h-3 w-3 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
               />
             </span>
           ) : (
@@ -1441,16 +1418,12 @@ function CategorySidebar({
           )}
           <span className="truncate flex-1">{category.name}</span>
           {count > 0 && (
-            <span className="text-[10px] text-muted-foreground/70 tabular-nums ml-1">
-              {count}
-            </span>
+            <span className="text-[10px] text-muted-foreground/70 tabular-nums ml-1">{count}</span>
           )}
         </button>
-        
+
         {hasChildren && isExpanded && (
-          <div>
-            {category.children!.map(child => renderCategory(child, level + 1))}
-          </div>
+          <div>{category.children!.map((child) => renderCategory(child, level + 1))}</div>
         )}
       </div>
     );
@@ -1464,23 +1437,22 @@ function CategorySidebar({
         className={`
           w-full flex items-center gap-1 px-2 py-1 rounded text-left text-xs
           transition-colors duration-100
-          ${selectedCategory === "all" 
-            ? "bg-primary/10 text-foreground font-medium" 
-            : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+          ${
+            selectedCategory === "all"
+              ? "bg-primary/10 text-foreground font-medium"
+              : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
           }
         `}
       >
         <span className="w-4 flex-shrink-0" />
         <span className="flex-1">全部</span>
-        <span className="text-[10px] text-muted-foreground/70 tabular-nums">
-          {stats.total}
-        </span>
+        <span className="text-[10px] text-muted-foreground/70 tabular-nums">{stats.total}</span>
       </button>
-      
+
       <Separator className="my-1.5" />
-      
+
       {/* Category tree */}
-      {categories.map(cat => renderCategory(cat))}
+      {categories.map((cat) => renderCategory(cat))}
     </div>
   );
 }
@@ -1525,8 +1497,8 @@ function KnowledgeTreeItem({
   const getFrequencyConfig = (frequency: Frequency) => {
     switch (frequency) {
       case "high":
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-foreground",
           border: "border-border",
           icon: Zap,
@@ -1534,8 +1506,8 @@ function KnowledgeTreeItem({
           pulse: false,
         };
       case "medium":
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-foreground",
           border: "border-border",
           icon: Target,
@@ -1543,8 +1515,8 @@ function KnowledgeTreeItem({
           pulse: false,
         };
       case "low":
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-muted-foreground",
           border: "border-border",
           icon: Lightbulb,
@@ -1552,8 +1524,8 @@ function KnowledgeTreeItem({
           pulse: false,
         };
       default:
-        return { 
-          bg: "bg-muted", 
+        return {
+          bg: "bg-muted",
           text: "text-muted-foreground",
           border: "border-muted",
           icon: Brain,
@@ -1582,9 +1554,7 @@ function KnowledgeTreeItem({
           <Star
             key={star}
             className={`h-3 w-3 transition-all ${
-              star <= importance 
-                ? "text-foreground fill-current" 
-                : "text-muted-foreground/20"
+              star <= importance ? "text-foreground fill-current" : "text-muted-foreground/20"
             }`}
           />
         ))}
@@ -1611,21 +1581,21 @@ function KnowledgeTreeItem({
           className={`
             group relative flex items-center gap-2 py-2 px-3 rounded-lg
             hover:bg-muted/50 transition-all duration-150
-            ${searchTerm && (point.name.toLowerCase().includes(searchTerm.toLowerCase()) || point.code.toLowerCase().includes(searchTerm.toLowerCase())) 
-              ? "bg-muted" 
-              : ""
+            ${
+              searchTerm &&
+              (point.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                point.code.toLowerCase().includes(searchTerm.toLowerCase()))
+                ? "bg-muted"
+                : ""
             }
           `}
           style={{ paddingLeft: `${12 + level * 16}px` }}
         >
           {/* Expand button */}
           {hasChildren ? (
-            <button
-              onClick={toggleExpanded}
-              className="p-0.5 rounded hover:bg-muted"
-            >
-              <ChevronRight 
-                className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`} 
+            <button onClick={toggleExpanded} className="p-0.5 rounded hover:bg-muted">
+              <ChevronRight
+                className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`}
               />
             </button>
           ) : (
@@ -1633,7 +1603,9 @@ function KnowledgeTreeItem({
           )}
 
           {/* Frequency indicator */}
-          <div className={`w-1.5 h-1.5 rounded-full ${frequencyConfig.bg.replace('bg-gradient-to-r', 'bg')} ${frequencyConfig.text.replace('text-', 'bg-')}`} />
+          <div
+            className={`w-1.5 h-1.5 rounded-full ${frequencyConfig.bg.replace("bg-gradient-to-r", "bg")} ${frequencyConfig.text.replace("text-", "bg-")}`}
+          />
 
           {/* Name */}
           <span className="font-medium text-sm truncate flex-1">
@@ -1650,10 +1622,7 @@ function KnowledgeTreeItem({
 
           {/* Quick actions */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-            <button
-              onClick={() => onEdit(point)}
-              className="p-1 hover:bg-muted rounded"
-            >
+            <button onClick={() => onEdit(point)} className="p-1 hover:bg-muted rounded">
               <Edit className="h-3 w-3 text-muted-foreground" />
             </button>
           </div>
@@ -1689,7 +1658,7 @@ function KnowledgeTreeItem({
     <div className="relative">
       {/* Tree connection lines */}
       {level > 0 && (
-        <div 
+        <div
           className="absolute left-0 top-0 bottom-0 w-6"
           style={{ marginLeft: `${(level - 1) * 24}px` }}
         >
@@ -1708,9 +1677,12 @@ function KnowledgeTreeItem({
           border shadow-sm hover:shadow-md
           transition-all duration-200 cursor-pointer
           ${getLevelStyles()}
-          ${searchTerm && (point.name.toLowerCase().includes(searchTerm.toLowerCase()) || point.code.toLowerCase().includes(searchTerm.toLowerCase())) 
-            ? "ring-2 ring-primary/30 bg-muted/50" 
-            : ""
+          ${
+            searchTerm &&
+            (point.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              point.code.toLowerCase().includes(searchTerm.toLowerCase()))
+              ? "ring-2 ring-primary/30 bg-muted/50"
+              : ""
           }
         `}
         style={{ marginLeft: `${level * 24}px` }}
@@ -1722,14 +1694,11 @@ function KnowledgeTreeItem({
               onClick={toggleExpanded}
               className={`
                 p-1.5 rounded-lg transition-all duration-200
-                ${expanded 
-                  ? "bg-primary/10 text-foreground" 
-                  : "bg-muted hover:bg-primary/10"
-                }
+                ${expanded ? "bg-primary/10 text-foreground" : "bg-muted hover:bg-primary/10"}
               `}
             >
-              <ChevronDown 
-                className={`h-4 w-4 transition-transform duration-200 ${expanded ? "" : "-rotate-90"}`} 
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${expanded ? "" : "-rotate-90"}`}
               />
             </button>
           ) : (
@@ -1745,7 +1714,7 @@ function KnowledgeTreeItem({
         <div className="flex-shrink-0 p-2 rounded-lg bg-muted">
           <Brain className="h-4 w-4 text-muted-foreground" />
         </div>
-        
+
         {/* Content */}
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
@@ -1755,8 +1724,8 @@ function KnowledgeTreeItem({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className="text-[10px] font-mono px-1.5 py-0 h-5 bg-muted/50 border-dashed cursor-pointer hover:bg-muted transition-colors"
                     onClick={handleCopyCode}
                   >
@@ -1776,23 +1745,21 @@ function KnowledgeTreeItem({
               </Badge>
             )}
           </div>
-          
+
           <div className="flex items-center gap-3 flex-wrap">
             {/* Frequency badge */}
-            <Badge 
+            <Badge
               className={`text-[10px] px-2 py-0.5 h-5 ${frequencyConfig.bg} ${frequencyConfig.text} border ${frequencyConfig.border}`}
             >
               <FrequencyIcon className="h-3 w-3 mr-1" />
               {frequencyConfig.label}
             </Badge>
-            
+
             {/* Importance stars */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="cursor-help">
-                    {getImportanceDisplay(point.importance)}
-                  </div>
+                  <div className="cursor-help">{getImportanceDisplay(point.importance)}</div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
                   重要程度: {point.importance}/5
@@ -1805,8 +1772,8 @@ function KnowledgeTreeItem({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className="text-[10px] px-2 py-0.5 h-5 cursor-help hover:bg-muted transition-colors"
                     >
                       <Link2 className="h-3 w-3 mr-1" />
@@ -1858,20 +1825,24 @@ function KnowledgeTreeItem({
         </div>
 
         {/* Quick Actions (visible on hover) */}
-        <div className={`flex-shrink-0 flex items-center gap-1 transition-all duration-200 ${showQuickActions ? "opacity-100" : "opacity-0"}`}>
+        <div
+          className={`flex-shrink-0 flex items-center gap-1 transition-all duration-200 ${showQuickActions ? "opacity-100" : "opacity-0"}`}
+        >
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-7 w-7 rounded-lg"
                   onClick={() => onEdit(point)}
                 >
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">编辑</TooltipContent>
+              <TooltipContent side="top" className="text-xs">
+                编辑
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -1879,20 +1850,22 @@ function KnowledgeTreeItem({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-7 w-7 rounded-lg"
                     onClick={() => onAddChild(point.id, point.category_id)}
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">添加子项</TooltipContent>
+                <TooltipContent side="top" className="text-xs">
+                  添加子项
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
@@ -1960,7 +1933,7 @@ export default function KnowledgePointManager() {
   const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
   const [frequencyFilter, setFrequencyFilter] = useState<Frequency | "all">("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // View controls
   const [viewMode, setViewMode] = useState<"tree" | "compact">("tree");
   const [allExpanded, setAllExpanded] = useState<boolean | undefined>(undefined);
@@ -1996,22 +1969,22 @@ export default function KnowledgePointManager() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd + K to focus search
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
       // Ctrl/Cmd + N to create new
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !dialogOpen && !quickJumpOpen) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "n" && !dialogOpen && !quickJumpOpen) {
         e.preventDefault();
         handleAdd();
       }
       // Ctrl/Cmd + G to quick jump
-      if ((e.ctrlKey || e.metaKey) && e.key === 'g' && !dialogOpen) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "g" && !dialogOpen) {
         e.preventDefault();
         setQuickJumpOpen(true);
       }
       // Escape to clear search or close dialogs
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (quickJumpOpen) {
           setQuickJumpOpen(false);
         } else if (searchTerm) {
@@ -2020,26 +1993,29 @@ export default function KnowledgePointManager() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [dialogOpen, searchTerm, quickJumpOpen]);
 
   // 扁平化分类
-  const flattenCategories = useCallback((
-    cats: CourseCategory[],
-    level = 0
-  ): { id: number; name: string; level: number }[] => {
-    const result: { id: number; name: string; level: number }[] = [];
-    for (const cat of cats) {
-      result.push({ id: cat.id, name: cat.name, level });
-      if (cat.children) {
-        result.push(...flattenCategories(cat.children, level + 1));
+  const flattenCategories = useCallback(
+    (cats: CourseCategory[], level = 0): { id: number; name: string; level: number }[] => {
+      const result: { id: number; name: string; level: number }[] = [];
+      for (const cat of cats) {
+        result.push({ id: cat.id, name: cat.name, level });
+        if (cat.children) {
+          result.push(...flattenCategories(cat.children, level + 1));
+        }
       }
-    }
-    return result;
-  }, []);
+      return result;
+    },
+    []
+  );
 
-  const flatCategories = useMemo(() => flattenCategories(categories), [categories, flattenCategories]);
+  const flatCategories = useMemo(
+    () => flattenCategories(categories),
+    [categories, flattenCategories]
+  );
 
   // 扁平化知识点
   const flattenPoints = useCallback((pts: KnowledgePoint[]): KnowledgePoint[] => {
@@ -2054,49 +2030,52 @@ export default function KnowledgePointManager() {
   }, []);
 
   // 加载数据
-  const fetchData = useCallback(async (showRefreshIndicator = false) => {
-    if (showRefreshIndicator) setIsRefreshing(true);
-    setLoading(true);
-    try {
-      const [categoriesRes, pointsRes, coursesRes] = await Promise.all([
-        courseApi.getCategories(),
-        courseApi.getKnowledgePoints({
-          category_id: categoryFilter !== "all" ? categoryFilter : undefined,
-          frequency: frequencyFilter !== "all" ? frequencyFilter : undefined,
-        }),
-        courseApi.getCourses({ page_size: 100, status: "published" }),
-      ]);
+  const fetchData = useCallback(
+    async (showRefreshIndicator = false) => {
+      if (showRefreshIndicator) setIsRefreshing(true);
+      setLoading(true);
+      try {
+        const [categoriesRes, pointsRes, coursesRes] = await Promise.all([
+          courseApi.getCategories(),
+          courseApi.getKnowledgePoints({
+            category_id: categoryFilter !== "all" ? categoryFilter : undefined,
+            frequency: frequencyFilter !== "all" ? frequencyFilter : undefined,
+          }),
+          courseApi.getCourses({ page_size: 100 }),
+        ]);
 
-      setCategories(categoriesRes.categories || []);
-      setPoints(pointsRes.knowledge_points || []);
-      setCourses(coursesRes.courses || []);
+        setCategories(categoriesRes.categories || []);
+        setPoints(pointsRes.knowledge_points || []);
+        setCourses(coursesRes.courses || []);
 
-      // 计算统计数据
-      const allPoints = pointsRes.knowledge_points || [];
-      const flat = flattenPoints(allPoints);
-      setStats({
-        total: flat.length,
-        highFrequency: flat.filter(p => p.frequency === "high").length,
-        mediumFrequency: flat.filter(p => p.frequency === "medium").length,
-        lowFrequency: flat.filter(p => p.frequency === "low").length,
-      });
+        // 计算统计数据
+        const allPoints = pointsRes.knowledge_points || [];
+        const flat = flattenPoints(allPoints);
+        setStats({
+          total: flat.length,
+          highFrequency: flat.filter((p) => p.frequency === "high").length,
+          mediumFrequency: flat.filter((p) => p.frequency === "medium").length,
+          lowFrequency: flat.filter((p) => p.frequency === "low").length,
+        });
 
-      // 计算分类统计
-      const catStats: Record<number, number> = {};
-      flat.forEach(p => {
-        if (p.category_id) {
-          catStats[p.category_id] = (catStats[p.category_id] || 0) + 1;
-        }
-      });
-      setCategoryStats(catStats);
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-      toast.error("加载数据失败");
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [categoryFilter, frequencyFilter, flattenPoints]);
+        // 计算分类统计
+        const catStats: Record<number, number> = {};
+        flat.forEach((p) => {
+          if (p.category_id) {
+            catStats[p.category_id] = (catStats[p.category_id] || 0) + 1;
+          }
+        });
+        setCategoryStats(catStats);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        toast.error("加载数据失败");
+      } finally {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [categoryFilter, frequencyFilter, flattenPoints]
+  );
 
   useEffect(() => {
     fetchData();
@@ -2119,18 +2098,34 @@ export default function KnowledgePointManager() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="sm" variant="ghost" onClick={() => setQuickJumpOpen(true)} className="h-8 w-8 p-0">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setQuickJumpOpen(true)}
+                className="h-8 w-8 p-0"
+              >
                 <Target className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">快速跳转</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">
+              快速跳转
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <Button size="sm" variant="ghost" onClick={() => fetchData(true)} disabled={isRefreshing} className="h-8 w-8 p-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => fetchData(true)}
+          disabled={isRefreshing}
+          className="h-8 w-8 p-0"
+        >
           <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
         </Button>
-        <Button size="sm" onClick={() => handleAdd()}
-          className="h-8 px-3 text-xs bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-sm">
+        <Button
+          size="sm"
+          onClick={() => handleAdd()}
+          className="h-8 px-3 text-xs bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-sm"
+        >
           <Plus className="mr-1 h-3.5 w-3.5" />
           新建
         </Button>
@@ -2143,13 +2138,14 @@ export default function KnowledgePointManager() {
   const filteredPoints = useMemo(() => {
     const filterFn = (pts: KnowledgePoint[]): KnowledgePoint[] => {
       if (!searchTerm) return pts;
-      
+
       const term = searchTerm.toLowerCase();
       return pts.reduce((acc: KnowledgePoint[], pt) => {
-        const matches = pt.name.toLowerCase().includes(term) || 
-                       pt.code.toLowerCase().includes(term) ||
-                       (pt.description && pt.description.toLowerCase().includes(term));
-        
+        const matches =
+          pt.name.toLowerCase().includes(term) ||
+          pt.code.toLowerCase().includes(term) ||
+          (pt.description && pt.description.toLowerCase().includes(term));
+
         if (pt.children && pt.children.length > 0) {
           const filteredChildren = filterFn(pt.children);
           if (filteredChildren.length > 0) {
@@ -2157,14 +2153,14 @@ export default function KnowledgePointManager() {
             return acc;
           }
         }
-        
+
         if (matches) {
           acc.push(pt);
         }
         return acc;
       }, []);
     };
-    
+
     return filterFn([...points]);
   }, [points, searchTerm]);
 
@@ -2237,23 +2233,48 @@ export default function KnowledgePointManager() {
       {/* Mini Stats Bar */}
       <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2 border-b border-border/30 bg-muted/20">
         {[
-          { label: "全部", value: stats.total, filter: "all" as const, active: frequencyFilter === "all" },
-          { label: "高频", value: stats.highFrequency, filter: "high" as Frequency, active: frequencyFilter === "high", icon: Zap },
-          { label: "中频", value: stats.mediumFrequency, filter: "medium" as Frequency, active: frequencyFilter === "medium", icon: Target },
-          { label: "低频", value: stats.lowFrequency, filter: "low" as Frequency, active: frequencyFilter === "low", icon: Lightbulb },
+          {
+            label: "全部",
+            value: stats.total,
+            filter: "all" as const,
+            active: frequencyFilter === "all",
+          },
+          {
+            label: "高频",
+            value: stats.highFrequency,
+            filter: "high" as Frequency,
+            active: frequencyFilter === "high",
+            icon: Zap,
+          },
+          {
+            label: "中频",
+            value: stats.mediumFrequency,
+            filter: "medium" as Frequency,
+            active: frequencyFilter === "medium",
+            icon: Target,
+          },
+          {
+            label: "低频",
+            value: stats.lowFrequency,
+            filter: "low" as Frequency,
+            active: frequencyFilter === "low",
+            icon: Lightbulb,
+          },
         ].map((item) => (
           <button
             key={item.filter}
             onClick={() => handleStatsFilter(item.filter)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-              item.active 
-                ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300" 
+              item.active
+                ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             {item.icon && <item.icon className="h-3 w-3" />}
             <span>{item.label}</span>
-            <span className={`ml-0.5 ${item.active ? "" : "text-muted-foreground/60"}`}>{item.value}</span>
+            <span className={`ml-0.5 ${item.active ? "" : "text-muted-foreground/60"}`}>
+              {item.value}
+            </span>
           </button>
         ))}
       </div>
@@ -2268,7 +2289,12 @@ export default function KnowledgePointManager() {
                 <FolderTree className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs font-medium">分类导航</span>
               </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowCategorySidebar(false)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setShowCategorySidebar(false)}
+              >
                 <PanelRightClose className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -2291,22 +2317,29 @@ export default function KnowledgePointManager() {
               <span className="text-xs font-medium">知识点列表</span>
               {categoryFilter && (
                 <Badge variant="secondary" className="ml-1 h-5 text-[10px]">
-                  {categories.find(c => c.id.toString() === categoryFilter)?.name || "筛选中"}
+                  {categories.find((c) => c.id.toString() === categoryFilter)?.name || "筛选中"}
                 </Badge>
               )}
             </div>
-            
+
             <div className="flex items-center gap-1">
               {/* Toggle sidebar button */}
               {!showCategorySidebar && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowCategorySidebar(true)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setShowCategorySidebar(true)}
+                      >
                         <PanelRightOpen className="h-3.5 w-3.5" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">显示分类导航</TooltipContent>
+                    <TooltipContent side="bottom" className="text-xs">
+                      显示分类导航
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               )}
@@ -2316,23 +2349,31 @@ export default function KnowledgePointManager() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button onClick={() => setViewMode("tree")}
-                        className={`p-1 rounded transition-all ${viewMode === "tree" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                      <button
+                        onClick={() => setViewMode("tree")}
+                        className={`p-1 rounded transition-all ${viewMode === "tree" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
                         <LayoutGrid className="h-3.5 w-3.5" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">树形视图</TooltipContent>
+                    <TooltipContent side="bottom" className="text-xs">
+                      树形视图
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button onClick={() => setViewMode("compact")}
-                        className={`p-1 rounded transition-all ${viewMode === "compact" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                      <button
+                        onClick={() => setViewMode("compact")}
+                        className={`p-1 rounded transition-all ${viewMode === "compact" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
                         <LayoutList className="h-3.5 w-3.5" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">紧凑视图</TooltipContent>
+                    <TooltipContent side="bottom" className="text-xs">
+                      紧凑视图
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
@@ -2342,31 +2383,48 @@ export default function KnowledgePointManager() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button onClick={() => setAllExpanded(true)}
-                        className={`p-1 rounded transition-all ${allExpanded === true ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                      <button
+                        onClick={() => setAllExpanded(true)}
+                        className={`p-1 rounded transition-all ${allExpanded === true ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
                         <ChevronsUpDown className="h-3.5 w-3.5" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">展开全部</TooltipContent>
+                    <TooltipContent side="bottom" className="text-xs">
+                      展开全部
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button onClick={() => setAllExpanded(false)}
-                        className={`p-1 rounded transition-all ${allExpanded === false ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                      <button
+                        onClick={() => setAllExpanded(false)}
+                        className={`p-1 rounded transition-all ${allExpanded === false ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
                         <ChevronsDownUp className="h-3.5 w-3.5" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">收起全部</TooltipContent>
+                    <TooltipContent side="bottom" className="text-xs">
+                      收起全部
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
 
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={() => { setSearchTerm(""); setCategoryFilter("all"); setFrequencyFilter("all"); }}
-                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground">
-                  <X className="mr-1 h-3 w-3" />清除
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCategoryFilter("all");
+                    setFrequencyFilter("all");
+                  }}
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <X className="mr-1 h-3 w-3" />
+                  清除
                 </Button>
               )}
             </div>
@@ -2374,7 +2432,10 @@ export default function KnowledgePointManager() {
 
           {/* Content */}
           <div className="flex-1 overflow-auto p-3">
-            <Select value={categoryFilter === "all" ? "all" : categoryFilter.toString()} onValueChange={(v) => setCategoryFilter(v === "all" ? "all" : Number(v))}>
+            <Select
+              value={categoryFilter === "all" ? "all" : categoryFilter.toString()}
+              onValueChange={(v) => setCategoryFilter(v === "all" ? "all" : Number(v))}
+            >
               <SelectTrigger className="w-[160px] h-8 text-xs mb-3">
                 <FolderTree className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
                 <SelectValue placeholder="选择分类" />
@@ -2382,7 +2443,10 @@ export default function KnowledgePointManager() {
               <SelectContent>
                 <SelectItem value="all">全部分类</SelectItem>
                 {flatCategories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id.toString()}>{"　".repeat(cat.level)}{cat.name}</SelectItem>
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                    {"　".repeat(cat.level)}
+                    {cat.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -2397,57 +2461,76 @@ export default function KnowledgePointManager() {
                 onClearCategory={() => setCategoryFilter("all")}
                 onClearFrequency={() => setFrequencyFilter("all")}
                 onClearSearch={() => setSearchTerm("")}
-                onClearAll={() => { setSearchTerm(""); setCategoryFilter("all"); setFrequencyFilter("all"); }}
+                onClearAll={() => {
+                  setSearchTerm("");
+                  setCategoryFilter("all");
+                  setFrequencyFilter("all");
+                }}
               />
             )}
 
             {loading ? (
               <div className="space-y-2 py-2">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 border rounded-lg animate-pulse" style={{ marginLeft: `${(i % 3) * 16}px` }}>
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-3 border rounded-lg animate-pulse"
+                    style={{ marginLeft: `${(i % 3) * 16}px` }}
+                  >
                     <Skeleton className="h-7 w-7 rounded" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-3.5 w-40" />
-                      <div className="flex gap-1.5"><Skeleton className="h-4 w-14 rounded-full" /><Skeleton className="h-4 w-16 rounded-full" /></div>
+                      <div className="flex gap-1.5">
+                        <Skeleton className="h-4 w-14 rounded-full" />
+                        <Skeleton className="h-4 w-16 rounded-full" />
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : filteredPoints.length === 0 ? (
-              <EmptyState hasFilters={hasActiveFilters} onClearFilters={() => { setSearchTerm(""); setCategoryFilter("all"); setFrequencyFilter("all"); }} onCreateFirst={() => handleAdd()} />
+              <EmptyState
+                hasFilters={hasActiveFilters}
+                onClearFilters={() => {
+                  setSearchTerm("");
+                  setCategoryFilter("all");
+                  setFrequencyFilter("all");
+                }}
+                onCreateFirst={() => handleAdd()}
+              />
             ) : (
               <ScrollArea className="h-[calc(100vh-22rem)]">
                 <div className={viewMode === "compact" ? "space-y-0.5" : "space-y-1.5 pr-3"}>
-                {filteredPoints.map((point, index) => (
-                  <KnowledgeTreeItem
-                    key={point.id}
-                    point={point}
-                    level={0}
-                    courses={courses}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onAddChild={handleAdd}
-                    onPreview={handlePreview}
-                    isLast={index === filteredPoints.length - 1}
-                    searchTerm={searchTerm}
-                    isExpanded={allExpanded}
-                    viewMode={viewMode}
-                  />
-                ))}
-              </div>
-              
-              {/* 底部统计 */}
-              <div className="mt-6 pt-4 border-t">
-                <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Brain className="h-3 w-3" />
-                    共 {flattenPoints(filteredPoints).length} 个知识点
-                    {hasActiveFilters && <span className="ml-1">(筛选)</span>}
-                  </span>
+                  {filteredPoints.map((point, index) => (
+                    <KnowledgeTreeItem
+                      key={point.id}
+                      point={point}
+                      level={0}
+                      courses={courses}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onAddChild={handleAdd}
+                      onPreview={handlePreview}
+                      isLast={index === filteredPoints.length - 1}
+                      searchTerm={searchTerm}
+                      isExpanded={allExpanded}
+                      viewMode={viewMode}
+                    />
+                  ))}
                 </div>
-              </div>
-            </ScrollArea>
-          )}
+
+                {/* 底部统计 */}
+                <div className="mt-6 pt-4 border-t">
+                  <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Brain className="h-3 w-3" />共 {flattenPoints(filteredPoints).length}{" "}
+                      个知识点
+                      {hasActiveFilters && <span className="ml-1">(筛选)</span>}
+                    </span>
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
           </div>
         </Card>
       </div>

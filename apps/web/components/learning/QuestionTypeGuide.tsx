@@ -155,9 +155,7 @@ function ExampleCard({
             <p className="font-medium text-stone-800">例题 {index + 1}</p>
             <div className="flex items-center gap-2 mt-1">
               <DifficultyBadge level={example.difficulty} />
-              {example.source && (
-                <span className="text-xs text-stone-500">{example.source}</span>
-              )}
+              {example.source && <span className="text-xs text-stone-500">{example.source}</span>}
             </div>
           </div>
         </div>
@@ -206,7 +204,9 @@ function ExampleCard({
                       className={cn(
                         "w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium flex-shrink-0",
                         isSelected && !showAnswer && "border-amber-500 text-amber-600",
-                        showAnswer && isAnswer && "border-emerald-500 text-emerald-600 bg-emerald-100",
+                        showAnswer &&
+                          isAnswer &&
+                          "border-emerald-500 text-emerald-600 bg-emerald-100",
                         showAnswer && isSelected && !isAnswer && "border-red-500 text-red-600",
                         !isSelected && !showAnswer && "border-stone-300 text-stone-500"
                       )}
@@ -265,9 +265,7 @@ function ExampleCard({
                 <Lightbulb className="w-4 h-4" />
                 答案解析
               </h5>
-              <p className="text-sm text-blue-700 leading-relaxed">
-                {example.analysis}
-              </p>
+              <p className="text-sm text-blue-700 leading-relaxed">{example.analysis}</p>
             </div>
           )}
         </div>
@@ -312,9 +310,7 @@ export function QuestionTypeGuide({
               {data.difficulty && <DifficultyBadge level={data.difficulty} />}
               {data.frequency && <FrequencyBadge frequency={data.frequency} />}
             </div>
-            <h1 className="text-2xl font-bold text-stone-800 mb-2">
-              {data.name}
-            </h1>
+            <h1 className="text-2xl font-bold text-stone-800 mb-2">{data.name}</h1>
             <p className="text-stone-600">{data.description}</p>
           </div>
 
@@ -323,7 +319,8 @@ export function QuestionTypeGuide({
               <Clock className="w-5 h-5 text-amber-500" />
               <div className="text-right">
                 <p className="text-lg font-bold text-stone-800">
-                  {Math.floor(data.timeRecommendation / 60)}:{(data.timeRecommendation % 60).toString().padStart(2, "0")}
+                  {Math.floor(data.timeRecommendation / 60)}:
+                  {(data.timeRecommendation % 60).toString().padStart(2, "0")}
                 </p>
                 <p className="text-xs text-stone-500">建议用时</p>
               </div>
@@ -334,9 +331,7 @@ export function QuestionTypeGuide({
         {/* 题型特点 */}
         {data.characteristics && data.characteristics.length > 0 && (
           <div className="mt-4 pt-4 border-t border-amber-200/50">
-            <h4 className="text-sm font-semibold text-stone-700 mb-2">
-              题型特点
-            </h4>
+            <h4 className="text-sm font-semibold text-stone-700 mb-2">题型特点</h4>
             <div className="flex flex-wrap gap-2">
               {data.characteristics.map((char, index) => (
                 <span
@@ -374,10 +369,7 @@ export function QuestionTypeGuide({
               {data.solutionSteps.map((step, index) => (
                 <div
                   key={step.order}
-                  className={cn(
-                    "relative pl-8",
-                    index < data.solutionSteps.length - 1 && "pb-4"
-                  )}
+                  className={cn("relative pl-8", index < data.solutionSteps.length - 1 && "pb-4")}
                 >
                   {/* 连接线 */}
                   {index < data.solutionSteps.length - 1 && (
@@ -388,9 +380,7 @@ export function QuestionTypeGuide({
                   <div
                     className={cn(
                       "absolute left-0 top-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold",
-                      step.keyPoint
-                        ? "bg-amber-500 text-white"
-                        : "bg-amber-100 text-amber-700"
+                      step.keyPoint ? "bg-amber-500 text-white" : "bg-amber-100 text-amber-700"
                     )}
                   >
                     {step.order}
@@ -406,9 +396,7 @@ export function QuestionTypeGuide({
                         </span>
                       )}
                     </h4>
-                    <p className="text-sm text-stone-600 mt-1">
-                      {step.description}
-                    </p>
+                    <p className="text-sm text-stone-600 mt-1">{step.description}</p>
                     {step.tips && (
                       <div className="mt-2 flex items-start gap-2 text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
                         <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -432,9 +420,7 @@ export function QuestionTypeGuide({
           <h2 className="flex items-center gap-2 text-lg font-semibold text-stone-800">
             <BookOpen className="w-5 h-5 text-emerald-500" />
             典型例题
-            <span className="text-sm font-normal text-stone-500">
-              ({data.examples.length}题)
-            </span>
+            <span className="text-sm font-normal text-stone-500">({data.examples.length}题)</span>
           </h2>
           {expandedSections.has("examples") ? (
             <ChevronUp className="w-5 h-5 text-stone-400" />
@@ -451,9 +437,7 @@ export function QuestionTypeGuide({
                 example={example}
                 index={index}
                 expanded={expandedExample === index}
-                onToggle={() =>
-                  setExpandedExample(expandedExample === index ? null : index)
-                }
+                onToggle={() => setExpandedExample(expandedExample === index ? null : index)}
                 onPractice={() => onExamplePractice?.(example)}
               />
             ))}
@@ -482,17 +466,12 @@ export function QuestionTypeGuide({
           {expandedSections.has("mistakes") && (
             <div className="border-t border-stone-100 p-4 space-y-3">
               {data.commonMistakes.map((mistake, index) => (
-                <div
-                  key={index}
-                  className="bg-red-50 rounded-lg p-4 border border-red-100"
-                >
+                <div key={index} className="bg-red-50 rounded-lg p-4 border border-red-100">
                   <h4 className="font-medium text-red-800 flex items-center gap-2">
                     <XCircle className="w-4 h-4" />
                     {mistake.title}
                   </h4>
-                  <p className="text-sm text-red-700 mt-1">
-                    {mistake.description}
-                  </p>
+                  <p className="text-sm text-red-700 mt-1">{mistake.description}</p>
                   <div className="mt-3 pt-3 border-t border-red-200">
                     <p className="text-sm text-emerald-700 flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -531,10 +510,7 @@ export function QuestionTypeGuide({
             <div className="border-t border-stone-100 p-4">
               <ul className="space-y-2">
                 {data.tips.map((tip, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-3 text-stone-600"
-                  >
+                  <li key={index} className="flex items-start gap-3 text-stone-600">
                     <Lightbulb className="w-4 h-4 text-amber-500 flex-shrink-0 mt-1" />
                     <span>{tip}</span>
                   </li>
@@ -569,9 +545,7 @@ export function QuestionTypeGuide({
                 {/* 前置知识 */}
                 {data.relatedKnowledge.filter((k) => k.type === "prerequisite").length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-stone-500 mb-2">
-                      前置知识
-                    </h4>
+                    <h4 className="text-sm font-medium text-stone-500 mb-2">前置知识</h4>
                     <div className="flex flex-wrap gap-2">
                       {data.relatedKnowledge
                         .filter((k) => k.type === "prerequisite")
@@ -592,9 +566,7 @@ export function QuestionTypeGuide({
                 {/* 相关知识 */}
                 {data.relatedKnowledge.filter((k) => k.type === "related").length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-stone-500 mb-2">
-                      相关知识
-                    </h4>
+                    <h4 className="text-sm font-medium text-stone-500 mb-2">相关知识</h4>
                     <div className="flex flex-wrap gap-2">
                       {data.relatedKnowledge
                         .filter((k) => k.type === "related")
@@ -615,9 +587,7 @@ export function QuestionTypeGuide({
                 {/* 进阶知识 */}
                 {data.relatedKnowledge.filter((k) => k.type === "advanced").length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-stone-500 mb-2">
-                      进阶学习
-                    </h4>
+                    <h4 className="text-sm font-medium text-stone-500 mb-2">进阶学习</h4>
                     <div className="flex flex-wrap gap-2">
                       {data.relatedKnowledge
                         .filter((k) => k.type === "advanced")

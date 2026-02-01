@@ -37,45 +37,53 @@ export function useDailyPractice() {
   }, []);
 
   // 提交答案
-  const submitAnswer = useCallback(async (data: SubmitAnswerRequest) => {
-    try {
-      const result = await practiceApi.submitAnswer(data);
-      
-      // 更新本地练习状态
-      if (practice) {
-        const updatedQuestions = practice.questions.map((q) => {
-          if (q.question_id === data.question_id) {
-            return {
-              ...q,
-              user_answer: data.user_answer,
-              is_correct: result.is_correct,
-              time_spent: data.time_spent,
-            };
-          }
-          return q;
-        });
+  const submitAnswer = useCallback(
+    async (data: SubmitAnswerRequest) => {
+      try {
+        const result = await practiceApi.submitAnswer(data);
 
-        const completedCount = updatedQuestions.filter((q) => q.is_correct !== undefined).length;
-        const correctCount = updatedQuestions.filter((q) => q.is_correct === true).length;
-        const wrongCount = updatedQuestions.filter((q) => q.is_correct === false).length;
+        // 更新本地练习状态
+        if (practice) {
+          const updatedQuestions = practice.questions.map((q) => {
+            if (q.question_id === data.question_id) {
+              return {
+                ...q,
+                user_answer: data.user_answer,
+                is_correct: result.is_correct,
+                time_spent: data.time_spent,
+              };
+            }
+            return q;
+          });
 
-        setPractice({
-          ...practice,
-          questions: updatedQuestions,
-          completed_count: completedCount,
-          correct_count: correctCount,
-          wrong_count: wrongCount,
-          progress: (completedCount / practice.total_questions) * 100,
-          correct_rate: completedCount > 0 ? (correctCount / completedCount) * 100 : 0,
-          status: completedCount >= practice.total_questions ? "completed" : completedCount > 0 ? "partial" : "pending",
-        });
+          const completedCount = updatedQuestions.filter((q) => q.is_correct !== undefined).length;
+          const correctCount = updatedQuestions.filter((q) => q.is_correct === true).length;
+          const wrongCount = updatedQuestions.filter((q) => q.is_correct === false).length;
+
+          setPractice({
+            ...practice,
+            questions: updatedQuestions,
+            completed_count: completedCount,
+            correct_count: correctCount,
+            wrong_count: wrongCount,
+            progress: (completedCount / practice.total_questions) * 100,
+            correct_rate: completedCount > 0 ? (correctCount / completedCount) * 100 : 0,
+            status:
+              completedCount >= practice.total_questions
+                ? "completed"
+                : completedCount > 0
+                  ? "partial"
+                  : "pending",
+          });
+        }
+
+        return result;
+      } catch (err: any) {
+        throw err;
       }
-
-      return result;
-    } catch (err: any) {
-      throw err;
-    }
-  }, [practice]);
+    },
+    [practice]
+  );
 
   // 获取当前题目索引
   const getCurrentQuestionIndex = useCallback(() => {
@@ -166,22 +174,25 @@ export function usePracticeCalendar() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
 
-  const fetchCalendar = useCallback(async (y?: number, m?: number) => {
-    setLoading(true);
-    try {
-      const targetYear = y || year;
-      const targetMonth = m || month;
-      const data = await practiceApi.getCalendar(targetYear, targetMonth);
-      setCalendar(data.calendar || []);
-      setYear(data.year);
-      setMonth(data.month);
-      return data;
-    } catch (err) {
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [year, month]);
+  const fetchCalendar = useCallback(
+    async (y?: number, m?: number) => {
+      setLoading(true);
+      try {
+        const targetYear = y || year;
+        const targetMonth = m || month;
+        const data = await practiceApi.getCalendar(targetYear, targetMonth);
+        setCalendar(data.calendar || []);
+        setYear(data.year);
+        setMonth(data.month);
+        return data;
+      } catch (err) {
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [year, month]
+  );
 
   return {
     loading,

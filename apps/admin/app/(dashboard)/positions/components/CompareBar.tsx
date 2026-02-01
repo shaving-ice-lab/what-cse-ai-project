@@ -2,19 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  Scale,
-  X,
-  ChevronUp,
-  ChevronDown,
-  Trash2,
-  ArrowRight,
-} from "lucide-react";
-import {
-  Button,
-  Badge,
-  ScrollArea,
-} from "@what-cse/ui";
+import { Scale, X, ChevronUp, ChevronDown, Trash2, ArrowRight } from "lucide-react";
+import { Button, Badge, ScrollArea } from "@what-cse/ui";
 import type { PositionBrief } from "@/types/position";
 
 interface CompareBarProps {
@@ -24,12 +13,7 @@ interface CompareBarProps {
   onClear: () => void;
 }
 
-export function CompareBar({
-  positions,
-  maxCount = 5,
-  onRemove,
-  onClear,
-}: CompareBarProps) {
+export function CompareBar({ positions, maxCount = 5, onRemove, onClear }: CompareBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
@@ -47,16 +31,16 @@ export function CompareBar({
 
   // 检测新添加的项目
   useEffect(() => {
-    const currentIds = positions.map(p => p.id);
+    const currentIds = positions.map((p) => p.id);
     const prevIds = prevPositionsRef.current;
-    
+
     // 找到新添加的项目
-    const newIds = currentIds.filter(id => !prevIds.includes(id));
+    const newIds = currentIds.filter((id) => !prevIds.includes(id));
     if (newIds.length > 0) {
       setNewItemId(newIds[0]);
       setTimeout(() => setNewItemId(null), 500); // 动画结束后清除
     }
-    
+
     prevPositionsRef.current = currentIds;
   }, [positions]);
 
@@ -90,10 +74,10 @@ export function CompareBar({
           </div>
           <div>
             <span className="font-medium">职位对比</span>
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className="ml-2 transition-all duration-200"
-              style={{ transform: newItemId ? 'scale(1.1)' : 'scale(1)' }}
+              style={{ transform: newItemId ? "scale(1.1)" : "scale(1)" }}
             >
               {positions.length}/{maxCount}
             </Badge>
@@ -124,11 +108,11 @@ export function CompareBar({
               <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-8 w-8 transition-transform duration-200"
-            style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(180deg)' }}
+            style={{ transform: isExpanded ? "rotate(0deg)" : "rotate(180deg)" }}
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
@@ -150,8 +134,8 @@ export function CompareBar({
                   removingId === position.id
                     ? "opacity-0 scale-95 -translate-y-2"
                     : newItemId === position.id
-                    ? "animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2"
-                    : "opacity-100 scale-100"
+                      ? "animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2"
+                      : "opacity-100 scale-100"
                 }`}
                 style={{
                   animationDelay: `${index * 50}ms`,
@@ -163,10 +147,7 @@ export function CompareBar({
                 >
                   <X className="h-3 w-3" />
                 </button>
-                <Link
-                  href={`/positions/${position.id}`}
-                  className="block"
-                >
+                <Link href={`/positions/${position.id}`} className="block">
                   <h4 className="font-medium text-sm line-clamp-1 hover:text-primary transition-colors">
                     {position.position_name}
                   </h4>
@@ -177,9 +158,7 @@ export function CompareBar({
                     <Badge variant="outline" className="text-xs">
                       {position.recruit_count}人
                     </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {position.province}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{position.province}</span>
                   </div>
                 </Link>
               </div>

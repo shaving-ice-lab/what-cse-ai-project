@@ -45,23 +45,17 @@ import { toast } from "@what-cse/ui";
 
 // 成绩等级配置
 const getScoreLevel = (percentage: number) => {
-  if (percentage >= 90) return { label: "优秀", color: "text-emerald-500", bgColor: "bg-emerald-500" };
+  if (percentage >= 90)
+    return { label: "优秀", color: "text-emerald-500", bgColor: "bg-emerald-500" };
   if (percentage >= 80) return { label: "良好", color: "text-blue-500", bgColor: "bg-blue-500" };
   if (percentage >= 70) return { label: "中等", color: "text-amber-500", bgColor: "bg-amber-500" };
-  if (percentage >= 60) return { label: "及格", color: "text-orange-500", bgColor: "bg-orange-500" };
+  if (percentage >= 60)
+    return { label: "及格", color: "text-orange-500", bgColor: "bg-orange-500" };
   return { label: "不及格", color: "text-red-500", bgColor: "bg-red-500" };
 };
 
 // 环形进度组件
-function ScoreRing({
-  score,
-  total,
-  size = 180,
-}: {
-  score: number;
-  total: number;
-  size?: number;
-}) {
+function ScoreRing({ score, total, size = 180 }: { score: number; total: number; size?: number }) {
   const percentage = total > 0 ? (score / total) * 100 : 0;
   const level = getScoreLevel(percentage);
   const strokeWidth = 12;
@@ -194,11 +188,11 @@ function CategoryStats({
   // 计算各题型统计
   const typeStats: TypeStat[] = (() => {
     const statsMap = new Map<string, TypeStat>();
-    
+
     questions.forEach((q) => {
       const answer = answers.get(q.id);
       const type = q.question_type;
-      
+
       if (!statsMap.has(type)) {
         statsMap.set(type, {
           type,
@@ -212,11 +206,11 @@ function CategoryStats({
           correctRate: 0,
         });
       }
-      
+
       const stat = statsMap.get(type)!;
       stat.total += 1;
       stat.maxScore += 1; // 假设每题1分，实际可根据数据调整
-      
+
       if (answer) {
         if (answer.is_correct) {
           stat.correct += 1;
@@ -230,23 +224,23 @@ function CategoryStats({
         stat.unanswered += 1;
       }
     });
-    
+
     // 计算正确率
     statsMap.forEach((stat) => {
       stat.correctRate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
     });
-    
+
     return Array.from(statsMap.values()).sort((a, b) => b.total - a.total);
   })();
 
   // 计算各知识点/分类统计
   const knowledgeStats: KnowledgeStat[] = (() => {
     const statsMap = new Map<string, KnowledgeStat>();
-    
+
     questions.forEach((q) => {
       const answer = answers.get(q.id);
       const categoryName = q.category?.name || "未分类";
-      
+
       if (!statsMap.has(categoryName)) {
         statsMap.set(categoryName, {
           name: categoryName,
@@ -256,10 +250,10 @@ function CategoryStats({
           correctRate: 0,
         });
       }
-      
+
       const stat = statsMap.get(categoryName)!;
       stat.total += 1;
-      
+
       if (answer) {
         if (answer.is_correct) {
           stat.correct += 1;
@@ -268,12 +262,12 @@ function CategoryStats({
         }
       }
     });
-    
+
     // 计算正确率
     statsMap.forEach((stat) => {
       stat.correctRate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
     });
-    
+
     return Array.from(statsMap.values()).sort((a, b) => b.total - a.total);
   })();
 
@@ -317,8 +311,8 @@ function CategoryStats({
                     </span>
                   </div>
                 </div>
-                <ProgressBar 
-                  percentage={stat.correctRate} 
+                <ProgressBar
+                  percentage={stat.correctRate}
                   color={getColorByRate(stat.correctRate)}
                 />
               </div>
@@ -340,7 +334,10 @@ function CategoryStats({
             knowledgeStats.map((stat) => (
               <div key={stat.name} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-stone-700 truncate max-w-[150px]" title={stat.name}>
+                  <span
+                    className="text-sm font-medium text-stone-700 truncate max-w-[150px]"
+                    title={stat.name}
+                  >
                     {stat.name}
                   </span>
                   <div className="flex items-center gap-3 text-xs">
@@ -352,8 +349,8 @@ function CategoryStats({
                     </span>
                   </div>
                 </div>
-                <ProgressBar 
-                  percentage={stat.correctRate} 
+                <ProgressBar
+                  percentage={stat.correctRate}
                   color={getColorByRate(stat.correctRate)}
                 />
               </div>
@@ -392,9 +389,7 @@ function QuestionDetail({
       >
         <div
           className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-            answer.is_correct
-              ? "bg-emerald-100 text-emerald-600"
-              : "bg-red-100 text-red-600"
+            answer.is_correct ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
           }`}
         >
           {index + 1}
@@ -440,8 +435,8 @@ function QuestionDetail({
                       isCorrectAnswer
                         ? "bg-emerald-50 border border-emerald-200"
                         : isUserAnswer && !isCorrectAnswer
-                        ? "bg-red-50 border border-red-200"
-                        : "bg-white border border-stone-200"
+                          ? "bg-red-50 border border-red-200"
+                          : "bg-white border border-stone-200"
                     }`}
                   >
                     <span className="font-medium text-stone-700">{opt.key}.</span>
@@ -466,9 +461,7 @@ function QuestionDetail({
             <span className="text-stone-500">
               你的答案：
               <span
-                className={`font-bold ${
-                  answer.is_correct ? "text-emerald-600" : "text-red-500"
-                }`}
+                className={`font-bold ${answer.is_correct ? "text-emerald-600" : "text-red-500"}`}
               >
                 {answer.user_answer || "未作答"}
               </span>
@@ -482,9 +475,7 @@ function QuestionDetail({
                 <Lightbulb className="w-4 h-4 text-blue-600" />
                 <span className="font-medium text-blue-700">答案解析</span>
               </div>
-              <div className="text-sm text-stone-700 whitespace-pre-wrap">
-                {question.analysis}
-              </div>
+              <div className="text-sm text-stone-700 whitespace-pre-wrap">{question.analysis}</div>
             </div>
           )}
 
@@ -520,20 +511,24 @@ function ExamResultContent({ paperId }: { paperId: string }) {
   const generateShareText = () => {
     if (!result) return "";
     const { record } = result;
-    const correctRate = record.correct_count / (record.correct_count + record.wrong_count + record.unanswered_count) * 100;
-    const scorePercentage = record.total_score > 0 ? (record.user_score / record.total_score) * 100 : 0;
-    
+    const correctRate =
+      (record.correct_count /
+        (record.correct_count + record.wrong_count + record.unanswered_count)) *
+      100;
+    const scorePercentage =
+      record.total_score > 0 ? (record.user_score / record.total_score) * 100 : 0;
+
     let grade = "继续努力";
     if (scorePercentage >= 90) grade = "优秀";
     else if (scorePercentage >= 80) grade = "良好";
     else if (scorePercentage >= 70) grade = "中等";
     else if (scorePercentage >= 60) grade = "及格";
-    
+
     let rankingText = "";
     if (ranking) {
       rankingText = `🥇 排名：第${ranking.user_rank}名（超过${ranking.percentile.toFixed(0)}%的考生）\n`;
     }
-    
+
     return `【公考刷题成绩单】
 📝 ${record.paper_title || "模拟考试"}
 🏆 得分：${record.user_score.toFixed(1)}/${record.total_score}分（${grade}）
@@ -601,10 +596,13 @@ ${rankingText}✅ 正确：${record.correct_count}题
       try {
         const res = await practiceApi.getPaperResult(parseInt(paperId), parseInt(recordId));
         setResult(res);
-        
+
         // Fetch ranking info
         try {
-          const rankingRes = await practiceApi.getPaperRanking(parseInt(paperId), parseInt(recordId));
+          const rankingRes = await practiceApi.getPaperRanking(
+            parseInt(paperId),
+            parseInt(recordId)
+          );
           setRanking(rankingRes);
         } catch (rankError) {
           console.error("Failed to load ranking:", rankError);
@@ -657,10 +655,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-stone-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-stone-700 mb-2">结果加载失败</h3>
-          <Link
-            href="/practice/papers"
-            className="text-amber-500 hover:text-amber-600"
-          >
+          <Link href="/practice/papers" className="text-amber-500 hover:text-amber-600">
             返回试卷中心
           </Link>
         </div>
@@ -671,7 +666,8 @@ ${rankingText}✅ 正确：${record.correct_count}题
   const { record, answers, questions } = result;
   const totalQuestions = questions.length;
   const correctRate = totalQuestions > 0 ? (record.correct_count / totalQuestions) * 100 : 0;
-  const scorePercentage = record.total_score > 0 ? (record.user_score / record.total_score) * 100 : 0;
+  const scorePercentage =
+    record.total_score > 0 ? (record.user_score / record.total_score) * 100 : 0;
 
   // 构建答案映射
   const answerMap = new Map(answers.map((a) => [a.question_id, a]));
@@ -688,7 +684,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg mb-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <ScoreRing score={record.user_score} total={record.total_score} />
-            
+
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-2xl font-bold mb-2">{record.paper_title || "考试结果"}</h1>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-white/80">
@@ -715,12 +711,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
 
         {/* 统计卡片 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <StatCard
-            icon={Target}
-            label="总题数"
-            value={totalQuestions}
-            color="bg-blue-500"
-          />
+          <StatCard icon={Target} label="总题数" value={totalQuestions} color="bg-blue-500" />
           <StatCard
             icon={CheckCircle}
             label="正确"
@@ -728,12 +719,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
             subValue={`${correctRate.toFixed(1)}%`}
             color="bg-emerald-500"
           />
-          <StatCard
-            icon={XCircle}
-            label="错误"
-            value={record.wrong_count}
-            color="bg-red-500"
-          />
+          <StatCard icon={XCircle} label="错误" value={record.wrong_count} color="bg-red-500" />
           <StatCard
             icon={AlertCircle}
             label="未答"
@@ -755,19 +741,27 @@ ${rankingText}✅ 正确：${record.correct_count}题
                 <div className="text-xs text-stone-500">我的排名</div>
               </div>
               <div className="text-center p-3 bg-stone-50 rounded-lg">
-                <div className="text-2xl font-bold text-stone-700">{ranking.total_participants}</div>
+                <div className="text-2xl font-bold text-stone-700">
+                  {ranking.total_participants}
+                </div>
                 <div className="text-xs text-stone-500">总参与人数</div>
               </div>
               <div className="text-center p-3 bg-stone-50 rounded-lg">
-                <div className="text-2xl font-bold text-emerald-600">{ranking.highest_score.toFixed(1)}</div>
+                <div className="text-2xl font-bold text-emerald-600">
+                  {ranking.highest_score.toFixed(1)}
+                </div>
                 <div className="text-xs text-stone-500">最高分</div>
               </div>
               <div className="text-center p-3 bg-stone-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{ranking.avg_score.toFixed(1)}</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {ranking.avg_score.toFixed(1)}
+                </div>
                 <div className="text-xs text-stone-500">平均分</div>
               </div>
               <div className="text-center p-3 bg-stone-50 rounded-lg">
-                <div className="text-2xl font-bold text-violet-600">{ranking.percentile.toFixed(0)}%</div>
+                <div className="text-2xl font-bold text-violet-600">
+                  {ranking.percentile.toFixed(0)}%
+                </div>
                 <div className="text-xs text-stone-500">超过考生</div>
               </div>
             </div>
@@ -821,17 +815,11 @@ ${rankingText}✅ 正确：${record.correct_count}题
                 <XCircle className="w-4 h-4" />
                 {showOnlyWrong ? "显示全部" : "只看错题"}
               </button>
-              <button
-                onClick={expandAll}
-                className="text-sm text-stone-500 hover:text-stone-700"
-              >
+              <button onClick={expandAll} className="text-sm text-stone-500 hover:text-stone-700">
                 全部展开
               </button>
               <span className="text-stone-300">|</span>
-              <button
-                onClick={collapseAll}
-                className="text-sm text-stone-500 hover:text-stone-700"
-              >
+              <button onClick={collapseAll} className="text-sm text-stone-500 hover:text-stone-700">
                 全部收起
               </button>
             </div>
@@ -850,7 +838,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
                   score: 0,
                 };
                 const originalIndex = questions.findIndex((q) => q.id === question.id);
-                
+
                 return (
                   <QuestionDetail
                     key={question.id}
@@ -875,18 +863,12 @@ ${rankingText}✅ 正确：${record.correct_count}题
             <div>
               <h4 className="font-medium text-stone-800 mb-1">学习建议</h4>
               <ul className="text-sm text-stone-600 space-y-1">
-                {scorePercentage < 60 && (
-                  <li>• 基础较薄弱，建议从基础知识点开始系统学习</li>
-                )}
+                {scorePercentage < 60 && <li>• 基础较薄弱，建议从基础知识点开始系统学习</li>}
                 {scorePercentage >= 60 && scorePercentage < 80 && (
                   <li>• 已具备一定基础，针对薄弱环节重点突破</li>
                 )}
-                {scorePercentage >= 80 && (
-                  <li>• 基础扎实，可以尝试更高难度的题目</li>
-                )}
-                {record.wrong_count > 0 && (
-                  <li>• 及时复习错题，避免同类错误再次出现</li>
-                )}
+                {scorePercentage >= 80 && <li>• 基础扎实，可以尝试更高难度的题目</li>}
+                {record.wrong_count > 0 && <li>• 及时复习错题，避免同类错误再次出现</li>}
                 <li>• 保持每天练习的习惯，持续提升</li>
               </ul>
             </div>
@@ -902,7 +884,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
               <h3 className="text-lg font-bold text-stone-800">分享成绩</h3>
               <p className="text-sm text-stone-500 mt-1">选择分享方式</p>
             </div>
-            
+
             {/* 成绩预览卡片 */}
             <div className="p-4">
               <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-4 text-white">
@@ -942,7 +924,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
                   <div className="text-xs text-stone-500">调用系统分享功能</div>
                 </div>
               </button>
-              
+
               <button
                 onClick={copyToClipboard}
                 className="w-full flex items-center gap-3 p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors"
@@ -955,7 +937,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
                   <div className="text-xs text-stone-500">复制文字发送给好友</div>
                 </div>
               </button>
-              
+
               <button
                 onClick={copyLink}
                 className="w-full flex items-center gap-3 p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors"
@@ -986,11 +968,7 @@ ${rankingText}✅ 正确：${record.correct_count}题
   );
 }
 
-export default function ExamResultPage({
-  params,
-}: {
-  params: Promise<{ paperId: string }>;
-}) {
+export default function ExamResultPage({ params }: { params: Promise<{ paperId: string }> }) {
   const { paperId } = use(params);
 
   return (

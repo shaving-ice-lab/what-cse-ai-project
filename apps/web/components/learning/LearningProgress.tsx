@@ -120,10 +120,7 @@ export function ProgressRing({
   }, [progress, animated]);
 
   return (
-    <div
-      ref={ref}
-      className={cn("relative inline-flex flex-col items-center", className)}
-    >
+    <div ref={ref} className={cn("relative inline-flex flex-col items-center", className)}>
       <div className="relative" style={{ width: size, height: size }}>
         <svg className="transform -rotate-90" width={size} height={size}>
           {/* 背景圆环 */}
@@ -151,17 +148,11 @@ export function ProgressRing({
         </svg>
         {/* 中心内容 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            className="font-display font-bold text-stone-800"
-            style={{ fontSize: size * 0.22 }}
-          >
+          <span className="font-display font-bold text-stone-800" style={{ fontSize: size * 0.22 }}>
             {Math.round(animatedProgress)}%
           </span>
           {showLabel && label && (
-            <span
-              className="text-stone-500"
-              style={{ fontSize: size * 0.1 }}
-            >
+            <span className="text-stone-500" style={{ fontSize: size * 0.1 }}>
               {label}
             </span>
           )}
@@ -215,13 +206,9 @@ export function ProgressBar({
     <div className={cn("w-full", className)}>
       {(label || showValue) && (
         <div className="flex items-center justify-between mb-1.5">
-          {label && (
-            <span className="text-sm font-medium text-stone-700">{label}</span>
-          )}
+          {label && <span className="text-sm font-medium text-stone-700">{label}</span>}
           {showValue && (
-            <span className="text-sm font-medium text-stone-600">
-              {Math.round(progress)}%
-            </span>
+            <span className="text-sm font-medium text-stone-600">{Math.round(progress)}%</span>
           )}
         </div>
       )}
@@ -291,9 +278,7 @@ function KnowledgeTreeNode({
 
   const progress =
     node.progress ??
-    (node.totalItems && node.completedItems
-      ? (node.completedItems / node.totalItems) * 100
-      : 0);
+    (node.totalItems && node.completedItems ? (node.completedItems / node.totalItems) * 100 : 0);
 
   return (
     <div className="w-full">
@@ -378,19 +363,11 @@ function KnowledgeTreeNode({
   );
 }
 
-export function KnowledgeTree({
-  data,
-  onNodeClick,
-  className,
-}: KnowledgeTreeProps) {
+export function KnowledgeTree({ data, onNodeClick, className }: KnowledgeTreeProps) {
   return (
     <div className={cn("space-y-1", className)}>
       {data.map((node) => (
-        <KnowledgeTreeNode
-          key={node.id}
-          node={node}
-          onNodeClick={onNodeClick}
-        />
+        <KnowledgeTreeNode key={node.id} node={node} onNodeClick={onNodeClick} />
       ))}
     </div>
   );
@@ -433,9 +410,7 @@ export function LearningDuration({ stats, className }: LearningDurationProps) {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-xl p-3 border border-stone-200 text-center">
           <BarChart3 className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-          <p className="text-lg font-bold text-stone-800">
-            {formatDuration(stats.totalDuration)}
-          </p>
+          <p className="text-lg font-bold text-stone-800">{formatDuration(stats.totalDuration)}</p>
           <p className="text-xs text-stone-500">累计学习</p>
         </div>
 
@@ -503,8 +478,7 @@ export function LearningProgress({
   onKnowledgeClick,
   className,
 }: LearningProgressProps) {
-  const overallProgress =
-    (stats.completedKnowledgePoints / stats.totalKnowledgePoints) * 100;
+  const overallProgress = (stats.completedKnowledgePoints / stats.totalKnowledgePoints) * 100;
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -516,12 +490,7 @@ export function LearningProgress({
         </h3>
 
         <div className="flex items-center gap-8">
-          <ProgressRing
-            progress={overallProgress}
-            size={140}
-            label="总完成度"
-            color="#f59e0b"
-          />
+          <ProgressRing progress={overallProgress} size={140} label="总完成度" color="#f59e0b" />
 
           <div className="flex-1 space-y-4">
             <ProgressBar

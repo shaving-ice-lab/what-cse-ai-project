@@ -121,18 +121,17 @@ export default function WeaknessAnalysisPage() {
         <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link
-                href="/learn"
-                className="p-2 rounded-lg hover:bg-stone-100 transition-colors"
-              >
+              <Link href="/learn" className="p-2 rounded-lg hover:bg-stone-100 transition-colors">
                 <ArrowLeft className="w-5 h-5 text-stone-600" />
               </Link>
               <div>
                 <h1 className="text-xl font-bold text-stone-800">AI 薄弱点分析</h1>
-                <p className="text-sm text-stone-500">基于 {analysis.total_questions} 道题目的分析结果</p>
+                <p className="text-sm text-stone-500">
+                  基于 {analysis.total_questions} 道题目的分析结果
+                </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={handleRefresh}
               className="p-2 rounded-lg text-stone-400 hover:bg-stone-100 transition-colors"
             >
@@ -183,9 +182,7 @@ export default function WeaknessAnalysisPage() {
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors",
-                activeTab === tab.id
-                  ? "bg-red-500 text-white"
-                  : "text-stone-600 hover:bg-stone-50"
+                activeTab === tab.id ? "bg-red-500 text-white" : "text-stone-600 hover:bg-stone-50"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -295,7 +292,7 @@ export default function WeaknessAnalysisPage() {
               </div>
               <h3 className="text-xl font-bold mb-2">{analysis.improvement_plan.title}</h3>
               <p className="text-emerald-100 mb-4">{analysis.improvement_plan.description}</p>
-              
+
               <div className="flex items-center gap-6 text-sm">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
@@ -317,11 +314,7 @@ export default function WeaknessAnalysisPage() {
 
               <div className="space-y-4">
                 {analysis.improvement_plan.phases.map((phase, index) => (
-                  <ImprovementPhaseCard
-                    key={phase.phase_id}
-                    phase={phase}
-                    index={index}
-                  />
+                  <ImprovementPhaseCard key={phase.phase_id} phase={phase} index={index} />
                 ))}
               </div>
 
@@ -389,15 +382,15 @@ function WeakPointCard({
   return (
     <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-xl">
       <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", config.bg)}>
-        <span className={cn("text-xl font-bold", config.color)}>
-          {point.correct_rate}%
-        </span>
+        <span className={cn("text-xl font-bold", config.color)}>{point.correct_rate}%</span>
       </div>
 
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <h4 className="font-medium text-stone-800">{point.name}</h4>
-          <span className={cn("px-1.5 py-0.5 rounded text-xs font-medium", config.bg, config.color)}>
+          <span
+            className={cn("px-1.5 py-0.5 rounded text-xs font-medium", config.bg, config.color)}
+          >
             {config.label}
           </span>
           {trendIcon[point.trend]}
@@ -438,12 +431,8 @@ function MistakeCard({ mistake }: { mistake: TypicalMistake }) {
       <p className="text-stone-700 mb-3">{mistake.question_content}</p>
 
       <div className="flex items-center gap-4 text-sm mb-3">
-        <span className="text-red-600">
-          您的答案: {mistake.user_answer}
-        </span>
-        <span className="text-emerald-600">
-          正确答案: {mistake.correct_answer}
-        </span>
+        <span className="text-red-600">您的答案: {mistake.user_answer}</span>
+        <span className="text-emerald-600">正确答案: {mistake.correct_answer}</span>
       </div>
 
       <button
@@ -557,13 +546,7 @@ function SubjectAnalysisBar({ subject }: { subject: WeakQuestionType }) {
 }
 
 // 改进阶段卡片
-function ImprovementPhaseCard({
-  phase,
-  index,
-}: {
-  phase: ImprovementPhase;
-  index: number;
-}) {
+function ImprovementPhaseCard({ phase, index }: { phase: ImprovementPhase; index: number }) {
   return (
     <div className="relative pl-8 pb-4">
       {/* 时间线 */}

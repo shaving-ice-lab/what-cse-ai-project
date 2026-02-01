@@ -1,6 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  ReactNode,
+} from "react";
 
 // =====================================================
 // 类型定义
@@ -16,7 +24,7 @@ export interface Section {
   locked?: boolean;
 }
 
-export type SectionType = 
+export type SectionType =
   | "exam_analysis"
   | "introduction"
   | "learning_goals"
@@ -57,25 +65,25 @@ interface ClassroomContextType {
   isSidebarOpen: boolean;
   showNotes: boolean;
   fontSize: "small" | "medium" | "large";
-  
+
   // 导航方法
   goToSection: (index: number) => void;
   goToNextSection: () => void;
   goToPrevSection: () => void;
   goToSectionById: (id: string) => void;
-  
+
   // 进度方法
   markSectionComplete: (sectionId: string) => void;
   updateQuizScore: (sectionId: string, score: number) => void;
   addNote: (sectionId: string, note: string) => void;
   toggleBookmark: (sectionId: string) => void;
-  
+
   // UI 控制
   toggleFullscreen: () => void;
   toggleSidebar: () => void;
   toggleNotes: () => void;
   setFontSize: (size: "small" | "medium" | "large") => void;
-  
+
   // 工具方法
   setSections: (sections: Section[]) => void;
   getProgressPercentage: () => number;
@@ -87,11 +95,11 @@ const ClassroomContext = createContext<ClassroomContextType | null>(null);
 // Provider 组件
 // =====================================================
 
-export function ClassroomProvider({ 
+export function ClassroomProvider({
   children,
   initialSections = [],
   onProgressUpdate,
-}: { 
+}: {
   children: ReactNode;
   initialSections?: Section[];
   onProgressUpdate?: (progress: LearningProgress) => void;
@@ -123,15 +131,18 @@ export function ClassroomProvider({
   }, []);
 
   // 导航到指定章节
-  const goToSection = useCallback((index: number) => {
-    if (index >= 0 && index < sections.length) {
-      setCurrentSectionIndex(index);
-      setProgress(prev => ({
-        ...prev,
-        currentSectionIndex: index,
-      }));
-    }
-  }, [sections.length]);
+  const goToSection = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < sections.length) {
+        setCurrentSectionIndex(index);
+        setProgress((prev) => ({
+          ...prev,
+          currentSectionIndex: index,
+        }));
+      }
+    },
+    [sections.length]
+  );
 
   // 下一章节
   const goToNextSection = useCallback(() => {
@@ -148,16 +159,19 @@ export function ClassroomProvider({
   }, [currentSectionIndex, goToSection]);
 
   // 通过 ID 导航
-  const goToSectionById = useCallback((id: string) => {
-    const index = sections.findIndex(s => s.id === id);
-    if (index !== -1) {
-      goToSection(index);
-    }
-  }, [sections, goToSection]);
+  const goToSectionById = useCallback(
+    (id: string) => {
+      const index = sections.findIndex((s) => s.id === id);
+      if (index !== -1) {
+        goToSection(index);
+      }
+    },
+    [sections, goToSection]
+  );
 
   // 标记章节完成
   const markSectionComplete = useCallback((sectionId: string) => {
-    setProgress(prev => ({
+    setProgress((prev) => ({
       ...prev,
       completedSections: prev.completedSections.includes(sectionId)
         ? prev.completedSections
@@ -167,7 +181,7 @@ export function ClassroomProvider({
 
   // 更新测验分数
   const updateQuizScore = useCallback((sectionId: string, score: number) => {
-    setProgress(prev => ({
+    setProgress((prev) => ({
       ...prev,
       quizScores: {
         ...prev.quizScores,
@@ -178,7 +192,7 @@ export function ClassroomProvider({
 
   // 添加笔记
   const addNote = useCallback((sectionId: string, note: string) => {
-    setProgress(prev => ({
+    setProgress((prev) => ({
       ...prev,
       notes: {
         ...prev.notes,
@@ -189,10 +203,10 @@ export function ClassroomProvider({
 
   // 切换书签
   const toggleBookmark = useCallback((sectionId: string) => {
-    setProgress(prev => ({
+    setProgress((prev) => ({
       ...prev,
       bookmarks: prev.bookmarks.includes(sectionId)
-        ? prev.bookmarks.filter(id => id !== sectionId)
+        ? prev.bookmarks.filter((id) => id !== sectionId)
         : [...prev.bookmarks, sectionId],
     }));
   }, []);
@@ -210,12 +224,12 @@ export function ClassroomProvider({
 
   // 侧边栏切换
   const toggleSidebar = useCallback(() => {
-    setIsSidebarOpen(prev => !prev);
+    setIsSidebarOpen((prev) => !prev);
   }, []);
 
   // 笔记面板切换
   const toggleNotes = useCallback(() => {
-    setShowNotes(prev => !prev);
+    setShowNotes((prev) => !prev);
   }, []);
 
   // 设置字体大小
@@ -279,7 +293,7 @@ export function ClassroomProvider({
   // 计时器
   useEffect(() => {
     const timer = setInterval(() => {
-      setProgress(prev => ({
+      setProgress((prev) => ({
         ...prev,
         timeSpent: prev.timeSpent + 1,
       }));
@@ -318,11 +332,7 @@ export function ClassroomProvider({
     getProgressPercentage,
   };
 
-  return (
-    <ClassroomContext.Provider value={value}>
-      {children}
-    </ClassroomContext.Provider>
-  );
+  return <ClassroomContext.Provider value={value}>{children}</ClassroomContext.Provider>;
 }
 
 // =====================================================
